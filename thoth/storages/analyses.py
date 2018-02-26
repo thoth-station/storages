@@ -6,7 +6,7 @@ import requests
 
 
 class AnalysisResultsStore(object):
-    """Adapter for storing solver results."""
+    """Adapter for storing analysis results."""
 
     def __init__(self, host: str=None):
         super().__init__()
