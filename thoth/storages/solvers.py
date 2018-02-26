@@ -31,6 +31,11 @@ class SolverResultsStore(object):
         response.raise_for_status()
         return response.json()['files']
 
+    def iterate_results(self):
+        for document_id in self.get_result_listing():
+            document = self.retrieve_by_document_id(document_id)
+            yield document_id, document
+
     def is_connected(self) -> bool:
         return True
 
