@@ -3,7 +3,9 @@ from setuptools import setup
 
 def get_install_requires():
     with open('requirements.txt', 'r') as requirements_file:
-        return requirements_file.read().splitlines()
+        # TODO: respect hashes in requirements.txt file
+        res = requirements_file.readlines()
+        return [req.split(' ', maxsplit=1)[0] for req in res if req]
 
 
 setup(
