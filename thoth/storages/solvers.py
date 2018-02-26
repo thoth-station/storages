@@ -1,22 +1,35 @@
 """Adapter for storing solver results onto a persistence remote store."""
 
-from selinon import DataStorage
+import os
+
+import requests
 
 
-class SolverResultsStore(DataStorage):
-    """Adapter for storing analysis results."""
+class SolverResultsStore(object):
+    """Adapter for storing solver results."""
 
-    def __init__(self, host: str):
+    def __init__(self, host: str=None):
         super().__init__()
-        self.host = host
+        self.host = host or os.environ['THOTH_SOLVER_RESULTS_STORE_HOST']
 
     def retrieve_by_document_id(self, document_id: str) -> dict:
-        # TODO: implement
-        pass
+        assert document_id.startswith('solver-'), "Please make sure you are calling right adapter to retrieve results."
+        response = requests.get('{}/api/v1/result/{}'.format(self.host, document_id))
+        response.raise_for_status()
+        return response.json()
 
     def store_document(self, content: dict) -> str:
-        # TODO: implement
-        pass
+        response = requests.post('{}/api/v1/solver-result'.format(self.host), json=content)
+        response.raise_for_status()
+        return response.json()['document_id']
+
+    def get_result_listing(self):
+        response = requests.get('{}/api/v1/result?type=solver'.format(self.host))
+        response.raise_for_status()
+        return response.json()['files']
 
     def is_connected(self) -> bool:
+        return True
+
+    def connect(self):
         return True
