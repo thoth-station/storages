@@ -40,7 +40,7 @@ class JanusGraphDatabase(object):
 
     def is_connected(self):
         """Check if we are connected to a remote Gremlin server."""
-        # TODO: this will require some logic to be sure that the connection is healthy.
+        # TODO: this will maybe require some logic to be sure that the connection is healthy.
         return self.app is not None
 
     def connect(self):
@@ -54,6 +54,16 @@ class JanusGraphDatabase(object):
             serializer=self.serializer
         ))
         self.app.register(DependsOn, PackageVersion)
+
+    def disconnect(self):
+        """Close all connections - disconnect from remote."""
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.app.close())
+        self.app = None
+
+    def __del__(self):
+        """Destructor."""
+        self.disconnect()
 
     async def _get_or_create_node(self, ecosystem: str, package_name: str, package_version: str) \
             -> (PackageVersion, bool):
