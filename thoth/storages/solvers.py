@@ -8,9 +8,12 @@ import requests
 class SolverResultsStore(object):
     """Adapter for storing solver results."""
 
+    ENVVAR_HOST = 'THOTH_SOLVER_RESULTS_STORE_HOST'
+    DEFAULT_HOST = os.getenv(ENVVAR_HOST) or 'http://localhost:8080'
+
     def __init__(self, host: str=None):
         super().__init__()
-        self.host = host or os.environ['THOTH_SOLVER_RESULTS_STORE_HOST']
+        self.host = host or self.DEFAULT_HOST
 
     def retrieve_by_document_id(self, document_id: str) -> dict:
         assert document_id.startswith('solver-'), "Please make sure you are calling right adapter to retrieve results."
