@@ -4,7 +4,7 @@ import abc
 
 
 class StorageBase(metaclass=abc.ABCMeta):
-    """A bt ase class for implementing storage adapters."""
+    """A base class for implementing storage adapters."""
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
