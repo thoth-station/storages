@@ -4,8 +4,10 @@ import os
 
 import requests
 
+from .base import StorageBase
 
-class SolverResultsStore(object):
+
+class SolverResultsStore(StorageBase):
     """Adapter for storing solver results."""
 
     ENVVAR_HOST = 'THOTH_SOLVER_RESULTS_STORE_HOST'

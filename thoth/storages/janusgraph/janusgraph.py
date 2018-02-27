@@ -10,6 +10,7 @@ from goblin import Goblin
 from .models import DependsOn
 from .models import PackageVersion
 
+from ..base import StorageBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ def requires_connection(func):
     return wrapper
 
 
-class JanusGraphDatabase(object):
+class JanusGraphDatabase(StorageBase):
     """A Gremlin server adapter communicating via a web socket."""
 
     ENVVAR_HOST_NAME = 'THOTH_JANUSGRAPH_HOST'

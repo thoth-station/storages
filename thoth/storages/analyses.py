@@ -4,8 +4,10 @@ import os
 
 import requests
 
+from .base import StorageBase
 
-class AnalysisResultsStore(object):
+
+class AnalysisResultsStore(StorageBase):
     """Adapter for storing analysis results."""
 
     def __init__(self, host: str=None):
