@@ -10,7 +10,7 @@ def get_install_requires():
 
 setup(
     name='thoth-storages',
-    version='0.0.1',
+    version='0.0.2',
     description='Storage and database adapters available in project Thoth',
     long_description='Storage and database adapters available in project Thoth',
     author='Fridolin Pokorny',
