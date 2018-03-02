@@ -1,3 +1,3 @@
-from .janusgraph import JanusGraphDatabase
+from .janusgraph import GraphDatabase
 from .models import DependsOn
 from .models import PackageVersion

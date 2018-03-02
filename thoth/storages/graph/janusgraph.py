@@ -34,7 +34,7 @@ def requires_connection(func):
     return wrapper
 
 
-class JanusGraphDatabase(StorageBase):
+class GraphDatabase(StorageBase):
     """A Gremlin server adapter communicating via a web socket."""
 
     ENVVAR_HOST_NAME = 'THOTH_JANUSGRAPH_HOST'

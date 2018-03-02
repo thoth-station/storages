@@ -18,7 +18,7 @@ setup(
     license='GPLv2+',
     packages=[
         'thoth.storages',
-        'thoth.storages.janusgraph'
+        'thoth.storages.graph'
     ],
     zip_safe=False,
     install_requires=get_install_requires()
