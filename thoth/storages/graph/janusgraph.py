@@ -99,11 +99,7 @@ class GraphDatabase(StorageBase):
                               package_name, package_version, [p.to_dict() for p in package])
             return package[0], True
 
-        package = PackageVersion()
-        package.ecosystem = ecosystem
-        package.name = package_name
-        package.version = package_version
-
+        package = PackageVersion.create(ecosystem=ecosystem, name=package_name, version=package_version)
         session.add(package)
         _LOGGER.debug(f"Package {ecosystem}/{package_name}/{package_version} added: {package.to_dict()}")
         await session.flush()
@@ -156,8 +152,7 @@ class GraphDatabase(StorageBase):
                 )
 
                 version_range = dependency['required_version'] or '*'
-                edge = DependsOn()
-                edge.version_range = version_range
+                edge = DependsOn.create(version_range=version_range)
                 await self._get_or_create_edge_depends_on(package_node, dependency_node, edge)
 
     @requires_connection
