@@ -58,6 +58,12 @@ class GraphDatabase(StorageBase):
         self.port = port or self.DEFAULT_PORT
         self.serializer = serializer or self.DEFAULT_SERIALIZER
 
+    @property
+    def g(self):
+        """Retrieve the g object for synchronous operations with the graph database."""
+        loop = asyncio.get_event_loop()
+        return loop.run_until_complete(self.app.session()).g
+
     def is_connected(self):
         """Check if we are connected to a remote Gremlin server."""
         # TODO: this will maybe require some logic to be sure that the connection is healthy.
