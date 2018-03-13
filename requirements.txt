@@ -3,3 +3,4 @@ gremlinpython==3.2.6
 goblin==2.1.0
 requests
 voluptuous
+boto3
