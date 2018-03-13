@@ -4,4 +4,4 @@ from .result_base import ResultStorageBase
 
 
 class AnalysisResultsStore(ResultStorageBase):
-    PATH_ENV_VAR = 'THOTH_CEPH_ANALYSIS_PATH'
+    RESULT_TYPE = 'analysis'

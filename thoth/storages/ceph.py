@@ -13,36 +13,37 @@ from .base import StorageBase
 class CephStore(StorageBase):
     """Adapter for storing analysis results."""
 
-    def __init__(self, *, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None,
-                 path: str=None, region: str=None):
+    def __init__(self, result_type, *,
+                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
         super().__init__()
+        self.deployment_name = os.environ['THOTH_DEPLOYMENT_NAME']
         self.host = host or os.environ['THOTH_CEPH_HOST']
         self.key_id = key_id or os.environ['THOTH_CEPH_KEY_ID']
         self.secret_key = secret_key or os.environ['THOTH_CEPH_SECRET_KEY']
         self.bucket = bucket or os.environ['THOTH_CEPH_BUCKET']
-        self.path = path or os.getenv('THOTH_CEPH_PATH', '')
         self.region = region or os.getenv('THOTH_CEPH_REGION', None)
+        self.result_type = result_type
         self._s3 = None
+
+        assert self.result_type, "Result type cannot be empty: {}".format(self.result_type)
+        assert self.deployment_name, "Deployment name has to be set, got {}".format(self.deployment_name)
+
+        self.prefix = "{}/{}".format(self.deployment_name, self.result_type)
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        prefix = self.path + '/'
-        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
-            yield obj.key[len(prefix):]
+        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
+            yield obj.key[len(self.prefix):]
 
     @staticmethod
     def _dict2blob(dictionary: dict) -> bytes:
         """Encode a dictionary to a blob so it can be stored on Ceph."""
         return json.dumps(dictionary, sort_keys=True, separators=(',', ': '), indent=2).encode()
 
-    def _create_object_path(self, object_key):
-        """Create a path to an object respecting the path configuration."""
-        return "{}/{}".format(self.path, object_key) if self.path else object_key
-
     def _store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
         put_kwargs = {'Body': blob}
-        object_path = self._create_object_path(object_key)
+        object_path = "{}/{}".format(self.prefix, object_key)
         response = self._s3.Object(self.bucket, object_path).put(**put_kwargs)
         return response
 
@@ -53,7 +54,7 @@ class CephStore(StorageBase):
 
     def _retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
-        object_path = self._create_object_path(object_key)
+        object_path = "{}/{}".format(self.prefix, object_key)
         return self._s3.Object(self.bucket, object_path).get()['Body'].read()
 
     def retrieve_document(self, document_id: str) -> dict:
@@ -66,7 +67,7 @@ class CephStore(StorageBase):
 
     def document_exists(self, document_id: str) -> bool:
         """Check if the there is an object with the given key in bucket, does only HEAD request."""
-        object_path = self._create_object_path(document_id)
+        object_path = "{}/{}".format(self.prefix, document_id)
         try:
             self._s3.Object(self.bucket, object_path).load()
         except botocore.exceptions.ClientError as e:

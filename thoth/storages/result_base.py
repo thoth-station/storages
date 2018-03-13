@@ -10,19 +10,17 @@ from .ceph import CephStore
 class ResultStorageBase(StorageBase):
     """Adapter base for storing results."""
 
-    PATH_ENV_VAR = None
+    RESULT_TYPE = None
 
-    def __init__(self, *, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None,
-                 path: str=None, region: str=None):
-        assert self.PATH_ENV_VAR is not None, "Make sure you define PATH_ENV_VAR in derived classes " \
-                                              "to distinguish between adapter type instances."
-        path = path or os.getenv(self.PATH_ENV_VAR)
+    def __init__(self, *, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+        assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes " \
+                                             "to distinguish between adapter type instances."
         self.ceph = CephStore(
+            self.RESULT_TYPE,
             host=host,
             key_id=key_id,
             secret_key=secret_key,
             bucket=bucket,
-            path=path,
             region=region
         )
 
