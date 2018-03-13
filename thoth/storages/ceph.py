@@ -90,7 +90,8 @@ class CephStore(StorageBase):
             config=botocore.client.Config(signature_version='s3v4'),
             endpoint_url=self.host
         )
-        self._create_bucket_if_needed()
+        # Ceph returns 403 on this call, let's assume the bucket exists.
+        # self._create_bucket_if_needed()
 
     def _create_bucket_if_needed(self) -> None:
         """Create desired bucket based on configuration if the given bucket does not already exist."""
