@@ -13,7 +13,7 @@ from .base import StorageBase
 class CephStore(StorageBase):
     """Adapter for storing analysis results."""
 
-    def __init__(self, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None,
+    def __init__(self, *, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None,
                  path: str=None, region: str=None):
         super().__init__()
         self.host = host or os.environ['THOTH_CEPH_HOST']
