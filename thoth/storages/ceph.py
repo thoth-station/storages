@@ -8,6 +8,7 @@ import boto3
 import botocore
 
 from .base import StorageBase
+from .exceptions import NotFoundError
 
 
 class CephStore(StorageBase):
@@ -53,7 +54,12 @@ class CephStore(StorageBase):
 
     def _retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
-        return self._s3.Object(self.bucket, self.prefix + object_key).get()['Body'].read()
+        try:
+            return self._s3.Object(self.bucket, self.prefix + object_key).get()['Body'].read()
+        except botocore.exceptions.ClientError as exc:
+            if exc.response['Error']['Code'] == "404":
+                raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
+            raise
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a dictionary stored as JSON from S3."""
@@ -67,8 +73,8 @@ class CephStore(StorageBase):
         """Check if the there is an object with the given key in bucket, does only HEAD request."""
         try:
             self._s3.Object(self.bucket, self.prefix + document_id).load()
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
+        except botocore.exceptions.ClientError as exc:
+            if exc.response['Error']['Code'] == "404":
                 exists = False
             else:
                 raise
