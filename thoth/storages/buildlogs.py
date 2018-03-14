@@ -42,3 +42,7 @@ class BuildLogsStore(StorageBase):
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
         return self.ceph.iterate_results()
+
+    def get_document_listing(self) -> typing.Generator[str, None, None]:
+        """Get listing of documents stored on the Ceph."""
+        return self.ceph.get_document_listing()
