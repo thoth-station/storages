@@ -41,9 +41,11 @@ class ResultStorageBase(StorageBase):
         self.ceph.connect()
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
+        """Get listing of documents available in Ceph as a generator."""
         yield from self.ceph.get_document_listing()
 
     def store_document(self, document: dict) -> dict:
+        """Store the given document in Ceph."""
         try:
             RESULT_SCHEMA(document)
         except Exception as exc:
@@ -52,4 +54,11 @@ class ResultStorageBase(StorageBase):
         return self.ceph.store_document(document, self.get_document_id(document))
 
     def retrieve_document(self, document_id: str) -> dict:
+        """Retrieve a document from Ceph by its id."""
         return self.ceph.retrieve_document(document_id)
+
+    def iterate_results(self) -> typing.Generator[tuple, None, None]:
+        """Iterate over results available in the Ceph."""
+        for document_id in self.get_document_listing():
+            document = self.retrieve_document(document_id)
+            yield document_id, document
