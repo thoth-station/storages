@@ -1,10 +1,11 @@
 """Adapter for storing analysis results onto a persistence remote store."""
 
-import os
 import typing
 
 from .base import StorageBase
 from .ceph import CephStore
+from .result_schema import RESULT_SCHEMA
+from .exceptions import SchemaError
 
 
 class ResultStorageBase(StorageBase):
@@ -36,6 +37,11 @@ class ResultStorageBase(StorageBase):
         yield from self.ceph.get_document_listing()
 
     def store_document(self, document: dict) -> dict:
+        try:
+            RESULT_SCHEMA(document)
+        except Exception as exc:
+            raise SchemaError("Failed to validate document schema") from exc
+
         document_id = document['metadata']['hostname']
         return self.ceph.store_document(document, document_id)
 
