@@ -59,6 +59,4 @@ class ResultStorageBase(StorageBase):
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
-        for document_id in self.get_document_listing():
-            document = self.retrieve_document(document_id)
-            yield document_id, document
+        return self.ceph.iterate_results()

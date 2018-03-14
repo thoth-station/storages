@@ -37,11 +37,11 @@ class CephStore(StorageBase):
             yield obj.key[len(self.prefix):]
 
     @staticmethod
-    def _dict2blob(dictionary: dict) -> bytes:
+    def dict2blob(dictionary: dict) -> bytes:
         """Encode a dictionary to a blob so it can be stored on Ceph."""
         return json.dumps(dictionary, sort_keys=True, separators=(',', ': '), indent=2).encode()
 
-    def _store_blob(self, blob: bytes, object_key: str) -> dict:
+    def store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
         put_kwargs = {'Body': blob}
         response = self._s3.Object(self.bucket, self.prefix + object_key).put(**put_kwargs)
@@ -49,8 +49,8 @@ class CephStore(StorageBase):
 
     def store_document(self, document: dict, document_id: str) -> dict:
         """Store a document (dict) onto Ceph."""
-        blob = self._dict2blob(document)
-        return self._store_blob(blob, document_id)
+        blob = self.dict2blob(document)
+        return self.store_blob(blob, document_id)
 
     def _retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
@@ -60,6 +60,12 @@ class CephStore(StorageBase):
             if exc.response['Error']['Code'] == "404":
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
+
+    def iterate_results(self) -> typing.Generator[tuple, None, None]:
+        """Iterate over results available in the Ceph."""
+        for document_id in self.get_document_listing():
+            document = self.retrieve_document(document_id)
+            yield document_id, document
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a dictionary stored as JSON from S3."""
@@ -126,3 +132,4 @@ class CephStore(StorageBase):
                     'LocationConstraint': self.region
                 }
             )
+
