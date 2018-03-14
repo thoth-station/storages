@@ -13,7 +13,12 @@ class VertexBase(element.Vertex):
 
         See :meth:`thoth.storages.graph.models.EdgeBase.create`.
         """
-        return cls.from_dict(vertex_properties)
+        instance = cls()
+
+        for attr, value in vertex_properties.items():
+            setattr(instance, attr, value)
+
+        return instance
 
 
 class EdgeBase(element.Edge):
@@ -27,7 +32,12 @@ class EdgeBase(element.Edge):
         >>> target_node = PackageVersion.create(ecosystem='pypi', name='pyyaml', version='1.0.0')
         >>> edge = DependsOn.create(version_range='>=10', source=source_node, target=target_node)
         """
-        return cls.from_dict(edge_properties)
+        instance = cls()
+
+        for attr, value in edge_properties.items():
+            setattr(instance, attr, value)
+
+        return instance
 
 
 class PackageVersion(VertexBase):
