@@ -44,14 +44,16 @@ class ResultStorageBase(StorageBase):
         """Get listing of documents available in Ceph as a generator."""
         yield from self.ceph.get_document_listing()
 
-    def store_document(self, document: dict) -> dict:
+    def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
         try:
             RESULT_SCHEMA(document)
         except Exception as exc:
             raise SchemaError("Failed to validate document schema") from exc
 
-        return self.ceph.store_document(document, self.get_document_id(document))
+        document_id = self.get_document_id(document)
+        self.ceph.store_document(document, document_id)
+        return document_id
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a document from Ceph by its id."""
