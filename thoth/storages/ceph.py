@@ -28,7 +28,7 @@ class CephStore(StorageBase):
         assert self.result_type, "Result type cannot be empty: {}".format(self.result_type)
         assert self.deployment_name, "Deployment name has to be set, got {}".format(self.deployment_name)
 
-        self.prefix = "{}/{}".format(self.deployment_name, self.result_type)
+        self.prefix = "{}/{}/".format(self.deployment_name, self.result_type)
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
@@ -43,8 +43,7 @@ class CephStore(StorageBase):
     def _store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
         put_kwargs = {'Body': blob}
-        object_path = "{}/{}".format(self.prefix, object_key)
-        response = self._s3.Object(self.bucket, object_path).put(**put_kwargs)
+        response = self._s3.Object(self.bucket, self.prefix + object_key).put(**put_kwargs)
         return response
 
     def store_document(self, document: dict, document_id: str) -> dict:
@@ -54,8 +53,7 @@ class CephStore(StorageBase):
 
     def _retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
-        object_path = "{}/{}".format(self.prefix, object_key)
-        return self._s3.Object(self.bucket, object_path).get()['Body'].read()
+        return self._s3.Object(self.bucket, self.prefix + object_key).get()['Body'].read()
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a dictionary stored as JSON from S3."""
@@ -67,9 +65,8 @@ class CephStore(StorageBase):
 
     def document_exists(self, document_id: str) -> bool:
         """Check if the there is an object with the given key in bucket, does only HEAD request."""
-        object_path = "{}/{}".format(self.prefix, document_id)
         try:
-            self._s3.Object(self.bucket, object_path).load()
+            self._s3.Object(self.bucket, self.prefix + document_id).load()
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 exists = False
