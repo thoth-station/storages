@@ -12,7 +12,7 @@ from .exceptions import NotFoundError
 
 
 class CephStore(StorageBase):
-    """Adapter for storing analysis results."""
+    """Adapter for storing and retrieving data from Ceph - low level API."""
 
     def __init__(self, result_type, *,
                  host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
