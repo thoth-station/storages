@@ -52,7 +52,7 @@ class CephStore(StorageBase):
         blob = self.dict2blob(document)
         return self.store_blob(blob, document_id)
 
-    def _retrieve_blob(self, object_key: str) -> bytes:
+    def retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
         try:
             return self._s3.Object(self.bucket, self.prefix + object_key).get()['Body'].read()
@@ -69,7 +69,7 @@ class CephStore(StorageBase):
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a dictionary stored as JSON from S3."""
-        return json.loads(self._retrieve_blob(document_id).decode())
+        return json.loads(self.retrieve_blob(document_id).decode())
 
     def is_connected(self) -> bool:
         """Check whether adapter is already connected to the remote Ceph storage."""
