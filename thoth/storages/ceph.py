@@ -14,22 +14,16 @@ from .exceptions import NotFoundError
 class CephStore(StorageBase):
     """Adapter for storing and retrieving data from Ceph - low level API."""
 
-    def __init__(self, result_type, *,
+    def __init__(self, prefix, *,
                  host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
         super().__init__()
-        self.deployment_name = os.environ['THOTH_DEPLOYMENT_NAME']
         self.host = host or os.environ['THOTH_CEPH_HOST']
         self.key_id = key_id or os.environ['THOTH_CEPH_KEY_ID']
         self.secret_key = secret_key or os.environ['THOTH_CEPH_SECRET_KEY']
         self.bucket = bucket or os.environ['THOTH_CEPH_BUCKET']
         self.region = region or os.getenv('THOTH_CEPH_REGION', None)
-        self.result_type = result_type
+        self.prefix = prefix
         self._s3 = None
-
-        assert self.result_type, "Result type cannot be empty: {}".format(self.result_type)
-        assert self.deployment_name, "Deployment name has to be set, got {}".format(self.deployment_name)
-
-        self.prefix = "{}/{}/".format(self.deployment_name, self.result_type)
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""

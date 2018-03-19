@@ -1,10 +1,11 @@
 """Graph database schema."""
 
-from goblin import element
+from goblin.element import Vertex
+from goblin.element import Edge
 from goblin import properties
 
 
-class VertexBase(element.Vertex):
+class VertexBase(Vertex):
     """A base class for edges that extends Goblin's vertex implementation."""
 
     @classmethod
@@ -21,7 +22,7 @@ class VertexBase(element.Vertex):
         return instance
 
 
-class EdgeBase(element.Edge):
+class EdgeBase(Edge):
     """A base class for edges that extends Goblin's edge implementation."""
 
     @classmethod
@@ -38,6 +39,13 @@ class EdgeBase(element.Edge):
             setattr(instance, attr, value)
 
         return instance
+
+
+class Package(VertexBase):
+    """Package node in graph representing a package without version."""
+    ecosystem = properties.Property(properties.String)
+    name = properties.Property(properties.String)
+    # TODO: adjust sync
 
 
 class PackageVersion(VertexBase):

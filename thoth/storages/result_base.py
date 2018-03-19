@@ -1,5 +1,6 @@
 """Adapter for storing analysis results onto a persistence remote store."""
 
+import os
 import typing
 
 from .base import StorageBase
@@ -13,11 +14,15 @@ class ResultStorageBase(StorageBase):
 
     RESULT_TYPE = None
 
-    def __init__(self, *, host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+    def __init__(self, deployment_name=None, *,
+                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
         assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes " \
                                              "to distinguish between adapter type instances."
+
+        self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
+        self.prefix = "{}/{}".format(self.deployment_name, self.RESULT_TYPE)
         self.ceph = CephStore(
-            self.RESULT_TYPE,
+            self.prefix,
             host=host,
             key_id=key_id,
             secret_key=secret_key,
