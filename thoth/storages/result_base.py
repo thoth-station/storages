@@ -20,7 +20,7 @@ class ResultStorageBase(StorageBase):
                                              "to distinguish between adapter type instances."
 
         self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
-        self.prefix = "{}/{}".format(self.deployment_name, self.RESULT_TYPE)
+        self.prefix = "{}/{}/".format(self.deployment_name, self.RESULT_TYPE)
         self.ceph = CephStore(
             self.prefix,
             host=host,
