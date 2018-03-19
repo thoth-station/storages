@@ -58,6 +58,11 @@ class GraphDatabase(StorageBase):
         self.port = port or self.DEFAULT_PORT
         self.serializer = serializer or self.DEFAULT_SERIALIZER
 
+    @classmethod
+    def create(cls, host, port=None):
+        """Create a graph adapter, only for one host (syntax sugar)."""
+        return cls(hosts=[host], port=port)
+
     @property
     def g(self):
         """Retrieve the g object for synchronous operations with the graph database."""
