@@ -66,8 +66,13 @@ class GraphDatabase(StorageBase):
     @property
     def g(self):
         """Retrieve the g object for synchronous operations with the graph database."""
+        return self.session.g
+
+    @property
+    def session(self):
+        """Returns session to the graph database."""
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(self.app.session()).g
+        return loop.run_until_complete(self.app.session())
 
     def is_connected(self):
         """Check if we are connected to a remote Gremlin server."""
