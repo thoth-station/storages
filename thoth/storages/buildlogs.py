@@ -14,7 +14,7 @@ class BuildLogsStore(StorageBase):
     def __init__(self, deployment_name=None, *,
                  host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
         self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
-        self.prefix = "{}/{}".format(self.deployment_name, self.RESULT_TYPE)
+        self.prefix = "{}/{}/{}".format(os.environ['THOTH_CEPH_BUCKET_PREFIX'], self.deployment_name, self.RESULT_TYPE)
         self.ceph = CephStore(
             self.prefix,
             host=host,
