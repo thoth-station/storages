@@ -11,6 +11,9 @@ from aiogremlin.process.graph_traversal import AsyncGraphTraversalSource
 class VertexBase(Vertex):
     """A base class for edges that extends Goblin's vertex implementation."""
 
+    # Vertex cache to be used.
+    cache = None
+
     def __repr__(self):
         values = ''
         for key, value in self.to_dict().items():
@@ -42,6 +45,9 @@ class VertexBase(Vertex):
 
 class EdgeBase(Edge):
     """A base class for edges that extends Goblin's edge implementation."""
+
+    # Edge cache to be used.
+    cache = None
 
     def __repr__(self):
         values = ''

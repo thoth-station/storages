@@ -7,6 +7,7 @@ import os
 
 from goblin import Goblin
 
+from ..base import StorageBase
 from .models import ALL_MODELS
 from .models import DependsOn
 from .models import HasVersion
@@ -17,7 +18,8 @@ from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
-from ..base import StorageBase
+from .utils import enable_edge_cache
+from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -104,6 +106,8 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
+    @enable_edge_cache
+    @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
         for python_package_info in document['result']['tree']:
             try:
@@ -154,9 +158,11 @@ class GraphDatabase(StorageBase):
                             target=python_package_version_dependency,
                             version_range=dependency['required_version']
                         ).get_or_create(self.g)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
 
+    @enable_edge_cache
+    @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         runtime_environment = RuntimeEnvironment.from_document(document)
         runtime_environment.get_or_create(self.g)
@@ -193,7 +199,7 @@ class GraphDatabase(StorageBase):
                         target=rpm_requirement,
                         analysis_document=document
                     ).get_or_create(self.g)
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
 
         # Python packages
@@ -217,5 +223,5 @@ class GraphDatabase(StorageBase):
                     source=python_package,
                     target=python_package_version
                 ).get_or_create(self.g)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
