@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ea0d1397f616e5198ece1d3be3f577b33a35d5afb5158b400e4ac9c67b3d1d57"
+            "sha256": "411a4ede784361daa2bde3136126c844607156b4bb176155e97c46d5ef4cbde7"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -57,17 +57,17 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:15688d60dcc764f6fbd32975696deb48e64dff185db58bba45df02f2230860a8",
-                "sha256:3a74aa62eb9c0a6e1c9eace4ab93b2c3de43ab9f116dbc2e60a8cee584532584"
+                "sha256:523f23434b628dfead797c6aca53ba9805be791a695fa61e070c67c7d1b64864",
+                "sha256:f270f058f46aff9208fe29cffee79a46a7020cd186308c13c76db59d9e087fa6"
             ],
-            "version": "==1.6.7"
+            "version": "==1.6.23"
         },
         "botocore": {
             "hashes": [
-                "sha256:0794994bf5a50d1b7df0b43c319d4a2ecd3fe26b55c0313e7427c0910fc977c1",
-                "sha256:bded64bf74314a2ebe9535d2ac151ecf6d1188afc5d1869911080d12c23233dc"
+                "sha256:158012844c7a385ef49a93354124878bee7f400e3597dea57202ea87faeefa90",
+                "sha256:fa84972784e55ae5f89c2d33b1b10b6ba028cb3733b350df7ed1461e0680ab40"
             ],
-            "version": "==1.9.7"
+            "version": "==1.9.23"
         },
         "certifi": {
             "hashes": [
@@ -154,10 +154,10 @@
         },
         "python-dateutil": {
             "hashes": [
-                "sha256:07009062406cffd554a9b4135cd2ff167c9bf6b7aac61fe946c93e69fad1bbd8",
-                "sha256:8f95bb7e6edbb2456a51a1fb58c8dca942024b4f5844cae62c90aa88afe6e300"
+                "sha256:891c38b2a02f5bb1be3e4793866c8df49c7d19baabf9c1bad62547e0b4866aca",
+                "sha256:95511bae634d69bc7329ba55e646499a842bc4ec342ad54a8cdb65645a0aad3c"
             ],
-            "version": "==2.7.0"
+            "version": "==2.6.1"
         },
         "pyyaml": {
             "hashes": [
@@ -198,6 +198,13 @@
                 "sha256:105f8d68616f8248e24bf0e9372ef04d3cc10104f1980f54d57b2ce73a5ad56a"
             ],
             "version": "==1.10.0"
+        },
+        "thoth-common": {
+            "hashes": [
+                "sha256:703c945dfd789e0578aed290927fa67e5b85e4c1a982442d8632f8272628890b",
+                "sha256:fb59cd0067fb41e4cf946c9682f9911ed39453c6a4f8e3eed4effdeb5668bb08"
+            ],
+            "version": "==0.0.3"
         },
         "tornado": {
             "hashes": [
