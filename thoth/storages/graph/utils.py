@@ -31,10 +31,16 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
     return result['id'], result['existed']
 
 
-async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase) -> tuple:
-    """Create an edge if not existed before, if the given edge already exists, get its id."""
-    source_id = edge.source.id
-    target_id = edge.target.id
+async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
+                             source_id: int=None, target_id: int=None) -> tuple:
+    """Create an edge if not existed before, if the given edge already exists, get its id.
+
+    Optional parameters source_id and target_id are present for optimizations.
+    """
+    # If source_id/target_id are not provided explicitly and edge.source/edge.target are not set, this will raise
+    # an exception. Provide at least one based on your usage.
+    source_id = source_id or edge.source.id
+    target_id = target_id or edge.target.id
 
     query = g.V(source_id).outE()
     creation = g.V(source_id).addE(edge.__label__)
