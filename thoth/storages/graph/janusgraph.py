@@ -5,6 +5,7 @@ import functools
 import logging
 import os
 
+import uvloop
 from goblin import Goblin
 
 from ..base import StorageBase
@@ -22,6 +23,9 @@ from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
+
+# http://goblin.readthedocs.io/en/latest/performance.html#use-uvloop
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def _get_hashable_id(val):
