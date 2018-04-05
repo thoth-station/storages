@@ -18,11 +18,14 @@ _LOGGER = logging.getLogger(__name__)
 
 def enable_vertex_cache(func: typing.Callable):
     """Enable vertex caching."""
-    if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
-        _LOGGER.debug("Disabling graph cache")
-        return func
-
     def wrapped(*args, **kwargs):
+        if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
+            _LOGGER.debug("Disabling vertex graph cache")
+            # We could just return directly function call here, but this version works
+            # as expected in Jupyter notebooks.
+            return func(*args, **kwargs)
+
+        _LOGGER.debug("Enabling vertex graph cache")
         VertexBase.cache = Cache()
 
         try:
@@ -38,11 +41,14 @@ def enable_vertex_cache(func: typing.Callable):
 
 def enable_edge_cache(func: typing.Callable):
     """Enable caching for edge handling."""
-    if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
-        _LOGGER.debug("Disabling graph cache")
-        return func
-
     def wrapped(*args, **kwargs):
+        if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
+            _LOGGER.debug("Disabling edge graph cache")
+            # We could just return directly function call instead of wrapper here, but this version works
+            # as expected in Jupyter notebooks.
+            return func(*args, **kwargs)
+
+        _LOGGER.debug("Enabling edge graph cache")
         EdgeBase.cache = Cache()
 
         try:
