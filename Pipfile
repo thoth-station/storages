@@ -13,6 +13,10 @@ goblin = "==2.1.0"
 requests = "*"
 voluptuous = "*"
 "boto3" = "*"
+thoth-common = "*"
+cython = "*"
+ujson = "*"
+uvloop = "*"
 
 
 [dev-packages]

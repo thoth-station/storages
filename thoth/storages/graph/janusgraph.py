@@ -5,14 +5,27 @@ import functools
 import logging
 import os
 
+import uvloop
 from goblin import Goblin
 
-from .models import DependsOn
-from .models import PackageVersion
-
 from ..base import StorageBase
+from .models import ALL_MODELS
+from .models import DependsOn
+from .models import HasVersion
+from .models import IsPartOf
+from .models import Package
+from .models import PythonPackageVersion
+from .models import Requires
+from .models import RPMPackageVersion
+from .models import RPMRequirement
+from .models import RuntimeEnvironment
+from .utils import enable_edge_cache
+from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
+
+# http://goblin.readthedocs.io/en/latest/performance.html#use-uvloop
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 def _get_hashable_id(val):
@@ -89,7 +102,7 @@ class GraphDatabase(StorageBase):
             port=self.port,
             serializer=self.serializer
         ))
-        self.app.register(DependsOn, PackageVersion)
+        self.app.register(*tuple(ALL_MODELS))
 
     def disconnect(self):
         """Close all connections - disconnect from remote."""
@@ -97,89 +110,122 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
-    async def _get_or_create_node(self, ecosystem: str, package_name: str, package_version: str) \
-            -> (PackageVersion, bool):
-        """Create a node if not exists, otherwise return id of an existing one."""
-        session = await self.app.session()
-
-        package = await session.traversal(PackageVersion).\
-            has(PackageVersion.name, package_name).\
-            has(PackageVersion.ecosystem, ecosystem).\
-            has(PackageVersion.version, package_version).toList()
-
-        if package:
-            _LOGGER.debug(f"Package {ecosystem}/{package_name}/{package_version} already exists: "
-                          f"{package[0].to_dict()}")
-            if len(package) > 1:
-                _LOGGER.error("Multiple nodes for same package found, package %r, version %r, nodes: %s",
-                              package_name, package_version, [p.to_dict() for p in package])
-            return package[0], True
-
-        package = PackageVersion.create(ecosystem=ecosystem, name=package_name, version=package_version)
-        session.add(package)
-        _LOGGER.debug(f"Package {ecosystem}/{package_name}/{package_version} added: {package.to_dict()}")
-        await session.flush()
-
-        return package, False
-
-    async def _get_or_create_edge_depends_on(self, from_node, to_node, edge):
-        """Create the given edge."""
-        session = await self.app.session()
-
-        # TODO: create a generic way how to accomplish this
-        existing_edge = await session.g.V(from_node.id).\
-            outE().\
-            as_('e').\
-            has(edge.__class__.version_range, edge.version_range).\
-            inV().\
-            hasId(to_node.id).\
-            select('e').\
-            toList()
-
-        if existing_edge:
-            _LOGGER.debug(f"DependsOn edge between nodes {from_node.to_dict()} and {to_node.to_dict()} "
-                          f"already exists: {existing_edge[0].to_dict()}")
-            if len(existing_edge) > 1:
-                _LOGGER.error("Multiple edges found, from node %r to node %r, edges: %s",
-                              from_node.to_dict(), to_node.to_dict(), [p.to_dict() for p in existing_edge])
-            return existing_edge[0], True
-
-        edge.source = from_node
-        edge.target = to_node
-        session.add(edge)
-        _LOGGER.debug(f"DependsOn edge between nodes {from_node.to_dict()} and {to_node.to_dict()} added: "
-                      f"{edge.to_dict()}")
-        await session.flush()
-
-        return edge, False
-
-    async def _async_store_pypi_package(self, package_name: str, package_version: str, dependencies: list) -> None:
-        """Store the given PyPI package into the graph database and construct dependency graph based on dependencies."""
-        # TODO: we assume that all of these queries succeed
-        package_node, _ = await self._get_or_create_node('pypi', package_name, package_version)
-
-        for dependency in dependencies:
-            dependency_name = dependency['package_name']
-            for dependency_version in dependency['resolved_versions']:
-                dependency_node, _ = await self._get_or_create_node(
-                    'pypi',
-                    dependency_name,
-                    dependency_version
+    @enable_edge_cache
+    @enable_vertex_cache
+    def sync_solver_result(self, document: dict) -> None:
+        for python_package_info in document['result']['tree']:
+            try:
+                # TODO: replace 'package_version' with 'version'
+                # TODO: replace 'package_name' with 'name'
+                python_package_version = PythonPackageVersion.from_properties(
+                    name=python_package_info['package_name'],
+                    ecosystem='pypi',
+                    version=python_package_info['package_version']
                 )
+                python_package_version.get_or_create(self.g)
 
-                version_range = dependency['required_version'] or '*'
-                edge = DependsOn.create(version_range=version_range)
-                await self._get_or_create_edge_depends_on(package_node, dependency_node, edge)
+                # TODO: create solved by
+                python_package = Package.from_properties(
+                    ecosystem=python_package_version.ecosystem,
+                    name=python_package_version.name
+                )
+                python_package.get_or_create(self.g)
 
-    @requires_connection
-    def store_pypi_package(self, package_name: str, package_version: str, dependencies: list) -> None:
-        """Store the given PyPI package into the graph database and construct dependency graph based on dependencies."""
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self._async_store_pypi_package(package_name, package_version, dependencies))
+                HasVersion.from_properties(
+                    source=python_package,
+                    target=python_package_version
+                ).get_or_create(self.g)
 
-    @requires_connection
-    def store_pypi_solver_result(self, document_id, solver_result):
-        """Store results of Thoth's PyPI dependency solver."""
-        # TODO: use document_id to keep result traceable
-        for entry in solver_result['result']['tree']:
-            self.store_pypi_package(entry['package_name'], entry['package_version'], entry['dependencies'])
+                for dependency in python_package_info['dependencies']:
+                    for dependency_version in dependency['resolved_versions']:
+                        python_package_version_dependency = PythonPackageVersion.from_properties(
+                            name=dependency['package_name'],
+                            version=dependency_version,
+                            ecosystem='pypi'
+                        )
+                        python_package_version_dependency.get_or_create(self.g)
+
+                        # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
+                        python_package_dependency = Package.from_properties(
+                            ecosystem=python_package_version_dependency.ecosystem,
+                            name=python_package_version_dependency.name
+                        )
+                        python_package_dependency.get_or_create(self.g)
+
+                        HasVersion.from_properties(
+                            source=python_package_dependency,
+                            target=python_package_version_dependency
+                        ).get_or_create(self.g)
+
+                        DependsOn.from_properties(
+                            source=python_package_version,
+                            target=python_package_version_dependency,
+                            version_range=dependency['required_version']
+                        ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+
+    @enable_edge_cache
+    @enable_vertex_cache
+    def sync_analysis_result(self, document: dict) -> None:
+        runtime_environment = RuntimeEnvironment.from_document(document)
+        runtime_environment.get_or_create(self.g)
+
+        # RPM packages
+        for idx, rpm_package_info in enumerate(document['result']['rpm-dependencies']):
+            try:
+                rpm_package_version = RPMPackageVersion.construct(rpm_package_info)
+                rpm_package_version.get_or_create(self.g)
+
+                IsPartOf.from_properties(
+                    source=rpm_package_version,
+                    target=runtime_environment,
+                ).get_or_create(self.g)
+
+                # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
+                rpm_package = Package.from_properties(
+                    ecosystem=rpm_package_version.ecosystem,
+                    name=rpm_package_version.name,
+                )
+                rpm_package.get_or_create(self.g)
+
+                HasVersion.from_properties(
+                    source=rpm_package,
+                    target=rpm_package_version
+                ).get_or_create(self.g)
+
+                for dependency in rpm_package_info['dependencies']:
+                    rpm_requirement = RPMRequirement.from_properties(name=dependency)
+                    rpm_requirement.get_or_create(self.g)
+
+                    Requires.from_document(
+                        source=rpm_package_version,
+                        target=rpm_requirement,
+                        analysis_document=document
+                    ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
+
+        # Python packages
+        for idx, python_package_info in enumerate(document['result']['mercator']):
+            try:
+                python_package_version = PythonPackageVersion.construct(python_package_info)
+                python_package_version.get_or_create(self.g)
+
+                IsPartOf.from_properties(
+                    source=python_package_version,
+                    target=runtime_environment
+                ).get_or_create(self.g)
+
+                python_package = Package.from_properties(
+                    ecosystem=python_package_version.ecosystem,
+                    name=python_package_version.name
+                )
+                python_package.get_or_create(self.g)
+
+                HasVersion.from_properties(
+                    source=python_package,
+                    target=python_package_version
+                ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-exception
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
