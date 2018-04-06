@@ -1,6 +1,8 @@
 """Graph database schema."""
 
-from goblin import properties
+from goblin import Property
+from goblin import VertexProperty
+import goblin.properties as properties
 
 from thoth.common import datetime_str2timestamp
 
@@ -11,22 +13,22 @@ from .models_base import EdgeBase
 class Package(VertexBase):
     """Package vertex in the graph representing a package without version."""
 
-    ecosystem = properties.Property(properties.String)
-    name = properties.Property(properties.String)
+    ecosystem = VertexProperty(properties.String)
+    name = VertexProperty(properties.String)
 
 
 class RPMRequirement(VertexBase):
     """Requirement of an RPM as stated in a spec file."""
 
-    name = properties.Property(properties.String)
+    name = VertexProperty(properties.String)
 
 
 class PackageVersionBase(VertexBase):
     """Package-version vertex in the graph representing any versioned package."""
 
-    ecosystem = properties.Property(properties.String)
-    name = properties.Property(properties.String)
-    version = properties.Property(properties.String)
+    ecosystem = VertexProperty(properties.String)
+    name = VertexProperty(properties.String)
+    version = VertexProperty(properties.String)
 
     @classmethod
     def construct(cls, *args, **kwargs):
@@ -36,11 +38,11 @@ class PackageVersionBase(VertexBase):
 class RPMPackageVersion(PackageVersionBase):
     """RPM-specific package version."""
 
-    release = properties.Property(properties.String)
-    epoch = properties.Property(properties.String)
-    arch = properties.Property(properties.String)
-    src = properties.Property(properties.Boolean)
-    package_identifier = properties.Property(properties.String)
+    release = VertexProperty(properties.String)
+    epoch = VertexProperty(properties.String)
+    arch = VertexProperty(properties.String)
+    src = VertexProperty(properties.Boolean)
+    package_identifier = VertexProperty(properties.String)
 
     @classmethod
     def construct(cls, package_info: dict):
@@ -73,13 +75,13 @@ class PythonPackageVersion(PackageVersionBase):
 class RuntimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
-    image = properties.Property(properties.String)
+    image = VertexProperty(properties.String)
     # TODO: capture hashes of layers
 
-    analysis_datetime = properties.Property(properties.Integer)
-    analysis_document_id = properties.Property(properties.String)
-    analyzer = properties.Property(properties.String)
-    analyzer_version = properties.Property(properties.String)
+    analysis_datetime = VertexProperty(properties.Integer)
+    analysis_document_id = VertexProperty(properties.String)
+    analyzer = VertexProperty(properties.String)
+    analyzer_version = VertexProperty(properties.String)
 
     @classmethod
     def from_document(cls, analysis_document: dict):
@@ -97,10 +99,10 @@ class SoftwareStack(VertexBase):
 
     # TODO: add observation info
 
-    analysis_document_id = properties.Property(properties.String)
-    analysis_datetime = properties.Property(properties.Integer)
-    analyzer = properties.Property(properties.String)
-    analyzer_version = properties.Property(properties.String)
+    analysis_document_id = VertexProperty(properties.String)
+    analysis_datetime = VertexProperty(properties.Integer)
+    analyzer = VertexProperty(properties.String)
+    analyzer_version = VertexProperty(properties.String)
 
     @classmethod
     def from_document(cls, analysis_document: dict):
@@ -115,9 +117,9 @@ class SoftwareStack(VertexBase):
 class DependsOn(EdgeBase):
     """Dependency between packages modeling based on ecosystem specification."""
 
-    version_range = properties.Property(properties.String, default='*')
-    package_name = properties.Property(properties.String)
-    extras = properties.Property(properties.String)
+    version_range = Property(properties.String, default='*')
+    package_name = Property(properties.String)
+    extras = Property(properties.String)
 
 
 class IsPartOf(EdgeBase):
@@ -127,12 +129,12 @@ class IsPartOf(EdgeBase):
 class IsSolvedBy(EdgeBase):
     """Connection whether the given package is installable into environment."""
 
-    solver_document_id = properties.Property(properties.String)
-    solver = properties.Property(properties.String)
-    solver_version = properties.Property(properties.String)
-    solver_datetime = properties.Property(properties.Integer)
+    solver_document_id = Property(properties.String)
+    solver = Property(properties.String)
+    solver_version = Property(properties.String)
+    solver_datetime = Property(properties.Integer)
 
-    installable = properties.Property(properties.Boolean)
+    installable = Property(properties.Boolean)
 
     @classmethod
     def from_document(cls, solver_document: dict):
@@ -147,10 +149,10 @@ class IsSolvedBy(EdgeBase):
 class Requires(EdgeBase):
     """Requirement edge of an RPM package."""
 
-    analysis_document_id = properties.Property(properties.String)
-    analysis_datetime = properties.Property(properties.Integer)
-    analyzer = properties.Property(properties.String)
-    analyzer_version = properties.Property(properties.String)
+    analysis_document_id = Property(properties.String)
+    analysis_datetime = Property(properties.Integer)
+    analyzer = Property(properties.String)
+    analyzer_version = Property(properties.String)
 
     @classmethod
     def from_document(cls, source, target, analysis_document):
