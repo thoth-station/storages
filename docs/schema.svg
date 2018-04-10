@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="54cm" height="39cm" viewBox="79 -1 1075 773" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="80" y="100" width="110.1" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="80" y="100" width="110.1" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="135.05" y="119">Package</text>
+    <rect style="fill: #ffffff" x="80" y="128" width="110.1" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="80" y="128" width="110.1" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="83" y="142">+ecosystem</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="83" y="158">+package_name</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="960.592" y="84.8476" width="171.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="960.592" y="84.8476" width="171.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="1046.44" y="103.848">RPMRequirement</text>
+    <rect style="fill: #ffffff" x="960.592" y="112.848" width="171.7" height="20"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="960.592" y="112.848" width="171.7" height="20"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="963.592" y="126.848">+rpm_requirement_name</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="360.772" y="52.289" width="193" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="360.772" y="52.289" width="193" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="457.272" y="71.289">RPMPackageVersion</text>
+    <rect style="fill: #ffffff" x="360.772" y="80.289" width="193" height="132"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="360.772" y="80.289" width="193" height="132"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="94.289">+ecosystem</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="110.289">+package_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="126.289">+version</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="142.289">+release</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="158.289">+epoch</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="174.289">+arch</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="190.289">+src</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="206.289">+package_identifier</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="359.702" y="300.196" width="217" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="359.702" y="300.196" width="217" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="468.202" y="319.196">PythonPackageVersion</text>
+    <rect style="fill: #ffffff" x="359.702" y="328.196" width="217" height="52"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="359.702" y="328.196" width="217" height="52"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="342.196">+ecosystem</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="358.196">+package_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="374.196">+version</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="590.122" y="706.098" width="163.25" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="590.122" y="706.098" width="163.25" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="671.747" y="725.098">EcosystemSolver</text>
+    <rect style="fill: #ffffff" x="590.122" y="734.098" width="163.25" height="36"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="590.122" y="734.098" width="163.25" height="36"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="593.122" y="748.098">+solver_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="593.122" y="764.098">+solver_version</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="966.156" y="535.524" width="171.7" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="966.156" y="535.524" width="171.7" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="1052.01" y="554.524">SoftwareStack</text>
+    <rect style="fill: #ffffff" x="966.156" y="563.524" width="171.7" height="68"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="966.156" y="563.524" width="171.7" height="68"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="969.156" y="577.524">+analyzer_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="969.156" y="593.524">+analyzer_version</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="969.156" y="609.524">+analysis_document_id</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="969.156" y="625.524">+analysis_datetime</text>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="951.25" y="268.812" width="200.9" height="28"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="951.25" y="268.812" width="200.9" height="28"/>
+    <text font-size="16" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:700" x="1051.7" y="287.812">RuntimeEnvironment</text>
+    <rect style="fill: #ffffff" x="951.25" y="296.812" width="200.9" height="84"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="951.25" y="296.812" width="200.9" height="84"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="954.25" y="310.812">+image_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="954.25" y="326.812">+analyzer_name</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="954.25" y="342.812">+analyzer_version</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="954.25" y="358.812">+analysis_document_id</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="954.25" y="374.812">+analysis_datetime</text>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ffa500" x1="190.1" y1="138" x2="348.8" y2="138.269"/>
+    <polygon style="fill: #ffa500" points="356.3,138.281 346.291,143.264 348.8,138.269 346.308,133.265 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ffa500" points="356.3,138.281 346.291,143.264 348.8,138.269 346.308,133.265 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ffa500" points="275.436,138.144 275.436,354.196 347.73,354.196 "/>
+    <polygon style="fill: #ffa500" points="355.23,354.196 345.23,359.196 347.73,354.196 345.23,349.196 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ffa500" points="355.23,354.196 345.23,359.196 347.73,354.196 345.23,349.196 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #008000" x1="553.772" y1="122.289" x2="948.62" y2="122.831"/>
+    <polygon style="fill: #008000" points="956.12,122.841 946.113,127.828 948.62,122.831 946.127,117.828 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #008000" points="956.12,122.841 946.113,127.828 948.62,122.831 946.127,117.828 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #0000ff" points="671.746,706.098 671.746,469.79 576.702,469.79 576.702,382.168 "/>
+    <polygon style="fill: #0000ff" points="576.702,374.668 581.702,384.668 576.702,382.168 571.702,384.668 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #0000ff" points="576.702,374.668 581.702,384.668 576.702,382.168 571.702,384.668 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #800080" points="553.772,154.289 780.038,154.289 780.038,338.812 939.278,338.812 "/>
+    <polygon style="fill: #800080" points="946.778,338.812 936.778,343.812 939.278,338.812 936.778,333.812 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #800080" points="946.778,338.812 936.778,343.812 939.278,338.812 936.778,333.812 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #800080" points="576.702,338.196 763.976,338.196 763.976,338.812 939.278,338.812 "/>
+    <polygon style="fill: #800080" points="946.778,338.812 936.778,343.812 939.278,338.812 936.778,333.812 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #800080" points="946.778,338.812 936.778,343.812 939.278,338.812 936.778,333.812 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ff0000" points="576.702,354.196 771.429,354.196 771.429,589.524 954.184,589.524 "/>
+    <polygon style="fill: #ff0000" points="961.684,589.524 951.684,594.524 954.184,589.524 951.684,584.524 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ff0000" points="961.684,589.524 951.684,594.524 954.184,589.524 951.684,584.524 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ff00f2" points="1052.01,535.524 1052.01,458.168 1051.7,458.168 1051.7,392.784 "/>
+    <polygon style="fill: #ff00f2" points="1051.7,385.284 1056.7,395.284 1051.7,392.784 1046.7,395.284 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #ff00f2" points="1051.7,385.284 1056.7,395.284 1051.7,392.784 1046.7,395.284 "/>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="200.168,92.2124 290.868,92.2124 302.868,104.212 302.868,126.212 200.168,126.212 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ffa500" points="200.168,92.2124 290.868,92.2124 302.868,104.212 302.868,126.212 200.168,126.212 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #ffa500" points="290.868,92.2124 290.868,104.212 302.868,104.212 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="207.168" y="117.112">
+      <tspan x="207.168" y="117.112">has_version</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="665.914,0.0654292 833.614,0.0654292 845.614,12.0654 845.614,114.065 665.914,114.065 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #008000" points="665.914,0.0654292 833.614,0.0654292 845.614,12.0654 845.614,114.065 665.914,114.065 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #008000" points="833.614,0.0654292 833.614,12.0654 845.614,12.0654 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="672.914" y="24.9654">
+      <tspan x="672.914" y="24.9654">requires</tspan>
+      <tspan x="672.914" y="40.9654"></tspan>
+      <tspan x="672.914" y="56.9654">+analyzer_name</tspan>
+      <tspan x="672.914" y="72.9654">+analyzer_version</tspan>
+      <tspan x="672.914" y="88.9654">+analysis_document_id</tspan>
+      <tspan x="672.914" y="104.965">+analysis_datetime</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="501.66,476.54 653.96,476.54 665.96,488.54 665.96,574.54 501.66,574.54 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #0000ff" points="501.66,476.54 653.96,476.54 665.96,488.54 665.96,574.54 501.66,574.54 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #0000ff" points="653.96,476.54 653.96,488.54 665.96,488.54 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="508.66" y="501.44">
+      <tspan x="508.66" y="501.44">solved</tspan>
+      <tspan x="508.66" y="517.44"></tspan>
+      <tspan x="508.66" y="533.44">+solver_datetime</tspan>
+      <tspan x="508.66" y="549.44">+solver_document_id</tspan>
+      <tspan x="508.66" y="565.44">+solver_error</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="777.532,547.936 883.632,547.936 895.632,559.936 895.632,581.936 777.532,581.936 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ff0000" points="777.532,547.936 883.632,547.936 895.632,559.936 895.632,581.936 777.532,581.936 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #ff0000" points="883.632,547.936 883.632,559.936 895.632,559.936 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="784.532" y="572.836">
+      <tspan x="784.532" y="572.836">creates_stack</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="788.52,296.17 871.52,296.17 883.52,308.17 883.52,330.17 788.52,330.17 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #800080" points="788.52,296.17 871.52,296.17 883.52,308.17 883.52,330.17 788.52,330.17 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #800080" points="871.52,296.17 871.52,308.17 883.52,308.17 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="795.52" y="321.07">
+      <tspan x="795.52" y="321.07">is_part_of</tspan>
+    </text>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="350.61,452.342 464.41,452.342 476.41,464.342 476.41,550.342 350.61,550.342 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #9400ff" points="350.61,452.342 464.41,452.342 476.41,464.342 476.41,550.342 350.61,550.342 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #9400ff" points="464.41,452.342 464.41,464.342 476.41,464.342 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="357.61" y="477.242">
+      <tspan x="357.61" y="477.242">depends_on</tspan>
+      <tspan x="357.61" y="493.242"></tspan>
+      <tspan x="357.61" y="509.242">+version_range</tspan>
+      <tspan x="357.61" y="525.242">+package_name</tspan>
+      <tspan x="357.61" y="541.242">+extras</tspan>
+    </text>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #9400ff" points="359.702,380.196 359.702,443.618 468.202,443.618 468.202,392.168 "/>
+    <polygon style="fill: #9400ff" points="468.202,384.668 473.202,394.668 468.202,392.168 463.202,394.668 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 4; stroke: #9400ff" points="468.202,384.668 473.202,394.668 468.202,392.168 463.202,394.668 "/>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="1060.53,440.346 1120.43,440.346 1132.43,452.346 1132.43,474.346 1060.53,474.346 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #ff00f2" points="1060.53,440.346 1120.43,440.346 1132.43,452.346 1132.43,474.346 1060.53,474.346 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 1; stroke: #ff00f2" points="1120.43,440.346 1120.43,452.346 1132.43,452.346 "/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="1067.53" y="465.246">
+      <tspan x="1067.53" y="465.246">runs_in</tspan>
+    </text>
+  </g>
+  <g>
+    <rect style="fill: #e5e5e5" x="85.447" y="661.078" width="171.2" height="54"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="85.447" y="661.078" width="171.2" height="54"/>
+    <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="171.047" y="683.978">
+      <tspan x="171.047" y="683.978">thoth-storages version:</tspan>
+      <tspan x="171.047" y="699.978">0.0.14</tspan>
+    </text>
+  </g>
+</svg>
