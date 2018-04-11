@@ -76,6 +76,9 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
     creation = addV(vertex.__label__)
 
     for key, value in vertex.to_dict().items():
+        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        if isinstance(value, dict) and '__value__' in value:
+            value = value['__value__']
         if value is not None:
             query = query.has(key, value)
             creation = creation.property(key, value)
@@ -124,6 +127,10 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
     for key, value in edge.to_dict().items():
         if key in ('source', 'target', 'id'):
             continue
+
+        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        if isinstance(value, dict) and '__value__' in value:
+            value = value['__value__']
 
         if value is not None:
             query = query.has(key, value)
