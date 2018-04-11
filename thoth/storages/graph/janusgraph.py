@@ -115,19 +115,17 @@ class GraphDatabase(StorageBase):
     def sync_solver_result(self, document: dict) -> None:
         for python_package_info in document['result']['tree']:
             try:
-                # TODO: replace 'package_version' with 'version'
-                # TODO: replace 'package_name' with 'name'
                 python_package_version = PythonPackageVersion.from_properties(
                     package_name=python_package_info['package_name'],
                     ecosystem='pypi',
-                    version=python_package_info['package_version']
+                    package_version=python_package_info['package_version']
                 )
                 python_package_version.get_or_create(self.g)
 
                 # TODO: create solved by
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
-                    package_name=python_package_version.name
+                    package_name=python_package_version.package_name
                 )
                 python_package.get_or_create(self.g)
 
@@ -140,7 +138,7 @@ class GraphDatabase(StorageBase):
                     for dependency_version in dependency['resolved_versions']:
                         python_package_version_dependency = PythonPackageVersion.from_properties(
                             package_name=dependency['package_name'],
-                            version=dependency_version,
+                            package_version=dependency_version,
                             ecosystem='pypi'
                         )
                         python_package_version_dependency.get_or_create(self.g)
@@ -148,7 +146,7 @@ class GraphDatabase(StorageBase):
                         # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
                         python_package_dependency = Package.from_properties(
                             ecosystem=python_package_version_dependency.ecosystem,
-                            package_name=python_package_version_dependency.name
+                            package_name=python_package_version_dependency.package_name
                         )
                         python_package_dependency.get_or_create(self.g)
 
@@ -185,7 +183,7 @@ class GraphDatabase(StorageBase):
                 # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
                 rpm_package = Package.from_properties(
                     ecosystem=rpm_package_version.ecosystem,
-                    name=rpm_package_version.name,
+                    package_name=rpm_package_version.package_name,
                 )
                 rpm_package.get_or_create(self.g)
 
@@ -195,7 +193,7 @@ class GraphDatabase(StorageBase):
                 ).get_or_create(self.g)
 
                 for dependency in rpm_package_info['dependencies']:
-                    rpm_requirement = RPMRequirement.from_properties(name=dependency)
+                    rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                     rpm_requirement.get_or_create(self.g)
 
                     Requires.from_document(
@@ -219,7 +217,7 @@ class GraphDatabase(StorageBase):
 
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
-                    package_name=python_package_version.name
+                    package_name=python_package_version.package_name
                 )
                 python_package.get_or_create(self.g)
 
