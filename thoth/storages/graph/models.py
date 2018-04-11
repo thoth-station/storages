@@ -14,20 +14,20 @@ class Package(VertexBase):
     """Package vertex in the graph representing a package without version."""
 
     ecosystem = VertexProperty(properties.String)
-    name = VertexProperty(properties.String)
+    package_name = VertexProperty(properties.String)
 
 
 class RPMRequirement(VertexBase):
     """Requirement of an RPM as stated in a spec file."""
 
-    name = VertexProperty(properties.String)
+    rpm_requirement_name = VertexProperty(properties.String)
 
 
 class PackageVersionBase(VertexBase):
     """Package-version vertex in the graph representing any versioned package."""
 
     ecosystem = VertexProperty(properties.String)
-    name = VertexProperty(properties.String)
+    package_name = VertexProperty(properties.String)
     version = VertexProperty(properties.String)
 
     @classmethod
@@ -49,7 +49,7 @@ class RPMPackageVersion(PackageVersionBase):
         """Construct an RPM package-version vertex based on analyzer result entry."""
         return cls.from_properties(
             ecosystem='rpm',
-            name=package_info['name'],
+            package_name=package_info['name'],
             version=package_info['version'],
             release=package_info.get('release'),
             epoch=package_info.get('epoch'),
@@ -67,7 +67,7 @@ class PythonPackageVersion(PackageVersionBase):
         """Construct a Python package-version vertex based on analyzer result entry."""
         return cls.from_properties(
             ecosystem=package_info['ecosystem'],
-            name=package_info['result']['name'],
+            package_name=package_info['result']['name'],
             version=package_info['result']['version'],
         )
 
@@ -75,21 +75,21 @@ class PythonPackageVersion(PackageVersionBase):
 class RuntimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
-    image = VertexProperty(properties.String)
+    image_name = VertexProperty(properties.String)
     # TODO: capture hashes of layers
 
     analysis_datetime = VertexProperty(properties.Integer)
     analysis_document_id = VertexProperty(properties.String)
-    analyzer = VertexProperty(properties.String)
+    analyzer_name = VertexProperty(properties.String)
     analyzer_version = VertexProperty(properties.String)
 
     @classmethod
     def from_document(cls, analysis_document: dict):
         return cls.from_properties(
-            image=analysis_document['metadata']['arguments']['extract-image']['image'],
+            image_name=analysis_document['metadata']['arguments']['extract-image']['image'],
             analysis_datetime=datetime_str2timestamp(analysis_document['metadata']['datetime']),
             analysis_document_id=analysis_document['metadata']['hostname'],
-            analyzer=analysis_document['metadata']['analyzer'],
+            analyzer_name=analysis_document['metadata']['analyzer'],
             analyzer_version=analysis_document['metadata']['analyzer_version']
         )
 
@@ -101,7 +101,7 @@ class SoftwareStack(VertexBase):
 
     analysis_document_id = VertexProperty(properties.String)
     analysis_datetime = VertexProperty(properties.Integer)
-    analyzer = VertexProperty(properties.String)
+    analyzer_name = VertexProperty(properties.String)
     analyzer_version = VertexProperty(properties.String)
 
     @classmethod
@@ -109,7 +109,7 @@ class SoftwareStack(VertexBase):
         return cls.from_properties(
             analysis_datetime=datetime_str2timestamp(analysis_document['metadata']['datetime']),
             analysis_document_id=analysis_document['metadata']['hostname'],
-            analyzer=analysis_document['metadata']['analyzer'],
+            analyzer_name=analysis_document['metadata']['analyzer'],
             analyzer_version=analysis_document['metadata']['analyzer_version']
         )
 
@@ -126,22 +126,22 @@ class IsPartOf(EdgeBase):
     """Connection to environment."""
 
 
-class IsSolvedBy(EdgeBase):
-    """Connection whether the given package is installable into environment."""
+class Solved(EdgeBase):
+    """Stores information about which EcosystemSolver solved/introduced package."""
 
     solver_document_id = Property(properties.String)
-    solver = Property(properties.String)
+    solver_name = Property(properties.String)
     solver_version = Property(properties.String)
     solver_datetime = Property(properties.Integer)
 
-    installable = Property(properties.Boolean)
+    solver_error = Property(properties.Boolean)
 
     @classmethod
     def from_document(cls, solver_document: dict):
         return cls.from_properties(
             solver_datetime=datetime_str2timestamp(solver_document['metadata']['datetime']),
             solver_document_id=solver_document['metadata']['hostname'],
-            solver=solver_document['metadata']['analyzer'],
+            solver_name=solver_document['metadata']['analyzer'],
             solver_version=solver_document['metadata']['analyzer_version']
         )
 
@@ -151,7 +151,7 @@ class Requires(EdgeBase):
 
     analysis_document_id = Property(properties.String)
     analysis_datetime = Property(properties.Integer)
-    analyzer = Property(properties.String)
+    analyzer_name = Property(properties.String)
     analyzer_version = Property(properties.String)
 
     @classmethod
@@ -161,7 +161,7 @@ class Requires(EdgeBase):
             target=target,
             analysis_datetime=datetime_str2timestamp(analysis_document['metadata']['datetime']),
             analysis_document_id=analysis_document['metadata']['hostname'],
-            analyzer=analysis_document['metadata']['analyzer'],
+            analyzer_name=analysis_document['metadata']['analyzer'],
             analyzer_version=analysis_document['metadata']['analyzer_version']
         )
 
@@ -172,6 +172,10 @@ class CreatesStack(EdgeBase):
 
 class HasVersion(EdgeBase):
     """The given package has a specific version."""
+
+
+class RunsIn(EdgeBase):
+    """The given software stack runs in a runtime environment."""
 
 
 ALL_MODELS = frozenset((

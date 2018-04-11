@@ -118,7 +118,7 @@ class GraphDatabase(StorageBase):
                 # TODO: replace 'package_version' with 'version'
                 # TODO: replace 'package_name' with 'name'
                 python_package_version = PythonPackageVersion.from_properties(
-                    name=python_package_info['package_name'],
+                    package_name=python_package_info['package_name'],
                     ecosystem='pypi',
                     version=python_package_info['package_version']
                 )
@@ -127,7 +127,7 @@ class GraphDatabase(StorageBase):
                 # TODO: create solved by
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
-                    name=python_package_version.name
+                    package_name=python_package_version.name
                 )
                 python_package.get_or_create(self.g)
 
@@ -139,7 +139,7 @@ class GraphDatabase(StorageBase):
                 for dependency in python_package_info['dependencies']:
                     for dependency_version in dependency['resolved_versions']:
                         python_package_version_dependency = PythonPackageVersion.from_properties(
-                            name=dependency['package_name'],
+                            package_name=dependency['package_name'],
                             version=dependency_version,
                             ecosystem='pypi'
                         )
@@ -148,7 +148,7 @@ class GraphDatabase(StorageBase):
                         # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
                         python_package_dependency = Package.from_properties(
                             ecosystem=python_package_version_dependency.ecosystem,
-                            name=python_package_version_dependency.name
+                            package_name=python_package_version_dependency.name
                         )
                         python_package_dependency.get_or_create(self.g)
 
@@ -219,7 +219,7 @@ class GraphDatabase(StorageBase):
 
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
-                    name=python_package_version.name
+                    package_name=python_package_version.name
                 )
                 python_package.get_or_create(self.g)
 
