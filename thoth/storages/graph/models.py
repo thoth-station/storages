@@ -28,7 +28,7 @@ class PackageVersionBase(VertexBase):
 
     ecosystem = VertexProperty(properties.String)
     package_name = VertexProperty(properties.String)
-    version = VertexProperty(properties.String)
+    package_version = VertexProperty(properties.String)
 
     @classmethod
     def construct(cls, *args, **kwargs):
@@ -50,7 +50,7 @@ class RPMPackageVersion(PackageVersionBase):
         return cls.from_properties(
             ecosystem='rpm',
             package_name=package_info['name'],
-            version=package_info['version'],
+            package_version=package_info['version'],
             release=package_info.get('release'),
             epoch=package_info.get('epoch'),
             arch=package_info.get('arch'),
@@ -68,7 +68,7 @@ class PythonPackageVersion(PackageVersionBase):
         return cls.from_properties(
             ecosystem=package_info['ecosystem'],
             package_name=package_info['result']['name'],
-            version=package_info['result']['version'],
+            package_version=package_info['result']['version'],
         )
 
 
