@@ -26,7 +26,7 @@
     <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="360.772" y="80.289" width="193" height="132"/>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="94.289">+ecosystem</text>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="110.289">+package_name</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="126.289">+version</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="126.289">+package_version</text>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="142.289">+release</text>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="158.289">+epoch</text>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="363.772" y="174.289">+arch</text>
@@ -41,7 +41,7 @@
     <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="359.702" y="328.196" width="217" height="52"/>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="342.196">+ecosystem</text>
     <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="358.196">+package_name</text>
-    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="374.196">+version</text>
+    <text font-size="12.8" style="fill: #000000;text-anchor:start;font-family:monospace;font-style:normal;font-weight:normal" x="362.702" y="374.196">+package_version</text>
   </g>
   <g>
     <rect style="fill: #ffffff" x="590.122" y="706.098" width="163.25" height="28"/>
