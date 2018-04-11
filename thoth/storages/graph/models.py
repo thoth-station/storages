@@ -183,7 +183,7 @@ ALL_MODELS = frozenset((
     DependsOn,
     HasVersion,
     IsPartOf,
-    IsSolvedBy,
+    Solved,
     Package,
     PythonPackageVersion,
     Requires,

@@ -6,7 +6,7 @@ from .models import DependsOn
 from .models import DependsOn
 from .models import HasVersion
 from .models import IsPartOf
-from .models import IsSolvedBy
+from .models import Solved
 from .models import Package
 from .models import PythonPackageVersion
 from .models import RPMPackageVersion
