@@ -153,8 +153,12 @@ class GraphDatabase(StorageBase):
                     source=python_package,
                     target=python_package_version
                 ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                continue
 
-                for dependency in python_package_info['dependencies']:
+            for dependency in python_package_info['dependencies']:
+                try:
                     for dependency_version in dependency['resolved_versions']:
                         python_package_version_dependency = PythonPackageVersion.from_properties(
                             package_name=dependency['package_name'],
@@ -188,11 +192,12 @@ class GraphDatabase(StorageBase):
                             target=python_package_version_dependency,
                             version_range=dependency['required_version']
                         ).get_or_create(self.g)
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                except Exception:  # pylint: disable=broad-except
+                    _LOGGER.warning(f"Failed to sync Python package {python_package_version.to_dict()} "
+                                    f"dependency: {dependency}")
 
-        try:
-            for error_info in document['result']['errors']:
+        for error_info in document['result']['errors']:
+            try:
                 python_package_version = PythonPackageVersion.from_properties(
                     package_name=error_info['package_name'],
                     package_version=error_info['version'],
@@ -218,8 +223,8 @@ class GraphDatabase(StorageBase):
                     source=python_package,
                     target=python_package_version
                 ).get_or_create(self.g)
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
 
     #@enable_edge_cache
     @enable_vertex_cache
@@ -264,7 +269,12 @@ class GraphDatabase(StorageBase):
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
 
-                for dependency in rpm_package_info['dependencies']:
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
+                continue
+
+            for dependency in rpm_package_info['dependencies']:
+                try:
                     rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                     rpm_requirement.get_or_create(self.g)
 
@@ -276,8 +286,9 @@ class GraphDatabase(StorageBase):
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
                     ).get_or_create(self.g)
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
+                except Exception:  # pylint: disable=broad-except
+                    _LOGGER.warning(f"Failed to sync dependencies for "
+                                    f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
         # Python packages
         for python_package_info in document['result']['mercator']:
