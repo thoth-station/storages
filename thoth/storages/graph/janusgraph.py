@@ -291,7 +291,7 @@ class GraphDatabase(StorageBase):
                                       f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
         # Python packages
-        for python_package_info in document['result']['mercator']:
+        for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
             try:
                 python_package_version = PythonPackageVersion.from_properties(
                     ecosystem='pypi',
