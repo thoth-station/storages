@@ -191,7 +191,7 @@
     <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="85.447" y="661.078" width="171.2" height="54"/>
     <text font-size="12.8" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="171.047" y="683.978">
       <tspan x="171.047" y="683.978">thoth-storages version:</tspan>
-      <tspan x="171.047" y="699.978">0.0.14</tspan>
+      <tspan x="171.047" y="699.978">0.0.15</tspan>
     </text>
   </g>
 </svg>
