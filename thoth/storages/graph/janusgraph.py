@@ -287,8 +287,8 @@ class GraphDatabase(StorageBase):
                         analyzer_version=document['metadata']['analyzer_version']
                     ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
-                    _LOGGER.warning(f"Failed to sync dependencies for "
-                                    f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
+                    _LOGGER.exception(f"Failed to sync dependencies for "
+                                      f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
         # Python packages
         for python_package_info in document['result']['mercator']:
