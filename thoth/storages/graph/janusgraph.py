@@ -141,7 +141,7 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=False
-                ).get_or_create()
+                ).get_or_create(self.g)
 
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
@@ -169,7 +169,7 @@ class GraphDatabase(StorageBase):
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
                             solver_error=False
-                        ).get_or_create()
+                        ).get_or_create(self.g)
 
                         python_package_dependency = Package.from_properties(
                             ecosystem=python_package_version_dependency.ecosystem,
@@ -206,7 +206,7 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True
-                ).get_or_create()
+                ).get_or_create(self.g)
 
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
