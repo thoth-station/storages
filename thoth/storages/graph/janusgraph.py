@@ -224,7 +224,7 @@ class GraphDatabase(StorageBase):
                     target=python_package_version
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {error_info!r}")
 
     #@enable_edge_cache
     @enable_vertex_cache
