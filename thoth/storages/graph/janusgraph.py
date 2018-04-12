@@ -8,13 +8,17 @@ import os
 import uvloop
 from goblin import Goblin
 
+from thoth.common import datetime_str2timestamp
+
 from ..base import StorageBase
 from .models import ALL_MODELS
 from .models import DependsOn
+from .models import EcosystemSolver
 from .models import HasVersion
 from .models import IsPartOf
 from .models import Package
 from .models import PythonPackageVersion
+from .models import Solved
 from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
@@ -110,19 +114,35 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
-    @enable_edge_cache
+    #@enable_edge_cache
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
+        ecosystem_solver = EcosystemSolver.from_properties(
+            solver_name=document['metadata']['analyzer'],
+            solver_version=document['metadata']['analyzer_version']
+        )
+        ecosystem_solver.get_or_create(self.g)
+
+        solver_document_id = document['metadata']['hostname']
+        solver_datetime = datetime_str2timestamp(document['metadata']['datetime'])
+
         for python_package_info in document['result']['tree']:
             try:
                 python_package_version = PythonPackageVersion.from_properties(
-                    package_name=python_package_info['package_name'],
                     ecosystem='pypi',
+                    package_name=python_package_info['package_name'].lower(),
                     package_version=python_package_info['package_version']
                 )
                 python_package_version.get_or_create(self.g)
 
-                # TODO: create solved by
+                Solved.from_properties(
+                    source=ecosystem_solver,
+                    target=python_package_version,
+                    solver_document_id=solver_document_id,
+                    solver_datetime=solver_datetime,
+                    solver_error=False
+                ).get_or_create()
+
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
                     package_name=python_package_version.package_name
@@ -143,7 +163,14 @@ class GraphDatabase(StorageBase):
                         )
                         python_package_version_dependency.get_or_create(self.g)
 
-                        # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
+                        Solved.from_properties(
+                            source=ecosystem_solver,
+                            target=python_package_version_dependency,
+                            solver_document_id=solver_document_id,
+                            solver_datetime=solver_datetime,
+                            solver_error=False
+                        ).get_or_create()
+
                         python_package_dependency = Package.from_properties(
                             ecosystem=python_package_version_dependency.ecosystem,
                             package_name=python_package_version_dependency.package_name
@@ -155,6 +182,7 @@ class GraphDatabase(StorageBase):
                             target=python_package_version_dependency
                         ).get_or_create(self.g)
 
+                        # TODO: mark extras
                         DependsOn.from_properties(
                             source=python_package_version,
                             target=python_package_version_dependency,
@@ -163,24 +191,59 @@ class GraphDatabase(StorageBase):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
 
-    @enable_edge_cache
+        try:
+            for error_info in document['result']['errors']:
+                python_package_version = PythonPackageVersion.from_properties(
+                    package_name=error_info['package_name'],
+                    package_version=error_info['version'],
+                    ecosystem='pypi'
+                )
+                python_package_version.get_or_create(self.g)
+
+                Solved.from_properties(
+                    source=ecosystem_solver,
+                    target=python_package_version,
+                    solver_document_id=solver_document_id,
+                    solver_datetime=solver_datetime,
+                    solver_error=True
+                ).get_or_create()
+
+                python_package = Package.from_properties(
+                    ecosystem=python_package_version.ecosystem,
+                    package_name=python_package_version.package_name
+                )
+                python_package.get_or_create(self.g)
+
+                HasVersion.from_properties(
+                    source=python_package,
+                    target=python_package_version
+                ).get_or_create(self.g)
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+
+    #@enable_edge_cache
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
-        runtime_environment = RuntimeEnvironment.from_document(document)
+        runtime_environment = RuntimeEnvironment.from_properties(
+            runtime_enviroment_name=document['metadata']['arguments']['extract-image']['image'],
+        )
         runtime_environment.get_or_create(self.g)
 
         # RPM packages
-        for idx, rpm_package_info in enumerate(document['result']['rpm-dependencies']):
+        for rpm_package_info in document['result']['rpm-dependencies']:
             try:
-                rpm_package_version = RPMPackageVersion.construct(rpm_package_info)
+                rpm_package_version = RPMPackageVersion.from_properties(
+                    ecosystem='rpm',
+                    package_name=rpm_package_info['name'],
+                    package_version=rpm_package_info['version'],
+                    release=rpm_package_info.get('release'),
+                    epoch=rpm_package_info.get('epoch'),
+                    arch=rpm_package_info.get('arch'),
+                    src=rpm_package_info.get('src', False),
+                    package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
+                )
                 rpm_package_version.get_or_create(self.g)
 
-                IsPartOf.from_properties(
-                    source=rpm_package_version,
-                    target=runtime_environment,
-                ).get_or_create(self.g)
-
-                # TODO: I'm not sure if we need this vertex type, probably for optimization? what about indexes?
                 rpm_package = Package.from_properties(
                     ecosystem=rpm_package_version.ecosystem,
                     package_name=rpm_package_version.package_name,
@@ -192,28 +255,39 @@ class GraphDatabase(StorageBase):
                     target=rpm_package_version
                 ).get_or_create(self.g)
 
+                IsPartOf.from_properties(
+                    source=rpm_package_version,
+                    target=runtime_environment,
+                    analysis_datetime= datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_document_id=document['metadata']['hostname'],
+                    analyzer_name=document['metadata']['analyzer'],
+                    analyzer_version=document['metadata']['analyzer_version']
+                ).get_or_create(self.g)
+
                 for dependency in rpm_package_info['dependencies']:
                     rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                     rpm_requirement.get_or_create(self.g)
 
-                    Requires.from_document(
+                    Requires.from_properties(
                         source=rpm_package_version,
                         target=rpm_requirement,
-                        analysis_document=document
+                        analysis_datetime= datetime_str2timestamp(document['metadata']['datetime']),
+                        analysis_document_id=document['metadata']['hostname'],
+                        analyzer_name=document['metadata']['analyzer'],
+                        analyzer_version=document['metadata']['analyzer_version']
                     ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
 
         # Python packages
-        for idx, python_package_info in enumerate(document['result']['mercator']):
+        for python_package_info in document['result']['mercator']:
             try:
-                python_package_version = PythonPackageVersion.construct(python_package_info)
+                python_package_version = PythonPackageVersion.from_properties(
+                    ecosystem='rpm',
+                    package_name=python_package_info['result']['name'].lower(),
+                    package_verion=python_package_info['result']['version']
+                )
                 python_package_version.get_or_create(self.g)
-
-                IsPartOf.from_properties(
-                    source=python_package_version,
-                    target=runtime_environment
-                ).get_or_create(self.g)
 
                 python_package = Package.from_properties(
                     ecosystem=python_package_version.ecosystem,
@@ -224,6 +298,15 @@ class GraphDatabase(StorageBase):
                 HasVersion.from_properties(
                     source=python_package,
                     target=python_package_version
+                ).get_or_create(self.g)
+
+                IsPartOf.from_properties(
+                    source=python_package_version,
+                    target=runtime_environment,
+                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_document_id=document['metadata']['hostname'],
+                    analyzer_name=document['metadata']['analyzer'],
+                    analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-exception
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
