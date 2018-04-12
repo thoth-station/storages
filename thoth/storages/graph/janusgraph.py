@@ -199,7 +199,7 @@ class GraphDatabase(StorageBase):
         for error_info in document['result']['errors']:
             try:
                 python_package_version = PythonPackageVersion.from_properties(
-                    package_name=error_info['package_name'],
+                    package_name=error_info.get('package_name', error_info['package']),  # Check this inconsistency.
                     package_version=error_info['version'],
                     ecosystem='pypi'
                 )
