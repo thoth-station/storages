@@ -294,7 +294,7 @@ class GraphDatabase(StorageBase):
         for python_package_info in document['result']['mercator']:
             try:
                 python_package_version = PythonPackageVersion.from_properties(
-                    ecosystem='rpm',
+                    ecosystem='pypi',
                     package_name=python_package_info['result']['name'].lower(),
                     package_verion=python_package_info['result']['version']
                 )
