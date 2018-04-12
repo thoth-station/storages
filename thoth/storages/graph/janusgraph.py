@@ -193,8 +193,8 @@ class GraphDatabase(StorageBase):
                             version_range=dependency['required_version']
                         ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
-                    _LOGGER.warning(f"Failed to sync Python package {python_package_version.to_dict()} "
-                                    f"dependency: {dependency}")
+                    _LOGGER.exception(f"Failed to sync Python package {python_package_version.to_dict()} "
+                                      f"dependency: {dependency}")
 
         for error_info in document['result']['errors']:
             try:
