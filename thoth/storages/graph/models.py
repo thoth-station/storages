@@ -59,8 +59,8 @@ class SoftwareStack(VertexBase):
 class EcosystemSolver(VertexBase):
     """Solver used to resolve dependencies within ecosystem."""
 
-    solver_name = Property(properties.String)
-    solver_version = Property(properties.String)
+    solver_name = VertexProperty(properties.String)
+    solver_version = VertexProperty(properties.String)
 
 
 class DependsOn(EdgeBase):
@@ -74,10 +74,10 @@ class DependsOn(EdgeBase):
 class IsPartOf(EdgeBase):
     """Connection to environment."""
 
-    analysis_datetime = VertexProperty(properties.Integer)
-    analysis_document_id = VertexProperty(properties.String)
-    analyzer_name = VertexProperty(properties.String)
-    analyzer_version = VertexProperty(properties.String)
+    analysis_datetime = Property(properties.Integer)
+    analysis_document_id = Property(properties.String)
+    analyzer_name = Property(properties.String)
+    analyzer_version = Property(properties.String)
 
 
 class Solved(EdgeBase):
