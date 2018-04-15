@@ -23,7 +23,7 @@ from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
-from .utils import enable_edge_cache
+#from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
@@ -190,7 +190,8 @@ class GraphDatabase(StorageBase):
                         DependsOn.from_properties(
                             source=python_package_version,
                             target=python_package_version_dependency,
-                            version_range=dependency['required_version']
+                            package_name=python_package_version_dependency.package_name,
+                            version_range=dependency['required_version'] or '*'
                         ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(f"Failed to sync Python package {python_package_version.to_dict()} "
