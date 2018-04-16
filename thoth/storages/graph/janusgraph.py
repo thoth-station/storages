@@ -296,7 +296,7 @@ class GraphDatabase(StorageBase):
                 python_package_version = PythonPackageVersion.from_properties(
                     ecosystem='pypi',
                     package_name=python_package_info['result']['name'].lower(),
-                    package_verion=python_package_info['result']['version']
+                    package_version=python_package_info['result']['version']
                 )
                 python_package_version.get_or_create(self.g)
 
