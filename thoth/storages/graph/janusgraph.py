@@ -292,6 +292,11 @@ class GraphDatabase(StorageBase):
 
         # Python packages
         for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
+            if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
+                # We don't want to sync found requirement.txt artifacts as they do not carry any
+                # valuable information for us.
+                continue
+
             try:
                 python_package_version = PythonPackageVersion.from_properties(
                     ecosystem='pypi',
