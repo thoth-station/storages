@@ -264,7 +264,7 @@ class GraphDatabase(StorageBase):
                 IsPartOf.from_properties(
                     source=rpm_package_version,
                     target=runtime_environment,
-                    analysis_datetime= datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
                     analysis_document_id=document['metadata']['hostname'],
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
@@ -282,7 +282,7 @@ class GraphDatabase(StorageBase):
                     Requires.from_properties(
                         source=rpm_package_version,
                         target=rpm_requirement,
-                        analysis_datetime= datetime_str2timestamp(document['metadata']['datetime']),
+                        analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
                         analysis_document_id=document['metadata']['hostname'],
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
