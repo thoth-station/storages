@@ -230,7 +230,7 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         runtime_environment = RuntimeEnvironment.from_properties(
-            runtime_enviroment_name=document['metadata']['arguments']['extract-image']['image'],
+            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
         runtime_environment.get_or_create(self.g)
 
