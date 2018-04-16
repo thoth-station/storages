@@ -23,7 +23,7 @@ from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
-from .utils import enable_edge_cache
+#from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
