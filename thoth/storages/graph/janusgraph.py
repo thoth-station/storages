@@ -190,6 +190,7 @@ class GraphDatabase(StorageBase):
                         DependsOn.from_properties(
                             source=python_package_version,
                             target=python_package_version_dependency,
+                            package_name=python_package_version_dependency.package_name,
                             version_range=dependency['required_version']
                         ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
