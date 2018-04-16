@@ -38,6 +38,8 @@ class VertexBase(Vertex):
         instance = cls()
 
         for attr, value in vertex_properties.items():
+            # Ensure that the instance has the given attribute.
+            getattr(instance, attr)
             setattr(instance, attr, value)
 
         return instance
