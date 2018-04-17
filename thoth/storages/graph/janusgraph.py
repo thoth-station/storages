@@ -114,6 +114,51 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
+    def python_package_version_exists(self, package_name, package_version):
+        """Check if the given Python package version exists in the graph database."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V() \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .has('__label__', PythonPackageVersion.__label__).constant(True) \
+            .next()
+
+        return bool(loop.run_until_complete(query))
+
+    def solver_records_exist(self, solver_document):
+        """Check whether the given solver document record exists in the graph database."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V() \
+            .has('__label__', EcosystemSolver.__label__) \
+            .has('__type__', 'vertex') \
+            .has('solver_name', solver_document['metadata']['analyzer']) \
+            .has('solver_version', solver_document['metadata']['analyzer_version']) \
+            .outE() \
+            .has('__type__', 'edge') \
+            .has('__label__', Solved.__label__) \
+            .has('solver_document_id', solver_document['metadata']['hostname']) \
+            .has('solver_datetime', datetime_str2timestamp(solver_document['metadata']['datetime'])) \
+            .count().next()
+
+        return loop.run_until_complete(query) > 0
+
+    def analysis_records_exist(self, analysis_document):
+        """Check whether the given analysis document records exist in the graph database."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.E() \
+            .has('__label__', IsPartOf.__label__) \
+            .has('__type__', 'edge') \
+            .has('analysis_datetime', datetime_str2timestamp(analysis_document['metadata']['datetime'])) \
+            .has('analysis_document_id', analysis_document['metadata']['hostname']) \
+            .has('analyzer_name', analysis_document['metadata']['analyzer']) \
+            .has('analyzer_version', analysis_document['metadata']['analyzer_version'])\
+            .count().next()
+
+        return loop.run_until_complete(query) > 0
+
     #@enable_edge_cache
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
