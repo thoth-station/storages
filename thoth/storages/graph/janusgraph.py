@@ -4,6 +4,7 @@ import asyncio
 import functools
 import logging
 import os
+import typing
 
 import uvloop
 from goblin import Goblin
@@ -114,7 +115,7 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
-    def python_package_version_exists(self, package_name, package_version):
+    def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
         loop = asyncio.get_event_loop()
 
@@ -126,7 +127,7 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
-    def solver_records_exist(self, solver_document):
+    def solver_records_exist(self, solver_document: dict) -> bool:
         """Check whether the given solver document record exists in the graph database."""
         loop = asyncio.get_event_loop()
 
@@ -144,7 +145,7 @@ class GraphDatabase(StorageBase):
 
         return loop.run_until_complete(query) > 0
 
-    def analysis_records_exist(self, analysis_document):
+    def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
         loop = asyncio.get_event_loop()
 
@@ -158,6 +159,43 @@ class GraphDatabase(StorageBase):
             .count().next()
 
         return loop.run_until_complete(query) > 0
+
+    def create_pypi_package_version(self, package_name: str, package_version: str, *,
+                                    only_if_package_seen: bool=False) -> typing.Union[None, tuple]:
+        """Create entries for PyPI package version."""
+        package_name = package_name.lower()
+
+        if only_if_package_seen:
+            query = self.g.V() \
+                .has('__type__', 'vertex') \
+                .has('__label__', Package.__label__) \
+                .has('ecosystem', 'pypi') \
+                .has('package_name', package_name) \
+                .count().next()
+            seen = asyncio.get_event_loop().run_until_complete(query)
+            if not seen:
+                return None
+
+        python_package = Package.from_properties(
+            ecosystem='pypi',
+            package_name=package_name
+        )
+        python_package.get_or_create(self.g)
+
+        python_package_version = PythonPackageVersion.from_properties(
+            ecosystem='pypi',
+            package_name=package_name,
+            package_version=package_version
+        )
+        python_package_version.get_or_create(self.g)
+
+        has_version = HasVersion.from_properties(
+            source=python_package,
+            target=python_package_version
+        )
+        has_version.get_or_create(self.g)
+
+        return python_package, has_version, python_package_version
 
     #@enable_edge_cache
     @enable_vertex_cache
@@ -173,12 +211,10 @@ class GraphDatabase(StorageBase):
 
         for python_package_info in document['result']['tree']:
             try:
-                python_package_version = PythonPackageVersion.from_properties(
-                    ecosystem='pypi',
-                    package_name=python_package_info['package_name'].lower(),
-                    package_version=python_package_info['package_version']
+                python_package, _, python_package_version = self.create_pypi_package_version(
+                    python_package_info['package_name'].lower(),
+                    python_package_info['package_version']
                 )
-                python_package_version.get_or_create(self.g)
 
                 Solved.from_properties(
                     source=ecosystem_solver,
@@ -187,17 +223,6 @@ class GraphDatabase(StorageBase):
                     solver_datetime=solver_datetime,
                     solver_error=False
                 ).get_or_create(self.g)
-
-                python_package = Package.from_properties(
-                    ecosystem=python_package_version.ecosystem,
-                    package_name=python_package_version.package_name
-                )
-                python_package.get_or_create(self.g)
-
-                HasVersion.from_properties(
-                    source=python_package,
-                    target=python_package_version
-                ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
                 continue
@@ -205,12 +230,11 @@ class GraphDatabase(StorageBase):
             for dependency in python_package_info['dependencies']:
                 try:
                     for dependency_version in dependency['resolved_versions']:
-                        python_package_version_dependency = PythonPackageVersion.from_properties(
-                            package_name=dependency['package_name'],
-                            package_version=dependency_version,
-                            ecosystem='pypi'
-                        )
-                        python_package_version_dependency.get_or_create(self.g)
+                        python_package_dependency, _, python_package_version_dependency = \
+                            self.create_pypi_package_version(
+                                package_name=dependency['package_name'],
+                                package_version=dependency_version
+                            )
 
                         Solved.from_properties(
                             source=ecosystem_solver,
@@ -218,17 +242,6 @@ class GraphDatabase(StorageBase):
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
                             solver_error=False
-                        ).get_or_create(self.g)
-
-                        python_package_dependency = Package.from_properties(
-                            ecosystem=python_package_version_dependency.ecosystem,
-                            package_name=python_package_version_dependency.package_name
-                        )
-                        python_package_dependency.get_or_create(self.g)
-
-                        HasVersion.from_properties(
-                            source=python_package_dependency,
-                            target=python_package_version_dependency
                         ).get_or_create(self.g)
 
                         # TODO: mark extras
@@ -244,12 +257,10 @@ class GraphDatabase(StorageBase):
 
         for error_info in document['result']['errors']:
             try:
-                python_package_version = PythonPackageVersion.from_properties(
-                    package_name=error_info.get('package_name') or error_info['package'],   # Check this inconsistency.
+                python_package, _, python_package_version = self.create_pypi_package_version(
+                    package_name=error_info.get('package_name') or error_info['package'],
                     package_version=error_info['version'],
-                    ecosystem='pypi'
                 )
-                python_package_version.get_or_create(self.g)
 
                 Solved.from_properties(
                     source=ecosystem_solver,
@@ -259,16 +270,6 @@ class GraphDatabase(StorageBase):
                     solver_error=True
                 ).get_or_create(self.g)
 
-                python_package = Package.from_properties(
-                    ecosystem=python_package_version.ecosystem,
-                    package_name=python_package_version.package_name
-                )
-                python_package.get_or_create(self.g)
-
-                HasVersion.from_properties(
-                    source=python_package,
-                    target=python_package_version
-                ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {error_info!r}")
 
@@ -344,23 +345,10 @@ class GraphDatabase(StorageBase):
                 continue
 
             try:
-                python_package_version = PythonPackageVersion.from_properties(
-                    ecosystem='pypi',
+                python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'].lower(),
                     package_version=python_package_info['result']['version']
                 )
-                python_package_version.get_or_create(self.g)
-
-                python_package = Package.from_properties(
-                    ecosystem=python_package_version.ecosystem,
-                    package_name=python_package_version.package_name
-                )
-                python_package.get_or_create(self.g)
-
-                HasVersion.from_properties(
-                    source=python_package,
-                    target=python_package_version
-                ).get_or_create(self.g)
 
                 IsPartOf.from_properties(
                     source=python_package_version,
