@@ -7,6 +7,7 @@ import os
 import typing
 
 import uvloop
+from gremlin_python.process.graph_traversal import inE
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
@@ -126,6 +127,23 @@ class GraphDatabase(StorageBase):
             .next()
 
         return bool(loop.run_until_complete(query))
+
+    def retrieve_unsolved_pypi_packages(self) -> dict:
+        """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name') \
+            .has('package_version') \
+            .not_(
+                inE()
+                .has('__label__', Solved.__label__)
+                .has('__type__', 'edge')
+            ).group().by('package_name').by('package_version') \
+            .next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
 
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check whether the given solver document record exists in the graph database."""
