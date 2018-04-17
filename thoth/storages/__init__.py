@@ -1,7 +1,7 @@
 """Storage and database adapters for Thoth."""
 
 __name__ = 'thoth-storages'
-__version__ = '0.0.16'
+__version__ = '0.0.17'
 
 from .analyses import AnalysisResultsStore
 from .buildlogs import BuildLogsStore
