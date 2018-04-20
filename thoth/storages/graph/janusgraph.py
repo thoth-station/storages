@@ -145,6 +145,19 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    def retrieve_dependent_packages(self, package_name: str) -> dict:
+        """Get mapping package name to package version of packages that depend on the given package."""
+        # TODO: when added __type__ Cassanda backend time outs. This should be fixed once we move to Data Hub.
+        query = self.g.E() \
+            .has('__label__', 'depends_on') \
+            .has('package_name', package_name) \
+            .outV() \
+            .dedup() \
+            .group().by('package_name').by('package_version') \
+            .next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check whether the given solver document record exists in the graph database."""
         loop = asyncio.get_event_loop()
