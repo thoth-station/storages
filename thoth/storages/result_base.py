@@ -15,12 +15,17 @@ class ResultStorageBase(StorageBase):
     RESULT_TYPE = None
 
     def __init__(self, deployment_name=None, *,
-                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None,
+                 prefix: str=None):
         assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes " \
                                              "to distinguish between adapter type instances."
 
         self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
-        self.prefix = "{}/{}/{}".format(os.environ['THOTH_CEPH_BUCKET_PREFIX'], self.deployment_name, self.RESULT_TYPE)
+        self.prefix = "{}/{}/{}".format(
+            prefix or os.environ['THOTH_CEPH_BUCKET_PREFIX'],
+            self.deployment_name,
+            self.RESULT_TYPE
+        )
         self.ceph = CephStore(
             self.prefix,
             host=host,
