@@ -27,7 +27,7 @@ setup(
     long_description='Storage and database adapters available in project Thoth',
     author='Fridolin Pokorny',
     author_email='fridolin@redhat.com',
-    license='GPLv2+',
+    license='GPLv3+',
     packages=[
         'thoth.storages',
         'thoth.storages.graph'
