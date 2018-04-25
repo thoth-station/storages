@@ -167,7 +167,7 @@ class GraphDatabase(StorageBase):
                     .next()
             )
 
-        query = g.V() \
+        query = self.g.V() \
             .has('__label__', RuntimeEnvironment.__label__) \
             .has('__type__', 'vertex') \
             .has('runtime_environment_name', runtime_environment_name) \
