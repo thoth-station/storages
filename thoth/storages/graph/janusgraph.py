@@ -25,6 +25,7 @@ import os
 import typing
 
 import uvloop
+from gremlin_python.process.traversal import Order
 from gremlin_python.process.graph_traversal import inE
 from goblin import Goblin
 
@@ -146,6 +147,37 @@ class GraphDatabase(StorageBase):
             .toList()
 
         return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_runtime_environment(self, runtime_environment_name: str, document_id: str=None) -> list:
+        """Get runtime environment dependencies by its name, select the newest analysis if no document_id is present."""
+        loop = asyncio.get_event_loop()
+
+        if not document_id:
+            document_id = loop.run_until_complete(
+                self.g.V()
+                    .has('__label__', RuntimeEnvironment.__label__)
+                    .has('__type__', 'vertex')
+                    .has('runtime_environment_name', runtime_environment_name)
+                    .inE()
+                    .has('__label__', IsPartOf.__label__)
+                    .order().by('analysis_datetime', Order.decr)
+                    .range(0, 1)
+                    .valueMap()
+                    .select('analysis_document_id')
+                    .next()
+            )
+
+        query = g.V() \
+            .has('__label__', RuntimeEnvironment.__label__) \
+            .has('__type__', 'vertex') \
+            .has('runtime_environment_name', runtime_environment_name) \
+            .inE() \
+            .has('__label__', IsPartOf.__label__) \
+            .has('analysis_document_id', document_id) \
+            .outV() \
+            .toList()
+
+        return loop.run_until_complete(query)
 
     def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
