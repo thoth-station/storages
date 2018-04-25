@@ -150,12 +150,12 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_runtime_environment(self, runtime_environment_name: str, document_id: str=None) -> list:
-        """Get runtime environment dependencies by its name, select the newest analysis if no document_id is present."""
+    def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str=None) -> list:
+        """Get runtime environment dependencies by its name, select the newest analysis if no document id is present."""
         loop = asyncio.get_event_loop()
 
-        if not document_id:
-            document_id = loop.run_until_complete(
+        if not analysis_document_id:
+            analysis_document_id = loop.run_until_complete(
                 self.g.V()
                     .has('__label__', RuntimeEnvironment.__label__)
                     .has('__type__', 'vertex')
@@ -169,7 +169,7 @@ class GraphDatabase(StorageBase):
                     .next()
             )
 
-            if not document_id:
+            if not analysis_document_id:
                 raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
 
         query = self.g.V() \
@@ -178,13 +178,18 @@ class GraphDatabase(StorageBase):
             .has('runtime_environment_name', runtime_environment_name) \
             .coalesce(inE()
                       .has('__label__', IsPartOf.__label__)
-                      .has('analysis_document_id', document_id)
+                      .has('analysis_document_id', analysis_document_id)
                       .outV(),
                       constant(False)) \
             .toList()
 
         result = loop.run_until_complete(query)
-        if not result or result[0] is False:
+        if not result:
+            # TODO: we are assuming that an analysis has always at least some entries
+            raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} with "
+                                f"analysis document id {analysis_document_id!r} found")
+
+        if result[0] is False:
             raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
 
         return result
