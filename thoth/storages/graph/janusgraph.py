@@ -27,11 +27,13 @@ import typing
 import uvloop
 from gremlin_python.process.traversal import Order
 from gremlin_python.process.graph_traversal import inE
+from gremlin_python.process.graph_traversal import constant
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
 
 from ..base import StorageBase
+from ..exceptions import NotFoundError
 from .models import ALL_MODELS
 from .models import DependsOn
 from .models import EcosystemSolver
@@ -167,17 +169,25 @@ class GraphDatabase(StorageBase):
                     .next()
             )
 
+            if not document_id:
+                raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
+
         query = self.g.V() \
             .has('__label__', RuntimeEnvironment.__label__) \
             .has('__type__', 'vertex') \
             .has('runtime_environment_name', runtime_environment_name) \
-            .inE() \
-            .has('__label__', IsPartOf.__label__) \
-            .has('analysis_document_id', document_id) \
-            .outV() \
+            .coalesce(inE()
+                      .has('__label__', IsPartOf.__label__)
+                      .has('analysis_document_id', document_id)
+                      .outV(),
+                      constant(False)) \
             .toList()
 
-        return loop.run_until_complete(query)
+        result = loop.run_until_complete(query)
+        if not result or result[0] is False:
+            raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
+
+        return result
 
     def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
