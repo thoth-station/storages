@@ -31,6 +31,7 @@ from gremlin_python.process.graph_traversal import constant
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
+from thoth.common import datetime_str_from_timestamp
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
@@ -136,6 +137,26 @@ class GraphDatabase(StorageBase):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(self.app.close())
         self.app = None
+
+    def get_analysis_metadata(self, analysis_document_id: str) -> dict:
+        """Get metadata stored for the given analysis document."""
+        query = self.g.E() \
+            .has('__label__', IsPartOf.__label__) \
+            .has('__type__', 'edge') \
+            .has('analysis_document_id', analysis_document_id) \
+            .sample(1) \
+            .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \
+            .by('analysis_datetime').by('analysis_document_id').by('analyzer_name').by('analyzer_version') \
+            .next()
+
+        result = asyncio.get_event_loop().run_until_complete(query)
+
+        if not result:
+            raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
+
+        result['analysis_datetime'] = datetime_str_from_timestamp(result['analysis_datetime'])
+
+        return result
 
     def runtime_environment_listing(self, start_offset: int=0, count: int=100) -> list:
         """Get listing of runtime environments available."""
