@@ -46,9 +46,10 @@ class VertexBase(Vertex):
         """Return a dict representation of this object that can be exposed on API endpoints."""
         result = {}
         
-        for property_name, property_value in self.__dict__.items():
+        for property_name, property_value in self.__properties__.items():
             if isinstance(property_value, VertexProperty):
-                result[property_name] = property_value.value
+                prop = getattr(self, property_name, None)
+                result[property_name] = prop
 
         return result
 
