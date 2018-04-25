@@ -171,7 +171,7 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str=None) -> list:
+    def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str=None) -> tuple:
         """Get runtime environment dependencies by its name, select the newest analysis if no document id is present."""
         loop = asyncio.get_event_loop()
 
@@ -213,7 +213,7 @@ class GraphDatabase(StorageBase):
         if result[0] is False:
             raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
 
-        return result
+        return result, analysis_document_id
 
     def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
