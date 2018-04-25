@@ -116,6 +116,19 @@ class GraphDatabase(StorageBase):
         loop.run_until_complete(self.app.close())
         self.app = None
 
+    def runtime_environment_listing(self, start_offset: int=0, count: int=100) -> list:
+        """Get listing of runtime environments available."""
+        query = self.g.V() \
+            .has('__label__', RuntimeEnvironment.__label__) \
+            .has('__type__', 'vertex') \
+            .values('runtime_environment_name') \
+            .dedup() \
+            .order() \
+            .range(start_offset, start_offset + count) \
+            .toList()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
     def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
         loop = asyncio.get_event_loop()
