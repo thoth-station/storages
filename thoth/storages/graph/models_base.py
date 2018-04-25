@@ -49,7 +49,7 @@ class VertexBase(Vertex):
         for property_name, property_value in self.__properties__.items():
             if isinstance(property_value, VertexProperty):
                 prop = getattr(self, property_name, None)
-                result[property_name] = prop
+                result[property_name] = prop.value
 
         return result
 
