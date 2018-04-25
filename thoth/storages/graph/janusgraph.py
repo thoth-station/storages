@@ -32,7 +32,6 @@ from gremlin_python.process.graph_traversal import constant
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
-from thoth.common import datetime_str_from_timestamp
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
