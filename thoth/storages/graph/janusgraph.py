@@ -23,6 +23,7 @@ import functools
 import logging
 import os
 import typing
+from datetime import datetime
 
 import uvloop
 from gremlin_python.process.traversal import Order
@@ -154,7 +155,7 @@ class GraphDatabase(StorageBase):
         if not result:
             raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
 
-        result['analysis_datetime'] = datetime_str_from_timestamp(result['analysis_datetime'])
+        result['analysis_datetime'] = datetime.fromtimestamp(result['analysis_datetime'])
 
         return result
 
