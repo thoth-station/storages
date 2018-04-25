@@ -21,6 +21,7 @@
 import asyncio
 
 from goblin import Vertex
+from goblin import VertexProperty
 from goblin import Edge
 
 from aiogremlin.process.graph_traversal import AsyncGraphTraversalSource
@@ -40,6 +41,16 @@ class VertexBase(Vertex):
             values += '{}={}, '.format(key, repr(value) if isinstance(value, str) else value)
 
         return f'{self.__class__.__name__}({values[:-2]})'
+
+    def to_pretty_dict(self) -> dict:
+        """Return a dict representation of this object that can be exposed on API endpoints."""
+        result = {}
+        
+        for property_name, property_value in self.__dict__.items():
+            if isinstance(property_value, VertexProperty):
+                result[property_name] = property_value.value
+
+        return result
 
     def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
         """Get or create this vertex."""
