@@ -171,6 +171,42 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    def runtime_environment_analyses_listing(self, runtime_environment_name: str,
+                                             start_offset: int=0, count: int=100) -> list:
+        """Get listing of analyses available for the given runtime environment."""
+        query = self.g.V() \
+            .has('__label__', RuntimeEnvironment.__label__) \
+            .has('__type__', 'vertex') \
+            .has('runtime_environment_name', runtime_environment_name) \
+            .inE() \
+            .has('__label__', IsPartOf.__label__) \
+            .has('__type__', 'edge') \
+            .order().by('analysis_datetime', Order.decr) \
+            .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \
+            .by('analysis_datetime').by('analysis_document_id').by('analyzer_name').by('analyzer_version') \
+            .dedup() \
+            .range(start_offset, start_offset + count) \
+            .toList()
+
+        entries = asyncio.get_event_loop().run_until_complete(query)
+
+        if not entries:
+            # TODO: we could optimize this into a single query
+            query = self.g.V() \
+                .has('__label__', RuntimeEnvironment.__label__) \
+                .has('__type__', 'vertex') \
+                .has('runtime_environment_name', runtime_environment_name) \
+                .count().next()
+
+            count = asyncio.get_event_loop().run_until_complete(query)
+            if not count:
+                raise NotFoundError(f"No analyses found for runtime environment {runtime_environment_name!r}")
+
+        for entry in entries:
+            entry['analysis_datetime'] = datetime.fromtimestamp(entry['analysis_datetime'])
+
+        return entries
+
     def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str=None) -> tuple:
         """Get runtime environment dependencies by its name, select the newest analysis if no document id is present."""
         loop = asyncio.get_event_loop()
