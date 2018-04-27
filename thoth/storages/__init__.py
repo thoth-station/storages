@@ -3,6 +3,7 @@
 __name__ = 'thoth-storages'
 __version__ = '0.0.25'
 
+from .advisers import AdvisersResultsStore
 from .analyses import AnalysisResultsStore
 from .buildlogs import BuildLogsStore
 from .ceph import CephStore
