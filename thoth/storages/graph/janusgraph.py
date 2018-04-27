@@ -510,6 +510,11 @@ class GraphDatabase(StorageBase):
                 # valuable information for us.
                 continue
 
+            if 'error' in python_package_info['result']:
+                # Mercator was unable to process this - e.g. there was a setup.py that is not distutils setup.py
+                _LOGGER.info("Skipping error entry - %r", python_package_info)
+                continue
+
             try:
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'].lower(),
