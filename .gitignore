@@ -3,3 +3,4 @@ __pycache__
 .coverage
 .pytest_cache
 thoth_storages.egg-info/
+.eggs/
