@@ -106,7 +106,11 @@ class TestBuildLogsStore(ThothStoragesTest):
             with_args(). \
             and_return(None). \
             once()
-        flexmock(adapter.ceph).should_receive('is_connected').with_args().and_return(True).once()
+        flexmock(adapter.ceph). \
+            should_receive('is_connected'). \
+            with_args(). \
+            and_return(True). \
+            once()
         adapter.connect()
 
         assert adapter.is_connected()
