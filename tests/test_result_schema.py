@@ -24,6 +24,7 @@ from voluptuous.error import Error
 from . import DATA_DIR
 
 from thoth.storages.result_schema import METADATA_SCHEMA
+from thoth.storages.result_schema import RESULT_SCHEMA
 
 
 def get_metadata(fail):
@@ -39,6 +40,19 @@ def get_metadata(fail):
             yield pytest.param(json.load(mf), id=metadata_file)
 
 
+def get_results(fail):
+    """Retrieve all files that store metadata dictionary as a test input."""
+    path = os.path.join(DATA_DIR, 'schema')
+    for result_file in os.listdir(path):
+        if fail and not result_file.startswith('result_fail_'):
+            continue
+        elif not fail and not result_file.startswith('result_ok_'):
+            continue
+
+        with open(os.path.join(path, result_file)) as mf:
+            yield pytest.param(json.load(mf), id=result_file)
+
+
 @pytest.mark.parametrize("metadata", get_metadata(fail=False))
 def test_metadata_schema_ok(metadata):
     """Test correct result schema."""
@@ -47,6 +61,19 @@ def test_metadata_schema_ok(metadata):
 
 @pytest.mark.parametrize("metadata", get_metadata(fail=True))
 def test_metadata_schema_fail(metadata):
-    """Test invalid result schema raises an error."""
+    """Test invalid metadata schema raises an error."""
     with pytest.raises(Error):
         METADATA_SCHEMA(metadata)
+
+
+@pytest.mark.parametrize("result", get_results(fail=False))
+def test_result_schema_ok(result):
+    """Test valid result schema matches result schema."""
+    RESULT_SCHEMA(result)
+
+
+@pytest.mark.parametrize("result", get_results(fail=True))
+def test_result_schema_fail(result):
+    """Test invalid result schema raises an error."""
+    with pytest.raises(Error):
+        RESULT_SCHEMA(result)
