@@ -1,2 +1,5 @@
 docs/schema.dia~
 __pycache__
+.coverage
+.pytest_cache
+thoth_storages.egg-info/

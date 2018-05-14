@@ -1,0 +1,39 @@
+{
+    "analyzer": "thoth-solver",
+    "analyzer_version": "1.0.2",
+    "arguments": {
+      "pypi": {
+        "exclude_packages": null,
+        "index": null,
+        "no_pretty": false,
+        "no_transitive": false,
+        "output": "http://result-api/api/v1/solver-result",
+        "requirements": "javapackages==1.0.0\nheaders.dist==0.1\ncomplex-dist==0.1\nsimple.dist==0.1\n"
+      },
+      "thoth-solver": {
+        "verbose": false
+      }
+    },
+    "datetime": "2018-05-01T09:00:24.218093",
+    "distribution": {
+      "codename": "Twenty Six",
+      "id": "fedora",
+      "like": "",
+      "version": "26",
+      "version_parts": {
+        "build_number": "",
+        "major": "26",
+        "minor": ""
+      }
+    },
+    "hostname": "fridex-thoth-solver-fc26-thoth-solver-fc26-2gnwq",
+    "python": {
+      "api_version": 1013,
+      "implementation_name": "cpython",
+      "major": 3,
+      "micro": 5,
+      "minor": 6,
+      "releaselevel": "final",
+      "serial": 0
+    }
+}
