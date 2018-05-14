@@ -22,8 +22,7 @@ def with_adjusted_env(env_dict: dict):
     """Adjust environment variables on function/method run."""
     def wrapper(func):
         def wrapped(*args, **kwargs):
-            old_env = dict(os.environ)
-            os.environ = env_dict
+            old_env, os.environ = os.environ, env_dict
             try:
                 return func(*args, **kwargs)
             finally:
@@ -32,4 +31,3 @@ def with_adjusted_env(env_dict: dict):
         return wrapped
 
     return wrapper
-
