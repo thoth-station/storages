@@ -55,7 +55,7 @@ class BuildLogsStore(StorageBase):
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
-        return self.ceph is not None
+        return self.ceph.is_connected()
 
     def connect(self) -> None:
         """Connect the given storage adapter."""
