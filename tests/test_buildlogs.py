@@ -21,6 +21,9 @@ import pytest
 from thoth.storages import BuildLogsStore
 
 from .base import ThothStoragesTest
+from .test_ceph import CEPH_ENV_MAP
+from .test_ceph import CEPH_INIT_ENV
+from .test_ceph import CEPH_INIT_KWARGS
 from .utils import with_adjusted_env
 
 _BUILDLOGS_INIT_KWARGS = {
@@ -29,14 +32,6 @@ _BUILDLOGS_INIT_KWARGS = {
 
 _BUILDLOGS_INIT_KWARGS_EXP = {
     'bucket_prefix': 'thoth-test'
-}
-
-_CEPH_INIT_KWARGS = {
-    'host': 'localhost',
-    'key_id': 'THOTHISGREATTHOTHISG',
-    'secret_key': 'THOTHISGREAT+THOTHISGREAT/THOTHISGREAT+S',
-    'bucket': 'test-bucket',
-    'region': None
 }
 
 
@@ -50,30 +45,12 @@ _BUILDLOGS_INIT_ENV_EXP = {
 }
 
 
-_CEPH_INIT_ENV = {
-    'THOTH_CEPH_HOST': 'localhost',
-    'THOTH_CEPH_KEY_ID': 'THOTHISGREATTHOTHISG',
-    'THOTH_CEPH_SECRET_KEY': 'THOTHISGREAT+THOTHISGREAT/THOTHISGREAT+S',
-    'THOTH_CEPH_BUCKET': 'test-bucket',
-    'THOTH_CEPH_REGION': 'brno-1'
-}
-
-# A mapping of env variables to actual properties.
-_CEPH_ENV_MAP = {
-    'THOTH_CEPH_HOST': 'host',
-    'THOTH_CEPH_KEY_ID': 'key_id',
-    'THOTH_CEPH_SECRET_KEY': 'secret_key',
-    'THOTH_CEPH_BUCKET': 'bucket',
-    'THOTH_CEPH_REGION': 'region'
-}
-
-
-_ENV = {**_CEPH_INIT_ENV, **_BUILDLOGS_INIT_ENV, **_BUILDLOGS_INIT_ENV_EXP}
+_ENV = {**CEPH_INIT_ENV, **_BUILDLOGS_INIT_ENV, **_BUILDLOGS_INIT_ENV_EXP}
 
 
 @pytest.fixture(name='adapter')
 @with_adjusted_env(_ENV)
-def fixture_adapter():
+def _fixture_adapter():
     """Retrieve an adapter to build logs."""
     return BuildLogsStore()
 
@@ -83,7 +60,7 @@ class TestBuildLogsStore(ThothStoragesTest):
 
     def test_init_kwargs(self):
         """Test adapter initialization from explicit arguments supplied to constructor."""
-        adapter = BuildLogsStore(**_BUILDLOGS_INIT_KWARGS, **_CEPH_INIT_KWARGS, **_BUILDLOGS_INIT_KWARGS_EXP)
+        adapter = BuildLogsStore(**_BUILDLOGS_INIT_KWARGS, **CEPH_INIT_KWARGS, **_BUILDLOGS_INIT_KWARGS_EXP)
         assert not adapter.is_connected()
         for key, value in _BUILDLOGS_INIT_KWARGS.items():
             assert getattr(adapter, key) == value, \
@@ -93,7 +70,7 @@ class TestBuildLogsStore(ThothStoragesTest):
         assert adapter.ceph is not None
         assert not adapter.ceph.is_connected()
 
-        for key, value in _CEPH_INIT_KWARGS.items():
+        for key, value in CEPH_INIT_KWARGS.items():
             assert getattr(adapter.ceph, key) == value, \
                 f"Ceph's adapter key {key!r} should have value {value!r} but " \
                 f"got {getattr(adapter.ceph, key)!r} instead"
@@ -114,8 +91,8 @@ class TestBuildLogsStore(ThothStoragesTest):
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs"
         assert adapter.ceph.prefix == adapter.prefix
 
-        for key, value in _CEPH_INIT_ENV.items():
-            attribute = _CEPH_ENV_MAP[key]
+        for key, value in CEPH_INIT_ENV.items():
+            attribute = CEPH_ENV_MAP[key]
             assert getattr(adapter.ceph, attribute) == value, \
                 f"Ceph's adapter attribute {attribute!r} should have value {value!r} but " \
                 f"got {getattr(adapter.ceph, key)!r} instead (env: {key})"
