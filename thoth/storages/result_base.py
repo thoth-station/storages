@@ -74,7 +74,7 @@ class ResultStorageBase(StorageBase):
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator."""
-        yield from self.ceph.get_document_listing()
+        return self.ceph.get_document_listing()
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""

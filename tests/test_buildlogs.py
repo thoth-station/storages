@@ -20,7 +20,7 @@ import pytest
 
 from thoth.storages import BuildLogsStore
 
-from .base import ThothStoragesTest
+from .base import StorageBaseTest
 from .test_ceph import CEPH_ENV_MAP
 from .test_ceph import CEPH_INIT_ENV
 from .test_ceph import CEPH_INIT_KWARGS
@@ -55,7 +55,7 @@ def _fixture_adapter():
     return BuildLogsStore()
 
 
-class TestBuildLogsStore(ThothStoragesTest):
+class TestBuildLogsStore(StorageBaseTest):
     """Test operations on build logs."""
 
     def test_init_kwargs(self):
@@ -97,62 +97,15 @@ class TestBuildLogsStore(ThothStoragesTest):
                 f"Ceph's adapter attribute {attribute!r} should have value {value!r} but " \
                 f"got {getattr(adapter.ceph, key)!r} instead (env: {key})"
 
-    def test_connect(self, adapter):
-        """Test lazy connection to Ceph."""
-        assert not adapter.is_connected()
-
-        flexmock(adapter.ceph). \
-            should_receive('connect'). \
-            with_args(). \
-            and_return(None). \
-            once()
-        flexmock(adapter.ceph). \
-            should_receive('is_connected'). \
-            with_args(). \
-            and_return(True). \
-            once()
-        adapter.connect()
-
-        assert adapter.is_connected()
-
     def test_store_document(self, adapter):
         """Test storing results on Ceph."""
+        # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
         document_id = 'bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2'
         adapter.ceph = flexmock(dict2blob=lambda _: document)
-        adapter.ceph.should_receive('store_blob'). \
+        adapter.ceph. \
+            should_receive('store_blob'). \
             with_args(document, document_id). \
             and_return(document_id). \
             once()
         assert adapter.store_document(document) == document_id
-
-    def test_retrieve_document(self, adapter):
-        """Test proper document retrieval."""
-        document = {'foo': 'bar'}
-        document_id = '<document_id>'
-        flexmock(adapter.ceph). \
-            should_receive('retrieve_document'). \
-            with_args(document_id). \
-            and_return(document). \
-            once()
-        assert adapter.ceph.retrieve_document(document_id) == document
-
-    def test_iterate_results(self, adapter):
-        """Test iterating over results for build logs stored on Ceph."""
-        # Just check that the request is properly propagated.
-        flexmock(adapter.ceph). \
-            should_receive('iterate_results'). \
-            with_args(). \
-            and_return(None). \
-            once()
-        assert adapter.iterate_results() is None
-
-    def test_get_document_listing(self, adapter):
-        """Test document listing for build logs stored on Ceph."""
-        # Just check that the request is properly propagated.
-        flexmock(adapter.ceph). \
-            should_receive('get_document_listing'). \
-            with_args(). \
-            and_return(None). \
-            once()
-        assert adapter.get_document_listing() is None

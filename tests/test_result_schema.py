@@ -21,7 +21,7 @@ import json
 import pytest
 from voluptuous.error import Error
 
-from . import DATA_DIR
+from .base import ThothStoragesTest
 
 from thoth.storages.result_schema import METADATA_SCHEMA
 from thoth.storages.result_schema import RESULT_SCHEMA
@@ -29,7 +29,7 @@ from thoth.storages.result_schema import RESULT_SCHEMA
 
 def get_metadata(fail):
     """Retrieve all files that store metadata dictionary as a test input."""
-    path = os.path.join(DATA_DIR, 'schema')
+    path = os.path.join(ThothStoragesTest.DATA_DIR, 'schema')
     for metadata_file in os.listdir(path):
         if fail and not metadata_file.startswith('metadata_fail_'):
             continue
@@ -42,7 +42,7 @@ def get_metadata(fail):
 
 def get_results(fail):
     """Retrieve all files that store metadata dictionary as a test input."""
-    path = os.path.join(DATA_DIR, 'schema')
+    path = os.path.join(ThothStoragesTest.DATA_DIR, 'schema')
     for result_file in os.listdir(path):
         if fail and not result_file.startswith('result_fail_'):
             continue
