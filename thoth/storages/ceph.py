@@ -100,6 +100,12 @@ class CephStore(StorageBase):
             exists = True
         return exists
 
+    def check_connection(self) -> None:
+        """Checks whether the given connection to the Ceph is alive and healthy, raise an exception if not."""
+        # The document exists method calls HEAD so we do not transfer actual data. We do not care if the given document
+        # actually really exists, but we raise an exception if there is an issue with the connection.
+        self.document_exists('foo')
+
     def connect(self) -> None:
         """Create a connection to the remote Ceph."""
         session = boto3.session.Session(aws_access_key_id=self.key_id,
