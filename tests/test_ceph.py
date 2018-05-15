@@ -23,6 +23,7 @@ from thoth.storages.exceptions import NotFoundError
 
 from .base import ThothStoragesTest
 from .utils import with_adjusted_env
+from .utils import connected_ceph_adapter
 
 
 CEPH_INIT_ENV = {
@@ -69,18 +70,9 @@ def _fixture_adapter():
 @pytest.fixture(name='connected_adapter')
 def _fixture_connected_adapter():
     """Retrieve a connected adapter to Ceph."""
-    mock_s3().start()
-
-    try:
-        adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
-        adapter.connect()
-        # FIXME: We need to call this explicitly since we use moto/boto3 instead of raw Ceph which has
-        # slightly different behaviour if a bucket is already present.
-        adapter._create_bucket_if_needed()
-        assert adapter.is_connected()
-        yield adapter
-    finally:
-        mock_s3().stop()
+    adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    with connected_ceph_adapter(adapter, raw_ceph=True) as connected_adapter:
+        yield connected_adapter
 
 
 class TestCephStore(ThothStoragesTest):

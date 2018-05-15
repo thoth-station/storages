@@ -37,15 +37,18 @@ def with_adjusted_env(env_dict: dict):
 
 
 @contextmanager
-def connected_ceph_adapter(adapter):
-    """Retrieve a connected adapter to solver results."""
+def connected_ceph_adapter(adapter, raw_ceph=False):
+    """Retrieve a connected adapter to Ceph results."""
     mock_s3().start()
 
     try:
         adapter.connect()
         # FIXME: We need to call this explicitly since we use moto/boto3 instead of raw Ceph which has
         # slightly different behaviour if a bucket is already present.
-        adapter.ceph._create_bucket_if_needed()
+        if not raw_ceph:
+            adapter.ceph._create_bucket_if_needed()
+        else:
+            adapter._create_bucket_if_needed()
         assert adapter.is_connected()
         yield adapter
     finally:
