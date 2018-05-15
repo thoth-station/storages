@@ -16,6 +16,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from contextlib import contextmanager
+
+from moto import mock_s3
 
 
 def with_adjusted_env(env_dict: dict):
@@ -31,3 +34,19 @@ def with_adjusted_env(env_dict: dict):
         return wrapped
 
     return wrapper
+
+
+@contextmanager
+def connected_ceph_adapter(adapter):
+    """Retrieve a connected adapter to solver results."""
+    mock_s3().start()
+
+    try:
+        adapter.connect()
+        # FIXME: We need to call this explicitly since we use moto/boto3 instead of raw Ceph which has
+        # slightly different behaviour if a bucket is already present.
+        adapter.ceph._create_bucket_if_needed()
+        assert adapter.is_connected()
+        yield adapter
+    finally:
+        mock_s3().stop()

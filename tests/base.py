@@ -16,13 +16,37 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import json
+
 import flexmock
+import pytest
 
 
 class ThothStoragesTest(object):
     """A main class for testing thoth-storages package."""
 
     DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
+
+    @classmethod
+    def get_all_results(cls):
+        """Retrieve all result files that store JSON results as a test input."""
+        yield from cls.get_solver_results()
+        yield from cls.get_analyzer_results()
+
+    @classmethod
+    def get_solver_results(cls):
+        return cls._get_result_type('solver')
+
+    @classmethod
+    def get_analyzer_results(cls):
+        return cls._get_result_type('analyzer')
+
+    @classmethod
+    def _get_result_type(cls, result_type):
+        path = os.path.join(cls.DATA_DIR, 'result', result_type)
+        for document_id in os.listdir(path):
+            with open(os.path.join(path, document_id)) as document_file:
+                yield pytest.param(json.load(document_file), document_id, id=document_id)
 
 
 class StorageBaseTest(ThothStoragesTest):

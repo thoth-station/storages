@@ -161,8 +161,8 @@ class TestCephStore(ThothStoragesTest):
                 assert document == document1
             elif document_id == key2:
                 assert document == document2
-
-            assert False, "The retrieved document was not previously stored."
+            else:
+                assert False, "The retrieved document was not previously stored."
 
     def test_retrieve_document_not_exist(self, connected_adapter):
         """Check that retrieving document that does not exists raises an exception."""
