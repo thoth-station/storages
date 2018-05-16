@@ -28,6 +28,7 @@ class Datetime(object):
     """Check datetime fields against ISO format."""
 
     def __call__(self, dt):
+        """Make check for datetime fields against ISO format."""
         dt, _, us = dt.partition(".")
         dt = datetime.datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
         us = int(us.rstrip("Z"), 10)

@@ -17,3 +17,7 @@ uvloop = "*"
 yarl = "<1.2"
 
 [dev-packages]
+coala = "*"
+pycodestylebear = "*"
+yamllintbear = "*"
+pydocstylebear = "*"

@@ -22,4 +22,6 @@ from .result_base import ResultStorageBase
 
 
 class AnalysisResultsStore(ResultStorageBase):
+    """Store results of image analyzes."""
+
     RESULT_TYPE = 'analysis'

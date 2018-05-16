@@ -27,7 +27,9 @@ class CacheMiss(Exception):
 
 class Cache(object):
     """A generic cache to store item-value pair for items that are not hashable."""
+
     def __init__(self):
+        """Initialize cache."""
         # Let's implement cache as a linked list now.
         self._cache = deque()
 

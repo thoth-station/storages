@@ -159,7 +159,7 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
     result = await query.as_('e').inV().hasId(target_id).select('e').fold().coalesce(
         unfold().id().as_('id').constant(True).as_('existed').select('id', 'existed'),
         creation.as_('e').to(g.V(target_id)).select('e').id().as_('id')
-            .constant(False).as_('existed').select('id', 'existed')
+        .constant(False).as_('existed').select('id', 'existed')
     ).next()
 
     if EdgeBase.cache:
