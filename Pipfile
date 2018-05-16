@@ -1,12 +1,9 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 aiogremlin = "==3.2.6rc1"
 gremlinpython = "==3.2.6"
 goblin = "==2.1.0"
@@ -17,7 +14,6 @@ thoth-common = ">=0.0.5"
 cython = "*"
 ujson = "*"
 uvloop = "*"
-
+yarl = "<1.2"
 
 [dev-packages]
-
