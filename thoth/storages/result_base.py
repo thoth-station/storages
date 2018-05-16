@@ -35,6 +35,10 @@ class ResultStorageBase(StorageBase):
     def __init__(self, deployment_name=None, *,
                  host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None,
                  prefix: str=None):
+        """Initialize result storage database.
+
+        The adapter can take arguments from env variables if not provided explicitly.
+        """
         assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes " \
                                              "to distinguish between adapter type instances."
 

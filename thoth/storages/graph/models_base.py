@@ -34,6 +34,7 @@ class VertexBase(Vertex):
     cache = None
 
     def __repr__(self):
+        """Show vertex representation."""
         values = ''
         for key, value in self.to_dict().items():
             if key.startswith('__'):
@@ -45,7 +46,7 @@ class VertexBase(Vertex):
     def to_pretty_dict(self) -> dict:
         """Return a dict representation of this object that can be exposed on API endpoints."""
         result = {}
-        
+
         for property_name, property_value in self.__properties__.items():
             if isinstance(property_value, VertexProperty):
                 prop = getattr(self, property_name, None)
@@ -81,7 +82,7 @@ class EdgeBase(Edge):
     # Edge cache to be used.
     cache = None
 
-    def __repr__(self):
+    def __repr__(self):  # Ignore PyDocStyleBear
         values = ''
         for key, value in self.to_dict().items():
             if key.startswith('__'):

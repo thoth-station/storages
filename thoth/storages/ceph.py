@@ -34,6 +34,10 @@ class CephStore(StorageBase):
 
     def __init__(self, prefix, *,
                  host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+        """Initialize adapter to Ceph.
+
+        Parameters not explicitly provided will be picked from env variables.
+        """
         super().__init__()
         self.host = host or os.environ['THOTH_CEPH_HOST']
         self.key_id = key_id or os.environ['THOTH_CEPH_KEY_ID']
@@ -150,4 +154,3 @@ class CephStore(StorageBase):
                     'LocationConstraint': self.region
                 }
             )
-

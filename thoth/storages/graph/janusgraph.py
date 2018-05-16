@@ -47,7 +47,7 @@ from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
-#from .utils import enable_edge_cache
+# from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,6 +66,7 @@ def _get_hashable_id(val):
 
 
 def requires_connection(func):
+    """Force implicit connection if not connected already."""
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
         if not self.is_connected():
@@ -111,7 +112,7 @@ class GraphDatabase(StorageBase):
 
     @property
     def session(self):
-        """Returns session to the graph database."""
+        """Return session to the graph database."""
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self.app.session())
 
@@ -363,9 +364,10 @@ class GraphDatabase(StorageBase):
 
         return python_package, has_version, python_package_version
 
-    #@enable_edge_cache
+    # @enable_edge_cache
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
+        """Sync the given solver result to the graph database."""
         ecosystem_solver = EcosystemSolver.from_properties(
             solver_name=document['metadata']['analyzer'],
             solver_version=document['metadata']['analyzer_version']
@@ -439,9 +441,10 @@ class GraphDatabase(StorageBase):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {error_info!r}")
 
-    #@enable_edge_cache
+    # @enable_edge_cache
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
+        """Sync the given analysis result to the graph database."""
         runtime_environment = RuntimeEnvironment.from_properties(
             runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
