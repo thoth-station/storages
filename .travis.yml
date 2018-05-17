@@ -1,7 +1,10 @@
 language: python
 python:
 - '3.6'
-script: true
+script:
+- pip3 install pipenv
+- pipenv install --dev
+- pipenv run python3 setup.py test
 deploy:
   provider: pypi
   user: fridex
