@@ -73,7 +73,7 @@ class CephStore(StorageBase):
         try:
             return self._s3.Object(self.bucket, self.prefix + object_key).get()['Body'].read()
         except botocore.exceptions.ClientError as exc:
-            if exc.response['Error']['Code'] == "404":
+            if exc.response['Error']['Code'] in ('404', 'NoSuchKey'):
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 

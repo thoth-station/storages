@@ -32,13 +32,18 @@ class BuildLogsStore(StorageBase):
     RESULT_TYPE = 'buildlogs'
 
     def __init__(self, deployment_name=None, *,
-                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+                 bucket_prefix: str=None, host: str=None, key_id: str=None,
+                 secret_key: str=None, bucket: str=None, region: str=None):
         """Initialize adapter for storing build logs.
 
         Parameters not explicitly provided will be picked from env variables.
         """
         self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
-        self.prefix = "{}/{}/{}".format(os.environ['THOTH_CEPH_BUCKET_PREFIX'], self.deployment_name, self.RESULT_TYPE)
+        self.prefix = "{}/{}/{}".format(
+            bucket_prefix or os.environ['THOTH_CEPH_BUCKET_PREFIX'],
+            self.deployment_name,
+            self.RESULT_TYPE
+        )
         self.ceph = CephStore(
             self.prefix,
             host=host,
@@ -50,7 +55,7 @@ class BuildLogsStore(StorageBase):
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
-        return self.ceph is not None
+        return self.ceph.is_connected()
 
     def connect(self) -> None:
         """Connect the given storage adapter."""
