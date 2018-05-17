@@ -10,7 +10,7 @@ files = **.py
 language = Python
 editor = vim
 max_line_length = 120
-ignore = setup.py
+ignore = setup.py, tests, tests/** 
 
 [all.yaml]
 bears = YAMLLintBear
