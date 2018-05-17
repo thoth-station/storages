@@ -5,7 +5,7 @@ script:
 - pip3 install pipenv
 - pipenv install --dev
 - pipenv run python3 setup.py test
-- pipenv run coala
+- pipenv run coala --non-interactive
 deploy:
   provider: pypi
   user: fridex
