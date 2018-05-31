@@ -540,7 +540,7 @@ class GraphDatabase(StorageBase):
             HasVersion.from_properties(
                 source=rpm_package,
                 target=rpm_package_version
-            ).construct_chained_query(chained_query)
+            ).construct_chained_query(chained_query, self.g)
 
             IsPartOf.from_properties(
                 source=rpm_package_version,
@@ -549,7 +549,7 @@ class GraphDatabase(StorageBase):
                 analysis_document_id=document['metadata']['hostname'],
                 analyzer_name=document['metadata']['analyzer'],
                 analyzer_version=document['metadata']['analyzer_version']
-            ).construct_chained_query(chained_query)
+            ).construct_chained_query(chained_query, self.g)
 
             for dependency in rpm_package_info['dependencies']:
                     rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
@@ -562,7 +562,7 @@ class GraphDatabase(StorageBase):
                         analysis_document_id=document['metadata']['hostname'],
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
-                    ).construct_chained_query(chained_query)
+                    ).construct_chained_query(chained_query, self.g)
             chained_query.execute()
 
         # Python packages
@@ -599,7 +599,7 @@ class GraphDatabase(StorageBase):
                 source=python_package,
                 target=python_package_version
             )
-            has_version.construct_chained_query(chained_query)
+            has_version.construct_chained_query(chained_query, self.g)
 
             IsPartOf.from_properties(
                 source=python_package_version,
@@ -608,6 +608,6 @@ class GraphDatabase(StorageBase):
                 analysis_document_id=document['metadata']['hostname'],
                 analyzer_name=document['metadata']['analyzer'],
                 analyzer_version=document['metadata']['analyzer_version']
-            ).construct_chained_query(chained_query)
+            ).construct_chained_query(chained_query, self.g)
 
             chained_query.execute()

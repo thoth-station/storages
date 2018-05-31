@@ -111,12 +111,12 @@ class EdgeBase(Edge):
 
         return existed
 
-    def construct_chained_query(self, chained_query: ChainedEdgeQuery) -> None:
+    def construct_chained_query(self, chained_query: ChainedEdgeQuery, g) -> None:
         """Construct create query for delayed element creation."""
         # Avoid cyclic imports due to typing.
         from .utils import construct_chained_edge_query
 
-        construct_chained_edge_query(self, chained_query)
+        construct_chained_edge_query(self, chained_query, g)
 
     @classmethod
     def from_properties(cls, **edge_properties):

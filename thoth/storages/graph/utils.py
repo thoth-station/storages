@@ -177,7 +177,7 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
     return result['id'], result['existed']
 
 
-def construct_chained_edge_query(edge: EdgeBase, chained_query: ChainedEdgeQuery, source_id=None, target_id=None) -> None:
+def construct_chained_edge_query(edge: EdgeBase, chained_query: ChainedEdgeQuery, g, source_id=None, target_id=None) -> None:
     source_id = source_id or edge.source.id
     target_id = target_id or edge.target.id
 
