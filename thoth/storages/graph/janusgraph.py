@@ -453,9 +453,10 @@ class GraphDatabase(StorageBase):
         )
         runtime_environment.get_or_create(self.g)
 
-        chained_query = ChainedVertexQuery(self.g, RPMPackageVersion.cache)
         # RPM packages
         for rpm_package_info in document['result']['rpm-dependencies']:
+            chained_query = ChainedVertexQuery(self.g, RPMPackageVersion.cache)
+
             rpm_package_version = RPMPackageVersion.from_properties(
                 ecosystem='rpm',
                 package_name=rpm_package_info['name'],
@@ -477,9 +478,11 @@ class GraphDatabase(StorageBase):
             for dependency in rpm_package_info['dependencies']:
                 rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                 rpm_requirement.construct_chained_query(chained_query)
+            chained_query.execute()
 
         # Python packages
         for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
+            chained_query = ChainedVertexQuery(self.g, RPMPackageVersion.cache)
             if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
                 # We don't want to sync found requirement.txt artifacts as they do not carry any
                 # valuable information for us.
@@ -506,16 +509,16 @@ class GraphDatabase(StorageBase):
             )
             python_package_version.construct_chained_query(chained_query)
 
-        chained_query.execute()
+            chained_query.execute()
 
         #
         # Now use cached vertexes if present, but construct edges.
         #
 
-        chained_query = ChainedEdgeQuery(self.g, HasVersion.cache)
-
         # RPM packages
         for rpm_package_info in document['result']['rpm-dependencies']:
+            chained_query = ChainedEdgeQuery(self.g, HasVersion.cache)
+
             rpm_package_version = RPMPackageVersion.from_properties(
                 ecosystem='rpm',
                 package_name=rpm_package_info['name'],
@@ -560,9 +563,12 @@ class GraphDatabase(StorageBase):
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
                     ).construct_chained_query(chained_query)
+            chained_query.execute()
 
         # Python packages
         for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
+            chained_query = ChainedEdgeQuery(self.g, HasVersion.cache)
+
             if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
                 # We don't want to sync found requirement.txt artifacts as they do not carry any
                 # valuable information for us.
@@ -604,4 +610,4 @@ class GraphDatabase(StorageBase):
                 analyzer_version=document['metadata']['analyzer_version']
             ).construct_chained_query(chained_query)
 
-        chained_query.execute()
+            chained_query.execute()
