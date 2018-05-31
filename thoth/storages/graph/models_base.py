@@ -26,6 +26,9 @@ from goblin import Edge
 
 from aiogremlin.process.graph_traversal import AsyncGraphTraversalSource
 
+from .chained_query import ChainedEdgeQuery
+from .chained_query import ChainedVertexQuery
+
 
 class VertexBase(Vertex):
     """A base class for edges that extends Goblin's vertex implementation."""
@@ -62,6 +65,13 @@ class VertexBase(Vertex):
         loop = asyncio.get_event_loop()
         _, existed = loop.run_until_complete(get_or_create_vertex(g, self))
         return existed
+
+    def construct_chained_query(self, chained_query: ChainedVertexQuery) -> None:
+        """Construct create query for delayed element creation."""
+        # Avoid cyclic imports due to typing.
+        from .utils import construct_chained_vertex_query
+
+        construct_chained_vertex_query(self, chained_query)
 
     @classmethod
     def from_properties(cls, **vertex_properties):
@@ -100,6 +110,13 @@ class EdgeBase(Edge):
         _, existed = loop.run_until_complete(get_or_create_edge(g, self))
 
         return existed
+
+    def construct_chained_query(self, chained_query: ChainedEdgeQuery) -> None:
+        """Construct create query for delayed element creation."""
+        # Avoid cyclic imports due to typing.
+        from .utils import construct_chained_edge_query
+
+        construct_chained_edge_query(self, chained_query)
 
     @classmethod
     def from_properties(cls, **edge_properties):

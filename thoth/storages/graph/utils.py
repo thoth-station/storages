@@ -28,6 +28,8 @@ from gremlin_python.process.graph_traversal import unfold
 
 from .cache import Cache
 from .cache import CacheMiss
+from .chained_query import ChainedEdgeQuery
+from .chained_query import ChainedVertexQuery
 from .models_base import VertexBase
 from .models_base import EdgeBase
 
@@ -173,3 +175,52 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
     edge.id = result['id']
 
     return result['id'], result['existed']
+
+
+def construct_chained_edge_query(edge: EdgeBase, chained_query: ChainedEdgeQuery, source_id=None, target_id=None) -> None:
+    source_id = source_id or edge.source.id
+    target_id = target_id or edge.target.id
+
+    query = chained_query.query.V(source_id).outE()
+    creation = g.V(source_id).addE(edge.__label__)
+
+    for key, value in edge.to_dict().items():
+        if key in ('source', 'target', 'id'):
+            continue
+
+        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        if isinstance(value, dict) and '__value__' in value:
+            value = value['__value__']
+
+        if value is not None:
+            query = query.has(key, value)
+            creation = creation.property(key, value)
+        else:
+            query = query.hasNot(key)
+
+    chained_query.query = query.as_('e').inV().hasId(target_id).select('e').fold().coalesce(
+        unfold().id().as_('id').select('id'),
+        creation.as_('e').to(g.V(target_id)).select('e').id().as_('id').select('id', 'existed'))
+
+
+def construct_chained_vertex_query(vertex: VertexBase, chained_query: ChainedVertexQuery) -> None:
+    VertexBase.cache.put(vertex.to_dict(), None)
+
+    query = chained_query.query.V()
+    creation = addV(vertex.__label__)
+
+    for key, value in vertex.to_dict().items():
+        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        if isinstance(value, dict) and '__value__' in value:
+            value = value['__value__']
+        if value is not None:
+            query = query.has(key, value)
+            creation = creation.property(key, value)
+        else:
+            query = query.hasNot(key)
+
+    chained_query.query = query.fold().coalesce(
+        unfold().id().as_('id').select('id'),
+        creation.id().as_('id').select('id')
+    )
+

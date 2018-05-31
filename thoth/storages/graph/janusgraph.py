@@ -445,52 +445,110 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
+        from .chained_query import ChainedEdgeQuery
+        from .chained_query import ChainedVertexQuery
+
         runtime_environment = RuntimeEnvironment.from_properties(
             runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
         runtime_environment.get_or_create(self.g)
 
+        chained_query = ChainedVertexQuery(self.g, RPMPackageVersion.cache)
         # RPM packages
         for rpm_package_info in document['result']['rpm-dependencies']:
-            try:
-                rpm_package_version = RPMPackageVersion.from_properties(
-                    ecosystem='rpm',
-                    package_name=rpm_package_info['name'],
-                    package_version=rpm_package_info['version'],
-                    release=rpm_package_info.get('release'),
-                    epoch=rpm_package_info.get('epoch'),
-                    arch=rpm_package_info.get('arch'),
-                    src=rpm_package_info.get('src', False),
-                    package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
-                )
-                rpm_package_version.get_or_create(self.g)
+            rpm_package_version = RPMPackageVersion.from_properties(
+                ecosystem='rpm',
+                package_name=rpm_package_info['name'],
+                package_version=rpm_package_info['version'],
+                release=rpm_package_info.get('release'),
+                epoch=rpm_package_info.get('epoch'),
+                arch=rpm_package_info.get('arch'),
+                src=rpm_package_info.get('src', False),
+                package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
+            )
+            rpm_package_version.construct_chained_query(chained_query)
 
-                rpm_package = Package.from_properties(
-                    ecosystem=rpm_package_version.ecosystem,
-                    package_name=rpm_package_version.package_name,
-                )
-                rpm_package.get_or_create(self.g)
-
-                HasVersion.from_properties(
-                    source=rpm_package,
-                    target=rpm_package_version
-                ).get_or_create(self.g)
-
-                IsPartOf.from_properties(
-                    source=rpm_package_version,
-                    target=runtime_environment,
-                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
-                    analysis_document_id=document['metadata']['hostname'],
-                    analyzer_name=document['metadata']['analyzer'],
-                    analyzer_version=document['metadata']['analyzer_version']
-                ).get_or_create(self.g)
-
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
-                continue
+            rpm_package = Package.from_properties(
+                ecosystem=rpm_package_version.ecosystem,
+                package_name=rpm_package_version.package_name,
+            )
+            rpm_package.construct_chained_query(chained_query)
 
             for dependency in rpm_package_info['dependencies']:
-                try:
+                rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
+                rpm_requirement.construct_chained_query(chained_query)
+
+        # Python packages
+        for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
+            if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
+                # We don't want to sync found requirement.txt artifacts as they do not carry any
+                # valuable information for us.
+                continue
+
+            if not python_package_info.get('result') or 'error' in python_package_info['result']:
+                # Mercator was unable to process this - e.g. there was a setup.py that is not distutils setup.py
+                _LOGGER.info("Skipping error entry - %r", python_package_info)
+                continue
+
+            package_name = python_package_info['result']['name'].lower()
+            package_version = python_package_info['result']['version']
+
+            python_package = Package.from_properties(
+                ecosystem='pypi',
+                package_name=package_name
+            )
+            python_package.construct_chained_query(chained_query)
+
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem='pypi',
+                package_name=package_name,
+                package_version=package_version
+            )
+            python_package_version.construct_chained_query(chained_query)
+
+        chained_query.execute()
+
+        #
+        # Now use cached vertexes if present, but construct edges.
+        #
+
+        chained_query = ChainedEdgeQuery(self.g, HasVersion.cache)
+
+        # RPM packages
+        for rpm_package_info in document['result']['rpm-dependencies']:
+            rpm_package_version = RPMPackageVersion.from_properties(
+                ecosystem='rpm',
+                package_name=rpm_package_info['name'],
+                package_version=rpm_package_info['version'],
+                release=rpm_package_info.get('release'),
+                epoch=rpm_package_info.get('epoch'),
+                arch=rpm_package_info.get('arch'),
+                src=rpm_package_info.get('src', False),
+                package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
+            )
+            rpm_package_version.get_or_create(self.g)
+
+            rpm_package = Package.from_properties(
+                ecosystem=rpm_package_version.ecosystem,
+                package_name=rpm_package_version.package_name,
+            )
+            rpm_package.get_or_create(self.g)
+
+            HasVersion.from_properties(
+                source=rpm_package,
+                target=rpm_package_version
+            ).construct_chained_query(chained_query)
+
+            IsPartOf.from_properties(
+                source=rpm_package_version,
+                target=runtime_environment,
+                analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                analysis_document_id=document['metadata']['hostname'],
+                analyzer_name=document['metadata']['analyzer'],
+                analyzer_version=document['metadata']['analyzer_version']
+            ).construct_chained_query(chained_query)
+
+            for dependency in rpm_package_info['dependencies']:
                     rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                     rpm_requirement.get_or_create(self.g)
 
@@ -501,10 +559,7 @@ class GraphDatabase(StorageBase):
                         analysis_document_id=document['metadata']['hostname'],
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
-                    ).get_or_create(self.g)
-                except Exception:  # pylint: disable=broad-except
-                    _LOGGER.exception(f"Failed to sync dependencies for "
-                                      f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
+                    ).construct_chained_query(chained_query)
 
         # Python packages
         for python_package_info in document['result']['mercator'] or []:  # or [] should go to analyzer to be consistent
@@ -513,24 +568,40 @@ class GraphDatabase(StorageBase):
                 # valuable information for us.
                 continue
 
-            if 'error' in python_package_info['result']:
+            if not python_package_info.get('result') or 'error' in python_package_info['result']:
                 # Mercator was unable to process this - e.g. there was a setup.py that is not distutils setup.py
                 _LOGGER.info("Skipping error entry - %r", python_package_info)
                 continue
 
-            try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
-                    package_name=python_package_info['result']['name'].lower(),
-                    package_version=python_package_info['result']['version']
-                )
+            package_name = python_package_info['result']['name'].lower()
+            package_version = python_package_info['result']['version']
 
-                IsPartOf.from_properties(
-                    source=python_package_version,
-                    target=runtime_environment,
-                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
-                    analysis_document_id=document['metadata']['hostname'],
-                    analyzer_name=document['metadata']['analyzer'],
-                    analyzer_version=document['metadata']['analyzer_version']
-                ).get_or_create(self.g)
-            except Exception:  # pylint: disable=broad-exception
-                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+            python_package = Package.from_properties(
+                ecosystem='pypi',
+                package_name=package_name
+            )
+            python_package.get_or_create(self.g)
+
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem='pypi',
+                package_name=package_name,
+                package_version=package_version
+            )
+            python_package_version.get_or_create(self.g)
+
+            has_version = HasVersion.from_properties(
+                source=python_package,
+                target=python_package_version
+            )
+            has_version.construct_chained_query(chained_query)
+
+            IsPartOf.from_properties(
+                source=python_package_version,
+                target=runtime_environment,
+                analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                analysis_document_id=document['metadata']['hostname'],
+                analyzer_name=document['metadata']['analyzer'],
+                analyzer_version=document['metadata']['analyzer_version']
+            ).construct_chained_query(chained_query)
+
+        chained_query.execute()
