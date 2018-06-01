@@ -80,7 +80,7 @@ def enable_edge_cache(func: typing.Callable):
     return wrapped
 
 
-async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase) -> tuple:
+async def get_or_create_vertex(async_session: AsyncGraphTraversalSource, vertex: VertexBase) -> tuple:
     """Create a vertex if not existed before, if the given vertex already exists, get tis id."""
     if VertexBase.cache:
         try:
@@ -90,7 +90,7 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
         except CacheMiss:
             pass
 
-    query = g.V()
+    query = async_session.g.V()
     creation = addV(vertex.__label__)
 
     for key, value in vertex.to_dict().items():
@@ -117,7 +117,7 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
     return result['id'], result['existed']
 
 
-async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
+async def get_or_create_edge(async_session: AsyncGraphTraversalSource, edge: EdgeBase,
                              source_id: int=None, target_id: int=None) -> tuple:
     """Create an edge if not existed before, if the given edge already exists, get its id.
 
@@ -139,8 +139,8 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
         except CacheMiss:
             pass
 
-    query = g.V(source_id).outE()
-    creation = g.V(source_id).addE(edge.__label__)
+    query = async_session.g.V(source_id).outE()
+    creation = async_session.g.V(source_id).addE(edge.__label__)
 
     for key, value in edge.to_dict().items():
         if key in ('source', 'target', 'id'):
@@ -158,7 +158,7 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
 
     result = await query.as_('e').inV().hasId(target_id).select('e').fold().coalesce(
         unfold().id().as_('id').constant(True).as_('existed').select('id', 'existed'),
-        creation.as_('e').to(g.V(target_id)).select('e').id().as_('id')
+        creation.as_('e').to(async_session.g.V(target_id)).select('e').id().as_('id')
         .constant(False).as_('existed').select('id', 'existed')
     ).next()
 

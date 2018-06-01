@@ -18,8 +18,6 @@
 
 """A base classes for model representation."""
 
-import asyncio
-
 from goblin import Vertex
 from goblin import VertexProperty
 from goblin import Edge
@@ -54,13 +52,12 @@ class VertexBase(Vertex):
 
         return result
 
-    def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
+    async def get_or_create(self, async_session: AsyncGraphTraversalSource) -> bool:
         """Get or create this vertex."""
         # Avoid cyclic imports due to typing.
         from .utils import get_or_create_vertex
 
-        loop = asyncio.get_event_loop()
-        _, existed = loop.run_until_complete(get_or_create_vertex(g, self))
+        _, existed = await get_or_create_vertex(async_session, self)
         return existed
 
     @classmethod
@@ -91,13 +88,12 @@ class EdgeBase(Edge):
 
         return f'{self.__class__.__name__}({values[:-2]})'
 
-    def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
+    async def get_or_create(self, async_session: AsyncGraphTraversalSource) -> bool:
         """Get or create a this edge."""
         # Avoid cyclic imports due to typing.
         from .utils import get_or_create_edge
 
-        loop = asyncio.get_event_loop()
-        _, existed = loop.run_until_complete(get_or_create_edge(g, self))
+        _, existed = await get_or_create_edge(async_session, self)
 
         return existed
 
