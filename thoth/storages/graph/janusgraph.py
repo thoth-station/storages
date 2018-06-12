@@ -513,7 +513,7 @@ class GraphDatabase(StorageBase):
                 # valuable information for us.
                 continue
 
-            if 'error' in python_package_info['result']:
+            if 'result' not in python_package_info or 'error' in python_package_info['result']:
                 # Mercator was unable to process this - e.g. there was a setup.py that is not distutils setup.py
                 _LOGGER.info("Skipping error entry - %r", python_package_info)
                 continue
