@@ -111,6 +111,11 @@ class GraphDatabase(StorageBase):
         return self.session.g
 
     @property
+    async def async_session(self):
+        """Retrieve the g object for asynchronous operations with the graph database."""
+        return await self.app.session()
+
+    @property
     def session(self):
         """Return session to the graph database."""
         loop = asyncio.get_event_loop()
@@ -327,19 +332,18 @@ class GraphDatabase(StorageBase):
 
         return loop.run_until_complete(query) > 0
 
-    def create_pypi_package_version(self, package_name: str, package_version: str, *,
-                                    only_if_package_seen: bool=False) -> typing.Union[None, tuple]:
+    async def create_pypi_package_version(self, package_name: str, package_version: str, *,
+                                          only_if_package_seen: bool=False) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
         package_name = package_name.lower()
 
         if only_if_package_seen:
-            query = self.g.V() \
+            seen = await self.async_session.g.V() \
                 .has('__type__', 'vertex') \
                 .has('__label__', Package.__label__) \
                 .has('ecosystem', 'pypi') \
                 .has('package_name', package_name) \
                 .count().next()
-            seen = asyncio.get_event_loop().run_until_complete(query)
             if not seen:
                 return None
 
@@ -347,50 +351,50 @@ class GraphDatabase(StorageBase):
             ecosystem='pypi',
             package_name=package_name
         )
-        python_package.get_or_create(self.g)
+        await python_package.get_or_create(await self.async_session)
 
         python_package_version = PythonPackageVersion.from_properties(
             ecosystem='pypi',
             package_name=package_name,
             package_version=package_version
         )
-        python_package_version.get_or_create(self.g)
+        await python_package_version.get_or_create(await self.async_session)
 
         has_version = HasVersion.from_properties(
             source=python_package,
             target=python_package_version
         )
-        has_version.get_or_create(self.g)
+        await has_version.get_or_create(await self.async_session)
 
         return python_package, has_version, python_package_version
 
     # @enable_edge_cache
     @enable_vertex_cache
-    def sync_solver_result(self, document: dict) -> None:
+    async def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
         ecosystem_solver = EcosystemSolver.from_properties(
             solver_name=document['metadata']['analyzer'],
             solver_version=document['metadata']['analyzer_version']
         )
-        ecosystem_solver.get_or_create(self.g)
+        await ecosystem_solver.get_or_create(await self.async_session)
 
         solver_document_id = document['metadata']['hostname']
         solver_datetime = datetime_str2timestamp(document['metadata']['datetime'])
 
         for python_package_info in document['result']['tree']:
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                python_package, _, python_package_version = await self.create_pypi_package_version(
                     python_package_info['package_name'].lower(),
                     python_package_info['package_version']
                 )
 
-                Solved.from_properties(
+                await Solved.from_properties(
                     source=ecosystem_solver,
                     target=python_package_version,
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=False
-                ).get_or_create(self.g)
+                ).get_or_create(await self.async_session)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
                 continue
@@ -399,56 +403,56 @@ class GraphDatabase(StorageBase):
                 try:
                     for dependency_version in dependency['resolved_versions']:
                         python_package_dependency, _, python_package_version_dependency = \
-                            self.create_pypi_package_version(
+                            await self.create_pypi_package_version(
                                 package_name=dependency['package_name'],
                                 package_version=dependency_version
                             )
 
-                        Solved.from_properties(
+                        await Solved.from_properties(
                             source=ecosystem_solver,
                             target=python_package_version_dependency,
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
                             solver_error=False
-                        ).get_or_create(self.g)
+                        ).get_or_create(await self.async_session)
 
                         # TODO: mark extras
-                        DependsOn.from_properties(
+                        await DependsOn.from_properties(
                             source=python_package_version,
                             target=python_package_version_dependency,
                             package_name=python_package_version_dependency.package_name.value,
                             version_range=dependency['required_version'] or '*'
-                        ).get_or_create(self.g)
+                        ).get_or_create(await self.async_session)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(f"Failed to sync Python package {python_package_version.to_dict()} "
                                       f"dependency: {dependency}")
 
         for error_info in document['result']['errors']:
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                python_package, _, python_package_version = await self.create_pypi_package_version(
                     package_name=error_info.get('package_name') or error_info['package'],
                     package_version=error_info['version'],
                 )
 
-                Solved.from_properties(
+                await Solved.from_properties(
                     source=ecosystem_solver,
                     target=python_package_version,
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True
-                ).get_or_create(self.g)
+                ).get_or_create(await self.async_session)
 
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {error_info!r}")
 
     # @enable_edge_cache
     @enable_vertex_cache
-    def sync_analysis_result(self, document: dict) -> None:
+    async def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
         runtime_environment = RuntimeEnvironment.from_properties(
             runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
-        runtime_environment.get_or_create(self.g)
+        await runtime_environment.get_or_create(await self.async_session)
 
         # RPM packages
         for rpm_package_info in document['result']['rpm-dependencies']:
@@ -463,27 +467,27 @@ class GraphDatabase(StorageBase):
                     src=rpm_package_info.get('src', False),
                     package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
                 )
-                rpm_package_version.get_or_create(self.g)
+                await rpm_package_version.get_or_create(await self.async_session)
 
                 rpm_package = Package.from_properties(
                     ecosystem=rpm_package_version.ecosystem,
                     package_name=rpm_package_version.package_name,
                 )
-                rpm_package.get_or_create(self.g)
+                await rpm_package.get_or_create(await self.async_session)
 
-                HasVersion.from_properties(
+                await HasVersion.from_properties(
                     source=rpm_package,
                     target=rpm_package_version
-                ).get_or_create(self.g)
+                ).get_or_create(await self.async_session)
 
-                IsPartOf.from_properties(
+                await IsPartOf.from_properties(
                     source=rpm_package_version,
                     target=runtime_environment,
                     analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
                     analysis_document_id=document['metadata']['hostname'],
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
-                ).get_or_create(self.g)
+                ).get_or_create(await self.async_session)
 
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
@@ -492,16 +496,16 @@ class GraphDatabase(StorageBase):
             for dependency in rpm_package_info['dependencies']:
                 try:
                     rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
-                    rpm_requirement.get_or_create(self.g)
+                    await rpm_requirement.get_or_create(await self.async_session)
 
-                    Requires.from_properties(
+                    await Requires.from_properties(
                         source=rpm_package_version,
                         target=rpm_requirement,
                         analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
                         analysis_document_id=document['metadata']['hostname'],
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
-                    ).get_or_create(self.g)
+                    ).get_or_create(await self.async_session)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(f"Failed to sync dependencies for "
                                       f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
@@ -519,18 +523,18 @@ class GraphDatabase(StorageBase):
                 continue
 
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                python_package, _, python_package_version = await self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'].lower(),
                     package_version=python_package_info['result']['version']
                 )
 
-                IsPartOf.from_properties(
+                await IsPartOf.from_properties(
                     source=python_package_version,
                     target=runtime_environment,
                     analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
                     analysis_document_id=document['metadata']['hostname'],
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
-                ).get_or_create(self.g)
+                ).get_or_create(await self.async_session)
             except Exception:  # pylint: disable=broad-exception
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
