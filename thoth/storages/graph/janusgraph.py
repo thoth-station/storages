@@ -381,7 +381,7 @@ class GraphDatabase(StorageBase):
             .dedup() \
             .project('solver_name', 'solver_version') \
             .toList()
-       
+
         return asyncio.get_event_loop().run_until_complete(query)
 
     # @enable_edge_cache
