@@ -365,7 +365,7 @@ class GraphDatabase(StorageBase):
         return python_package, has_version, python_package_version
 
     def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
-        """Get Unsolved Runtime Environment which are not connected and attached to python package."""
+        """Get unsolved runtime environment which are not connected and attached to python package version."""
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('package_name', package_name) \
@@ -374,10 +374,10 @@ class GraphDatabase(StorageBase):
             .has('__label__', 'solved') \
             .outV() \
             .dedup() \
-            .aggregate('inter_result') \
+            .aggregate('solvers_solved_python_package_version') \
             .V() \
-            .hasLabel('label', 'ecosystem_solver') \
-            .where(without('inter_result')) \
+            .has('__label__', 'ecosystem_solver') \
+            .where(without('solvers_solved_python_package_version')) \
             .dedup() \
             .project('solver_name', 'solver_version') \
             .toList()
