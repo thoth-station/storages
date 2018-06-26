@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""This is the tests."""
+
 import pytest
 from moto import mock_s3
 
@@ -36,7 +38,8 @@ CEPH_INIT_ENV = {
 
 
 CEPH_INIT_KWARGS = {
-    'host': 'https://s3.ap-southeast-1.amazonaws.com',  # This host is needed by moto that mocks calls to it.
+    # This host is needed by moto that mocks calls to it.
+    'host': 'https://s3.ap-southeast-1.amazonaws.com',
     'key_id': 'THOTHISGREATTHOTHISG',
     'secret_key': 'THOTHISGREAT+THOTHISGREAT/THOTHISGREAT+S',
     'bucket': 'test-bucket',
@@ -75,14 +78,14 @@ def _fixture_connected_adapter():
         yield connected_adapter
 
 
-class TestCephStore(ThothStoragesTest):
+class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
     def test_init_kwargs(self):
         """Test initialization of Ceph based on arguments."""
         adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
         for key, value in CEPH_INIT_KWARGS.items():
             assert getattr(adapter, key) == value, \
-                f"Ceph attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"
+                f"Ceph attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"  # Ignore PycodestyleBear (E501)
 
         assert adapter.prefix == _BUCKET_PREFIX
         assert not adapter.is_connected()
@@ -97,7 +100,7 @@ class TestCephStore(ThothStoragesTest):
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
             assert getattr(adapter, attribute) == value, \
-                f"Ceph attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is " \
+                f"Ceph attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is " \  # Ignore PycodestyleBear (E501)
                 f"{value!r} (env: {key!r})"
 
     def test_is_connected(self, adapter):
@@ -140,6 +143,7 @@ class TestCephStore(ThothStoragesTest):
         connected_adapter.store_document(document, key)
         assert connected_adapter.retrieve_document(key) == document
 
+    # Ignore PyDocStyleBear
     def test_iterate_results_empty(self, connected_adapter):
         assert list(connected_adapter.iterate_results()) == []
 
@@ -154,12 +158,13 @@ class TestCephStore(ThothStoragesTest):
             elif document_id == key2:
                 assert document == document2
             else:
-                assert False, "The retrieved document was not previously stored."
+                assert False, "The retrieved document was not previously stored."  # Ignore PycodestyleBear (E501)
 
     def test_retrieve_document_not_exist(self, connected_adapter):
-        """Check that retrieving document that does not exists raises an exception."""
+        """Check that retrieving document that does not exists raises an exception."""  # Ignore PycodestyleBear (E501)
         with pytest.raises(NotFoundError):
-            connected_adapter.retrieve_document('some-document-that-really-does-not-exist')
+            connected_adapter.retrieve_document(
+                'some-document-that-really-does-not-exist')
 
     def test_document_exists(self, connected_adapter):
         """Test document presents on Ceph."""

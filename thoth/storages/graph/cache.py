@@ -26,7 +26,7 @@ class CacheMiss(Exception):
 
 
 class Cache(object):
-    """A generic cache to store item-value pair for items that are not hashable."""
+    """A generic cache for non-hashable item-value pairs."""
 
     def __init__(self):
         """Initialize cache."""

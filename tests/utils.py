@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""This is the tests."""
+
 import os
 from contextlib import contextmanager
 
@@ -43,8 +45,9 @@ def connected_ceph_adapter(adapter, raw_ceph=False):
 
     try:
         adapter.connect()
-        # FIXME: We need to call this explicitly since we use moto/boto3 instead of raw Ceph which has
-        # slightly different behaviour if a bucket is already present.
+        # FIXME: We need to call this explicitly since we use moto/boto3
+        # instead of raw Ceph which has slightly different behaviour if
+        # a bucket is already present.
         if not raw_ceph:
             adapter.ceph._create_bucket_if_needed()
         else:

@@ -33,7 +33,8 @@ class CephStore(StorageBase):
     """Adapter for storing and retrieving data from Ceph - low level API."""
 
     def __init__(self, prefix, *,
-                 host: str=None, key_id: str=None, secret_key: str=None, bucket: str=None, region: str=None):
+                 host: str = None, key_id: str = None, secret_key: str = None,
+                 bucket: str = None, region: str = None):
         """Initialize adapter to Ceph.
 
         Parameters not explicitly provided will be picked from env variables.
@@ -49,18 +50,21 @@ class CephStore(StorageBase):
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
-            yield obj.key[len(self.prefix) + 1:]  # +1 to remove slash (separator) after prefix
+        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():  # Ignore PycodestyleBear (E501)
+            # +1 to remove slash (separator) after prefix
+            yield obj.key[len(self.prefix) + 1:]
 
     @staticmethod
     def dict2blob(dictionary: dict) -> bytes:
         """Encode a dictionary to a blob so it can be stored on Ceph."""
-        return json.dumps(dictionary, sort_keys=True, separators=(',', ': '), indent=2).encode()
+        return json.dumps(dictionary, sort_keys=True, separators=(',', ': '),
+                          indent=2).encode()
 
     def store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
         put_kwargs = {'Body': blob}
-        response = self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").put(**put_kwargs)
+        response = self._s3.Object(
+            self.bucket, f"{self.prefix}/{object_key}").put(**put_kwargs)
         return response
 
     def store_document(self, document: dict, document_id: str) -> dict:
@@ -71,10 +75,11 @@ class CephStore(StorageBase):
     def retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
         try:
-            return self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").get()['Body'].read()
+            return self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").get()['Body'].read()  # Ignore PycodestyleBear (E501)
         except botocore.exceptions.ClientError as exc:
             if exc.response['Error']['Code'] in ('404', 'NoSuchKey'):
-                raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
+                raise NotFoundError(
+                    "Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc  # Ignore PycodestyleBear (E501)
             raise
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
@@ -88,11 +93,14 @@ class CephStore(StorageBase):
         return json.loads(self.retrieve_blob(document_id).decode())
 
     def is_connected(self) -> bool:
-        """Check whether adapter is already connected to the remote Ceph storage."""
+        """Check whether adapter is connected to the remote Ceph storage."""
         return self._s3 is not None
 
     def document_exists(self, document_id: str) -> bool:
-        """Check if the there is an object with the given key in bucket, does only HEAD request."""
+        """Check if the there is an object with the given key in bucket.
+
+        This check does only HEAD request.
+        """
         try:
             self._s3.Object(self.bucket, f"{self.prefix}/{document_id}").load()
         except botocore.exceptions.ClientError as exc:
@@ -105,9 +113,14 @@ class CephStore(StorageBase):
         return exists
 
     def check_connection(self) -> None:
-        """Check whether the given connection to the Ceph is alive and healthy, raise an exception if not."""
-        # The document exists method calls HEAD so we do not transfer actual data. We do not care if the given document
-        # actually really exists, but we raise an exception if there is an issue with the connection.
+        """Ceph Connection Check.
+
+        Check whether the given connection to the Ceph is alive and healthy,
+        raise an exception if not.
+        """
+        # The document exists method calls HEAD so we do not transfer actual
+        # data. We do not care if the given document actually really exists,
+        # but we raise an exception if there is an issue with the connection.
         self.document_exists('foo')
 
     def connect(self) -> None:
@@ -115,7 +128,8 @@ class CephStore(StorageBase):
         session = boto3.session.Session(aws_access_key_id=self.key_id,
                                         aws_secret_access_key=self.secret_key,
                                         region_name=self.region)
-        # signature version is needed to connect to new regions which support only v4
+        # signature version is needed to connect to new regions which
+        # support only v4
         self._s3 = session.resource(
             's3',
             config=botocore.client.Config(signature_version='s3v4'),
@@ -125,7 +139,10 @@ class CephStore(StorageBase):
         # self._create_bucket_if_needed()
 
     def _create_bucket_if_needed(self) -> None:
-        """Create desired bucket based on configuration if the given bucket does not already exist."""
+        """Create desired bucket based on configuration.
+
+        If the given bucket does not already exist, it is created.
+        """
         # check that the bucket exists - see boto3 docs
         try:
             self._s3.meta.client.head_bucket(Bucket=self.bucket)
