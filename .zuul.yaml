@@ -6,6 +6,7 @@
               linters:
                 - coala
     gate:
+      queue: core
       jobs:
         - linters:
             vars:
