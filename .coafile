@@ -1,15 +1,16 @@
 [all]
 bears = LineCountBear, FilenameBear
 files = **.py, **.yaml, **.rst **.md
-ignore = **/__pycache__/**, **/__pycache__, __pycache__, __pycache__/**, **/*.pyc, *.pyc
+ignore = **/__pycache__/**, **/__pycache__, __pycache__, __pycache__/**, **/*.pyc, *.pyc, .eggs/**
 max_lines_per_file = 1000
 
 [all.python]
 bears = PycodestyleBear, PyDocStyleBear
 files = **.py
 language = Python
+max_line_length = 120
 editor = vim
-ignore = setup.py
+ignore = setup.py, .eggs/**
 
 [all.yaml]
 bears = YAMLLintBear

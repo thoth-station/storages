@@ -85,8 +85,7 @@ class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
 
         for key, value in CEPH_INIT_KWARGS.items():
             assert getattr(adapter, key) == value, \
-                f"Ceph attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"  # Ignore PycodestyleBear (E501)
-
+                f"Ceph attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"
         assert adapter.prefix == _BUCKET_PREFIX
         assert not adapter.is_connected()
 
@@ -100,7 +99,7 @@ class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
             assert getattr(adapter, attribute) == value, \
-                f"Ceph attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is " \  # Ignore PycodestyleBear (E501)
+                f"Ceph attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is " \
                 f"{value!r} (env: {key!r})"
 
     def test_is_connected(self, adapter):
@@ -158,10 +157,10 @@ class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
             elif document_id == key2:
                 assert document == document2
             else:
-                assert False, "The retrieved document was not previously stored."  # Ignore PycodestyleBear (E501)
+                assert False, "The retrieved document was not previously stored."
 
     def test_retrieve_document_not_exist(self, connected_adapter):
-        """Check that retrieving document that does not exists raises an exception."""  # Ignore PycodestyleBear (E501)
+        """Check that retrieving document that does not exists raises an exception."""
         with pytest.raises(NotFoundError):
             connected_adapter.retrieve_document(
                 'some-document-that-really-does-not-exist')
