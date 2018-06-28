@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""This is the tests."""
+
 import os
 import json
 
@@ -29,16 +31,16 @@ class ThothStoragesTest(object):
 
     @classmethod
     def get_all_results(cls):
-        """Retrieve all result files that store JSON results as a test input."""
+        """Retrieve all files that store JSON results as a test input."""
         yield from cls.get_solver_results()
         yield from cls.get_analyzer_results()
 
     @classmethod
-    def get_solver_results(cls):
+    def get_solver_results(cls):  # Ignore PyDocStyleBear
         return cls._get_result_type('solver')
 
     @classmethod
-    def get_analyzer_results(cls):
+    def get_analyzer_results(cls):  # Ignore PyDocStyleBear
         return cls._get_result_type('analyzer')
 
     @classmethod
@@ -46,10 +48,11 @@ class ThothStoragesTest(object):
         path = os.path.join(cls.DATA_DIR, 'result', result_type)
         for document_id in os.listdir(path):
             with open(os.path.join(path, document_id)) as document_file:
-                yield pytest.param(json.load(document_file), document_id, id=document_id)
+                yield pytest.param(json.load(document_file), document_id,
+                                   id=document_id)
 
 
-class StorageBaseTest(ThothStoragesTest):
+class StorageBaseTest(ThothStoragesTest):  # Ignore PyDocStyleBear
     def test_connect(self, adapter):
         """Test lazy connection to Ceph."""
         assert not adapter.is_connected()
@@ -68,7 +71,7 @@ class StorageBaseTest(ThothStoragesTest):
 
         assert adapter.is_connected()
 
-    def test_is_connected(self, adapter):
+    def test_is_connected(self, adapter):  # Ignore PyDocStyleBear
         assert not adapter.is_connected()
         adapter.connect()
         assert adapter.is_connected()

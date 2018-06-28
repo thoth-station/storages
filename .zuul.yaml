@@ -1,0 +1,18 @@
+- project:
+    check:
+      jobs:
+        - linters:
+            vars:
+              linters:
+                - coala
+    gate:
+      queue: core
+      jobs:
+        - linters:
+            vars:
+              linters:
+                - coala
+
+    release:
+      jobs:
+        - upload-pypi-sesheta

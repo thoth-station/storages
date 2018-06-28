@@ -39,8 +39,8 @@ def enable_vertex_cache(func: typing.Callable):
     def wrapped(*args, **kwargs):
         if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
             _LOGGER.debug("Disabling vertex graph cache")
-            # We could just return directly function call here, but this version works
-            # as expected in Jupyter notebooks.
+            # We could just return directly function call here, but
+            # this version works as expected in Jupyter notebooks.
             return func(*args, **kwargs)
 
         _LOGGER.debug("Enabling vertex graph cache")
@@ -62,8 +62,8 @@ def enable_edge_cache(func: typing.Callable):
     def wrapped(*args, **kwargs):
         if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
             _LOGGER.debug("Disabling edge graph cache")
-            # We could just return directly function call instead of wrapper here, but this version works
-            # as expected in Jupyter notebooks.
+            # We could just return directly function call instead of wrapper
+            # here, but this version works as expected in Jupyter notebooks.
             return func(*args, **kwargs)
 
         _LOGGER.debug("Enabling edge graph cache")
@@ -80,8 +80,13 @@ def enable_edge_cache(func: typing.Callable):
     return wrapped
 
 
+# Ignore PycodestyleBear (E501)
 async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase) -> tuple:
-    """Create a vertex if not existed before, if the given vertex already exists, get tis id."""
+    """Create a vertex if not existes.
+
+    If the Vertex does not exists, it is created, if the given vertex
+    already exists, it's ID is returned.
+    """
     if VertexBase.cache:
         try:
             cached_id = VertexBase.cache.get(vertex.to_dict())
@@ -94,7 +99,8 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
     creation = addV(vertex.__label__)
 
     for key, value in vertex.to_dict().items():
-        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        # Goblin's to_dict() calls to_dict() on properties. If there is
+        # such case, get actual value from property.
         if isinstance(value, dict) and '__value__' in value:
             value = value['__value__']
         if value is not None:
@@ -104,26 +110,33 @@ async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase)
             query = query.hasNot(key)
 
     result = await query.fold().coalesce(
-        unfold().id().as_('id').constant(True).as_('existed').select('id', 'existed'),
-        creation.id().as_('id').constant(False).as_('existed').select('id', 'existed')
+        unfold().id().as_('id').constant(True).as_('existed')
+        .select('id', 'existed'),
+        creation.id().as_('id').constant(False).as_('existed')
+        .select('id', 'existed')
     ).next()
 
     if VertexBase.cache:
         VertexBase.cache.put(vertex.to_dict(), result['id'])
 
-    # Assign to instance so instance has the id associated correctly for later queries.
+    # Assign to instance so instance has the id associated correctly
+    # for later queries.
     vertex.id = result['id']
 
     return result['id'], result['existed']
 
 
 async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
-                             source_id: int=None, target_id: int=None) -> tuple:
-    """Create an edge if not existed before, if the given edge already exists, get its id.
+                             source_id: int = None,
+                             target_id: int = None) -> tuple:
+    """Create an edge if not existed.
+
+    If the given edge already exists, return its id.
 
     Optional parameters source_id and target_id are present for optimizations.
     """
-    # If source_id/target_id are not provided explicitly and edge.source/edge.target are not set, this will raise
+    # If source_id/target_id are not provided explicitly and
+    # edge.source/edge.target are not set, this will raise
     # an exception. Provide at least one based on your usage.
     source_id = source_id or edge.source.id
     target_id = target_id or edge.target.id
@@ -146,7 +159,8 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
         if key in ('source', 'target', 'id'):
             continue
 
-        # Goblin's to_dict() calls to_dict() on properties. If there is such case, get actual value from property.
+        # Goblin's to_dict() calls to_dict() on properties. If there is
+        # such case, get actual value from property.
         if isinstance(value, dict) and '__value__' in value:
             value = value['__value__']
 
@@ -156,8 +170,8 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
         else:
             query = query.hasNot(key)
 
-    result = await query.as_('e').inV().hasId(target_id).select('e').fold().coalesce(
-        unfold().id().as_('id').constant(True).as_('existed').select('id', 'existed'),
+    result = await query.as_('e').inV().hasId(target_id).select('e').fold().coalesce(  # Ignore PycodestyleBear (E501)
+        unfold().id().as_('id').constant(True).as_('existed').select('id', 'existed'),  # Ignore PycodestyleBear (E501)
         creation.as_('e').to(g.V(target_id)).select('e').id().as_('id')
         .constant(False).as_('existed').select('id', 'existed')
     ).next()
@@ -169,7 +183,8 @@ async def get_or_create_edge(g: AsyncGraphTraversalSource, edge: EdgeBase,
         item['target'] = target_id
         EdgeBase.cache.put(item, result['id'])
 
-    # Assign to instance so instance has the id associated correctly for later queries.
+    # Assign to instance so instance has the id associated correctly for
+    # later queries.
     edge.id = result['id']
 
     return result['id'], result['existed']

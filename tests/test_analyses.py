@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""This is the tests."""
+
 import pytest
 
 from thoth.storages import AnalysisResultsStore
@@ -30,14 +32,19 @@ _BUCKET_PREFIX = 'some-analyses'
 @pytest.fixture(name='adapter')
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
-    return AnalysisResultsStore(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    return AnalysisResultsStore(deployment_name=_DEPLOYMENT_NAME,
+                                prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
 
 class TestAnalysisResultsStore(ResultBaseTest):
+    """A Test Class for Analysis Results Store."""
+
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
-        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}"
+        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}"  # Ignore PycodestyleBear (E501)
 
-    @pytest.mark.parametrize('document,document_id', ResultBaseTest.get_analyzer_results())
+    @pytest.mark.parametrize('document,document_id',
+                             ResultBaseTest.get_analyzer_results())
+    # Ignore PyDocStyleBear
     def test_store_document(self, adapter, document, document_id):
         self.store_retrieve_document_test(adapter, document, document_id)
