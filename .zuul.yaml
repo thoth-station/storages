@@ -1,7 +1,10 @@
 - project:
     check:
       jobs:
-        - unittests
+        - run-test-command:
+            vars:
+              test_command:
+                - "pipenv run python3 setup.py test"
         - linters:
             vars:
               linters:
