@@ -1,7 +1,7 @@
 - project:
     check:
       jobs:
-        - ensure-pipenv
+        - pipenv
         - run-test-command:
             vars:
               test_command:
