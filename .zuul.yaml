@@ -1,11 +1,10 @@
 - project:
     check:
       jobs:
-        - pipenv
-        - run-test-command:
+        - pipenv:
             vars:
-              test_command:
-                - "pipenv run python3 setup.py test"
+              pipenv_extra_args:
+                - "python3 setup.py test"
         - linters:
             vars:
               linters:
