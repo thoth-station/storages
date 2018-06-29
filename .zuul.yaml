@@ -1,6 +1,7 @@
 - project:
     check:
       jobs:
+        - unittests
         - linters:
             vars:
               linters:
