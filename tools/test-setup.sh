@@ -2,6 +2,6 @@
 
 # This script will set up our test environment.
 
-scl enable rh-python36 -- LANG=en_US.utf8  LC_ALL=en_US.utf8 pipenv install --three --dev
+scl enable rh-python36 -- env LANG=en_US.utf8 LC_ALL=en_US.utf8 pipenv install --three --dev
 
 #end.
