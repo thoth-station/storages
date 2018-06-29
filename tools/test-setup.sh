@@ -2,6 +2,6 @@
 
 # This script will set up our test environment.
 
-pipenv install --three --dev
+scl enable rh-python36 -- pipenv install --three --dev
 
 #end.
