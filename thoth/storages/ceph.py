@@ -40,7 +40,7 @@ class CephStore(StorageBase):
         Parameters not explicitly provided will be picked from env variables.
         """
         super().__init__()
-        self.host = host or os.environ['THOTH_S3_ENDPOINT_URL ']
+        self.host = host or os.environ['THOTH_S3_ENDPOINT_URL']
         self.key_id = key_id or os.environ['THOTH_CEPH_KEY_ID']
         self.secret_key = secret_key or os.environ['THOTH_CEPH_SECRET_KEY']
         self.bucket = bucket or os.environ['THOTH_CEPH_BUCKET']
