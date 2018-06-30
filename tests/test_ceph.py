@@ -29,7 +29,7 @@ from .utils import connected_ceph_adapter
 
 
 CEPH_INIT_ENV = {
-    'THOTH_S3_ENDPOINT_URL ': None,
+    'THOTH_S3_ENDPOINT_URL': None,
     'THOTH_CEPH_KEY_ID': 'THOTHISGREATTHOTHISG',
     'THOTH_CEPH_SECRET_KEY': 'THOTHISGREAT+THOTHISGREAT/THOTHISGREAT+S',
     'THOTH_CEPH_BUCKET': 'test-bucket',
@@ -49,7 +49,7 @@ CEPH_INIT_KWARGS = {
 
 # A mapping of env variables to actual properties.
 CEPH_ENV_MAP = {
-    'THOTH_S3_ENDPOINT_URL ': 'host',
+    'THOTH_S3_ENDPOINT_URL': 'host',
     'THOTH_CEPH_KEY_ID': 'key_id',
     'THOTH_CEPH_SECRET_KEY': 'secret_key',
     'THOTH_CEPH_BUCKET': 'bucket',
