@@ -27,4 +27,4 @@ from .result_schema import RESULT_SCHEMA
 from .solvers import SolverResultsStore
 
 __name__ = 'thoth-storages'
-__version__ = '0.0.30'
+__version__ = '0.0.31'
