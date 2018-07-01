@@ -50,7 +50,7 @@ class CephStore(StorageBase):
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():  # Ignore PycodestyleBear (E501)
+        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
             # +1 to remove slash (separator) after prefix
             yield obj.key[len(self.prefix) + 1:]
 
@@ -75,11 +75,11 @@ class CephStore(StorageBase):
     def retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
         try:
-            return self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").get()['Body'].read()  # Ignore PycodestyleBear (E501)
+            return self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").get()['Body'].read()
         except botocore.exceptions.ClientError as exc:
             if exc.response['Error']['Code'] in ('404', 'NoSuchKey'):
                 raise NotFoundError(
-                    "Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc  # Ignore PycodestyleBear (E501)
+                    "Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:

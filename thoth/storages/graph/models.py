@@ -40,7 +40,7 @@ class RPMRequirement(VertexBase):
 
 
 class PackageVersionBase(VertexBase):
-    """Package-version vertex in the graph representing any versioned package."""  # Ignore PycodestyleBear (E501)
+    """Package-version vertex in the graph representing any versioned package."""
 
     ecosystem = VertexProperty(properties.String)
     package_name = VertexProperty(properties.String)
@@ -62,7 +62,7 @@ class PythonPackageVersion(PackageVersionBase):
 
 
 class RuntimeEnvironment(VertexBase):
-    """Environment such as container image which consists of various packages."""  # Ignore PycodestyleBear (E501)
+    """Environment such as container image which consists of various packages."""
 
     runtime_environment_name = VertexProperty(properties.String)
     # TODO: capture hashes of layers
@@ -82,7 +82,7 @@ class EcosystemSolver(VertexBase):
 
 
 class DependsOn(EdgeBase):
-    """Dependency between packages modeling based on ecosystem specification."""  # Ignore PycodestyleBear (E501)
+    """Dependency between packages modeling based on ecosystem specification."""
 
     version_range = Property(properties.String, default='*')
     package_name = Property(properties.String)
@@ -99,7 +99,7 @@ class IsPartOf(EdgeBase):
 
 
 class Solved(EdgeBase):
-    """Stores information about which EcosystemSolver solved/introduced package."""  # Ignore PycodestyleBear (E501)
+    """Stores information about which EcosystemSolver solved/introduced package."""
 
     solver_document_id = Property(properties.String)
     solver_datetime = Property(properties.Integer)
