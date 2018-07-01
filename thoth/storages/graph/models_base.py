@@ -39,7 +39,8 @@ class VertexBase(Vertex):
         for key, value in self.to_dict().items():
             if key.startswith('__'):
                 continue
-            values += '{}={}, '.format(key, repr(value) if isinstance(value, str) else value)  # Ignore PycodestyleBear (E501)
+            values += '{}={}, '.format(key, repr(value)
+                                       if isinstance(value, str) else value)
 
         return f'{self.__class__.__name__}({values[:-2]})'
 
@@ -90,7 +91,8 @@ class EdgeBase(Edge):
         for key, value in self.to_dict().items():
             if key.startswith('__'):
                 continue
-            values += '{}={}, '.format(key, repr(value) if isinstance(value, str) else value)  # Ignore PycodestyleBear (E501)
+            values += '{}={}, '.format(key, repr(value)
+                                       if isinstance(value, str) else value)
 
         return f'{self.__class__.__name__}({values[:-2]})'
 
@@ -108,9 +110,9 @@ class EdgeBase(Edge):
     def from_properties(cls, **edge_properties):
         """Create edge based on its properties.
 
-        >>> source_node = PackageVersion.from_properties(ecosystem='pypi', name='selinon', version='1.0.0rc1')  # Ignore PycodestyleBear (E501)
-        >>> target_node = PackageVersion.from_properties(ecosystem='pypi', name='pyyaml', version='1.0.0')  # Ignore PycodestyleBear (E501)
-        >>> edge = DependsOn.from_properties(version_range='>=10', source=source_node, target=target_node)  # Ignore PycodestyleBear (E501)
+        >>> source_node = PackageVersion.from_properties(ecosystem='pypi', name='selinon', version='1.0.0rc1')
+        >>> target_node = PackageVersion.from_properties(ecosystem='pypi', name='pyyaml', version='1.0.0')
+        >>> edge = DependsOn.from_properties(version_range='>=10', source=source_node, target=target_node)
         """
         instance = cls()
 
