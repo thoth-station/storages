@@ -146,14 +146,15 @@ class GraphDatabase(StorageBase):
 
     def get_analysis_metadata(self, analysis_document_id: str) -> dict:
         """Get metadata stored for the given analysis document."""
+        # Ignore PycodestyleBear (E501)
         query = self.g.E() \
             .has('__label__', IsPartOf.__label__) \
             .has('__type__', 'edge') \
             .has('analysis_document_id', analysis_document_id) \
             .sample(1) \
-            .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \  # Ignore PycodestyleBear (E501)
-            .by('analysis_datetime').by('analysis_document_id').by('analyzer_name').by('analyzer_version') \  # Ignore PycodestyleBear (E501)
-                .next()  # Ignore PycodestyleBear (E127)
+            .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \
+            .by('analysis_datetime').by('analysis_document_id').by('analyzer_name').by('analyzer_version') \
+            .next()  # Ignore PycodestyleBear (E127)
 
         result = asyncio.get_event_loop().run_until_complete(query)
 
@@ -346,13 +347,14 @@ class GraphDatabase(StorageBase):
         """Check whether the given analysis document records exist in the graph database."""  # Ignore PycodestyleBear (E501)
         loop = asyncio.get_event_loop()
 
+        # Ignore PycodestyleBear (E501)
         query = self.g.E() \
             .has('__label__', IsPartOf.__label__) \
             .has('__type__', 'edge') \
-            .has('analysis_datetime', datetime_str2timestamp(analysis_document['metadata']['datetime'])) \  # Ignore PycodestyleBear (E501)
-            .has('analysis_document_id', analysis_document['metadata']['hostname']) \  # Ignore PycodestyleBear (E501)
+            .has('analysis_datetime', datetime_str2timestamp(analysis_document['metadata']['datetime'])) \
+            .has('analysis_document_id', analysis_document['metadata']['hostname']) \
             .has('analyzer_name', analysis_document['metadata']['analyzer']) \
-            .has('analyzer_version', analysis_document['metadata']['analyzer_version'])\  # Ignore PycodestyleBear (E501)
+            .has('analyzer_version', analysis_document['metadata']['analyzer_version']) \
             .count().next()
 
         return loop.run_until_complete(query) > 0
@@ -394,7 +396,8 @@ class GraphDatabase(StorageBase):
 
         return python_package, has_version, python_package_version
 
-    def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:  # Ignore PycodestyleBear (E501)
+    # Ignore PycodestyleBear (E501)
+    def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
         """Get unsolved runtime environment which are not connected and attached to python package version."""  # Ignore PycodestyleBear (E501)
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
@@ -444,13 +447,13 @@ class GraphDatabase(StorageBase):
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")  # Ignore PycodestyleBear (E501)
+                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
                 continue
 
             for dependency in python_package_info['dependencies']:
                 try:
                     for dependency_version in dependency['resolved_versions']:
-                        python_package_dependency, _, python_package_version_dependency = \  # Ignore PycodestyleBear (E501)
+                        python_package_dependency, _, python_package_version_dependency = \
                             self.create_pypi_package_version(
                                 package_name=dependency['package_name'],
                                 package_version=dependency_version
@@ -468,7 +471,8 @@ class GraphDatabase(StorageBase):
                         DependsOn.from_properties(
                             source=python_package_version,
                             target=python_package_version_dependency,
-                            package_name=python_package_version_dependency.package_name.value,  # Ignore PycodestyleBear (E501)
+                            # Ignore PycodestyleBear (E501)
+                            package_name=python_package_version_dependency.package_name.value,
                             version_range=dependency['required_version'] or '*'
                         ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
@@ -500,7 +504,8 @@ class GraphDatabase(StorageBase):
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
         runtime_environment = RuntimeEnvironment.from_properties(
-            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],  # Ignore PycodestyleBear (E501)
+            # Ignore PycodestyleBear (E501)
+            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
         runtime_environment.get_or_create(self.g)
 
@@ -559,7 +564,8 @@ class GraphDatabase(StorageBase):
                             document['metadata']['datetime']),
                         analysis_document_id=document['metadata']['hostname'],
                         analyzer_name=document['metadata']['analyzer'],
-                        analyzer_version=document['metadata']['analyzer_version']  # Ignore PycodestyleBear (E501)
+                        # Ignore PycodestyleBear (E501)
+                        analyzer_version=document['metadata']['analyzer_version']
                     ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(f"Failed to sync dependencies for "
@@ -573,14 +579,15 @@ class GraphDatabase(StorageBase):
                 # they do not carry any valuable information for us.
                 continue
 
-            if 'result' not in python_package_info or 'error' in python_package_info['result']:  # Ignore PycodestyleBear (E501)
+            # Ignore PycodestyleBear (E501)
+            if 'result' not in python_package_info or 'error' in python_package_info['result']:
                 # Mercator was unable to process this - e.g. there was a
                 # setup.py that is not distutils setup.py
                 _LOGGER.info("Skipping error entry - %r", python_package_info)
                 continue
 
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(  # Ignore PycodestyleBear (E501)
+                python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'].lower(),
                     package_version=python_package_info['result']['version']
                 )
@@ -594,6 +601,6 @@ class GraphDatabase(StorageBase):
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
-            except Exception:  # pylint: disable=broad-exception
+            except Exception:
                 _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")  # Ignore PycodestyleBear (E501)
+                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")

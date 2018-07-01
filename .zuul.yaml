@@ -1,6 +1,10 @@
 - project:
     check:
       jobs:
+        - pipenv:
+            vars:
+              pipenv_extra_args:
+                - "python3 setup.py test"
         - linters:
             vars:
               linters:
