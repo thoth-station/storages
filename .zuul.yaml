@@ -1,18 +1,15 @@
 - project:
     check:
       jobs:
-        - linters:
-            vars:
-              linters:
-                - coala
+        - linters
     gate:
       queue: core
       jobs:
-        - linters:
-            vars:
-              linters:
-                - coala
-
+        - linters
     release:
       jobs:
         - upload-pypi-sesheta
+    kebechet-auto-gate:
+      queue: core
+      jobs:
+        - linters
