@@ -45,26 +45,26 @@ class CephStore(StorageBase):
         self.secret_key = secret_key or os.environ['THOTH_CEPH_SECRET_KEY']
         self.bucket = bucket or os.environ['THOTH_CEPH_BUCKET']
         self.region = region or os.getenv('THOTH_CEPH_REGION', None)
-        self.prefix = prefix
         self._s3 = None
+        self.prefix = prefix
+
+        if not self.prefix.endswith('/'):
+            self.prefix += '/'
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
-            # +1 to remove slash (separator) after prefix
-            yield obj.key[len(self.prefix) + 1:]
+            yield obj.key[len(self.prefix)]
 
     @staticmethod
     def dict2blob(dictionary: dict) -> bytes:
         """Encode a dictionary to a blob so it can be stored on Ceph."""
-        return json.dumps(dictionary, sort_keys=True, separators=(',', ': '),
-                          indent=2).encode()
+        return json.dumps(dictionary, sort_keys=True, separators=(',', ': '), indent=2).encode()
 
     def store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
         put_kwargs = {'Body': blob}
-        response = self._s3.Object(
-            self.bucket, f"{self.prefix}/{object_key}").put(**put_kwargs)
+        response = self._s3.Object(self.bucket, f"{self.prefix}{object_key}").put(**put_kwargs)
         return response
 
     def store_document(self, document: dict, document_id: str) -> dict:
@@ -75,7 +75,7 @@ class CephStore(StorageBase):
     def retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
         try:
-            return self._s3.Object(self.bucket, f"{self.prefix}/{object_key}").get()['Body'].read()
+            return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()['Body'].read()
         except botocore.exceptions.ClientError as exc:
             if exc.response['Error']['Code'] in ('404', 'NoSuchKey'):
                 raise NotFoundError(
@@ -102,7 +102,7 @@ class CephStore(StorageBase):
         This check does only HEAD request.
         """
         try:
-            self._s3.Object(self.bucket, f"{self.prefix}/{document_id}").load()
+            self._s3.Object(self.bucket, f"{self.prefix}{document_id}").load()
         except botocore.exceptions.ClientError as exc:
             if exc.response['Error']['Code'] == "404":
                 exists = False
