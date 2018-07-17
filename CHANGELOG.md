@@ -1,5 +1,11 @@
 # Changelog for Thoth's Storage Module
 
+## [0.1.0] - 2018-Jul-17 - goern
+
+### Fixed
+
+Make slash after prefix explicit, [#59](https://github.com/thoth-station/storages/pull/59)
+
 ## [0.0.33] - 2018-Jul-01 - goern
 
 ### Changed
