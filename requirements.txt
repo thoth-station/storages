@@ -1,12 +1,11 @@
 aiogremlin==3.2.6rc1
-gremlinpython==3.2.6
-goblin==2.1.0
-requests
-voluptuous
 boto3
-thoth-common
 cython
+goblin==2.1.0
+gremlinpython==3.2.6
+requests
+thoth-common
 ujson
 uvloop
+voluptuous
 yarl<1.2
-
