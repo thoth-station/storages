@@ -57,6 +57,15 @@ class RPMPackageVersion(PackageVersionBase):
     package_identifier = VertexProperty(properties.String)
 
 
+class CVE(VertexBase):
+    """Information about a CVE."""
+
+    advisory = VertexProperty(properties.String)
+    cve_name = VertexProperty(properties.String, default=None)
+    cve_id = VertexProperty(properties.String)
+    version_range = VertexProperty(properties.String)
+
+
 class PythonPackageVersion(PackageVersionBase):
     """Python package version vertex."""
 
@@ -127,11 +136,17 @@ class RunsIn(EdgeBase):
     """The given software stack runs in a runtime environment."""
 
 
+class HasVulnerability(EdgeBase):
+    """The given package-v version has a vulnerability."""
+
+
 ALL_MODELS = frozenset((
     CreatesStack,
+    CVE,
     DependsOn,
     EcosystemSolver,
     HasVersion,
+    HasVulnerability,
     IsPartOf,
     Package,
     PythonPackageVersion,
