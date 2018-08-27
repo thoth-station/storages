@@ -1,5 +1,6 @@
 - project:
     check:
+      queue: core
       jobs:
         - linters
     gate:
