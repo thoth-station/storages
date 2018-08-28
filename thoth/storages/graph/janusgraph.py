@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # thoth-storages
 # Copyright(C) 2018 Fridolin Pokorny
 #
@@ -27,6 +26,7 @@ from datetime import datetime
 
 import uvloop
 from gremlin_python.process.traversal import Order
+from gremlin_python.process.traversal import without
 from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import constant
 from goblin import Goblin
@@ -36,17 +36,19 @@ from thoth.common import datetime_str2timestamp
 from ..base import StorageBase
 from ..exceptions import NotFoundError
 from .models import ALL_MODELS
+from .models import CVE
 from .models import DependsOn
 from .models import EcosystemSolver
 from .models import HasVersion
+from .models import HasVulnerability
 from .models import IsPartOf
 from .models import Package
 from .models import PythonPackageVersion
-from .models import Solved
 from .models import Requires
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
+from .models import Solved
 # from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 
@@ -591,5 +593,48 @@ class GraphDatabase(StorageBase):
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-exception
-                _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+
+    def create_python_cve_record(self, package_name: str, package_version: str, *,
+                                 record_id: str, version_range: str, advisory: str,
+                                 cve: str = None) -> typing.Tuple[CVE, bool]:
+        """Store information about a CVE in the graph database for the given Python package."""
+        cve_record = CVE.from_properties(
+            cve_id=record_id,
+            version_range=version_range,
+            advisory=advisory,
+            cve_name=cve
+        )
+        cve_record_existed = cve_record.get_or_create(self.g)
+        _LOGGER.debug(
+            "CVE record wit id %r ", record_id, "added" if not cve_record_existed else "was already present"
+        )
+
+        # We explicitly track vulnerable packages (only_if_package_seen=False).
+        python_package, _, python_package_version = self.create_pypi_package_version(
+            package_name,
+            package_version,
+            only_if_package_seen=False
+        )
+
+        has_vulnerability = HasVulnerability.from_properties(source=python_package_version, target=cve_record)
+        has_vulnerability_existed = has_vulnerability.get_or_create(self.g)
+
+        _LOGGER.debug(
+            "CVE record %r for vulnerability of %r in version %r ", record_id, package_name, package_version,
+            "added" if not has_vulnerability_existed else "was already present"
+        )
+        return cve_record, has_vulnerability_existed
+
+    def get_python_cve_records(self, package_name: str, package_version: str) -> typing.List[CVE]:
+        """Get known vulnerabilities for the given package-version."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .outE() \
+            .has('__label__', 'has_vulnerability') \
+            .inV() \
+            .toList()
+
+        return asyncio.get_event_loop().run_until_complete(query)
