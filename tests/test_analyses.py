@@ -26,7 +26,7 @@ from .test_ceph import CEPH_INIT_KWARGS
 
 
 _DEPLOYMENT_NAME = 'thoth-my-deployment'
-_BUCKET_PREFIX = 'some-analyses'
+_BUCKET_PREFIX = 'some-analyses/'
 
 
 @pytest.fixture(name='adapter')
@@ -41,7 +41,7 @@ class TestAnalysisResultsStore(ResultBaseTest):
 
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
-        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}"  # Ignore PycodestyleBear (E501)
+        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"  # Ignore PycodestyleBear (E501)
 
     @pytest.mark.parametrize('document,document_id',
                              ResultBaseTest.get_analyzer_results())
