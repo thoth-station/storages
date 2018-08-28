@@ -38,8 +38,10 @@ from ..base import StorageBase
 from ..exceptions import NotFoundError
 from .models import ALL_MODELS
 from .models import DependsOn
+from .models import CVE
 from .models import EcosystemSolver
 from .models import HasVersion
+from .models import HasVulnerability
 from .models import IsPartOf
 from .models import Package
 from .models import PythonPackageVersion
@@ -492,16 +494,13 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception(
                     f"Failed to sync Python package, error is not fatal: {error_info!r}")
 
-    # @enable_edge_cache
-    @enable_vertex_cache
-    def sync_analysis_result(self, document: dict) -> None:
-        """Sync the given analysis result to the graph database."""
-        runtime_environment = RuntimeEnvironment.from_properties(
-            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
-        )
-        runtime_environment.get_or_create(self.g)
+    def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of deb packages found in the given container image."""
+        for deb_package_info in document['result']['deb-dependencies']:
+            pass
 
-        # RPM packages
+    def _rpm_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document['result']['rpm-dependencies']:
             try:
                 rpm_package_version = RPMPackageVersion.from_properties(
@@ -562,7 +561,8 @@ class GraphDatabase(StorageBase):
                     _LOGGER.exception(f"Failed to sync dependencies for "
                                       f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
-        # Python packages
+    def _python_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
         for python_package_info in document['result']['mercator'] or []:
             if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
@@ -592,5 +592,60 @@ class GraphDatabase(StorageBase):
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-exception
-                _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+
+    def create_python_cve_record(self, package_name: str, package_version: str, *,
+                                 record_id: str, version_range: str, advisory: str,
+                                 cve: str = None) -> typing.Tuple[CVE, bool]:
+        """Store information about a CVE in the graph database for the given Python package."""
+        cve_record = CVE.from_properties(
+            cve_id=record_id,
+            version_range=version_range,
+            advisory=advisory,
+            cve_name=cve
+        )
+        cve_record_existed = cve_record.get_or_create(self.g)
+        _LOGGER.debug(
+            "CVE record wit id %r ", record_id, "added" if not cve_record_existed else "was already present"
+        )
+
+        # We explicitly track vulnerable packages (only_if_package_seen=False).
+        python_package, _, python_package_version = self.create_pypi_package_version(
+            package_name,
+            package_version,
+            only_if_package_seen=False
+        )
+
+        has_vulnerability = HasVulnerability.from_properties(source=python_package_version, target=cve_record)
+        has_vulnerability_existed = has_vulnerability.get_or_create(self.g)
+
+        _LOGGER.debug(
+            "CVE record %r for vulnerability of %r in version %r ", record_id, package_name, package_version,
+            "added" if not has_vulnerability_existed else "was already present"
+        )
+        return cve_record, has_vulnerability_existed
+
+    def get_python_cve_records(self, package_name: str, package_version: str) -> typing.List[CVE]:
+        """Get known vulnerabilities for the given package-version."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .outE() \
+            .has('__label__', 'has_vulnerability') \
+            .inV() \
+            .toList()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    # @enable_edge_cache
+    @enable_vertex_cache
+    def sync_analysis_result(self, document: dict) -> None:
+        """Sync the given analysis result to the graph database."""
+        runtime_environment = RuntimeEnvironment.from_properties(
+            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
+        )
+        runtime_environment.get_or_create(self.g)
+        self._rpm_sync_analysis_result(document, runtime_environment)
+        self._deb_sync_analysis_result(document, runtime_environment)
+        self._python_sync_analysis_result(document, runtime_environment)
