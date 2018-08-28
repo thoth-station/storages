@@ -57,7 +57,7 @@ CEPH_ENV_MAP = {
 }
 
 _ENV = {**CEPH_INIT_ENV}
-_BUCKET_PREFIX = 'some-prefix'
+_BUCKET_PREFIX = 'some-prefix/'
 
 
 @pytest.fixture(name='adapter')
