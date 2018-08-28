@@ -27,6 +27,7 @@ from datetime import datetime
 
 import uvloop
 from gremlin_python.process.traversal import Order
+from gremlin_python.process.traversal import without
 from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import constant
 from goblin import Goblin
