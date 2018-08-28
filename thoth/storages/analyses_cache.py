@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # thoth-storages
 # Copyright(C) 2018 Fridolin Pokorny
 #
@@ -16,19 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Storage and database adapters for Thoth."""
+"""Adapter for retrieving and storing hashes for fast image lookups."""
 
-from .advisers import AdvisersResultsStore
-from .advisers_cache import AdvisersCacheStore
-from .analyses import AnalysisResultsStore
-from .analyses_cache import AnalysesCacheStore
-from .buildlogs import BuildLogsStore
-from .ceph import CephStore
-from .graph import GraphDatabase
-from .provenance import ProvenanceResultsStore
-from .provenance_cache import ProvenanceCacheStore
-from .result_schema import RESULT_SCHEMA
-from .solvers import SolverResultsStore
+from .ceph_cache import CephCache
 
-__name__ = 'thoth-storages'
-__version__ = "0.6.0"
+
+class AnalysesCacheStore(CephCache):
+    """Adapter for retrieving and storing hashes for fast image lookups.
+
+    This adapter is used to store simple files on Ceph so that there can be quickly checked whether the given image
+    was analyzed based in its SHA and which analysis corresponds to the analyzed image.
+    """
+
+    RESULT_TYPE = 'analysis-cache'

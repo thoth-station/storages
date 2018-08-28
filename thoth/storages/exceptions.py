@@ -29,3 +29,7 @@ class NotFoundError(ThothStorageException):
 
 class SchemaError(ThothStorageException):
     """Raised if trying to store document with invalid schema."""
+
+
+class CacheMiss(ThothStorageException):
+    """Raised if the requested document was not found in the cache."""
