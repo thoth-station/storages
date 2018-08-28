@@ -58,6 +58,7 @@ class VertexBase(Vertex):
 
         return result
 
+    # pylint: disable=invalid-name
     def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
         """Get or create this vertex."""
         # Avoid cyclic imports due to typing.
@@ -96,6 +97,7 @@ class EdgeBase(Edge):
 
         return f'{self.__class__.__name__}({values[:-2]})'
 
+    # pylint: disable=invalid-name
     def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
         """Get or create a this edge."""
         # Avoid cyclic imports due to typing.
