@@ -1,10 +1,10 @@
 - project:
     check:
-      queue: thoth-station/user-api
+      queue: thoth-station/core
       jobs:
         - linters
     gate:
-      queue: thoth-station/user-api
+      queue: thoth-station/core
       jobs:
         - linters
     release:
@@ -16,6 +16,6 @@
             vars:
               webhook_url: "https://paas.upshift.redhat.com/oapi/v1/namespaces/thoth-test-core/buildconfigs/user-api/webhooks/"
     kebechet-auto-gate:
-      queue: thoth-station/user-api
+      queue: thoth-station/core
       jobs:
         - linters
