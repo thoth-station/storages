@@ -713,4 +713,3 @@ class GraphDatabase(StorageBase):
         self._rpm_sync_analysis_result(document, runtime_environment)
         self._deb_sync_analysis_result(document, runtime_environment)
         self._python_sync_analysis_result(document, runtime_environment)
-
