@@ -57,6 +57,13 @@ class RPMPackageVersion(PackageVersionBase):
     package_identifier = VertexProperty(properties.String)
 
 
+class DebPackageVersion(PackageVersionBase):
+    """Debian-specific package version."""
+
+    epoch = VertexProperty(properties.String)
+    arch = VertexProperty(properties.String)
+
+
 class CVE(VertexBase):
     """Information about a CVE."""
 
@@ -115,8 +122,8 @@ class Solved(EdgeBase):
     solver_error = Property(properties.Boolean)
 
 
-class Requires(EdgeBase):
-    """Requirement edge of an RPM package."""
+class PackageExtractNativeBase(EdgeBase):
+    """An edge that was captured when analyzing native dependencies (RPM or Debian-based)."""
 
     analysis_document_id = Property(properties.String)
     analysis_datetime = Property(properties.Integer)
@@ -140,9 +147,35 @@ class HasVulnerability(EdgeBase):
     """The given package-v version has a vulnerability."""
 
 
+class Requires(PackageExtractNativeBase):
+    """Requirement edge of an RPM package."""
+
+
+class DebDepends(PackageExtractNativeBase):
+    """Depending edge of a deb package."""
+
+    version_range = Property(properties.String, default='*')
+
+
+class DebPreDepends(PackageExtractNativeBase):
+    """Pre-depending edge of a deb package."""
+
+    version_range = Property(properties.String, default='*')
+
+
+class DebReplaces(PackageExtractNativeBase):
+    """An edge of a deb package capturing package replacement.."""
+
+    version_range = Property(properties.String, default='*')
+
+
 ALL_MODELS = frozenset((
     CreatesStack,
     CVE,
+    DebDepends,
+    DebPackageVersion,
+    DebPreDepends,
+    DebReplaces,
     DependsOn,
     EcosystemSolver,
     HasVersion,

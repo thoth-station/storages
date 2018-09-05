@@ -37,7 +37,11 @@ from ..base import StorageBase
 from ..exceptions import NotFoundError
 from .models import ALL_MODELS
 from .models import CVE
+from .models import DebDepends
 from .models import DependsOn
+from .models import DebPackageVersion
+from .models import DebPreDepends
+from .models import DebReplaces
 from .models import EcosystemSolver
 from .models import HasVersion
 from .models import HasVulnerability
@@ -490,19 +494,77 @@ class GraphDatabase(StorageBase):
                 ).get_or_create(self.g)
 
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {error_info!r}")
+                _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
 
-    # @enable_edge_cache
-    @enable_vertex_cache
-    def sync_analysis_result(self, document: dict) -> None:
-        """Sync the given analysis result to the graph database."""
-        runtime_environment = RuntimeEnvironment.from_properties(
-            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
-        )
-        runtime_environment.get_or_create(self.g)
+    def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of deb packages found in the given container image."""
+        for deb_package_info in document['result']['deb-dependencies']:
+            try:
+                deb_package_version = DebPackageVersion.from_properties(
+                    ecosystem='deb',
+                    package_name=deb_package_info['name'],
+                    package_version=deb_package_info['version'],
+                    arch=deb_package_info['arch'],
+                    epoch=deb_package_info.get('epoch')
+                )
+                deb_package_version.get_or_create(self.g)
 
-        # RPM packages
+                deb_package = Package.from_properties(
+                    ecosystem=deb_package_version.ecosystem,
+                    package_name=deb_package_version.package_name
+                )
+                deb_package.get_or_create(self.g)
+
+                HasVersion.from_properties(
+                    source=deb_package,
+                    target=deb_package_version
+                ).get_or_create(self.g)
+
+                IsPartOf.from_properties(
+                    source=deb_package_version,
+                    target=runtime_environment,
+                    analysis_datetime=datetime_str2timestamp(
+                        document['metadata']['datetime']),
+                    analysis_document_id=document['metadata']['hostname'],
+                    analyzer_name=document['metadata']['analyzer'],
+                    analyzer_version=document['metadata']['analyzer_version']
+                ).get_or_create(self.g)
+
+                # These three can be grouped with a zip, but that is not that readable...
+                for pre_depends in deb_package_info.get('pre-depends') or []:
+                    package = Package.from_properties(ecosystem='deb', package_name=pre_depends['name'])
+                    package.get_or_create(self.g)
+
+                    DebPreDepends.from_properties(
+                        source=deb_package_version,
+                        target=package,
+                        version_range=pre_depends.get('version')
+                    ).get_or_create(self.g)
+
+                for depends in deb_package_info.get('depends') or []:
+                    package = Package.from_properties(ecosystem='deb', package_name=depends['name'])
+                    package.get_or_create(self.g)
+
+                    DebDepends.from_properties(
+                        source=deb_package_version,
+                        target=package,
+                        version_range=depends.get('version')
+                    ).get_or_create(self.g)
+
+                for replaces in deb_package_info.get('replaces') or []:
+                    package = Package.from_properties(ecosystem='deb', package_name=replaces['name'])
+                    package.get_or_create(self.g)
+
+                    DebReplaces.from_properties(
+                        source=deb_package_version,
+                        target=package,
+                        version_range=replaces.get('version')
+                    ).get_or_create(self.g)
+            except Exception:
+                _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
+
+    def _rpm_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document['result']['rpm-dependencies']:
             try:
                 rpm_package_version = RPMPackageVersion.from_properties(
@@ -563,7 +625,8 @@ class GraphDatabase(StorageBase):
                     _LOGGER.exception(f"Failed to sync dependencies for "
                                       f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
-        # Python packages
+    def _python_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
         for python_package_info in document['result']['mercator'] or []:
             if python_package_info['ecosystem'] == 'Python-RequirementsTXT':
@@ -638,3 +701,15 @@ class GraphDatabase(StorageBase):
             .toList()
 
         return asyncio.get_event_loop().run_until_complete(query)
+
+    # @enable_edge_cache
+    @enable_vertex_cache
+    def sync_analysis_result(self, document: dict) -> None:
+        """Sync the given analysis result to the graph database."""
+        runtime_environment = RuntimeEnvironment.from_properties(
+            runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
+        )
+        runtime_environment.get_or_create(self.g)
+        self._rpm_sync_analysis_result(document, runtime_environment)
+        self._deb_sync_analysis_result(document, runtime_environment)
+        self._python_sync_analysis_result(document, runtime_environment)
