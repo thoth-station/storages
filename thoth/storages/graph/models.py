@@ -85,9 +85,33 @@ class RuntimeEnvironment(VertexBase):
 
 
 class SoftwareStack(VertexBase):
-    """Observations we have about the given stack."""
+    """A software stack crated by packages in specific versions."""
 
-    # TODO: add observation info and info about origin
+    installable = VertexProperty(properties.Boolean, default=True)
+
+
+class SoftwareStackObservation(VertexBase):
+    """Observations we have about the given stack based on run on a specific hardware."""
+
+    performance_index = VertexProperty(properties.Float)
+    observation_document_id = VertexProperty(properties.String, db_name='document_id')
+
+
+class HardwareInformation(VertexBase):
+    """Hardware specification and propertires."""
+
+    cpu_vendor = VertexProperty(properties.String)
+    cpu_model_name = VertexProperty(properties.String)
+    cpu_model = VertexProperty(properties.Integer)
+    cpu_family = VertexProperty(properties.Integer)
+    cpu_cores = VertexProperty(properties.Integer)
+
+    gpu_vendor = VertexProperty(properties.String)
+    gpu_model_name = VertexProperty(properties.String)
+    gpu_cores = VertexProperty(properties.Integer)
+    gpu_memory_size = VertexProperty(properties.Integer)
+
+    ram_size = VertexProperty(properties.Integer)
 
 
 class EcosystemSolver(VertexBase):
@@ -103,6 +127,12 @@ class DependsOn(EdgeBase):
     version_range = Property(properties.String, default='*')
     package_name = Property(properties.String)
     extras = Property(properties.String)
+
+
+class Observed(EdgeBase):
+    """Information about observations gathered on run."""
+
+    observation_document_id = VertexProperty(properties.String)
 
 
 class IsPartOf(EdgeBase):
@@ -189,4 +219,7 @@ ALL_MODELS = frozenset((
     RuntimeEnvironment,
     SoftwareStack,
     Solved,
+    Observed,
+    HardwareInformation,
+    SoftwareStackObservation,
 ))
