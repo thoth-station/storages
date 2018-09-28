@@ -251,8 +251,7 @@ class GraphDatabase(StorageBase):
             )
 
             if not analysis_document_id:
-                raise NotFoundError(
-                    f"No entries for runtime environment {runtime_environment_name!r} found")
+                raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
 
         query = self.g.V() \
             .has('__label__', RuntimeEnvironment.__label__) \
@@ -292,7 +291,7 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
-    def python_package_exists(self, package_name) -> bool:
+    def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
         loop = asyncio.get_event_loop()
 
@@ -304,6 +303,21 @@ class GraphDatabase(StorageBase):
             .next()
 
         return bool(loop.run_until_complete(query))
+
+    def get_all_versions_python_package(self, package_name: str) -> typing.List[str]:
+        """Get all versions available for a Python package."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name', package_name) \
+            .dedup() \
+            .select('package_version') \
+            .toList()
+
+        return asyncio.get_event_loop().run_until_complete(query)
 
     def retrieve_unsolved_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved."""
