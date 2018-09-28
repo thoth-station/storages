@@ -306,6 +306,7 @@ class GraphDatabase(StorageBase):
 
     def get_all_versions_python_package(self, package_name: str) -> typing.List[str]:
         """Get all versions available for a Python package."""
+        # TODO: specify index
         loop = asyncio.get_event_loop()
 
         query = self.g.V() \
@@ -339,11 +340,26 @@ class GraphDatabase(StorageBase):
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
         # TODO: when added __type__ Cassanda backend time outs.
+        # TODO: specify index
         # This should be fixed once we move to Data Hub.
         query = self.g.E() \
             .has('__label__', 'depends_on') \
             .has('package_name', package_name) \
             .outV() \
+            .dedup() \
+            .group().by('package_name').by('package_version') \
+            .next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def retrieve_dependencies(self, package_name: str, package_version: str, index: str) -> dict:
+        """Get mapping package name to package version of packages that are dependencies for the given pkg."""
+        query = self.g.V() \
+            .has('__label__', 'depends_on') \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .has('index', index) \
+            .invV() \
             .dedup() \
             .group().by('package_name').by('package_version') \
             .next()
