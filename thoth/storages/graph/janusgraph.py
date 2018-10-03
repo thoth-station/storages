@@ -28,7 +28,9 @@ import uvloop
 from gremlin_python.process.traversal import Order
 from gremlin_python.process.traversal import without
 from gremlin_python.process.graph_traversal import inE
+from gremlin_python.process.graph_traversal import outE
 from gremlin_python.process.graph_traversal import constant
+from gremlin_python.process.graph_traversal import project
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
@@ -278,8 +280,7 @@ class GraphDatabase(StorageBase):
 
         return result, analysis_document_id
 
-    def python_package_version_exists(self, package_name: str,
-                                      package_version: str) -> bool:
+    def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
         """Check if the given Python package version exists in the graph database."""
         loop = asyncio.get_event_loop()
 
@@ -364,6 +365,25 @@ class GraphDatabase(StorageBase):
             .dedup() \
             .group().by('package_name').by('package_version') \
             .next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index: str) -> list:
+        """Get all transitive dependencies for the given package by traversing dependency graph."""
+        query = self.g.V() \
+            .has('__type__', 'vertex') \
+            .has('__label__', 'python_package_version') \
+            .has('ecosystem', 'pypi') \
+            .has('package_version', package_version) \
+            .has('package_name', package_name) \
+            .repeat(
+                outE().simplePath().has('__label__', 'depends_on').inV().has('__label__', 'python_package_version')
+            ) \
+            .emit() \
+            .path().by(
+                project('package', 'version').by('package_name').by('package_version')
+            ).by(project('depends_on').by('version_range')) \
+            .toList()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
