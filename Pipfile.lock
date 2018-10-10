@@ -66,10 +66,10 @@
         },
         "botocore": {
             "hashes": [
-                "sha256:0f0a2a74a9dc1d53531f559477f329ad087f3b378fc9cf02e67017e475854f8d",
-                "sha256:bc2fa51e05afb944f4f684c7d52a0db165898985d46b2fcb55fb842028fcc7a6"
+                "sha256:4152cd92e7f979707e35be7d4fa18f0435050b460e0a54cd88db27c2586d8886",
+                "sha256:dde120395f3775fa2273c1e0e5b909532f74461601d85c6c5f5f719991cffd22"
             ],
-            "version": "==1.12.19"
+            "version": "==1.12.20"
         },
         "certifi": {
             "hashes": [
@@ -256,10 +256,10 @@
         },
         "sentry-sdk": {
             "hashes": [
-                "sha256:593c81517e98ab67edc8def34fe3afacde83eb899da31cd069b448a0ac122a83",
-                "sha256:6fcb7e87069221e3ddbc9a7baf756e69b3346020f8fa20057d0df2466d8ea011"
+                "sha256:47e612413dd9ce247b6383f8eddb405c02411f152694aadea56640713bae0eed",
+                "sha256:f8f302e186076b8cfe80472ac7da93d06325dd446d7bb0ed60e867a4fcb808d9"
             ],
-            "version": "==0.3.11"
+            "version": "==0.4.0"
         },
         "six": {
             "hashes": [
@@ -270,11 +270,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:0ca00dc1a826885216de02d81f5cdf10ea6b570d91473e40b4b4d9f0e29e210a",
-                "sha256:93e0f8cab4076b7b30543113cecbb16410f1e44beedf445c6da6239c438903d9"
+                "sha256:2532b52a93e28382a22b862a5e83d8d8c4cb45070528e327c1c2748d1dc5e226",
+                "sha256:52dbdb02e87b2950270686dd913f7e1a53c35785b5184aaf7c06bbe4f95c00bc"
             ],
             "index": "pypi",
-            "version": "==0.3.6"
+            "version": "==0.3.9"
         },
         "tornado": {
             "hashes": [
@@ -441,10 +441,10 @@
         },
         "botocore": {
             "hashes": [
-                "sha256:0f0a2a74a9dc1d53531f559477f329ad087f3b378fc9cf02e67017e475854f8d",
-                "sha256:bc2fa51e05afb944f4f684c7d52a0db165898985d46b2fcb55fb842028fcc7a6"
+                "sha256:4152cd92e7f979707e35be7d4fa18f0435050b460e0a54cd88db27c2586d8886",
+                "sha256:dde120395f3775fa2273c1e0e5b909532f74461601d85c6c5f5f719991cffd22"
             ],
-            "version": "==1.12.19"
+            "version": "==1.12.20"
         },
         "certifi": {
             "hashes": [
