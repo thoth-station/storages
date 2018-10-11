@@ -85,8 +85,8 @@ def requires_connection(func):
 class GraphDatabase(StorageBase):
     """A Gremlin server adapter communicating via a web socket."""
 
-    ENVVAR_HOST_NAME = 'THOTH_JANUSGRAPH_HOST'
-    ENVVAR_HOST_PORT = 'THOTH_JANUSGRAPH_PORT'
+    ENVVAR_HOST_NAME = 'JANUSGRAPH_SERVICE_HOST'
+    ENVVAR_HOST_PORT = 'JANUSGRAPH_SERVICE_PORT'
 
     DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or 'localhost'
     DEFAULT_PORT = os.getenv(ENVVAR_HOST_PORT) or 8182
@@ -251,7 +251,8 @@ class GraphDatabase(StorageBase):
             )
 
             if not analysis_document_id:
-                raise NotFoundError(f"No entries for runtime environment {runtime_environment_name!r} found")
+                raise NotFoundError(
+                    f"No entries for runtime environment {runtime_environment_name!r} found")
 
         query = self.g.V() \
             .has('__label__', RuntimeEnvironment.__label__) \
@@ -538,7 +539,8 @@ class GraphDatabase(StorageBase):
                 ).get_or_create(self.g)
 
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
+                _LOGGER.exception(
+                    "Failed to sync Python package, error is not fatal: %r", error_info)
 
     def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of deb packages found in the given container image."""
@@ -576,7 +578,8 @@ class GraphDatabase(StorageBase):
 
                 # These three can be grouped with a zip, but that is not that readable...
                 for pre_depends in deb_package_info.get('pre-depends') or []:
-                    package = Package.from_properties(ecosystem='deb', package_name=pre_depends['name'])
+                    package = Package.from_properties(
+                        ecosystem='deb', package_name=pre_depends['name'])
                     package.get_or_create(self.g)
 
                     DebPreDepends.from_properties(
@@ -586,7 +589,8 @@ class GraphDatabase(StorageBase):
                     ).get_or_create(self.g)
 
                 for depends in deb_package_info.get('depends') or []:
-                    package = Package.from_properties(ecosystem='deb', package_name=depends['name'])
+                    package = Package.from_properties(
+                        ecosystem='deb', package_name=depends['name'])
                     package.get_or_create(self.g)
 
                     DebDepends.from_properties(
@@ -596,7 +600,8 @@ class GraphDatabase(StorageBase):
                     ).get_or_create(self.g)
 
                 for replaces in deb_package_info.get('replaces') or []:
-                    package = Package.from_properties(ecosystem='deb', package_name=replaces['name'])
+                    package = Package.from_properties(
+                        ecosystem='deb', package_name=replaces['name'])
                     package.get_or_create(self.g)
 
                     DebReplaces.from_properties(
@@ -605,7 +610,8 @@ class GraphDatabase(StorageBase):
                         version_range=replaces.get('version')
                     ).get_or_create(self.g)
             except Exception:
-                _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
+                _LOGGER.exception(
+                    "Failed to sync debian package, error is not fatal: %r", deb_package_info)
 
     def _rpm_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of RPMs found in the given container image."""
@@ -700,7 +706,8 @@ class GraphDatabase(StorageBase):
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-exception
-                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                _LOGGER.exception(
+                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
 
     def create_python_cve_record(self, package_name: str, package_version: str, *,
                                  record_id: str, version_range: str, advisory: str,
@@ -724,7 +731,8 @@ class GraphDatabase(StorageBase):
             only_if_package_seen=False
         )
 
-        has_vulnerability = HasVulnerability.from_properties(source=python_package_version, target=cve_record)
+        has_vulnerability = HasVulnerability.from_properties(
+            source=python_package_version, target=cve_record)
         has_vulnerability_existed = has_vulnerability.get_or_create(self.g)
 
         _LOGGER.debug(
