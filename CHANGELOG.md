@@ -46,3 +46,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency moto from 1.3.4 to 1.3.6
 * Update janusgraph.py
 * Sync debian packages to the graph database
+
+## Release 0.5.4 (2018-10-12T09:14:50)
+* Edge property is not a vertex property
+* Automatic update of dependency thoth-common from 0.3.6 to 0.3.11
+* Automatic update of dependency boto3 from 1.9.21 to 1.9.22
