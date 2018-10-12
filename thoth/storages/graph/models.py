@@ -133,7 +133,7 @@ class DependsOn(EdgeBase):
 class Observed(EdgeBase):
     """Information about observations gathered on run."""
 
-    observation_document_id = VertexProperty(properties.String)
+    observation_document_id = Property(properties.String)
 
 
 class IsPartOf(EdgeBase):
