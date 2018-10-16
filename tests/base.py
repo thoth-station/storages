@@ -36,11 +36,11 @@ class ThothStoragesTest(object):
         yield from cls.get_analyzer_results()
 
     @classmethod
-    def get_solver_results(cls):  # Ignore PyDocStyleBear
+    def get_solver_results(cls):
         return cls._get_result_type('solver')
 
     @classmethod
-    def get_analyzer_results(cls):  # Ignore PyDocStyleBear
+    def get_analyzer_results(cls):
         return cls._get_result_type('analyzer')
 
     @classmethod
@@ -48,11 +48,10 @@ class ThothStoragesTest(object):
         path = os.path.join(cls.DATA_DIR, 'result', result_type)
         for document_id in os.listdir(path):
             with open(os.path.join(path, document_id)) as document_file:
-                yield pytest.param(json.load(document_file), document_id,
-                                   id=document_id)
+                yield pytest.param(json.load(document_file), document_id, id=document_id)
 
 
-class StorageBaseTest(ThothStoragesTest):  # Ignore PyDocStyleBear
+class StorageBaseTest(ThothStoragesTest):
     def test_connect(self, adapter):
         """Test lazy connection to Ceph."""
         assert not adapter.is_connected()
@@ -71,7 +70,7 @@ class StorageBaseTest(ThothStoragesTest):  # Ignore PyDocStyleBear
 
         assert adapter.is_connected()
 
-    def test_is_connected(self, adapter):  # Ignore PyDocStyleBear
+    def test_is_connected(self, adapter):
         assert not adapter.is_connected()
         adapter.connect()
         assert adapter.is_connected()

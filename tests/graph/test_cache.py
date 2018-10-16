@@ -1,4 +1,4 @@
-#!/usr/bin/env python3  # Ignore PyDocStyleBear
+#!/usr/bin/env python3
 # thoth-storages
 # Copyright(C) 2018 Fridolin Pokorny
 #
@@ -29,8 +29,8 @@ def _fixture_adapter():
     return Cache()
 
 
-class TestCache(ThothStoragesTest):  # Ignore PyDocStyleBear
-    def test_wipe(self, cache):  # Ignore PyDocStyleBear
+class TestCache(ThothStoragesTest):
+    def test_wipe(self, cache):
         item, value = {'foo': '<id>'}, 'value'
         cache.put(item, value)
 
@@ -40,7 +40,7 @@ class TestCache(ThothStoragesTest):  # Ignore PyDocStyleBear
         with pytest.raises(CacheMiss):
             cache.get(item)
 
-    def test_get_nonexistent(self, cache):  # Ignore PyDocStyleBear
+    def test_get_nonexistent(self, cache):
         item, value = {'foo': '<id>'}, 'value'
 
         cache.put(item, value)
@@ -48,7 +48,7 @@ class TestCache(ThothStoragesTest):  # Ignore PyDocStyleBear
         with pytest.raises(CacheMiss):
             cache.get({'foo': 'some-non-existing-item'})
 
-    def test_get(self, cache):  # Ignore PyDocStyleBear
+    def test_get(self, cache):
         item1, value1 = {'foo': '<id1>'}, 'value1'
         item2, value2 = {'bar': '<id2>'}, 'value2'
 
@@ -58,6 +58,6 @@ class TestCache(ThothStoragesTest):  # Ignore PyDocStyleBear
         assert cache.get(item1) == value1
         assert cache.get(item2) == value2
 
-    def test_get_empty(self, cache):  # Ignore PyDocStyleBear
+    def test_get_empty(self, cache):
         with pytest.raises(CacheMiss):
             cache.get({'<id>': '<value>'})

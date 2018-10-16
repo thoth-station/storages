@@ -88,11 +88,9 @@ class TestBuildLogsStore(StorageBaseTest):
         assert adapter.ceph is not None
         assert not adapter.ceph.is_connected()
 
-        # Ignore PycodestyleBear (E501)
         assert adapter.deployment_name == _BUILDLOGS_INIT_ENV['THOTH_DEPLOYMENT_NAME']
 
         bucket_prefix = _BUILDLOGS_INIT_ENV_EXP['THOTH_CEPH_BUCKET_PREFIX']
-        # Ignore PycodestyleBear (E501)
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
         assert adapter.ceph.prefix == adapter.prefix
 
@@ -106,7 +104,6 @@ class TestBuildLogsStore(StorageBaseTest):
         """Test storing results on Ceph."""
         # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
-        # Ignore PycodestyleBear (E501)
         document_id = 'bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2'
         adapter.ceph = flexmock(dict2blob=lambda _: document)
         adapter.ceph. \

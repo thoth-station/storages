@@ -41,10 +41,8 @@ class TestAnalysisResultsStore(ResultBaseTest):
 
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
-        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"  # Ignore PycodestyleBear (E501)
+        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
-    @pytest.mark.parametrize('document,document_id',
-                             ResultBaseTest.get_analyzer_results())
-    # Ignore PyDocStyleBear
+    @pytest.mark.parametrize('document,document_id', ResultBaseTest.get_analyzer_results())
     def test_store_document(self, adapter, document, document_id):
         self.store_retrieve_document_test(adapter, document, document_id)

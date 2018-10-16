@@ -41,7 +41,6 @@ class ResultStorageBase(StorageBase):
         The adapter can take arguments from env variables if not provided
         explicitly.
         """
-        # Ignore PycodestyleBear (E501)
         assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes to distinguish between adapter type instances."  
 
         self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']

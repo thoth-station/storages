@@ -158,7 +158,7 @@ class GraphDatabase(StorageBase):
             .sample(1) \
             .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \
             .by('analysis_datetime').by('analysis_document_id').by('analyzer_name').by('analyzer_version') \
-            .next()  # Ignore PycodestyleBear (E127)
+            .next()
 
         result = asyncio.get_event_loop().run_until_complete(query)
 
