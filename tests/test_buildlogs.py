@@ -79,7 +79,7 @@ class TestBuildLogsStore(StorageBaseTest):
                 f"got {getattr(adapter.ceph, key)!r} instead"
 
         bucket_prefix = _BUILDLOGS_INIT_KWARGS_EXP['bucket_prefix']
-        assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs"
+        assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
         assert adapter.ceph.prefix == adapter.prefix
 
     def test_init_env(self, adapter):
@@ -93,7 +93,7 @@ class TestBuildLogsStore(StorageBaseTest):
 
         bucket_prefix = _BUILDLOGS_INIT_ENV_EXP['THOTH_CEPH_BUCKET_PREFIX']
         # Ignore PycodestyleBear (E501)
-        assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs"
+        assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
         assert adapter.ceph.prefix == adapter.prefix
 
         for key, value in CEPH_INIT_ENV.items():
