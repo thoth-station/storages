@@ -51,3 +51,17 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Edge property is not a vertex property
 * Automatic update of dependency thoth-common from 0.3.6 to 0.3.11
 * Automatic update of dependency boto3 from 1.9.21 to 1.9.22
+
+## Release 0.6.0 (2018-10-22T10:43:00)
+* Automatic update of dependency thoth-common from 0.3.11 to 0.3.12
+* fixing project.post.jobs.trigger-build.vars.webhook_url
+* Automatic update of dependency boto3 from 1.9.27 to 1.9.28
+* Automatic update of dependency boto3 from 1.9.26 to 1.9.27
+* Automatic update of dependency requests from 2.19.1 to 2.20.0
+* Automatic update of dependency boto3 from 1.9.25 to 1.9.26
+* Automatic update of dependency boto3 from 1.9.24 to 1.9.25
+* Automatic update of dependency pytest from 3.8.2 to 3.9.1
+* Automatic update of dependency boto3 from 1.9.23 to 1.9.24
+* Add timestamp to the result schema
+* Automatic update of dependency cython from 0.28.5 to 0.29
+* Automatic update of dependency boto3 from 1.9.22 to 1.9.23
