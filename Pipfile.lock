@@ -204,10 +204,10 @@
         },
         "pytz": {
             "hashes": [
-                "sha256:642253af8eae734d1509fc6ac9c1aee5e5b69d76392660889979b9870610a46b",
-                "sha256:91e3ccf2c344ffaa6defba1ce7f38f97026943f675b7703f44789768e4cb0ece"
+                "sha256:31cb35c89bd7d333cd32c5f278fca91b523b0834369e757f4c5641ea252236ca",
+                "sha256:8e0f8568c118d3077b46be7d654cc8167fa916092e28320cde048e54bfc9f1e6"
             ],
-            "version": "==2018.6"
+            "version": "==2018.7"
         },
         "pyyaml": {
             "hashes": [
@@ -246,10 +246,10 @@
         },
         "sentry-sdk": {
             "hashes": [
-                "sha256:9161ccee9cc714ca205d42e252eddbc9ed89152bf09cac099143835486f5e7a4",
-                "sha256:c18552010648e6303b557310dc6e4babda3c942c6e4145995699547c64d3982f"
+                "sha256:d4eb77414e21258943cdd7ea4aa216e2d994d38700d747d5d3da943edd414b58",
+                "sha256:e77795ca8bafbcf4a19d9c2fcd99f9cb68a9623e5f853a0758084a8b025e6c87"
             ],
-            "version": "==0.5.1"
+            "version": "==0.5.2"
         },
         "six": {
             "hashes": [
@@ -260,11 +260,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:2863a1065dc27f02f0274987c1672ee6eedfc7a7c26c3e84359385a2677ddf40",
-                "sha256:cac9d6ffeb04392a376fb99d8ead3b6369ca953f27ca711e520568a3c10b8ebc"
+                "sha256:5213daa7c804850da1199785eb521eff3f05f85bff6c34bac071f5d983995ebf",
+                "sha256:fa4082df05ce47bda6c7657b585db3561893bf21db062a201c1014befba57f67"
             ],
             "index": "pypi",
-            "version": "==0.3.13"
+            "version": "==0.3.14"
         },
         "tornado": {
             "hashes": [
@@ -1082,10 +1082,10 @@
         },
         "pytz": {
             "hashes": [
-                "sha256:642253af8eae734d1509fc6ac9c1aee5e5b69d76392660889979b9870610a46b",
-                "sha256:91e3ccf2c344ffaa6defba1ce7f38f97026943f675b7703f44789768e4cb0ece"
+                "sha256:31cb35c89bd7d333cd32c5f278fca91b523b0834369e757f4c5641ea252236ca",
+                "sha256:8e0f8568c118d3077b46be7d654cc8167fa916092e28320cde048e54bfc9f1e6"
             ],
-            "version": "==2018.6"
+            "version": "==2018.7"
         },
         "pyyaml": {
             "hashes": [
