@@ -65,3 +65,18 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add timestamp to the result schema
 * Automatic update of dependency cython from 0.28.5 to 0.29
 * Automatic update of dependency boto3 from 1.9.22 to 1.9.23
+
+## Release 0.7.0 (2018-10-30T22:37:43)
+* Use job id as document id instead of pod id
+* Implement image lookup for fast checks of image analyses
+* Automatic update of dependency thoth-common from 0.3.14 to 0.3.15
+* Automatic update of dependency thoth-common from 0.3.13 to 0.3.14
+* Automatic update of dependency thoth-common from 0.3.12 to 0.3.13
+* Automatic update of dependency pytest from 3.9.2 to 3.9.3
+* Automatic update of dependency boto3 from 1.9.32 to 1.9.33
+* Automatic update of dependency boto3 from 1.9.30 to 1.9.32
+* Automatic update of dependency boto3 from 1.9.29 to 1.9.30
+* Automatic update of dependency pytest from 3.9.1 to 3.9.2
+* Automatic update of dependency boto3 from 1.9.28 to 1.9.29
+* Remove ignore comments
+* Fix CI
