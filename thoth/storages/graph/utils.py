@@ -80,7 +80,6 @@ def enable_edge_cache(func: typing.Callable):
     return wrapped
 
 
-# Ignore PycodestyleBear (E501) pylint: disable=invalid-name
 async def get_or_create_vertex(g: AsyncGraphTraversalSource, vertex: VertexBase) -> tuple:
     """Create a vertex if not existes.
 

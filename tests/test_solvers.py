@@ -35,10 +35,10 @@ def _fixture_adapter():
                               prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
 
-class TestSolverResultsStore(ResultBaseTest):  # Ignore PyDocStyleBear
+class TestSolverResultsStore(ResultBaseTest):
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
-        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"  # Ignore PycodestyleBear (E501)
+        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
     @pytest.mark.parametrize('document,document_id',
                              ResultBaseTest.get_solver_results())

@@ -43,21 +43,17 @@ class MyResultStorage(ResultStorageBase):
 @pytest.fixture(name='adapter')
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
-    return MyResultStorage(deployment_name=_DEPLOYMENT_NAME,
-                           prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    return MyResultStorage(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
 
-class ResultBaseTest(StorageBaseTest):  # Ignore PyDocStyleBear
+class ResultBaseTest(StorageBaseTest):
     """The Base Class for Result Tests."""
-  # Ignore PycodestyleBear (W293)
-    def test_get_document_id(self):  # Ignore PyDocStyleBear
+    def test_get_document_id(self):
         # Make sure we pick document id from right place.
         document = {'metadata': {'hostname': 'localhost'}}
         assert ResultStorageBase.get_document_id(document) == 'localhost'
 
-    @pytest.mark.parametrize('document,document_id',
-                             StorageBaseTest.get_all_results())
-    # Ignore PyDocStyleBear
+    @pytest.mark.parametrize('document,document_id', StorageBaseTest.get_all_results())
     def test_store_document(self, document, document_id):
         # pytest does not support fixtures and parameters at the same time
         adapter = _fixture_adapter()
@@ -73,8 +69,7 @@ class ResultBaseTest(StorageBaseTest):  # Ignore PyDocStyleBear
     def test_assertion_error(self):
         """Test assertion error if a developer does not provide RESULT_TYPE."""
         with pytest.raises(AssertionError):
-            ResultStorageBase(deployment_name=_DEPLOYMENT_NAME,
-                              prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+            ResultStorageBase(deployment_name=_DEPLOYMENT_NAME,prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
     @staticmethod
     def store_retrieve_document_test(adapter, document, document_id):
@@ -85,14 +80,13 @@ class ResultBaseTest(StorageBaseTest):  # Ignore PyDocStyleBear
         with connected_ceph_adapter(adapter) as connected_adapter:
             stored_document_id = connected_adapter.store_document(document)
             assert stored_document_id == document_id
-            assert connected_adapter.retrieve_document(
-                stored_document_id) == document
+            assert connected_adapter.retrieve_document stored_document_id) == document
 
 
 class TestResultBase(ResultBaseTest):
     """Test base class for result types.
 
-    We need to rename class to rename the class so it starts with Test prefix and is correctly picked by pytest.  # Ignore PycodestyleBear (E501)
-    We cannot directly use this class to derive from in result-specific adapters as pytest will run tests multiple  # Ignore PycodestyleBear (E501)
-    times for it due to Test prefix. This is a simple workaround to avoid running tests multiple times.  # Ignore PycodestyleBear (E501)
+    We need to rename class to rename the class so it starts with Test prefix and is correctly picked by pytest.
+    We cannot directly use this class to derive from in result-specific adapters as pytest will run tests multiple
+    times for it due to Test prefix. This is a simple workaround to avoid running tests multiple times.
     """

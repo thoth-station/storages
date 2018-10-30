@@ -1,4 +1,4 @@
-#!/usr/bin/env python3  # Ignore PyDocStyleBear
+#!/usr/bin/env python3
 # thoth-storages
 # Copyright(C) 2018 Fridolin Pokorny
 #

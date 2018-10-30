@@ -78,7 +78,7 @@ def _fixture_connected_adapter():
         yield connected_adapter
 
 
-class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
+class TestCephStore(ThothStoragesTest):
     def test_init_kwargs(self):
         """Test initialization of Ceph based on arguments."""
         adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
@@ -143,7 +143,6 @@ class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
         connected_adapter.store_document(document, key)
         assert connected_adapter.retrieve_document(key) == document
 
-    # Ignore PyDocStyleBear
     def test_iterate_results_empty(self, connected_adapter):
         assert list(connected_adapter.iterate_results()) == []
 
@@ -163,8 +162,7 @@ class TestCephStore(ThothStoragesTest):  # Ignore PyDocStyleBear
     def test_retrieve_document_not_exist(self, connected_adapter):
         """Check that retrieving document that does not exists raises an exception."""
         with pytest.raises(NotFoundError):
-            connected_adapter.retrieve_document(
-                'some-document-that-really-does-not-exist')
+            connected_adapter.retrieve_document('some-document-that-really-does-not-exist')
 
     def test_document_exists(self, connected_adapter):
         """Test document presents on Ceph."""
