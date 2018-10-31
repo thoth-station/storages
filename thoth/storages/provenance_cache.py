@@ -20,7 +20,7 @@
 from .ceph_cache import CephCache
 
 
-class ProvenanceCacheStore(ResultStorageBase):
+class ProvenanceCacheStore(CephCache):
     """Adapter for retrieving and storing hashes for cached provenance checker results."""
 
     RESULT_TYPE = 'provenance-cache'
