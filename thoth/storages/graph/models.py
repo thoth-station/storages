@@ -150,7 +150,15 @@ class Solved(EdgeBase):
 
     solver_document_id = Property(properties.String)
     solver_datetime = Property(properties.Integer)
-    solver_error = Property(properties.Boolean)
+    # Issues during installation of the given package in the given version
+    # (e.g. no native dependency that is needed, issues with setup.py,, ...)
+    solver_error = Property(properties.Boolean, default=False)
+    # Issues when solving the given package (e.g. the given package does not
+    # exist or the given version does not exist.)
+    # This flag is an addition to solver_error, meaning if solver_unsolvable is
+    # set to True, solver_error is True as well. But NOT vice versa.
+    # This behaviour is to simplify queries during recommendations.
+    solver_unsolvable = Property(properties.Boolean, default=False)
 
 
 class PackageExtractNativeBase(EdgeBase):

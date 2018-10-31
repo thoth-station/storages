@@ -487,11 +487,11 @@ class GraphDatabase(StorageBase):
                     target=python_package_version,
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
-                    solver_error=False
+                    solver_error=False,
+                    solver_unsolvable=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(
-                    f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
+                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
                 continue
 
             for dependency in python_package_info['dependencies']:
@@ -508,7 +508,8 @@ class GraphDatabase(StorageBase):
                             target=python_package_version_dependency,
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
-                            solver_error=False
+                            solver_error=False,
+                            solver_unsolvable=False
                         ).get_or_create(self.g)
 
                         # TODO: mark extras
@@ -525,8 +526,7 @@ class GraphDatabase(StorageBase):
         for error_info in document['result']['errors']:
             try:
                 python_package, _, python_package_version = self.create_pypi_package_version(
-                    package_name=error_info.get(
-                        'package_name') or error_info['package'],
+                    package_name=error_info.get('package_name') or error_info['package'],
                     package_version=error_info['version'],
                 )
 
@@ -535,12 +535,40 @@ class GraphDatabase(StorageBase):
                     target=python_package_version,
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
-                    solver_error=True
+                    solver_error=True,
+                    solver_unsolvable=False
                 ).get_or_create(self.g)
-
             except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(
-                    "Failed to sync Python package, error is not fatal: %r", error_info)
+                _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
+
+        for unsolvable in document['result']['unresolved']:
+            if not unsolvable['version_spec'].startswith('=='):
+                # No resolution can be perfomed so no identifier is captured, report warning and continue.
+                # We would like to capture this especially when there are
+                # packages in ecosystem that we cannot find (e.g. not configured private index
+                # or removed package).
+                _LOGGER.warning(
+                    f"Cannot sync unsolvable package {unsolvable} as package is not locked to as specific version"
+                )
+                continue
+
+            package_version = unsolvable['version_spec'][len('=='):]
+            try:
+                python_package, _, python_package_version = self.create_pypi_package_version(
+                    package_name=unsolvable['package_name'],
+                    package_version=package_version,
+                )
+
+                Solved.from_properties(
+                    source=ecosystem_solver,
+                    target=python_package_version,
+                    solver_document_id=solver_document_id,
+                    solver_datetime=solver_datetime,
+                    solver_error=True,
+                    solver_unsolvable=True
+                ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
 
     def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of deb packages found in the given container image."""
