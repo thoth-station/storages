@@ -80,3 +80,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency boto3 from 1.9.28 to 1.9.29
 * Remove ignore comments
 * Fix CI
+
+## Release 0.7.1 (2018-10-31T00:40:59)
+* Fix wrong base class
