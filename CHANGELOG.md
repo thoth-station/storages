@@ -83,3 +83,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.7.1 (2018-10-31T00:40:59)
 * Fix wrong base class
+
+## Release 0.7.2 (2018-10-31T12:22:42)
+
