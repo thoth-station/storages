@@ -333,8 +333,41 @@ class GraphDatabase(StorageBase):
                 inE()
                 .has('__label__', Solved.__label__)
                 .has('__type__', 'edge')
-        ).group().by('package_name').by('package_version') \
-            .next()
+        ).group().by('package_name').by('package_version').next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def retrieve_unsolvable_pypi_packages(self) -> dict:
+        """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name') \
+            .has('package_version') \
+            .and_(
+                inE()
+                .has('__label__', Solved.__label__)
+                .has('__type__', 'edge')
+                .has('solver_error_unsolvable', True)
+        ).group().by('package_name').by('package_version').next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def retrieve_unparsable_pypi_packages(self) -> dict:
+        """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name') \
+            .has('package_version') \
+            .and_(
+                inE()
+                .has('__label__', Solved.__label__)
+                .has('__type__', 'edge')
+                .has('solver_error_unparsable', True)
+        ).group().by('package_name').by('package_version').next()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
