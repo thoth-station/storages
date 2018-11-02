@@ -544,7 +544,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=False,
-                    solver_unsolvable=False
+                    solver_unsolvable=False,
+                    solver_unparsed=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
@@ -565,7 +566,8 @@ class GraphDatabase(StorageBase):
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
                             solver_error=False,
-                            solver_unsolvable=False
+                            solver_unsolvable=False,
+                            solver_unparsed=False
                         ).get_or_create(self.g)
 
                         # TODO: mark extras
@@ -592,7 +594,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True,
-                    solver_unsolvable=False
+                    solver_unsolvable=False,
+                    solver_unparsed=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
@@ -621,10 +624,39 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True,
-                    solver_unsolvable=True
+                    solver_unsolvable=True,
+                    solver_unparsed=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
+
+        for unparsed in document['result']['unparsed']:
+            parts = unparsed.rsplit('==', maxsplit=1)
+            if len(parts) != 2:
+                # This request did not come from graph-refresh job as there is not pinned version.
+                _LOGGER.warning(
+                    f"Cannot sync unparsed package {unparsed} as package is not locked to as specific version"
+                )
+                continue
+
+            package_name, package_version = parts
+            try:
+                python_package, _, python_package_version = self.create_pypi_package_version(
+                    package_name=package_name,
+                    package_version=package_version,
+                )
+
+                Solved.from_properties(
+                    source=ecosystem_solver,
+                    target=python_package_version,
+                    solver_document_id=solver_document_id,
+                    solver_datetime=solver_datetime,
+                    solver_error=True,
+                    solver_unsolvable=False,
+                    solver_unparsed=True
+                ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
 
     def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of deb packages found in the given container image."""
