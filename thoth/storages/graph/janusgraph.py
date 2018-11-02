@@ -544,8 +544,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=False,
-                    solver_unsolvable=False,
-                    solver_unparsed=False
+                    solver_error_unsolvable=False,
+                    solver_error_unparsable=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
@@ -566,8 +566,8 @@ class GraphDatabase(StorageBase):
                             solver_document_id=solver_document_id,
                             solver_datetime=solver_datetime,
                             solver_error=False,
-                            solver_unsolvable=False,
-                            solver_unparsed=False
+                            solver_error_unsolvable=False,
+                            solver_error_unparsable=False
                         ).get_or_create(self.g)
 
                         # TODO: mark extras
@@ -594,8 +594,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True,
-                    solver_unsolvable=False,
-                    solver_unparsed=False
+                    solver_error_unsolvable=False,
+                    solver_error_unparsable=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
@@ -624,8 +624,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True,
-                    solver_unsolvable=True,
-                    solver_unparsed=False
+                    solver_error_unsolvable=True,
+                    solver_error_unparsable=False
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
@@ -652,8 +652,8 @@ class GraphDatabase(StorageBase):
                     solver_document_id=solver_document_id,
                     solver_datetime=solver_datetime,
                     solver_error=True,
-                    solver_unsolvable=False,
-                    solver_unparsed=True
+                    solver_error_unsolvable=False,
+                    solver_error_unparsable=True
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)

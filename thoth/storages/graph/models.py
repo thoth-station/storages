@@ -157,15 +157,15 @@ class Solved(EdgeBase):
     solver_error = Property(properties.Boolean, default=False)
     # Issues when solving the given package (e.g. the given package does not
     # exist or the given version does not exist.)
-    # This flag is an addition to solver_error, meaning if solver_unsolvable is
+    # This flag is an addition to solver_error, meaning if solver_error_unsolvable is
     # set to True, solver_error is True as well. But NOT vice versa.
     # This behaviour is to simplify queries during recommendations.
-    solver_unsolvable = Property(properties.Boolean, default=False)
+    solver_error_unsolvable = Property(properties.Boolean, default=False)
     # Issues when parsing package names (package name does not conform to PEP - e.g. spaces in name).
-    # This flag is an addition to solver_error, meaning if solver_unparsed is
+    # This flag is an addition to solver_error, meaning if solver_error_unparsable is
     # set to True, solver_error is True as well. But NOT vice versa.
     # This behaviour is to simplify queries during recommendations.
-    solver_unparsed = Property(properties.Boolean, default=False)
+    solver_error_unparsable = Property(properties.Boolean, default=False)
 
 
 class PackageExtractNativeBase(EdgeBase):
