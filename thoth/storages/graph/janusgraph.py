@@ -22,6 +22,7 @@ import functools
 import logging
 import os
 import typing
+import re
 from datetime import datetime
 
 import uvloop
@@ -407,7 +408,9 @@ class GraphDatabase(StorageBase):
     def create_pypi_package_version(self, package_name: str, package_version: str, *,
                                     only_if_package_seen: bool = False) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
-        package_name = package_name.lower()
+        # Make sure we have normalized names in the graph database according to PEP:
+        #   https://www.python.org/dev/peps/pep-0503/#normalized-names
+        package_name = re.sub(r"[-_.]+", "-", package_name).lower()
 
         if only_if_package_seen:
             query = self.g.V() \
