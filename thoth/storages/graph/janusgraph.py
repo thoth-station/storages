@@ -58,6 +58,8 @@ from .models import RuntimeEnvironment
 from .models import Solved
 # from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
+from ..analyses import AnalysisResultsStore
+from ..solvers import SolverResultsStore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -201,8 +203,7 @@ class GraphDatabase(StorageBase):
             .has('__label__', IsPartOf.__label__) \
             .has('__type__', 'edge') \
             .order().by('analysis_datetime', Order.decr) \
-            .project('analysis_datetime', 'analysis_document_id',
-                     'analyzer_name', 'analyzer_version') \
+            .project('analysis_datetime', 'analysis_document_id', 'analyzer_name', 'analyzer_version') \
             .by('analysis_datetime').by('analysis_document_id') \
             .by('analyzer_name').by('analyzer_version') \
             .dedup() \
@@ -225,13 +226,11 @@ class GraphDatabase(StorageBase):
                     f"No analyses found for runtime environment {runtime_environment_name!r}")
 
         for entry in entries:
-            entry['analysis_datetime'] = datetime.fromtimestamp(
-                entry['analysis_datetime'])
+            entry['analysis_datetime'] = datetime.fromtimestamp(entry['analysis_datetime'])
 
         return entries
 
-    def get_runtime_environment(self, runtime_environment_name: str,
-                                analysis_document_id: str = None) -> tuple:
+    def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str = None) -> tuple:
         """Get runtime environment dependencies by its name.
 
         Select the newest analysis if no document id is present.
@@ -425,20 +424,17 @@ class GraphDatabase(StorageBase):
         """Check if the given solver document record exists."""
         loop = asyncio.get_event_loop()
 
+        document_id = SolverResultsStore.get_document_id(solver_document)
         query = self.g.V() \
             .has('__label__', EcosystemSolver.__label__) \
             .has('__type__', 'vertex') \
             .has('solver_name', solver_document['metadata']['analyzer']) \
-            .has('solver_version',
-                 solver_document['metadata']['analyzer_version']) \
+            .has('solver_version', solver_document['metadata']['analyzer_version']) \
             .outE() \
             .has('__type__', 'edge') \
             .has('__label__', Solved.__label__) \
-            .has('solver_document_id',
-                 solver_document['metadata']['hostname']) \
-            .has('solver_datetime',
-                 datetime_str2timestamp(
-                     solver_document['metadata']['datetime'])) \
+            .has('solver_document_id', document_id) \
+            .has('solver_datetime', datetime_str2timestamp(solver_document['metadata']['datetime'])) \
             .count().next()
 
         return loop.run_until_complete(query) > 0
@@ -447,11 +443,12 @@ class GraphDatabase(StorageBase):
         """Check whether the given analysis document records exist in the graph database."""
         loop = asyncio.get_event_loop()
 
+        document_id = AnalysisResultsStore.get_document_id(analysis_document)
         query = self.g.E() \
             .has('__label__', IsPartOf.__label__) \
             .has('__type__', 'edge') \
             .has('analysis_datetime', datetime_str2timestamp(analysis_document['metadata']['datetime'])) \
-            .has('analysis_document_id', analysis_document['metadata']['hostname']) \
+            .has('analysis_document_id', document_id) \
             .has('analyzer_name', analysis_document['metadata']['analyzer']) \
             .has('analyzer_version', analysis_document['metadata']['analyzer_version']) \
             .count().next()
@@ -527,9 +524,8 @@ class GraphDatabase(StorageBase):
         )
         ecosystem_solver.get_or_create(self.g)
 
-        solver_document_id = document['metadata']['hostname']
-        solver_datetime = datetime_str2timestamp(
-            document['metadata']['datetime'])
+        solver_document_id = SolverResultsStore.get_document_id(document)
+        solver_datetime = datetime_str2timestamp(document['metadata']['datetime'])
 
         for python_package_info in document['result']['tree']:
             try:
@@ -626,7 +622,36 @@ class GraphDatabase(StorageBase):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
 
-    def _deb_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+        for unparsed in document['result']['unparsed']:
+            parts = unparsed.rsplit('==', maxsplit=1)
+            if len(parts) != 2:
+                # This request did not come from graph-refresh job as there is not pinned version.
+                _LOGGER.warning(
+                    f"Cannot sync unparsed package {unparsed} as package is not locked to as specific version"
+                )
+                continue
+
+            package_name, package_version = parts
+            try:
+                python_package, _, python_package_version = self.create_pypi_package_version(
+                    package_name=package_name,
+                    package_version=package_version,
+                )
+
+                Solved.from_properties(
+                    source=ecosystem_solver,
+                    target=python_package_version,
+                    solver_document_id=solver_document_id,
+                    solver_datetime=solver_datetime,
+                    solver_error=True,
+                    solver_error_unsolvable=False,
+                    solver_error_unparsable=True
+                ).get_or_create(self.g)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
+
+    def _deb_sync_analysis_result(self, document_id: str, document: dict,
+                                  runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of deb packages found in the given container image."""
         for deb_package_info in document['result']['deb-dependencies']:
             try:
@@ -653,9 +678,8 @@ class GraphDatabase(StorageBase):
                 IsPartOf.from_properties(
                     source=deb_package_version,
                     target=runtime_environment,
-                    analysis_datetime=datetime_str2timestamp(
-                        document['metadata']['datetime']),
-                    analysis_document_id=document['metadata']['hostname'],
+                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_document_id=document_id,
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
@@ -697,7 +721,8 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception(
                     "Failed to sync debian package, error is not fatal: %r", deb_package_info)
 
-    def _rpm_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+    def _rpm_sync_analysis_result(self, document_id: str, document: dict,
+                                  runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document['result']['rpm-dependencies']:
             try:
@@ -709,8 +734,7 @@ class GraphDatabase(StorageBase):
                     epoch=rpm_package_info.get('epoch'),
                     arch=rpm_package_info.get('arch'),
                     src=rpm_package_info.get('src', False),
-                    package_identifier=rpm_package_info.get(
-                        'package_identifier', rpm_package_info['name'])
+                    package_identifier=rpm_package_info.get('package_identifier', rpm_package_info['name'])
                 )
                 rpm_package_version.get_or_create(self.g)
 
@@ -728,9 +752,8 @@ class GraphDatabase(StorageBase):
                 IsPartOf.from_properties(
                     source=rpm_package_version,
                     target=runtime_environment,
-                    analysis_datetime=datetime_str2timestamp(
-                        document['metadata']['datetime']),
-                    analysis_document_id=document['metadata']['hostname'],
+                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_document_id=document_id,
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
@@ -742,16 +765,14 @@ class GraphDatabase(StorageBase):
 
             for dependency in rpm_package_info['dependencies']:
                 try:
-                    rpm_requirement = RPMRequirement.from_properties(
-                        rpm_requirement_name=dependency)
+                    rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                     rpm_requirement.get_or_create(self.g)
 
                     Requires.from_properties(
                         source=rpm_package_version,
                         target=rpm_requirement,
-                        analysis_datetime=datetime_str2timestamp(
-                            document['metadata']['datetime']),
-                        analysis_document_id=document['metadata']['hostname'],
+                        analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                        analysis_document_id=document_id,
                         analyzer_name=document['metadata']['analyzer'],
                         analyzer_version=document['metadata']['analyzer_version']
                     ).get_or_create(self.g)
@@ -759,7 +780,8 @@ class GraphDatabase(StorageBase):
                     _LOGGER.exception(f"Failed to sync dependencies for "
                                       f"RPM {rpm_package_version.to_dict()}: {dependency!r}")
 
-    def _python_sync_analysis_result(self, document: dict, runtime_environment: RuntimeEnvironment) -> None:
+    def _python_sync_analysis_result(self, document_id: str, document: dict,
+                                     runtime_environment: RuntimeEnvironment) -> None:
         """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
         for python_package_info in document['result']['mercator'] or []:
@@ -783,9 +805,8 @@ class GraphDatabase(StorageBase):
                 IsPartOf.from_properties(
                     source=python_package_version,
                     target=runtime_environment,
-                    analysis_datetime=datetime_str2timestamp(
-                        document['metadata']['datetime']),
-                    analysis_document_id=document['metadata']['hostname'],
+                    analysis_datetime=datetime_str2timestamp(document['metadata']['datetime']),
+                    analysis_document_id=document_id,
                     analyzer_name=document['metadata']['analyzer'],
                     analyzer_version=document['metadata']['analyzer_version']
                 ).get_or_create(self.g)
@@ -846,6 +867,7 @@ class GraphDatabase(StorageBase):
             runtime_environment_name=document['metadata']['arguments']['extract-image']['image'],
         )
         runtime_environment.get_or_create(self.g)
-        self._rpm_sync_analysis_result(document, runtime_environment)
-        self._deb_sync_analysis_result(document, runtime_environment)
-        self._python_sync_analysis_result(document, runtime_environment)
+        document_id = AnalysisResultsStore.get_document_id(document)
+        self._rpm_sync_analysis_result(document_id, document, runtime_environment)
+        self._deb_sync_analysis_result(document_id, document, runtime_environment)
+        self._python_sync_analysis_result(document_id, document, runtime_environment)
