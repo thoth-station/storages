@@ -23,7 +23,6 @@ import logging
 import os
 import typing
 import re
-from datetime import datetime
 from itertools import chain
 
 import uvloop
@@ -36,6 +35,7 @@ from gremlin_python.process.graph_traversal import project
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
+from thoth.common import timestamp2datetime
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
@@ -172,8 +172,7 @@ class GraphDatabase(StorageBase):
             raise NotFoundError(
                 f"Analysis with analysis document if {analysis_document_id} was not found")
 
-        result['analysis_datetime'] = datetime.fromtimestamp(
-            result['analysis_datetime'])
+        result['analysis_datetime'] = timestamp2datetime(result['analysis_datetime'])
 
         return result
 
@@ -227,7 +226,7 @@ class GraphDatabase(StorageBase):
                     f"No analyses found for runtime environment {runtime_environment_name!r}")
 
         for entry in entries:
-            entry['analysis_datetime'] = datetime.fromtimestamp(entry['analysis_datetime'])
+            entry['analysis_datetime'] = timestamp2datetime(entry['analysis_datetime'])
 
         return entries
 
