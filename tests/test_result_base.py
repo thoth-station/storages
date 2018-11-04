@@ -80,7 +80,7 @@ class ResultBaseTest(StorageBaseTest):
         with connected_ceph_adapter(adapter) as connected_adapter:
             stored_document_id = connected_adapter.store_document(document)
             assert stored_document_id == document_id
-            assert connected_adapter.retrieve_document stored_document_id) == document
+            assert connected_adapter.retrieve_document(stored_document_id) == document
 
 
 class TestResultBase(ResultBaseTest):
