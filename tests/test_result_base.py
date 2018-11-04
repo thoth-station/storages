@@ -57,8 +57,7 @@ class ResultBaseTest(StorageBaseTest):
     def test_store_document(self, document, document_id):
         # pytest does not support fixtures and parameters at the same time
         adapter = _fixture_adapter()
-        adapter.ceph = flexmock(
-            get_document_id=ResultStorageBase.get_document_id)
+        adapter.ceph = flexmock(get_document_id=ResultStorageBase.get_document_id)
         adapter.ceph. \
             should_receive('store_document'). \
             with_args(document, document_id). \
