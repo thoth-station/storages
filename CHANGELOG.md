@@ -86,3 +86,18 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.7.2 (2018-10-31T12:22:42)
 
+
+## Release 0.7.3 (2018-11-04T21:49:10)
+* Rename error flags
+* Introduce unparsed flag
+* Introduce unparsed flag
+* Automatic update of dependency pytest from 3.9.3 to 3.10.0
+* Keep schema up2date with recent schema changes
+* Hostname is not equal to document id
+* Introduce methods for checking unsolvable and unparsed packages
+* Automatic update of dependency boto3 from 1.9.36 to 1.9.37
+* Introduce transitive dependencies gathering method
+* Normalize names of packages that are inserted into graph database
+* Automatic update of dependency boto3 from 1.9.35 to 1.9.36
+* Automatic update of dependency uvloop from 0.11.2 to 0.11.3
+* Automatic update of dependency boto3 from 1.9.34 to 1.9.35
