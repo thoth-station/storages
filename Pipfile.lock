@@ -260,11 +260,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:96158f8d7871230b44bc9ce69300414a1c6ffcd7de9914ab2b4028a2c90ef5cd",
-                "sha256:981d0b8b9f9d1ac5157e691539911d1008847e4a4255cb625d9e8454ab142b92"
+                "sha256:6b01e9d892b28068efc8cbbb41d790406aebfa47a9eed9fbcacae5f8ae66b94a",
+                "sha256:cd4a757ba3a238028f22aa4e547c6a5924be53f3e6d7bb46a329e30d355524f3"
             ],
             "index": "pypi",
-            "version": "==0.3.16"
+            "version": "==0.4.0"
         },
         "tornado": {
             "hashes": [
@@ -535,13 +535,6 @@
                 "sha256:229cd0794a19d8f33b2b4a4b70e1225b6c010af96c2dc8615279abbc1bb3929a"
             ],
             "version": "==2.10.0"
-        },
-        "cookies": {
-            "hashes": [
-                "sha256:15bee753002dff684987b8df8c235288eb8d45f8191ae056254812dfd42c81d3",
-                "sha256:d6b698788cae4cfa4e62ef8643a9ca332b79bd96cb314294b864ae8d7eb3ee8e"
-            ],
-            "version": "==2.2.1"
         },
         "coverage": {
             "hashes": [
