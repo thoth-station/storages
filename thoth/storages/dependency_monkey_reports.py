@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # thoth-storages
 # Copyright(C) 2018 Fridolin Pokorny
 #
@@ -16,20 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Storage and database adapters for Thoth."""
+"""Adapter for persisting reports from Dependency Monkey runs."""
 
-from .advisers import AdvisersResultsStore
-from .advisers_cache import AdvisersCacheStore
-from .analyses import AnalysisResultsStore
-from .analyses_cache import AnalysesCacheStore
-from .buildlogs import BuildLogsStore
-from .ceph import CephStore
-from .dependency_monkey_reports import DependencyMonkeyReportsStore
-from .graph import GraphDatabase
-from .provenance import ProvenanceResultsStore
-from .provenance_cache import ProvenanceCacheStore
-from .result_schema import RESULT_SCHEMA
-from .solvers import SolverResultsStore
+from .result_base import ResultStorageBase
 
-__name__ = 'thoth-storages'
-__version__ = "0.7.2"
+
+class DependencyMonkeyReportsStore(ResultStorageBase):
+    """Adapter for persisting reports from Dependency Monkey runs."""
+
+    RESULT_TYPE = 'dependency-monkey-reports'
