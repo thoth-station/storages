@@ -24,6 +24,7 @@ import os
 import typing
 import re
 from datetime import datetime
+from itertools import chain
 
 import uvloop
 from gremlin_python.process.traversal import Order
@@ -309,18 +310,17 @@ class GraphDatabase(StorageBase):
     def get_all_versions_python_package(self, package_name: str) -> typing.List[str]:
         """Get all versions available for a Python package."""
         # TODO: specify index
-        loop = asyncio.get_event_loop()
-
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('__type__', 'vertex') \
             .has('ecosystem', 'pypi') \
             .has('package_name', package_name) \
-            .dedup() \
+            .valueMap() \
             .select('package_version') \
+            .dedup() \
             .toList()
 
-        return asyncio.get_event_loop().run_until_complete(query)
+        return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
 
     def retrieve_unsolved_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved."""
