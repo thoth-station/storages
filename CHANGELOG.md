@@ -86,3 +86,27 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.7.2 (2018-10-31T12:22:42)
 
+
+## Release 0.7.3 (2018-11-07T10:04:34)
+* Automatic update of dependency boto3 from 1.9.38 to 1.9.39
+* Automatic update of dependency boto3 from 1.9.37 to 1.9.38
+* Introduce dependency monkey reports adapter
+* Fix query to retrieve all package versions
+* Exclude test directory
+* Automatic update of dependency moto from 1.3.6 to 1.3.7
+* Automatic update of dependency thoth-common from 0.3.16 to 0.4.0
+* Fix document naming
+* Fix CI failures
+* Rename error flags
+* Introduce unparsed flag
+* Introduce unparsed flag
+* Automatic update of dependency pytest from 3.9.3 to 3.10.0
+* Keep schema up2date with recent schema changes
+* Hostname is not equal to document id
+* Introduce methods for checking unsolvable and unparsed packages
+* Automatic update of dependency boto3 from 1.9.36 to 1.9.37
+* Introduce transitive dependencies gathering method
+* Normalize names of packages that are inserted into graph database
+* Automatic update of dependency boto3 from 1.9.35 to 1.9.36
+* Automatic update of dependency uvloop from 0.11.2 to 0.11.3
+* Automatic update of dependency boto3 from 1.9.34 to 1.9.35
