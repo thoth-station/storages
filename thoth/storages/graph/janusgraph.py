@@ -627,7 +627,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
 
         for unparsed in document['result']['unparsed']:
-            parts = unparsed.rsplit('==', maxsplit=1)
+            parts = unparsed['requirement'].rsplit('==', maxsplit=1)
             if len(parts) != 2:
                 # This request did not come from graph-refresh job as there is not pinned version.
                 _LOGGER.warning(
