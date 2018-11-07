@@ -110,3 +110,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency boto3 from 1.9.35 to 1.9.36
 * Automatic update of dependency uvloop from 0.11.2 to 0.11.3
 * Automatic update of dependency boto3 from 1.9.34 to 1.9.35
+
+## Release 0.7.4 (2018-11-07T13:17:46)
+* Fix unparseable solver result sync
