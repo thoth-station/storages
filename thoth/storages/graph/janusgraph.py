@@ -387,7 +387,7 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_solver_documents_count(self) -> dict:
+    def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
         query = self.g.E() \
             .has('__label__', Solved.__label__) \
@@ -404,7 +404,7 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_analyzer_documents_count(self) -> dict:
+    def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
         query = self.g.E() \
             .has('__type__', 'edge') \
