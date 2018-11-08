@@ -113,3 +113,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.7.4 (2018-11-07T13:17:46)
 * Fix unparseable solver result sync
+
+## Release 0.7.5 (2018-11-08T10:43:48)
+* Use common date utilities for creating datetime from timestamp
+* Fix queries to janusgraph - aggregate by document ids
+* Add method for counting documents
+* Add methods in janusgraph for metrics
+* Automatic update of dependency boto3 from 1.9.39 to 1.9.40
+* Correctly handle decorator wrappers
