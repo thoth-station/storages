@@ -349,7 +349,9 @@ class GraphDatabase(StorageBase):
                 inE()
                 .has('__label__', Solved.__label__)
                 .has('__type__', 'edge')
+                .has('solver_error', True)
                 .has('solver_error_unsolvable', True)
+                .has('solver_error_unparsable', False)
         ).group().by('package_name').by('package_version').next()
 
         return asyncio.get_event_loop().run_until_complete(query)
@@ -366,24 +368,68 @@ class GraphDatabase(StorageBase):
                 inE()
                 .has('__label__', Solved.__label__)
                 .has('__type__', 'edge')
+                .has('solver_error', True)
                 .has('solver_error_unparsable', True)
+                .has('solver_error_unpsolvable', False)
         ).group().by('package_name').by('package_version').next()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_python_packages_count(self) -> dict:
+    def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
-        query = self.g.V() \
+        if not without_error:
+            query = self.g.V() \
+                .has('__label__', PythonPackageVersion.__label__) \
+                .has('__type__', 'vertex') \
+                .has('ecosystem', 'pypi') \
+                .has('package_name') \
+                .has('package_version') \
+                .count().next()
+        else:
+            query = self.g.E() \
+                .has('__label__', Solved.__label__) \
+                .has('__type__', 'edge') \
+                .has('solver_document_id') \
+                .has('solver_datetime') \
+                .has('solver_error', False) \
+                .has('solver_error_unsolvable') \
+                .has('solver_error_unparsable') \
+                .inV() \
+                .has('__label__', PythonPackageVersion.__label__) \
+                .has('__type__', 'vertex') \
+                .has('ecosystem', 'pypi') \
+                .has('package_name') \
+                .has('package_version') \
+                .dedup() \
+                .count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_error_python_packages_count(self, unsolvable: bool = False, unparsable: bool = False) -> int:
+        """Retrieve number of Python packages stored in the graph database with error flag."""
+        if unsolvable and uparsable:
+            raise ValueError("Properties unsolvable and unparsable are disjoin")
+
+        query = self.g.E() \
+            .has('__label__', Solved.__label__) \
+            .has('__type__', 'edge') \
+            .has('solver_document_id') \
+            .has('solver_datetime') \
+            .has('solver_error', True) \
+            .has('solver_error_unsolvable', unsolvable) \
+            .has('solver_error_unparsable', unparsable) \
+            .inV() \
             .has('__label__', PythonPackageVersion.__label__) \
             .has('__type__', 'vertex') \
             .has('ecosystem', 'pypi') \
             .has('package_name') \
             .has('package_version') \
+            .dedup() \
             .count().next()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_solver_documents_count(self) -> dict:
+    def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
         query = self.g.E() \
             .has('__label__', Solved.__label__) \
@@ -400,7 +446,7 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_analyzer_documents_count(self) -> dict:
+    def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
         query = self.g.E() \
             .has('__type__', 'edge') \
