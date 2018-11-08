@@ -121,3 +121,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add methods in janusgraph for metrics
 * Automatic update of dependency boto3 from 1.9.39 to 1.9.40
 * Correctly handle decorator wrappers
+
+## Release 0.7.6 (2018-11-08T13:09:47)
+* Fix indentation error
