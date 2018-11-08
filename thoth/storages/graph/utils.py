@@ -21,6 +21,7 @@
 import os
 import typing
 import logging
+from functools import wraps
 
 from aiogremlin.process.graph_traversal import AsyncGraphTraversalSource
 from gremlin_python.process.graph_traversal import addV
@@ -36,6 +37,7 @@ _LOGGER = logging.getLogger(__name__)
 
 def enable_vertex_cache(func: typing.Callable):
     """Enable vertex caching."""
+    @wraps(func)
     def wrapped(*args, **kwargs):
         if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
             _LOGGER.debug("Disabling vertex graph cache")
@@ -59,6 +61,7 @@ def enable_vertex_cache(func: typing.Callable):
 
 def enable_edge_cache(func: typing.Callable):
     """Enable caching for edge handling."""
+    @wraps(func)
     def wrapped(*args, **kwargs):
         if bool(int(os.getenv('THOTH_STORAGES_DISABLE_CACHE', '0'))):
             _LOGGER.debug("Disabling edge graph cache")
