@@ -447,6 +447,7 @@ class GraphDatabase(StorageBase):
 
     def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index: str) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph."""
+        # TODO: extend query so that we are sure the given PVI was solved
         query = self.g.V() \
             .has('__type__', 'vertex') \
             .has('__label__', 'python_package_version') \
