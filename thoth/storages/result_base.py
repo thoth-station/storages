@@ -79,6 +79,10 @@ class ResultStorageBase(StorageBase):
         """Get listing of documents available in Ceph as a generator."""
         return self.ceph.get_document_listing()
 
+    def get_document_count(self) -> int:
+        """Get number of documents present."""
+        return len(tuple(self.get_document_listing()))
+
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
         try:
