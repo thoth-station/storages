@@ -349,7 +349,9 @@ class GraphDatabase(StorageBase):
                 inE()
                 .has('__label__', Solved.__label__)
                 .has('__type__', 'edge')
+                .has('solver_error', True)
                 .has('solver_error_unsolvable', True)
+                .has('solver_error_unparsable', False)
         ).group().by('package_name').by('package_version').next()
 
         return asyncio.get_event_loop().run_until_complete(query)
@@ -366,7 +368,9 @@ class GraphDatabase(StorageBase):
                 inE()
                 .has('__label__', Solved.__label__)
                 .has('__type__', 'edge')
+                .has('solver_error', True)
                 .has('solver_error_unparsable', True)
+                .has('solver_error_unpsolvable', False)
         ).group().by('package_name').by('package_version').next()
 
         return asyncio.get_event_loop().run_until_complete(query)
