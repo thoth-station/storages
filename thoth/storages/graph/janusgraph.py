@@ -394,7 +394,7 @@ class GraphDatabase(StorageBase):
             .has('solver_error_unsolvable') \
             .has('solver_error_unparsable') \
             .valueMap() \
-            .select('solver_document_id')
+            .select('solver_document_id') \
             .dedup() \
             .count().next()
 
@@ -410,7 +410,7 @@ class GraphDatabase(StorageBase):
             .has('analyzer_name') \
             .has('analyzer_version') \
             .valueMap() \
-            .select('analysis_document_id')
+            .select('analysis_document_id') \
             .dedup() \
             .count().next()
 
