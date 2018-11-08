@@ -23,4 +23,4 @@ from .result_base import ResultStorageBase
 class ProvenanceResultsStore(ResultStorageBase):
     """Store results of provenance reports."""
 
-    RESULT_TYPE = 'provenance'
+    RESULT_TYPE = "provenance"

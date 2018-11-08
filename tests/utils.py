@@ -25,6 +25,7 @@ from moto import mock_s3
 
 def with_adjusted_env(env_dict: dict):
     """Adjust environment variables on function/method run."""
+
     def wrapper(func):
         def wrapped(*args, **kwargs):
             old_env, os.environ = os.environ, env_dict

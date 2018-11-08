@@ -23,4 +23,4 @@ from .result_base import ResultStorageBase
 class DependencyMonkeyReportsStore(ResultStorageBase):
     """Adapter for persisting reports from Dependency Monkey runs."""
 
-    RESULT_TYPE = 'dependency-monkey-reports'
+    RESULT_TYPE = "dependency-monkey-reports"

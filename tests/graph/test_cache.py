@@ -23,7 +23,7 @@ from thoth.storages.graph.cache import CacheMiss
 from thoth.storages.graph.cache import Cache
 
 
-@pytest.fixture(name='cache')
+@pytest.fixture(name="cache")
 def _fixture_adapter():
     """Retrieve a cache instance."""
     return Cache()
@@ -31,7 +31,7 @@ def _fixture_adapter():
 
 class TestCache(ThothStoragesTest):
     def test_wipe(self, cache):
-        item, value = {'foo': '<id>'}, 'value'
+        item, value = {"foo": "<id>"}, "value"
         cache.put(item, value)
 
         assert cache.get(item) == value
@@ -41,16 +41,16 @@ class TestCache(ThothStoragesTest):
             cache.get(item)
 
     def test_get_nonexistent(self, cache):
-        item, value = {'foo': '<id>'}, 'value'
+        item, value = {"foo": "<id>"}, "value"
 
         cache.put(item, value)
 
         with pytest.raises(CacheMiss):
-            cache.get({'foo': 'some-non-existing-item'})
+            cache.get({"foo": "some-non-existing-item"})
 
     def test_get(self, cache):
-        item1, value1 = {'foo': '<id1>'}, 'value1'
-        item2, value2 = {'bar': '<id2>'}, 'value2'
+        item1, value1 = {"foo": "<id1>"}, "value1"
+        item2, value2 = {"bar": "<id2>"}, "value2"
 
         cache.put(item1, value1)
         cache.put(item2, value2)
@@ -60,4 +60,4 @@ class TestCache(ThothStoragesTest):
 
     def test_get_empty(self, cache):
         with pytest.raises(CacheMiss):
-            cache.get({'<id>': '<value>'})
+            cache.get({"<id>": "<value>"})

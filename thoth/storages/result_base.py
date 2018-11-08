@@ -32,30 +32,32 @@ class ResultStorageBase(StorageBase):
 
     RESULT_TYPE = None
 
-    def __init__(self, deployment_name=None, *, host: str = None,
-                 key_id: str = None, secret_key: str = None,
-                 bucket: str = None, region: str = None,
-                 prefix: str = None):
+    def __init__(
+        self,
+        deployment_name=None,
+        *,
+        host: str = None,
+        key_id: str = None,
+        secret_key: str = None,
+        bucket: str = None,
+        region: str = None,
+        prefix: str = None,
+    ):
         """Initialize result storage database.
 
         The adapter can take arguments from env variables if not provided
         explicitly.
         """
-        assert self.RESULT_TYPE is not None, "Make sure you define RESULT_TYPE in derived classes to distinguish between adapter type instances."  
+        assert (
+            self.RESULT_TYPE is not None
+        ), "Make sure you define RESULT_TYPE in derived classes to distinguish between adapter type instances."
 
-        self.deployment_name = deployment_name or os.environ['THOTH_DEPLOYMENT_NAME']
+        self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
         self.prefix = "{}/{}/{}".format(
-            prefix or os.environ['THOTH_CEPH_BUCKET_PREFIX'],
-            self.deployment_name,
-            self.RESULT_TYPE
+            prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
         )
         self.ceph = CephStore(
-            self.prefix,
-            host=host,
-            key_id=key_id,
-            secret_key=secret_key,
-            bucket=bucket,
-            region=region
+            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
         )
 
     @classmethod
@@ -65,7 +67,7 @@ class ResultStorageBase(StorageBase):
         # Note we need to return job id here - the last part delimited by dash
         # is used for specifying pod that runs for the given job. We need job
         # id to be returned (remove pod specific part).
-        return document['metadata']['hostname'].rsplit('-', maxsplit=1)[0]
+        return document["metadata"]["hostname"].rsplit("-", maxsplit=1)[0]
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""

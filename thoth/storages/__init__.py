@@ -31,5 +31,5 @@ from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
 from .solvers import SolverResultsStore
 
-__name__ = 'thoth-storages'
+__name__ = "thoth-storages"
 __version__ = "0.7.6"

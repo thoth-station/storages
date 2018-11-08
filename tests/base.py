@@ -27,7 +27,7 @@ import pytest
 class ThothStoragesTest(object):
     """A main class for testing thoth-storages package."""
 
-    DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
+    DATA_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data")
 
     @classmethod
     def get_all_results(cls):
@@ -37,15 +37,15 @@ class ThothStoragesTest(object):
 
     @classmethod
     def get_solver_results(cls):
-        return cls._get_result_type('solver')
+        return cls._get_result_type("solver")
 
     @classmethod
     def get_analyzer_results(cls):
-        return cls._get_result_type('analyzer')
+        return cls._get_result_type("analyzer")
 
     @classmethod
     def _get_result_type(cls, result_type):
-        path = os.path.join(cls.DATA_DIR, 'result', result_type)
+        path = os.path.join(cls.DATA_DIR, "result", result_type)
         for document_id in os.listdir(path):
             with open(os.path.join(path, document_id)) as document_file:
                 yield pytest.param(json.load(document_file), document_id, id=document_id)
@@ -56,16 +56,8 @@ class StorageBaseTest(ThothStoragesTest):
         """Test lazy connection to Ceph."""
         assert not adapter.is_connected()
 
-        flexmock(adapter.ceph). \
-            should_receive('connect'). \
-            with_args(). \
-            and_return(None). \
-            once()
-        flexmock(adapter.ceph). \
-            should_receive('is_connected'). \
-            with_args(). \
-            and_return(True). \
-            once()
+        flexmock(adapter.ceph).should_receive("connect").with_args().and_return(None).once()
+        flexmock(adapter.ceph).should_receive("is_connected").with_args().and_return(True).once()
         adapter.connect()
 
         assert adapter.is_connected()
@@ -77,31 +69,19 @@ class StorageBaseTest(ThothStoragesTest):
 
     def test_retrieve_document(self, adapter):
         """Test proper document retrieval."""
-        document = {'foo': 'bar'}
-        document_id = '<document_id>'
-        flexmock(adapter.ceph). \
-            should_receive('retrieve_document'). \
-            with_args(document_id). \
-            and_return(document). \
-            once()
+        document = {"foo": "bar"}
+        document_id = "<document_id>"
+        flexmock(adapter.ceph).should_receive("retrieve_document").with_args(document_id).and_return(document).once()
         assert adapter.ceph.retrieve_document(document_id) == document
 
     def test_iterate_results(self, adapter):
         """Test iterating over results for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph). \
-            should_receive('iterate_results'). \
-            with_args(). \
-            and_return(None). \
-            once()
+        flexmock(adapter.ceph).should_receive("iterate_results").with_args().and_return(None).once()
         assert adapter.iterate_results() is None
 
     def test_get_document_listing(self, adapter):
         """Test document listing for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph). \
-            should_receive('get_document_listing'). \
-            with_args(). \
-            and_return(None). \
-            once()
+        flexmock(adapter.ceph).should_receive("get_document_listing").with_args().and_return(None).once()
         assert adapter.get_document_listing() is None

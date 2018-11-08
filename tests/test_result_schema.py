@@ -31,11 +31,11 @@ from thoth.storages.result_schema import RESULT_SCHEMA
 
 def get_metadata(fail):
     """Retrieve all files that store metadata dictionary as a test input."""
-    path = os.path.join(ThothStoragesTest.DATA_DIR, 'schema')
+    path = os.path.join(ThothStoragesTest.DATA_DIR, "schema")
     for metadata_file in os.listdir(path):
-        if fail and not metadata_file.startswith('metadata_fail_'):
+        if fail and not metadata_file.startswith("metadata_fail_"):
             continue
-        elif not fail and not metadata_file.startswith('metadata_ok_'):
+        elif not fail and not metadata_file.startswith("metadata_ok_"):
             continue
 
         with open(os.path.join(path, metadata_file)) as mf:
@@ -44,11 +44,11 @@ def get_metadata(fail):
 
 def get_results(fail):
     """Retrieve all files that store metadata dictionary as a test input."""
-    path = os.path.join(ThothStoragesTest.DATA_DIR, 'schema')
+    path = os.path.join(ThothStoragesTest.DATA_DIR, "schema")
     for result_file in os.listdir(path):
-        if fail and not result_file.startswith('result_fail_'):
+        if fail and not result_file.startswith("result_fail_"):
             continue
-        elif not fail and not result_file.startswith('result_ok_'):
+        elif not fail and not result_file.startswith("result_ok_"):
             continue
 
         with open(os.path.join(path, result_file)) as mf:

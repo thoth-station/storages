@@ -27,4 +27,4 @@ class AnalysesCacheStore(CephCache):
     was analyzed based in its SHA and which analysis corresponds to the analyzed image.
     """
 
-    RESULT_TYPE = 'analysis-cache'
+    RESULT_TYPE = "analysis-cache"
