@@ -372,6 +372,47 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    def get_python_packages_count(self) -> dict:
+        """Retrieve number of Python packages stored in the graph database."""
+        query = self.g.V() \
+            .has('__label__', PythonPackageVersion.__label__) \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name') \
+            .has('package_version') \
+            .count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_solver_documents_count(self) -> dict:
+        """Get number of solver documents synced into graph."""
+        query = self.g.E() \
+            .has('__label__', Solved.__label__) \
+            .has('__type__', 'edge') \
+            .has('solver_document_id') \
+            .has('solver_datetime') \
+            .has('solver_error') \
+            .has('solver_error_unsolvable') \
+            .has('solver_error_unparsable') \
+            .dedup() \
+            .count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_analyzer_documents_count(self) -> dict:
+        """Get number of image analysis documents synced into graph."""
+        query = self.g.E() \
+            .has('__type__', 'edge') \
+            .has('__type__', Requires.__label__) \
+            .has('analysis_datetime') \
+            .has('analysis_document_id') \
+            .has('analyzer_name') \
+            .has('analyzer_version') \
+            .dedup() \
+            .count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
         # TODO: when added __type__ Cassanda backend time outs.
