@@ -337,6 +337,17 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    def retrieve_solved_pypi_packages(self) -> dict:
+        """Retrieve a dictionary mapping package names to versions for dependencies that were already solved."""
+        query = self.g.E() \
+            .has('__label__', Solved.__label__) \
+            .has('__type__', 'edge') \
+            .inV() \
+            .dedup() \
+            .group().by('package_name').by('package_version').next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
     def retrieve_unsolvable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
         query = self.g.V() \
