@@ -124,3 +124,19 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.7.6 (2018-11-08T13:09:47)
 * Fix indentation error
+
+## Release 0.8.0 (2018-11-15T12:22:25)
+* Automatic update of dependency boto3 from 1.9.44 to 1.9.45
+* Automatic update of dependency pytest from 3.10.1 to 4.0.0
+* Automatic update of dependency boto3 from 1.9.43 to 1.9.44
+* Add a query to check for solved packages
+* Automatic update of dependency boto3 from 1.9.42 to 1.9.43
+* Automatic update of dependency pytest from 3.10.0 to 3.10.1
+* Automatic update of dependency boto3 from 1.9.41 to 1.9.42
+* Automatic update of dependency boto3 from 1.9.40 to 1.9.41
+* Automatic update of dependency requests from 2.20.0 to 2.20.1
+* Extend quieries to janusgraph
+* Extend quieries to janusgraph
+* Fix return values
+* Make sure to hit indexes with queries
+* Fix indentation error
