@@ -74,6 +74,18 @@ class CVE(VertexBase):
     version_range = VertexProperty(properties.String)
 
 
+class PythonPackageIndex(VertexBase):
+    """Representation of a Python package Index.
+
+    Fields are compatible with Thoth's Source class (the implicit ones are omitted).
+    """
+
+    url = VertexProperty(properties.String)
+    warehouse_api_url = VertexProperty(properties.String, default=None)
+    verify_ssl = VertexProperty(properties.Boolean, default=True)
+    warehouse = VertexProperty(properties.Boolean, default=False)
+
+
 class PythonPackageVersion(PackageVersionBase):
     """Python package version vertex."""
 
@@ -228,6 +240,7 @@ ALL_MODELS = frozenset((
     HasVulnerability,
     IsPartOf,
     Package,
+    PythonPackageIndex,
     PythonPackageVersion,
     Requires,
     RPMPackageVersion,
