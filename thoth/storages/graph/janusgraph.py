@@ -51,6 +51,7 @@ from .models import HasVersion
 from .models import HasVulnerability
 from .models import IsPartOf
 from .models import Package
+from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
 from .models import RPMPackageVersion
@@ -175,6 +176,18 @@ class GraphDatabase(StorageBase):
         result['analysis_datetime'] = timestamp2datetime(result['analysis_datetime'])
 
         return result
+
+    def register_python_package_index(url: str, *, warehouse_api_url: str = None,
+                                      verify_ssl: bool = True, warehouse: bool = False) -> bool:
+        """Return a list of available Python package indexes."""
+        python_package_index = PythonPackageIndex.from_properties(
+            url=url,
+            warehouse_api_url=warehouse_api_url,
+            verify_ssl=verify_ssl,
+            warehouse=warehouse
+        )
+        existed = python_package.get_or_create(self.g)
+        return existed
 
     def runtime_environment_listing(self, start_offset: int = 0,
                                     count: int = 100) -> list:
