@@ -30,7 +30,10 @@ from .exceptions import SchemaError
 class ResultStorageBase(StorageBase):
     """Adapter base for storing results."""
 
+    # Type of results to distinguish them based on prefix on Ceph.
     RESULT_TYPE = None
+    # Use core analyzers schema as default one, derived classes can adjust this.
+    SCHEMA = RESULT_SCHEMA
 
     def __init__(
         self,
@@ -87,10 +90,11 @@ class ResultStorageBase(StorageBase):
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
-        try:
-            RESULT_SCHEMA(document)
-        except Exception as exc:
-            raise SchemaError("Failed to validate document schema") from exc
+        if self.SCHEMA:
+            try:
+                self.SCHEMA(document)
+            except Exception as exc:
+                raise SchemaError("Failed to validate document schema") from exc
 
         document_id = self.get_document_id(document)
         self.ceph.store_document(document, document_id)
