@@ -54,9 +54,8 @@ class ResultBaseTest(StorageBaseTest):
         assert ResultStorageBase.get_document_id(document) == 'localhost'
 
     @pytest.mark.parametrize('document,document_id', StorageBaseTest.get_all_results())
-    def test_store_document(self, document, document_id):
+    def test_store_document(self, adapter, document, document_id):
         # pytest does not support fixtures and parameters at the same time
-        adapter = _fixture_adapter()
         adapter.ceph = flexmock(get_document_id=ResultStorageBase.get_document_id)
         adapter.ceph. \
             should_receive('store_document'). \
