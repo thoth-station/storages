@@ -27,4 +27,5 @@ class InspectionResultsStore(ResultStorageBase):
 
     @classmethod
     def get_document_id(cls, document: dict) -> str:
+        """Get id under which the given document will be stored."""
         return document['inspection_id']
