@@ -35,13 +35,13 @@ class VertexBase(Vertex):
 
     def __repr__(self):
         """Show vertex representation."""
-        values = ''
+        values = ""
         for key, value in self.to_dict().items():
-            if key.startswith('__'):
+            if key.startswith("__"):
                 continue
-            values += '{}={}, '.format(key, repr(value) if isinstance(value, str) else value)
+            values += "{}={}, ".format(key, repr(value) if isinstance(value, str) else value)
 
-        return f'{self.__class__.__name__}({values[:-2]})'
+        return f"{self.__class__.__name__}({values[:-2]})"
 
     def to_pretty_dict(self) -> dict:
         """Return a dict representation of this object.
@@ -86,14 +86,14 @@ class EdgeBase(Edge):
     # Edge cache to be used.
     cache = None
 
-    def __repr__(self):
-        values = ''
+    def __repr__(self):  # Ignore PyDocStyleBear
+        values = ""
         for key, value in self.to_dict().items():
-            if key.startswith('__'):
+            if key.startswith("__"):
                 continue
-            values += '{}={}, '.format(key, repr(value) if isinstance(value, str) else value)
+            values += "{}={}, ".format(key, repr(value) if isinstance(value, str) else value)
 
-        return f'{self.__class__.__name__}({values[:-2]})'
+        return f"{self.__class__.__name__}({values[:-2]})"
 
     # pylint: disable=invalid-name
     def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
