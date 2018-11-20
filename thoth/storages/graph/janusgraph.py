@@ -187,7 +187,7 @@ class GraphDatabase(StorageBase):
             warehouse=warehouse
         )
         existed = python_package.get_or_create(self.g)
-        return existed
+        return python_package_index, existed
 
     def runtime_environment_listing(self, start_offset: int = 0,
                                     count: int = 100) -> list:
