@@ -67,7 +67,7 @@ def sync_analysis_documents(document_ids: list = None, force: bool = False,
     graph = GraphDatabase()
     graph.connect()
 
-    analysis_store = AnalysisResultsStore(host=analysis_results_store_host)
+    analysis_store = AnalysisResultsStore()
     analysis_store.connect()
 
     processed, synced, skipped, failed = 0, 0, 0, 0
