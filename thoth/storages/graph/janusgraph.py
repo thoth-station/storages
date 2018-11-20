@@ -28,6 +28,7 @@ from itertools import chain
 import uvloop
 from gremlin_python.process.traversal import Order
 from gremlin_python.process.traversal import without
+from gremlin_python.process.traversal import gt
 from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import outE
 from gremlin_python.process.graph_traversal import constant
@@ -553,6 +554,17 @@ class GraphDatabase(StorageBase):
 
         return loop.run_until_complete(query) > 0
 
+    def solver_document_id_exist(self, solver_document_id) -> bool:
+        """Check if there is a solver document with the given id."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.E() \
+            .has('solver_document_id', solver_document_id) \
+            .count().is_(gt(0)) \
+            .next()
+
+        return bool(loop.run_until_complete(query))
+
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
         loop = asyncio.get_event_loop()
@@ -568,6 +580,17 @@ class GraphDatabase(StorageBase):
             .count().next()
 
         return loop.run_until_complete(query) > 0
+
+    def analysis_document_id_exist(self, analysis_document_id) -> bool:
+        """Check if there is a analysis document with the given id."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.E() \
+            .has('solver_document_id', analysis_document_id) \
+            .count().is_(gt(0)) \
+            .next()
+
+        return bool(loop.run_until_complete(query))
 
     def create_pypi_package_version(self, package_name: str, package_version: str, *,
                                     only_if_package_seen: bool = False) -> typing.Union[None, tuple]:
