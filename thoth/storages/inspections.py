@@ -24,3 +24,7 @@ class InspectionResultsStore(ResultStorageBase):
     """Adapter for persisting Amun inspection results."""
 
     RESULT_TYPE = 'inspections'
+
+    @classmethod
+    def get_document_id(cls, document: dict) -> str:
+        return document['inspection_id']
