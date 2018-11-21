@@ -15,6 +15,7 @@ cython = "*"
 ujson = "*"
 uvloop = "*"
 yarl = "<1.2"
+amun = "*"
 
 [dev-packages]
 pytest = "*"
