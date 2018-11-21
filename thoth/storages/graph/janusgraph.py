@@ -713,11 +713,12 @@ class GraphDatabase(StorageBase):
             )
 
         if document['job_log'] is not None:
+            performance_index = None
             if document['status']['job']['exit_code'] != 0:
                 # Negative performance index - the application does not run.
                 performance_index = -1.0
-
-            performance_index = document['job_log'].get('performance_index')
+            elif isinstance(document['job_log']['stdout'], dict):
+                performance_index = document['job_log']['stdout'].get('performance_index')
 
             runtime_environment = RuntimeEnvironment.from_properties(
                 runtime_environment_name=document['inspection_id']
