@@ -677,7 +677,7 @@ class GraphDatabase(StorageBase):
     def create_software_stack_pipfile(pipfile_locked: dict) -> SoftwareStack:
         """Create a software stack inside graph database from a Pipfile.lock."""
         python_packages = []
-        for package_name, package_info in pipfile_locked.items()
+        for package_name, package_info in pipfile_locked.items():
             # TODO: extend with index
             # TODO: sync also test packages?
             if not package_info['version'].startswith('=='):

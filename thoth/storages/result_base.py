@@ -107,3 +107,7 @@ class ResultStorageBase(StorageBase):
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
         return self.ceph.iterate_results()
+
+    def document_exists(self, document_id: str) -> bool:
+        """Check if the there is an object with the given key in bucket."""
+        return self.ceph.document_exists(document_id)
