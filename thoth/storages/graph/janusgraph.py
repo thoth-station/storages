@@ -64,7 +64,6 @@ from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
 from .models import HardwareInformation
-from .models import Observed
 from .models import Solved
 from .models import SoftwareStack
 from .models import CreatesStack
@@ -696,6 +695,7 @@ class GraphDatabase(StorageBase):
 
         software_stack = SoftwareStack()
         software_stack.get_or_create(self.g)
+
         for python_package_version in python_packages:
             CreatesStack.from_properties(
                 source=python_package_version,
@@ -727,25 +727,21 @@ class GraphDatabase(StorageBase):
             runtime_hardware = self._get_hardware_information(document['specification']['run']['requests'])
             runtime_hardware.get_or_create(self.g)
 
-            runtime_observation = Observed.from_properties(
-                source=runtime_hardware,
-                target=runtime_environment
-            )
-            runtime_observation.get_or_create(self.g)
-
             run_error = document['status']['job']['exit_code'] == 0
 
             if software_stack:
                 RunsIn.from_properties(
                     source=software_stack,
                     target=runtime_environment,
-                    inspection_document_id=document['inspection_id']
+                    inspection_document_id=document['inspection_id'],
+                    run_error=run_error
                 ).get_or_create(self.g)
 
             RunsOn.from_properties(
                 source=runtime_environment,
                 target=runtime_hardware,
-                inspection_document_id=document['inspection_id']
+                inspection_document_id=document['inspection_id'],
+                run_error=run_error
             ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
@@ -756,20 +752,15 @@ class GraphDatabase(StorageBase):
         buildtime_hardware = self._get_hardware_information(document['specification']['build']['requests'])
         buildtime_hardware.get_or_create(self.g)
 
-        buildtime_observation = Observed.from_properties(
-            source=buildtime_hardware,
-            target=buildtime_environment
-        )
-        buildtime_observation.get_or_create(self.g)
-
         build_error = document['status']['build']['exit_code'] == 0
 
-        BuildsIn.from_properties(
-            source=software_stack,
-            target=buildtime_environment,
-            inspection_document_id=document['inspection_id'],
-            build_error=build_error
-        ).get_or_create(self.g)
+        if software_stack:
+            BuildsIn.from_properties(
+                source=software_stack,
+                target=buildtime_environment,
+                inspection_document_id=document['inspection_id'],
+                build_error=build_error
+            ).get_or_create(self.g)
 
         BuildsOn.from_properties(
             source=buildtime_environment,
