@@ -23,7 +23,7 @@ from .result_base import ResultStorageBase
 class InspectionResultsStore(ResultStorageBase):
     """Adapter for persisting Amun inspection results."""
 
-    RESULT_TYPE = 'inspections'
+    RESULT_TYPE = 'inspection'
     SCHEMA = None
 
     @classmethod

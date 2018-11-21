@@ -55,10 +55,18 @@ from .models import Package
 from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
+from .models import RunsIn
+from .models import RunsOn
+from .models import BuildsIn
+from .models import BuildsOn
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
+from .models import HardwareInformation
+from .models import Observed
 from .models import Solved
+from .models import SoftwareStack
+from .models import CreatesStack
 # from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
 from ..analyses import AnalysisResultsStore
@@ -554,8 +562,8 @@ class GraphDatabase(StorageBase):
 
         return loop.run_until_complete(query) > 0
 
-    def solver_document_id_exist(self, solver_document_id) -> bool:
-        """Check if there is a solver document with the given id."""
+    def solver_document_id_exist(self, solver_document_id: str) -> bool:
+        """Check if there is a solver document record with the given id."""
         loop = asyncio.get_event_loop()
 
         query = self.g.E() \
@@ -581,8 +589,8 @@ class GraphDatabase(StorageBase):
 
         return loop.run_until_complete(query) > 0
 
-    def analysis_document_id_exist(self, analysis_document_id) -> bool:
-        """Check if there is a analysis document with the given id."""
+    def analysis_document_id_exist(self, analysis_document_id: str) -> bool:
+        """Check if there is an analysis document record with the given id."""
         loop = asyncio.get_event_loop()
 
         query = self.g.E() \
@@ -591,6 +599,179 @@ class GraphDatabase(StorageBase):
             .next()
 
         return bool(loop.run_until_complete(query))
+
+    def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
+        """Check if there is an inspection document record with the given id."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.E() \
+            .has('inspection_document_id', analysis_document_id) \
+            .count().is_(gt(0)) \
+            .next()
+
+        return bool(loop.run_until_complete(query))
+
+    @staticmethod
+    def _parse_cpu(cpu_spec) -> float:
+        """Parse the given CPU requirement as used by OpenShift/Kubernetes."""
+        if isinstance(cpu_spec, str):
+            if cpu_spec.endswith('m'):
+                cpu_spec = cpu_spec[:-1]
+                return int(cpu_spec) / 1000
+
+        return float(cpu_spec)
+
+    @staticmethod
+    def _parse_memory(memory_spec) -> float:
+        if isinstance(memory_spec, (float, int)):
+            return float(memory_spec)
+
+        if memory_spec.endswith('E'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000**6
+        elif memory_spec.endswith('P'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000**5
+        elif memory_spec.endswith('T'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000**4
+        elif memory_spec.endswith('G'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000**3
+        elif memory_spec.endswith('M'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000**2
+        elif memory_spec.endswith('K'):
+            memory_spec = float(memory_spec[:-1])
+            return memory_spec * 1000
+        elif memory_spec.endswith('Ei'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024**6
+        elif memory_spec.endswith('Pi'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024**5
+        elif memory_spec.endswith('Ti'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024**4
+        elif memory_spec.endswith('Gi'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024**3
+        elif memory_spec.endswith('Mi'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024**2
+        elif memory_spec.endswith('Ki'):
+            memory_spec = float(memory_spec[:-2])
+            return memory_spec * 1024
+
+    def _get_hardware_information(self, specs: dict) -> HardwareInformation:
+        """Get hardware information based on requests provided."""
+        hardware = specs['hardware']
+        return HardwareInformation.from_properties(
+            cpu_family=hardware.get('cpu_family'),
+            cpu_model=hardware.get('cpu_model'),
+            cpu_physical_cpus=hardware.get('physical_cpus'),
+            cpu_model_name=hardware.get('processor'),
+            cpu_cores=self._parse_cores(specs['cpu']) if specs.get('cpu') else None,
+            ram_size=self._parse_memory(specs['memory']) if specs.get('memory') else None,
+        )
+
+    def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:
+        """Create a software stack inside graph database from a Pipfile.lock."""
+        python_packages = []
+        for package_name, package_info in pipfile_locked['default'].items():
+            # TODO: extend with index
+            # TODO: sync also test packages?
+            if not package_info['version'].startswith('=='):
+                _LOGGER.error(
+                    "Package %r in version %r in the Pipfile.lock was not pinned to a specific version correctly",
+                    package_name, package_info['version']
+                )
+                package_version = package_info['version']
+            else:
+                package_version = package_info['version'][len('=='):]
+
+            _, v, python_package_version = self.create_pypi_package_version(package_name, package_version)
+            python_packages.append(python_package_version)
+
+        software_stack = SoftwareStack()
+        software_stack.get_or_create(self.g)
+        for python_package_version in python_packages:
+            CreatesStack.from_properties(
+                source=python_package_version,
+                target=software_stack
+            ).get_or_create(self.g)
+
+    def sync_inspection_result(self, document) -> None:
+        """Sync the given inspection document into the graph database."""
+        if document['specification'].get('python'):
+            sofware_stack = self.create_software_stack_pipfile(
+                document['specification']['python']['requirements_locked']
+            )
+
+        if document['job_log'] is not None:
+            if document['status']['job']['exit_code'] != 0:
+                # Negative performance index - the application does not run.
+                performance_index = -1.0
+
+            performance_index = document['job_log'].get('performance_index')
+
+            runtime_environment = RuntimeEnvironment.from_properties(
+                runtime_environment_name=document['inspection_id']
+            )
+            runtime_environment.get_or_create(self.g)
+
+            runtime_hardware = self._get_hardware_information(document['specification']['run']['requests'])
+            runtime_hardware.get_or_create(self.g)
+
+            runtime_observation = Observed.from_properties(
+                source=runtime_hardware,
+                target=runtime_environment
+            )
+            runtime_observation.get_or_create(self.g)
+
+            run_error = document['status']['exit_code'] == 0
+
+            RunsIn(
+                source=software_stack,
+                target=runtime_environment,
+                inspection_document_id=inspection_document_id
+            ).get_or_create(self.g)
+
+            RunsOn(
+                source=runtime_environment,
+                target=runtime_hardware,
+                inspection_document_id=inspection_document_id,
+            ).get_or_create(self.g)
+
+        buildtime_environment = BuildtimeEnvironment.from_properties(
+            buildtime_environment_name=document['inspection_id']
+        )
+        buildtime_environment.get_or_create(self.g)
+
+        buildtime_hardware = self._get_hardware_information(document['specification']['build']['requests'])
+        buildtime_hardware.get_or_create(self.g)
+
+        buildtime_observation = Observed.from_properties(
+            source=buildtime_hardware,
+            target=buildtime_environment
+        )
+        buildtime_observation.get_or_create_edge(self.g)
+
+        build_error = document['status']['build']['exit_code'] == 0
+
+        BuildsIn(
+            source=sofware_stack,
+            target=buildtime_environment,
+            inspection_document_id=inspection_document_id,
+            build_error=build_error
+        ).get_or_create(self.g)
+
+        BuildsOn(
+            source=buildtime_environment,
+            target=buildtime_hardware,
+            inspection_document_id=inspection_document_id,
+            build_error=build_error
+        ).get_or_create(self.g)
 
     def create_pypi_package_version(self, package_name: str, package_version: str, *,
                                     only_if_package_seen: bool = False) -> typing.Union[None, tuple]:

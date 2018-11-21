@@ -94,35 +94,48 @@ class RuntimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
     runtime_environment_name = VertexProperty(properties.String)
-    # TODO: capture hashes of layers
+    # TODO: capture hashes of layers to be precise?
+
+
+class BuildtimeEnvironment(VertexBase):
+    """Environment such as container image which consists of various packages."""
+
+    biuldtime_environment_name = VertexProperty(properties.String)
+    # TODO: capture hashes of layers to be precise?
 
 
 class SoftwareStack(VertexBase):
     """A software stack crated by packages in specific versions."""
-
-    installable = VertexProperty(properties.Boolean, default=True)
 
 
 class SoftwareStackObservation(VertexBase):
     """Observations we have about the given stack based on run on a specific hardware."""
 
     performance_index = VertexProperty(properties.Float)
-    observation_document_id = VertexProperty(properties.String, db_name='document_id')
+    inspection_document_id = VertexProperty(properties.String, db_name='document_id')
+
+
+class BuildObservation(VertexBase):
+    """Observations we have about the given stack on runtime on some specific hardware."""
+
+    inspection_document_id = VertexProperty(properties.String, db_name='document_id')
 
 
 class HardwareInformation(VertexBase):
     """Hardware specification and propertires."""
 
-    cpu_vendor = VertexProperty(properties.String)
+    # cpu_vendor = VertexProperty(properties.String)
     cpu_model_name = VertexProperty(properties.String)
     cpu_model = VertexProperty(properties.Integer)
     cpu_family = VertexProperty(properties.Integer)
     cpu_cores = VertexProperty(properties.Integer)
+    cpu_physical_cpus = VertexProperty(properties.Integer)
 
-    gpu_vendor = VertexProperty(properties.String)
-    gpu_model_name = VertexProperty(properties.String)
-    gpu_cores = VertexProperty(properties.Integer)
-    gpu_memory_size = VertexProperty(properties.Integer)
+    # TODO: provide once we will have them available from Amun.
+    # gpu_vendor = VertexProperty(properties.String)
+    # gpu_model_name = VertexProperty(properties.String)
+    # gpu_cores = VertexProperty(properties.Integer)
+    # gpu_memory_size = VertexProperty(properties.Integer)
 
     ram_size = VertexProperty(properties.Integer)
 
@@ -145,7 +158,7 @@ class DependsOn(EdgeBase):
 class Observed(EdgeBase):
     """Information about observations gathered on run."""
 
-    observation_document_id = Property(properties.String)
+    inspection_document_id = Property(properties.String)
 
 
 class IsPartOf(EdgeBase):
@@ -200,6 +213,30 @@ class HasVersion(EdgeBase):
 class RunsIn(EdgeBase):
     """The given software stack runs in a runtime environment."""
 
+    inspection_document_id = Property(properties.String)
+    run_error = Property(properties.Boolean)
+
+
+class RunsOn(EdgeBase):
+    """The given software stack runs on the given hardware."""
+
+    inspection_document_id = Property(properties.String)
+    run_error = Property(properties.Boolean)
+
+
+class BuildsIn(EdgeBase):
+    """The given software stack builds in a build environment."""
+
+    inspection_document_id = Property(properties.String)
+    build_error = Property(properties.Boolean)
+
+
+class BuildsOn(EdgeBase):
+    """The given software stack builds on the given hardware."""
+
+    inspection_document_id = Property(properties.String)
+    build_error = Property(properties.Boolean)
+
 
 class HasVulnerability(EdgeBase):
     """The given package-v version has a vulnerability."""
@@ -228,6 +265,10 @@ class DebReplaces(PackageExtractNativeBase):
 
 
 ALL_MODELS = frozenset((
+    BuildsIn,
+    BuildsOn,
+    BuildtimeEnvironment,
+    BuildObservation,
     CreatesStack,
     CVE,
     DebDepends,
@@ -245,6 +286,8 @@ ALL_MODELS = frozenset((
     Requires,
     RPMPackageVersion,
     RPMRequirement,
+    RunsIn,
+    RunsOn,
     RuntimeEnvironment,
     SoftwareStack,
     Solved,
