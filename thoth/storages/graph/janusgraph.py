@@ -62,6 +62,7 @@ from .models import BuildsOn
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
+from .models import HardwareInformation
 from .models import Observed
 from .models import Solved
 from .models import SoftwareStack
@@ -674,10 +675,10 @@ class GraphDatabase(StorageBase):
             ram_size=self._parse_memory(specs['memory']) if specs.get('memory') else None,
         )
 
-    def create_software_stack_pipfile(pipfile_locked: dict) -> SoftwareStack:
+    def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:
         """Create a software stack inside graph database from a Pipfile.lock."""
         python_packages = []
-        for package_name, package_info in pipfile_locked.items():
+        for package_name, package_info in pipfile_locked['default'].items():
             # TODO: extend with index
             # TODO: sync also test packages?
             if not package_info['version'].startswith('=='):
@@ -685,11 +686,14 @@ class GraphDatabase(StorageBase):
                     "Package %r in version %r in the Pipfile.lock was not pinned to a specific version correctly",
                     package_name, package_info['version']
                 )
-            package_version = package_version[len('=='):]
+                package_version = package_info['version']
+            else:
+                package_version = package_info['version'][len('=='):]
+
             _, v, python_package_version = self.create_pypi_package_version(package_name, package_version)
             python_packages.append(python_package_version)
 
-        sofware_stack = SoftwareStack()
+        software_stack = SoftwareStack()
         software_stack.get_or_create(self.g)
         for python_package_version in python_packages:
             CreatesStack.from_properties(
@@ -712,7 +716,7 @@ class GraphDatabase(StorageBase):
             performance_index = document['job_log'].get('performance_index')
 
             runtime_environment = RuntimeEnvironment.from_properties(
-                runtime_environment_name=document['image']
+                runtime_environment_name=document['inspection_id']
             )
             runtime_environment.get_or_create(self.g)
 
@@ -729,8 +733,8 @@ class GraphDatabase(StorageBase):
 
             RunsIn(
                 source=software_stack,
-                target=runtime_environment
-                inspection_document_id=inspection_document_id,
+                target=runtime_environment,
+                inspection_document_id=inspection_document_id
             ).get_or_create(self.g)
 
             RunsOn(
@@ -740,7 +744,7 @@ class GraphDatabase(StorageBase):
             ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
-            buildtime_environment_name=document['image']
+            buildtime_environment_name=document['inspection_id']
         )
         buildtime_environment.get_or_create(self.g)
 
