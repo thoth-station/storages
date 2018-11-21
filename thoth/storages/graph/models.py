@@ -100,7 +100,7 @@ class RuntimeEnvironment(VertexBase):
 class BuildtimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
-    biuldtime_environment_name = VertexProperty(properties.String)
+    buildtime_environment_name = VertexProperty(properties.String)
     # TODO: capture hashes of layers to be precise?
 
 
