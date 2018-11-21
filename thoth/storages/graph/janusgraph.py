@@ -59,6 +59,7 @@ from .models import RunsIn
 from .models import RunsOn
 from .models import BuildsIn
 from .models import BuildsOn
+from .models import BuildtimeEnvironment
 from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import RuntimeEnvironment
@@ -671,7 +672,7 @@ class GraphDatabase(StorageBase):
             cpu_model=hardware.get('cpu_model'),
             cpu_physical_cpus=hardware.get('physical_cpus'),
             cpu_model_name=hardware.get('processor'),
-            cpu_cores=self._parse_cores(specs['cpu']) if specs.get('cpu') else None,
+            cpu_cores=self._parse_cpu(specs['cpu']) if specs.get('cpu') else None,
             ram_size=self._parse_memory(specs['memory']) if specs.get('memory') else None,
         )
 
@@ -701,10 +702,13 @@ class GraphDatabase(StorageBase):
                 target=software_stack
             ).get_or_create(self.g)
 
+        return software_stack
+
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
+        software_stack = None
         if document['specification'].get('python'):
-            sofware_stack = self.create_software_stack_pipfile(
+            software_stack = self.create_software_stack_pipfile(
                 document['specification']['python']['requirements_locked']
             )
 
@@ -729,18 +733,19 @@ class GraphDatabase(StorageBase):
             )
             runtime_observation.get_or_create(self.g)
 
-            run_error = document['status']['exit_code'] == 0
+            run_error = document['status']['job']['exit_code'] == 0
 
-            RunsIn(
-                source=software_stack,
-                target=runtime_environment,
-                inspection_document_id=inspection_document_id
-            ).get_or_create(self.g)
+            if software_stack:
+                RunsIn.from_properties(
+                    source=software_stack,
+                    target=runtime_environment,
+                    inspection_document_id=document['inspection_id']
+                ).get_or_create(self.g)
 
-            RunsOn(
+            RunsOn.from_properties(
                 source=runtime_environment,
                 target=runtime_hardware,
-                inspection_document_id=inspection_document_id,
+                inspection_document_id=document['inspection_id']
             ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
@@ -755,21 +760,21 @@ class GraphDatabase(StorageBase):
             source=buildtime_hardware,
             target=buildtime_environment
         )
-        buildtime_observation.get_or_create_edge(self.g)
+        buildtime_observation.get_or_create(self.g)
 
         build_error = document['status']['build']['exit_code'] == 0
 
-        BuildsIn(
-            source=sofware_stack,
+        BuildsIn.from_properties(
+            source=software_stack,
             target=buildtime_environment,
-            inspection_document_id=inspection_document_id,
+            inspection_document_id=document['inspection_id'],
             build_error=build_error
         ).get_or_create(self.g)
 
-        BuildsOn(
+        BuildsOn.from_properties(
             source=buildtime_environment,
             target=buildtime_hardware,
-            inspection_document_id=inspection_document_id,
+            inspection_document_id=document['inspection_id'],
             build_error=build_error
         ).get_or_create(self.g)
 
