@@ -114,7 +114,7 @@ class SoftwareStackObservation(VertexBase):
     """Observations we have about the given stack based on run on a specific hardware."""
 
     performance_index = VertexProperty(properties.Float)
-    observation_document_id = VertexProperty(properties.String, db_name='document_id')
+    inspection_document_id = VertexProperty(properties.String, db_name='document_id')
 
 
 class HardwareInformation(VertexBase):
@@ -152,7 +152,7 @@ class DependsOn(EdgeBase):
 class Observed(EdgeBase):
     """Information about observations gathered on run."""
 
-    observation_document_id = Property(properties.String)
+    inspection_document_id = Property(properties.String)
 
 
 class IsPartOf(EdgeBase):
