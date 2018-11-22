@@ -766,8 +766,14 @@ class GraphDatabase(StorageBase):
                     "No performance index found in document for inspection %r", document['inspection_id']
                 )
 
+            environment_name = document['inspection_id']
+            if not document['specification'].get('packages'):
+                # Use the base image as an environment name if there were not
+                # installed any native packages.
+                environment_name = document['specification']['base']
+
             runtime_environment = RuntimeEnvironment.from_properties(
-                runtime_environment_name=document['inspection_id']
+                runtime_environment_name=environment_name
             )
             runtime_environment.get_or_create(self.g)
 
@@ -794,7 +800,7 @@ class GraphDatabase(StorageBase):
             ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
-            buildtime_environment_name=document['inspection_id']
+            buildtime_environment_name=environment_name
         )
         buildtime_environment.get_or_create(self.g)
 
