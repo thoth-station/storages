@@ -735,14 +735,16 @@ class GraphDatabase(StorageBase):
                     source=software_stack,
                     target=runtime_environment,
                     inspection_document_id=document['inspection_id'],
-                    run_error=run_error
+                    run_error=run_error,
+                    performance_index=performance_index
                 ).get_or_create(self.g)
 
             RunsOn.from_properties(
                 source=runtime_environment,
                 target=runtime_hardware,
                 inspection_document_id=document['inspection_id'],
-                run_error=run_error
+                run_error=run_error,
+                performance_index=performance_index
             ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
