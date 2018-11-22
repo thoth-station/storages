@@ -328,6 +328,43 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
+    def compute_python_package_version_avg_performance(
+            self,
+            package_name: str,
+            package_version: str,
+            index: str = None,
+            runtime_environment_name: str = None) -> float:
+        """Get average performance of a Python package on the given runtime environment.
+
+        We derive this average performance based on software stacks we have
+        evaluated on the given runtime environment including the given
+        package in specified version. There are also included stacks that
+        failed for some reason that have negative performance impact on the overall value.
+        """
+        # TODO: incorporate index in the performance query.
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V() \
+            .has('__label__', PythonPackageVersion.__label__) \
+            .has('__type__', 'vertex') \
+            .has('ecosystem', 'pypi') \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .outE('__label__', CreatesStack.__label__) \
+            .inV() \
+            .has('__label__', SoftwareStack.__label__) \
+            .outE() \
+            .has('__label__', RunsIn.__label__) \
+            .inV() \
+            .has('__label__', RuntimeEnvironment.__label__) \
+            .has('runtime_environment_name', runtime_environment_name) \
+            .valueMap() \
+            .select('performance_index')\
+            .mean() \
+            .next()
+
+        return float(loop.run_until_complete(query))
+
     def get_all_versions_python_package(self, package_name: str) -> typing.List[str]:
         """Get all versions available for a Python package."""
         # TODO: specify index
