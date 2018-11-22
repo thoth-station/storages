@@ -140,3 +140,61 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix return values
 * Make sure to hit indexes with queries
 * Fix indentation error
+
+## Release 0.9.0 (2018-11-22T22:23:35)
+* Use base image name if there were not installed any native pkgs
+* Report which inspection id is being synced
+* Improve handling of performance index
+* Hardware can be even None
+* Fix key error if hardware was not provided on Amun
+* Log about Amun results gathering
+* Introduce graceful flag for inspection syncs
+* Return directly list, not chain iterable
+* Use models to_dict method to obtain values
+* Fix Python package index URL retrieval
+* Add method for retrieving Python package index URLs
+* Update schema in docs
+* Sync also performance index to janusgraph
+* Introduce query for computing performance index
+* Introduce method for registering Python package indexes
+* Do not forget to install Amun client
+* Introduce method for syncing inspection documents
+* Automatic update of dependency boto3 from 1.9.49 to 1.9.50
+* Gather performance index from inspection jobs
+* Update schema docs
+* Remove runtime and buildtime observations
+* Fix recent errors
+* Fix errors
+* Fix syntax error
+* Create method for syncing inspections into janusgraph
+* Be consistent with storage prefix naming
+* Rename observation_document_id to inspection_document_id
+* Introduce buildtime environment model
+* Fix CI
+* Automatic update of dependency boto3 from 1.9.48 to 1.9.49
+* Automatic update of dependency thoth-common from 0.4.4 to 0.4.5
+* Fix CI
+* Do not use schema for inspections
+* Remove unused variable
+* Introduce sync methods
+* Fix CI
+* Adjust document_id gathering
+* Introduce adapter for inspection results
+* Introduce methods for checking documents based on id
+* fixed some coala problems
+* added a pyproject.toml to keep black happy
+* using thoth's coala job
+* using thoth-pytest job
+* Fix pytest4 warning
+* Return also python package index model
+* Introduce method for creating Python package index vertex
+* Update schema documentation
+* Add python package index entity
+* Automatic update of dependency boto3 from 1.9.47 to 1.9.48
+* Automatic update of dependency thoth-common from 0.4.3 to 0.4.4
+* Automatic update of dependency thoth-common from 0.4.2 to 0.4.3
+* Automatic update of dependency boto3 from 1.9.46 to 1.9.47
+* Automatic update of dependency pytest-timeout from 1.3.2 to 1.3.3
+* Automatic update of dependency thoth-common from 0.4.1 to 0.4.2
+* Automatic update of dependency boto3 from 1.9.45 to 1.9.46
+* Automatic update of dependency thoth-common from 0.4.0 to 0.4.1
