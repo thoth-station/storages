@@ -83,7 +83,6 @@ class PythonPackageIndex(VertexBase):
     url = VertexProperty(properties.String)
     warehouse_api_url = VertexProperty(properties.String, default=None)
     verify_ssl = VertexProperty(properties.Boolean, default=True)
-    warehouse = VertexProperty(properties.Boolean, default=False)
 
 
 class PythonPackageVersion(PackageVersionBase):
