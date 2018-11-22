@@ -703,7 +703,7 @@ class GraphDatabase(StorageBase):
 
     def _get_hardware_information(self, specs: dict) -> HardwareInformation:
         """Get hardware information based on requests provided."""
-        hardware = specs['hardware']
+        hardware = specs.get('hardware', {})
         return HardwareInformation.from_properties(
             cpu_family=hardware.get('cpu_family'),
             cpu_model=hardware.get('cpu_model'),
