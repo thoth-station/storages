@@ -106,7 +106,8 @@ def sync_analysis_documents(document_ids: list = None, force: bool = False,
     return processed, synced, skipped, failed
 
 
-def sync_inspection_documents(amun_api_url: str, document_ids: list = None, force_sync: bool = False) -> tuple:
+def sync_inspection_documents(amun_api_url: str, document_ids: list = None, force_sync: bool = False,
+                              graceful: bool = False) -> tuple:
     """Sync observations made on Amun into graph databaes."""
     inspection_store = InspectionResultsStore()
     inspection_store.connect()
@@ -155,6 +156,9 @@ def sync_inspection_documents(amun_api_url: str, document_ids: list = None, forc
                     inspection_store.store_document(document)
                     synced += 1
                 except Exception as exc:
+                    if not graceful:
+                        raise
+
                     _LOGGER.exception(f"Failed to sync inspection %r: %s", inspection_id, str(exc))
                     failed += 1
             else:
