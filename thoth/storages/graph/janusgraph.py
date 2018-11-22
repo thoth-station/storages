@@ -1256,4 +1256,4 @@ class GraphDatabase(StorageBase):
             .select('url') \
             .toList()
 
-        return chain(*asyncio.get_event_loop().run_until_complete(query))
+        return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
