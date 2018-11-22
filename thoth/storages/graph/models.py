@@ -214,6 +214,7 @@ class RunsIn(EdgeBase):
 
     inspection_document_id = Property(properties.String)
     run_error = Property(properties.Boolean)
+    performance_index = Property(properties.Float)
 
 
 class RunsOn(EdgeBase):
@@ -221,6 +222,7 @@ class RunsOn(EdgeBase):
 
     inspection_document_id = Property(properties.String)
     run_error = Property(properties.Boolean)
+    performance_index = Property(properties.Float)
 
 
 class BuildsIn(EdgeBase):
