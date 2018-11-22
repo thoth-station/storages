@@ -756,7 +756,15 @@ class GraphDatabase(StorageBase):
                 # Negative performance index - the application does not run.
                 performance_index = -1.0
             elif isinstance(document['job_log']['stdout'], dict):
-                performance_index = document['job_log']['stdout'].get('performance_index')
+                try:
+                    performance_index = float(document['job_log']['stdout'].get('performance_index'))
+                except Exception:
+                    _LOGGER.error("Failed to parse performance index - not a float: %s", performance_index)
+
+            if performance_index is None:
+                _LOGGER.warning(
+                    "No performance index found in document for inspection %r", document['inspection_id']
+                )
 
             runtime_environment = RuntimeEnvironment.from_properties(
                 runtime_environment_name=document['inspection_id']
@@ -1252,7 +1260,7 @@ class GraphDatabase(StorageBase):
         """Retrieve all the URLs of registered Python package indexes."""
         query = self.g.V() \
             .has('__label__', PythonPackageIndex.__label__) \
-            .valueMap(True) \
+            .valueMap() \
             .select('url') \
             .toList()
 
