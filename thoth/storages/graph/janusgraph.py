@@ -56,6 +56,7 @@ from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
 from .models import RunsIn
+from .models import PythonPackageIndex
 from .models import RunsOn
 from .models import BuildsIn
 from .models import BuildsOn
@@ -1190,3 +1191,21 @@ class GraphDatabase(StorageBase):
         self._rpm_sync_analysis_result(document_id, document, runtime_environment)
         self._deb_sync_analysis_result(document_id, document, runtime_environment)
         self._python_sync_analysis_result(document_id, document, runtime_environment)
+
+    def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True):
+        """Register the given Python package index in the graph database."""
+        package_index = PythonPackageIndex.from_properties(
+            url=url,
+            warehouse_api_url=warehouse_api_url,
+            verify_ssl=verify_ssl
+        )
+        package_index.get_or_create(self.g)
+
+    def python_package_index_listing(self):
+        """Get listing of Python package indexes registered in the JanusGraph database."""
+        query = self.g.V() \
+            .has('__label__', PythonPackageIndex.__label__) \
+            .valueMap(True) \
+            .toList()
+
+        return asyncio.get_event_loop().run_until_complete(query)
