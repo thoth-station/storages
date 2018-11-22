@@ -1244,10 +1244,9 @@ class GraphDatabase(StorageBase):
         """Get listing of Python package indexes registered in the JanusGraph database."""
         query = self.g.V() \
             .has('__label__', PythonPackageIndex.__label__) \
-            .valueMap(True) \
             .toList()
 
-        return asyncio.get_event_loop().run_until_complete(query)
+        return [item.to_dict() for item in asyncio.get_event_loop().run_until_complete(query)]
 
     def get_python_package_index_urls(self) -> list:
         """Retrieve all the URLs of registered Python package indexes."""
