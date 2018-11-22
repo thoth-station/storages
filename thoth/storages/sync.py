@@ -128,7 +128,7 @@ def sync_inspection_documents(amun_api_url: str, document_ids: list = None, forc
                 continue
 
             if finished:
-
+                _LOGGER.info("Obtaining results from Amun API")
                 try:
                     specification = get_inspection_specification(amun_api_url, inspection_id)
                     build_log = get_inspection_build_log(amun_api_url, inspection_id)
