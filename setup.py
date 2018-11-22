@@ -2,6 +2,7 @@ import os
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+from pathlib import Path
 
 
 def get_install_requires():
@@ -51,7 +52,7 @@ setup(
     name='thoth-storages',
     version=get_version(),
     description='Storage and database adapters available in project Thoth',
-    long_description='Storage and database adapters available in project Thoth',
+    long_description=Path('README.rst').read_text(),
     author='Fridolin Pokorny',
     author_email='fridolin@redhat.com',
     license='GPLv3+',
