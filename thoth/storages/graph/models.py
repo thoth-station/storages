@@ -89,6 +89,13 @@ class PythonPackageVersion(PackageVersionBase):
     """Python package version vertex."""
 
 
+class PythonArtifact(VertexBase):
+    """A Python artifact as placed on a source package index."""
+
+    #artifact_name = VertexProperty(properties.String)
+    artifact_hash = VertexProperty(properties.String)
+
+
 class RuntimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
@@ -282,6 +289,7 @@ ALL_MODELS = frozenset((
     HasVulnerability,
     IsPartOf,
     Package,
+    PythonArtifact,
     PythonPackageIndex,
     PythonPackageVersion,
     Requires,
