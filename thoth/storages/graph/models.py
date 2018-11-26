@@ -212,6 +212,10 @@ class CreatesStack(EdgeBase):
     """The given set of packages create a stack."""
 
 
+class HasArtifact(EdgeBase):
+    """The given package has the given artifact."""
+
+
 class HasVersion(EdgeBase):
     """The given package has a specific version."""
 
