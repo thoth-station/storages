@@ -1258,6 +1258,25 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    def get_python_package_version_hashes_sha256(self,
+                                                 package_name: str,
+                                                 package_version: str,
+                                                 index_url: str) -> typing.List[str]:
+        """Get hashes for a Python package in specified version."""
+        query = self.g.V() \
+            .has('__label__', 'python_package_version') \
+            .has('package_name', package_name) \
+            .has('package_version', package_version) \
+            .has('index_url', index_url) \
+            .outE() \
+            .has('__label__', 'has_artifact') \
+            .inV() \
+            .valueMap() \
+            .select('artifact_hash_sha256') \
+            .toList()
+
+        return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
+
     # @enable_edge_cache
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
