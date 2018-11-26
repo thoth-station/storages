@@ -916,7 +916,7 @@ class GraphDatabase(StorageBase):
                     python_package_info['package_name'],
                     python_package_info['package_version'],
                     python_package_info['index_url'],
-                    python_package_info['sha256']
+                    hashes=python_package_info['sha256']
                 )
 
                 Solved.from_properties(
