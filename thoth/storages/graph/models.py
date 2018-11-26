@@ -93,7 +93,7 @@ class PythonArtifact(VertexBase):
     """A Python artifact as placed on a source package index."""
 
     #artifact_name = VertexProperty(properties.String)
-    artifact_hash = VertexProperty(properties.String)
+    artifact_hash_sha256 = VertexProperty(properties.String)
 
 
 class RuntimeEnvironment(VertexBase):
@@ -251,7 +251,11 @@ class BuildsOn(EdgeBase):
 
 
 class HasVulnerability(EdgeBase):
-    """The given package-v version has a vulnerability."""
+    """The given package version has a vulnerability."""
+
+
+class HasArtifact(EdgeBase):
+    """The given package-version has an artifact."""
 
 
 class Requires(PackageExtractNativeBase):

@@ -48,10 +48,12 @@ from .models import DebPackageVersion
 from .models import DebPreDepends
 from .models import DebReplaces
 from .models import EcosystemSolver
+from .models import HasArtifact
 from .models import HasVersion
 from .models import HasVulnerability
 from .models import IsPartOf
 from .models import Package
+from .models import PythonArtifact
 from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
@@ -826,7 +828,8 @@ class GraphDatabase(StorageBase):
         ).get_or_create(self.g)
 
     def create_pypi_package_version(self, package_name: str, package_version: str, index_url: str, *,
-                                    only_if_package_seen: bool = False) -> typing.Union[None, tuple]:
+                                    hashes: list = None, only_if_package_seen: bool = False
+        ) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
         # Make sure we have normalized names in the graph database according to PEP:
         #   https://www.python.org/dev/peps/pep-0503/#normalized-names
@@ -862,6 +865,15 @@ class GraphDatabase(StorageBase):
             target=python_package_version
         )
         has_version.get_or_create(self.g)
+
+        for digest in hashes or []:
+            python_artifact = PythonArtifact.from_properties(artifact_hash_sha256=digest)
+            python_artifact.get_or_create(self.g)
+
+            HasArtifact.from_properties(
+                source=python_package_version,
+                target=python_artifact
+            ).get_or_create(self.g)
 
         return python_package, has_version, python_package_version
 
@@ -903,7 +915,8 @@ class GraphDatabase(StorageBase):
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     python_package_info['package_name'],
                     python_package_info['package_version'],
-                    python_package_info['index_url']
+                    python_package_info['index_url'],
+                    python_package_info['sha256']
                 )
 
                 Solved.from_properties(
