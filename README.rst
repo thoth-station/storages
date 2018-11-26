@@ -22,4 +22,4 @@ You can run prepared testsuite via the following command:
 .. code-block:: console
 
     pipenv install --dev
-    pipenv run python3 -m pytest tests/ -v
+    pipenv run python3 setup.py tests
