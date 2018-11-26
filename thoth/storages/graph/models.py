@@ -45,7 +45,7 @@ class PackageVersionBase(VertexBase):
     ecosystem = VertexProperty(properties.String)
     package_name = VertexProperty(properties.String)
     package_version = VertexProperty(properties.String)
-    index = VertexProperty(properties.String)
+    index_url = VertexProperty(properties.String)
 
 
 class RPMPackageVersion(PackageVersionBase):
