@@ -728,7 +728,8 @@ class GraphDatabase(StorageBase):
             else:
                 package_version = package_info['version'][len('=='):]
 
-            _, v, python_package_version = self.create_pypi_package_version(package_name, package_version)
+            # TODO: assing index_url from sources?
+            _, v, python_package_version = self.create_pypi_package_version(package_name, package_version, index_url=None)
             python_packages.append(python_package_version)
 
         software_stack = SoftwareStack()
@@ -852,7 +853,7 @@ class GraphDatabase(StorageBase):
             ecosystem='pypi',
             package_name=package_name,
             package_version=package_version,
-            index=index_url
+            index_url=index_url
         )
         python_package_version.get_or_create(self.g)
 
@@ -1178,6 +1179,8 @@ class GraphDatabase(StorageBase):
                 continue
 
             try:
+                # TODO: we should run analysis on packages not to have packages in the graph database triggering solver runs
+                # TODO: we should check for hashes in the graph database to see if we have the given package
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'],
                     package_version=python_package_info['result']['version'],
