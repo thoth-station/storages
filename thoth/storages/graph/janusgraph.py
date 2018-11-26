@@ -824,7 +824,7 @@ class GraphDatabase(StorageBase):
             build_error=build_error
         ).get_or_create(self.g)
 
-    def create_pypi_package_version(self, package_name: str, package_version: str, *,
+    def create_pypi_package_version(self, package_name: str, package_version: str, index_url: str, *,
                                     only_if_package_seen: bool = False) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
         # Make sure we have normalized names in the graph database according to PEP:
@@ -851,7 +851,8 @@ class GraphDatabase(StorageBase):
         python_package_version = PythonPackageVersion.from_properties(
             ecosystem='pypi',
             package_name=package_name,
-            package_version=package_version
+            package_version=package_version,
+            index=index_url
         )
         python_package_version.get_or_create(self.g)
 
@@ -899,8 +900,9 @@ class GraphDatabase(StorageBase):
         for python_package_info in document['result']['tree']:
             try:
                 python_package, _, python_package_version = self.create_pypi_package_version(
-                    python_package_info['package_name'].lower(),
-                    python_package_info['package_version']
+                    python_package_info['package_name'],
+                    python_package_info['package_version'],
+                    python_package_info['index_url']
                 )
 
                 Solved.from_properties(
@@ -918,30 +920,33 @@ class GraphDatabase(StorageBase):
 
             for dependency in python_package_info['dependencies']:
                 try:
-                    for dependency_version in dependency['resolved_versions']:
-                        python_package_dependency, _, python_package_version_dependency = \
-                            self.create_pypi_package_version(
-                                package_name=dependency['package_name'],
-                                package_version=dependency_version
-                            )
+                    for index_entry in dependency['resolved_versions']:
+                        index_url = index_entry['index']
+                        for dependency_version in index_entry['versions']:
+                            python_package_dependency, _, python_package_version_dependency = \
+                                self.create_pypi_package_version(
+                                    package_name=dependency['package_name'],
+                                    package_version=dependency_version,
+                                    index_url=index_url
+                                )
 
-                        Solved.from_properties(
-                            source=ecosystem_solver,
-                            target=python_package_version_dependency,
-                            solver_document_id=solver_document_id,
-                            solver_datetime=solver_datetime,
-                            solver_error=False,
-                            solver_error_unsolvable=False,
-                            solver_error_unparsable=False
-                        ).get_or_create(self.g)
+                            Solved.from_properties(
+                                source=ecosystem_solver,
+                                target=python_package_version_dependency,
+                                solver_document_id=solver_document_id,
+                                solver_datetime=solver_datetime,
+                                solver_error=False,
+                                solver_error_unsolvable=False,
+                                solver_error_unparsable=False
+                            ).get_or_create(self.g)
 
-                        # TODO: mark extras
-                        DependsOn.from_properties(
-                            source=python_package_version,
-                            target=python_package_version_dependency,
-                            package_name=python_package_version_dependency.package_name.value,
-                            version_range=dependency['required_version'] or '*'
-                        ).get_or_create(self.g)
+                            # TODO: mark extras
+                            DependsOn.from_properties(
+                                source=python_package_version,
+                                target=python_package_version_dependency,
+                                package_name=python_package_version_dependency.package_name.value,
+                                version_range=dependency['required_version'] or '*'
+                            ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(f"Failed to sync Python package {python_package_version.to_dict()}"
                                       f"dependency: {dependency}")
@@ -951,6 +956,7 @@ class GraphDatabase(StorageBase):
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=error_info.get('package_name') or error_info['package'],
                     package_version=error_info['version'],
+                    index_url=error_info['index']
                 )
 
                 Solved.from_properties(
@@ -981,6 +987,7 @@ class GraphDatabase(StorageBase):
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=unsolvable['package_name'],
                     package_version=package_version,
+                    index_url=unsolvable['index']
                 )
 
                 Solved.from_properties(
@@ -1009,6 +1016,7 @@ class GraphDatabase(StorageBase):
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=package_name,
                     package_version=package_version,
+                    index_url=None,
                 )
 
                 Solved.from_properties(
@@ -1171,8 +1179,9 @@ class GraphDatabase(StorageBase):
 
             try:
                 python_package, _, python_package_version = self.create_pypi_package_version(
-                    package_name=python_package_info['result']['name'].lower(),
-                    package_version=python_package_info['result']['version']
+                    package_name=python_package_info['result']['name'],
+                    package_version=python_package_info['result']['version'],
+                    index_url=None
                 )
 
                 IsPartOf.from_properties(
@@ -1187,7 +1196,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception(
                     f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
 
-    def create_python_cve_record(self, package_name: str, package_version: str, *,
+    def create_python_cve_record(self, package_name: str, package_version: str, index_url: str, *,
                                  record_id: str, version_range: str, advisory: str,
                                  cve: str = None) -> typing.Tuple[CVE, bool]:
         """Store information about a CVE in the graph database for the given Python package."""
@@ -1206,6 +1215,7 @@ class GraphDatabase(StorageBase):
         python_package, _, python_package_version = self.create_pypi_package_version(
             package_name,
             package_version,
+            index_url=index_url,
             only_if_package_seen=False
         )
 
