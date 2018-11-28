@@ -368,20 +368,29 @@ class GraphDatabase(StorageBase):
 
         return float(loop.run_until_complete(query))
 
-    def get_all_versions_python_package(self, package_name: str) -> typing.List[str]:
+    def get_all_versions_python_package(self, package_name: str, index_url: str = None) -> typing.List[str]:
         """Get all versions available for a Python package."""
-        # TODO: specify index
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('__type__', 'vertex') \
             .has('ecosystem', 'pypi') \
-            .has('package_name', package_name) \
-            .valueMap() \
-            .select('package_version') \
+            .has('package_name', package_name)
+
+        if index_url:
+            query = query.has('index_url', index_url)
+
+        query = query.valueMap() \
+            .select('package_version', 'index_url') \
             .dedup() \
             .toList()
 
-        return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
+        # TODO: we could optimize this query
+        result = []
+        query_result = asyncio.get_event_loop().run_until_complete(query)
+        for item in query_result:
+            result.append((item['package_version'][0], item['index_url'][0]))
+
+        return result
 
     def retrieve_unsolved_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved."""
