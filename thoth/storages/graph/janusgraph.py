@@ -573,7 +573,7 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index: str) -> list:
+    def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index_url: str) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph."""
         query = self.g.V() \
             .has('__type__', 'vertex') \
@@ -581,12 +581,13 @@ class GraphDatabase(StorageBase):
             .has('ecosystem', 'pypi') \
             .has('package_version', package_version) \
             .has('package_name', package_name) \
+            .has('index_url', index_url) \
             .repeat(
                 outE().simplePath().has('__label__', 'depends_on').inV().has('__label__', 'python_package_version')
             ) \
             .emit() \
             .path().by(
-                project('package', 'version').by('package_name').by('package_version')
+                project('package', 'version', 'index_url').by('package_name').by('package_version').by('index_url')
             ).by(project('depends_on').by('version_range')) \
             .toList()
 
