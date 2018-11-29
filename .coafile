@@ -4,7 +4,7 @@ files = **.py, **.yaml, **.toml, **.rst, **.md
 file_naming_convention = snake
 ignore = **/__pycache__/**, **/__pycache__, __pycache__, __pycache__/**, **/*.pyc, *.pyc, .github/**/*.md, test/**
 max_line_length = 120
-max_lines_per_file = 1300
+max_lines_per_file = 1500
 
 [all.python]
 bears = PycodestyleBear, PyDocStyleBear
