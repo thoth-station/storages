@@ -740,7 +740,11 @@ class GraphDatabase(StorageBase):
                 package_version = package_info['version'][len('=='):]
 
             # TODO: assing index_url from sources?
-            _, v, python_package_version = self.create_pypi_package_version(package_name, package_version, index_url=None)
+            _, v, python_package_version = self.create_pypi_package_version(
+                    package_name,
+                    package_version,
+                    index_url=None
+            )
             python_packages.append(python_package_version)
 
         software_stack = SoftwareStack()
@@ -836,9 +840,13 @@ class GraphDatabase(StorageBase):
             build_error=build_error
         ).get_or_create(self.g)
 
-    def create_pypi_package_version(self, package_name: str, package_version: str, index_url: str, *,
-                                    hashes: list = None, only_if_package_seen: bool = False
-        ) -> typing.Union[None, tuple]:
+    def create_pypi_package_version(self,
+                                    package_name: str,
+                                    package_version: str,
+                                    index_url: str, *,
+                                    hashes: list = None,
+                                    only_if_package_seen: bool = False
+                                    ) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
         # Make sure we have normalized names in the graph database according to PEP:
         #   https://www.python.org/dev/peps/pep-0503/#normalized-names
@@ -1201,8 +1209,10 @@ class GraphDatabase(StorageBase):
                 continue
 
             try:
-                # TODO: we should run analysis on packages not to have packages in the graph database triggering solver runs
-                # TODO: we should check for hashes in the graph database to see if we have the given package
+                # TODO: we should run analysis on packages not to have packages
+                # in the graph database triggering solver runs
+                # TODO: we should check for hashes in the graph database to see
+                # if we have the given package
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info['result']['name'],
                     package_version=python_package_info['result']['version'],

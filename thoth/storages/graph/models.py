@@ -92,7 +92,7 @@ class PythonPackageVersion(PackageVersionBase):
 class PythonArtifact(VertexBase):
     """A Python artifact as placed on a source package index."""
 
-    #artifact_name = VertexProperty(properties.String)
+    # artifact_name = VertexProperty(properties.String)
     artifact_hash_sha256 = VertexProperty(properties.String)
 
 
