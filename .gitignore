@@ -6,3 +6,4 @@ thoth_storages.egg-info/
 .eggs/
 .vscode/
 docs/schema.dia~
+dist/
