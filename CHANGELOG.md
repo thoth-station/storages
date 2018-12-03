@@ -212,3 +212,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency thoth-common from 0.4.1 to 0.4.2
 * Automatic update of dependency boto3 from 1.9.45 to 1.9.46
 * Automatic update of dependency thoth-common from 0.4.0 to 0.4.1
+
+## Release 0.9.1 (2018-12-03T13:33:36)
+* Do not forget to install Amun for interaction with Amun
+* Automatic update of dependency boto3 from 1.9.55 to 1.9.57
+* Fixes for CI
+* Automatic update of dependency amun from 0.1.3 to 0.2.0
+* Automatic update of dependency thoth-common from 0.4.5 to 0.4.6
+* Automatic update of dependency boto3 from 1.9.51 to 1.9.55
+* Consider index when retrieving transitive dependencies
+* Include index url in the releases listing
