@@ -305,16 +305,20 @@ class GraphDatabase(StorageBase):
 
         return result, analysis_document_id
 
-    def python_package_version_exists(self, package_name: str, package_version: str) -> bool:
+    def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
         loop = asyncio.get_event_loop()
 
         query = self.g.V() \
-            .has('package_name', package_name) \
-            .has('package_version', package_version) \
+            .has('__label__', PythonPackageVersion.__label__) \
             .has('ecosystem', 'pypi') \
-            .has('__label__', PythonPackageVersion.__label__).constant(True) \
-            .next()
+            .has('package_name', package_name) \
+            .has('package_version', package_version)
+
+        if index_url:
+            query = query.has('index_url', index_url)
+
+        query = query.constant(True)
 
         return bool(loop.run_until_complete(query))
 
