@@ -318,7 +318,7 @@ class GraphDatabase(StorageBase):
         if index_url:
             query = query.has('index_url', index_url)
 
-        query = query.constant(True)
+        query = query.constant(True).next()
 
         return bool(loop.run_until_complete(query))
 
