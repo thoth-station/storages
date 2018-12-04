@@ -141,6 +141,13 @@ class GraphDatabase(StorageBase):
         loop = asyncio.get_event_loop()
         return loop.run_until_complete(self.app.session())
 
+    @staticmethod
+    def normalize_python_package_name(package_name: str) -> str:
+        """Normalize Pyton package name based on PEP-0503."""
+        # Make sure we have normalized names in the graph database according to PEP:
+        #   https://www.python.org/dev/peps/pep-0503/#normalized-names
+        return re.sub(r"[-_.]+", "-", package_name).lower()
+
     def is_connected(self):
         """Check if we are connected to a remote Gremlin server."""
         # TODO: this will maybe require some logic to be sure that the
@@ -307,6 +314,7 @@ class GraphDatabase(StorageBase):
 
     def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
+        package_name = self.normalize_python_package_name(package_name)
         loop = asyncio.get_event_loop()
 
         query = self.g.V() \
@@ -324,6 +332,7 @@ class GraphDatabase(StorageBase):
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
+        package_name = self.normalize_python_package_name(package_name)
         loop = asyncio.get_event_loop()
 
         query = self.g.V() \
@@ -349,6 +358,7 @@ class GraphDatabase(StorageBase):
         failed for some reason that have negative performance impact on the overall value.
         """
         # TODO: incorporate index in the performance query.
+        package_name = self.normalize_python_package_name(package_name)
         loop = asyncio.get_event_loop()
 
         query = self.g.V() \
@@ -374,6 +384,7 @@ class GraphDatabase(StorageBase):
 
     def get_all_versions_python_package(self, package_name: str, index_url: str = None) -> typing.List[str]:
         """Get all versions available for a Python package."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('__type__', 'vertex') \
@@ -553,6 +564,7 @@ class GraphDatabase(StorageBase):
         # TODO: when added __type__ Cassanda backend time outs.
         # TODO: specify index
         # This should be fixed once we move to Data Hub.
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.E() \
             .has('__label__', 'depends_on') \
             .has('package_name', package_name) \
@@ -565,6 +577,7 @@ class GraphDatabase(StorageBase):
 
     def retrieve_dependencies(self, package_name: str, package_version: str, index: str) -> dict:
         """Get mapping package name to package version of packages that are dependencies for the given pkg."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.V() \
             .has('__label__', 'depends_on') \
             .has('package_name', package_name) \
@@ -579,6 +592,7 @@ class GraphDatabase(StorageBase):
 
     def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index_url: str) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.V() \
             .has('__type__', 'vertex') \
             .has('__label__', 'python_package_version') \
@@ -853,9 +867,7 @@ class GraphDatabase(StorageBase):
                                     only_if_package_seen: bool = False
                                     ) -> typing.Union[None, tuple]:
         """Create entries for PyPI package version."""
-        # Make sure we have normalized names in the graph database according to PEP:
-        #   https://www.python.org/dev/peps/pep-0503/#normalized-names
-        package_name = re.sub(r"[-_.]+", "-", package_name).lower()
+        package_name = self.normalize_python_package_name(package_name)
 
         if only_if_package_seen:
             query = self.g.V() \
@@ -901,6 +913,7 @@ class GraphDatabase(StorageBase):
 
     def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
         """Get unsolved runtime environment which are not connected and attached to python package version."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('package_name', package_name) \
@@ -1271,6 +1284,7 @@ class GraphDatabase(StorageBase):
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> typing.List[CVE]:
         """Get known vulnerabilities for the given package-version."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self.g.V() \
             .has('__label__', 'python_package_version') \
             .has('package_name', package_name) \
