@@ -818,21 +818,38 @@ class GraphDatabase(StorageBase):
             run_error = document['status']['job']['exit_code'] == 0
 
             if software_stack:
-                RunsIn.from_properties(
-                    source=software_stack,
-                    target=runtime_environment,
+                if performance_index is not None:
+                    RunsIn.from_properties(
+                        source=software_stack,
+                        target=runtime_environment,
+                        inspection_document_id=document['inspection_id'],
+                        run_error=run_error,
+                        performance_index=performance_index
+                    ).get_or_create(self.g)
+                else:
+                    # We cannot pass performance_index as None as goblin will complain.
+                    RunsIn.from_properties(
+                        source=software_stack,
+                        target=runtime_environment,
+                        inspection_document_id=document['inspection_id'],
+                        run_error=run_error,
+                    ).get_or_create(self.g)
+
+            if performance_index is not None:
+                RunsOn.from_properties(
+                    source=runtime_environment,
+                    target=runtime_hardware,
                     inspection_document_id=document['inspection_id'],
                     run_error=run_error,
                     performance_index=performance_index
                 ).get_or_create(self.g)
-
-            RunsOn.from_properties(
-                source=runtime_environment,
-                target=runtime_hardware,
-                inspection_document_id=document['inspection_id'],
-                run_error=run_error,
-                performance_index=performance_index
-            ).get_or_create(self.g)
+            else:
+                RunsOn.from_properties(
+                    source=runtime_environment,
+                    target=runtime_hardware,
+                    inspection_document_id=document['inspection_id'],
+                    run_error=run_error,
+                ).get_or_create(self.g)
 
         buildtime_environment = BuildtimeEnvironment.from_properties(
             buildtime_environment_name=environment_name
