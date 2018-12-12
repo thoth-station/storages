@@ -122,11 +122,7 @@ def sync_inspection_documents(amun_api_url: str, document_ids: list = None, forc
     for inspection_id in document_ids or dependency_mokey_reports_store.iterate_inspection_ids():
         processed += 1
         if force_sync or not inspection_store.document_exists(inspection_id):
-            try:
-                finished = is_inspection_finished(amun_api_url, inspection_id)
-            except Exception as exc:
-                _LOGGER.error("Failed to obtain inspection status from Amun: %s", str(exc))
-                continue
+            finished = is_inspection_finished(amun_api_url, inspection_id)
 
             if finished:
                 _LOGGER.info("Obtaining results from Amun API for inspection %r", inspection_id)
