@@ -278,11 +278,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:b20460fcc83e8a153e197b1da00e97fcceac70eec3b94edc837335f708aaeb4e",
-                "sha256:df73a271ba472e7fd513f3d351d18e4d42f23d5efef62ef0cf2dd637abf88509"
+                "sha256:a5f8d8c08c6a3db5da871bbbbeebfce109c99b865e0e3cc81cac60106117886b",
+                "sha256:ad2fcd466c1245ad35bbf2f7ce2c444b6d02861d625a69fefb280d3a98c919a5"
             ],
             "index": "pypi",
-            "version": "==0.4.6"
+            "version": "==0.5.0"
         },
         "tornado": {
             "hashes": [
