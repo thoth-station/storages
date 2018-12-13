@@ -32,38 +32,45 @@ from .exceptions import NotFoundError
 class CephStore(StorageBase):
     """Adapter for storing and retrieving data from Ceph - low level API."""
 
-    def __init__(self, prefix, *,
-                 host: str = None, key_id: str = None, secret_key: str = None,
-                 bucket: str = None, region: str = None):
+    def __init__(
+        self,
+        prefix,
+        *,
+        host: str = None,
+        key_id: str = None,
+        secret_key: str = None,
+        bucket: str = None,
+        region: str = None,
+    ):
         """Initialize adapter to Ceph.
 
         Parameters not explicitly provided will be picked from env variables.
         """
         super().__init__()
-        self.host = host or os.environ['THOTH_S3_ENDPOINT_URL']
-        self.key_id = key_id or os.environ['THOTH_CEPH_KEY_ID']
-        self.secret_key = secret_key or os.environ['THOTH_CEPH_SECRET_KEY']
-        self.bucket = bucket or os.environ['THOTH_CEPH_BUCKET']
-        self.region = region or os.getenv('THOTH_CEPH_REGION', None)
+        self.host = host or os.environ["THOTH_S3_ENDPOINT_URL"]
+        self.key_id = key_id or os.environ["THOTH_CEPH_KEY_ID"]
+        self.secret_key = secret_key or os.environ["THOTH_CEPH_SECRET_KEY"]
+        self.bucket = bucket or os.environ["THOTH_CEPH_BUCKET"]
+        self.region = region or os.getenv("THOTH_CEPH_REGION", None)
         self._s3 = None
         self.prefix = prefix
 
-        if not self.prefix.endswith('/'):
-            self.prefix += '/'
+        if not self.prefix.endswith("/"):
+            self.prefix += "/"
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
-            yield obj.key[len(self.prefix):]
+            yield obj.key[len(self.prefix) :]
 
     @staticmethod
     def dict2blob(dictionary: dict) -> bytes:
         """Encode a dictionary to a blob so it can be stored on Ceph."""
-        return json.dumps(dictionary, sort_keys=True, separators=(',', ': '), indent=2).encode()
+        return json.dumps(dictionary, sort_keys=True, separators=(",", ": "), indent=2).encode()
 
     def store_blob(self, blob: bytes, object_key: str) -> dict:
         """Store a blob on Ceph."""
-        put_kwargs = {'Body': blob}
+        put_kwargs = {"Body": blob}
         response = self._s3.Object(self.bucket, f"{self.prefix}{object_key}").put(**put_kwargs)
         return response
 
@@ -75,11 +82,10 @@ class CephStore(StorageBase):
     def retrieve_blob(self, object_key: str) -> bytes:
         """Retrieve remote object content."""
         try:
-            return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()['Body'].read()
+            return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["Body"].read()
         except botocore.exceptions.ClientError as exc:
-            if exc.response['Error']['Code'] in ('404', 'NoSuchKey'):
-                raise NotFoundError(
-                    "Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
+            if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
+                raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
@@ -104,7 +110,7 @@ class CephStore(StorageBase):
         try:
             self._s3.Object(self.bucket, f"{self.prefix}{document_id}").load()
         except botocore.exceptions.ClientError as exc:
-            if exc.response['Error']['Code'] == "404":
+            if exc.response["Error"]["Code"] == "404":
                 exists = False
             else:
                 raise
@@ -121,19 +127,17 @@ class CephStore(StorageBase):
         # The document exists method calls HEAD so we do not transfer actual
         # data. We do not care if the given document actually really exists,
         # but we raise an exception if there is an issue with the connection.
-        self.document_exists('foo')
+        self.document_exists("foo")
 
     def connect(self) -> None:
         """Create a connection to the remote Ceph."""
-        session = boto3.session.Session(aws_access_key_id=self.key_id,
-                                        aws_secret_access_key=self.secret_key,
-                                        region_name=self.region)
+        session = boto3.session.Session(
+            aws_access_key_id=self.key_id, aws_secret_access_key=self.secret_key, region_name=self.region
+        )
         # signature version is needed to connect to new regions which
         # support only v4
         self._s3 = session.resource(
-            's3',
-            config=botocore.client.Config(signature_version='s3v4'),
-            endpoint_url=self.host
+            "s3", config=botocore.client.Config(signature_version="s3v4"), endpoint_url=self.host
         )
         # Ceph returns 403 on this call, let's assume the bucket exists.
         # self._create_bucket_if_needed()
@@ -150,7 +154,7 @@ class CephStore(StorageBase):
             # if a client error is thrown, then check that it was a 404 error.
             # if it was a 404 error, then the bucket does not exist.
             try:
-                error_code = int(exc.response['Error']['Code'])
+                error_code = int(exc.response["Error"]["Code"])
             except (TypeError, ValueError, KeyError):
                 raise
             if error_code == 404:
@@ -162,12 +166,7 @@ class CephStore(StorageBase):
         """Create a bucket."""
         # Yes boto3, you are doing it right:
         #   https://github.com/boto/boto3/issues/125
-        if self.region == 'us-east-1':
+        if self.region == "us-east-1":
             self._s3.create_bucket(Bucket=self.bucket)
         else:
-            self._s3.create_bucket(
-                Bucket=self.bucket,
-                CreateBucketConfiguration={
-                    'LocationConstraint': self.region
-                }
-            )
+            self._s3.create_bucket(Bucket=self.bucket, CreateBucketConfiguration={"LocationConstraint": self.region})

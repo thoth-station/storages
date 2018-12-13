@@ -24,4 +24,4 @@ from .result_base import ResultStorageBase
 class AdvisersResultsStore(ResultStorageBase):
     """Adapter for persisting recommendation results."""
 
-    RESULT_TYPE = 'adviser'
+    RESULT_TYPE = "adviser"

@@ -118,13 +118,13 @@ class SoftwareStackObservation(VertexBase):
     """Observations we have about the given stack based on run on a specific hardware."""
 
     performance_index = VertexProperty(properties.Float)
-    inspection_document_id = VertexProperty(properties.String, db_name='document_id')
+    inspection_document_id = VertexProperty(properties.String, db_name="document_id")
 
 
 class BuildObservation(VertexBase):
     """Observations we have about the given stack on runtime on some specific hardware."""
 
-    inspection_document_id = VertexProperty(properties.String, db_name='document_id')
+    inspection_document_id = VertexProperty(properties.String, db_name="document_id")
 
 
 class HardwareInformation(VertexBase):
@@ -156,7 +156,7 @@ class EcosystemSolver(VertexBase):
 class DependsOn(EdgeBase):
     """Dependency between packages modeling based on ecosystem specification."""
 
-    version_range = Property(properties.String, default='*')
+    version_range = Property(properties.String, default="*")
     package_name = Property(properties.String)
     extras = Property(properties.String)
 
@@ -265,50 +265,52 @@ class Requires(PackageExtractNativeBase):
 class DebDepends(PackageExtractNativeBase):
     """Depending edge of a deb package."""
 
-    version_range = Property(properties.String, default='*')
+    version_range = Property(properties.String, default="*")
 
 
 class DebPreDepends(PackageExtractNativeBase):
     """Pre-depending edge of a deb package."""
 
-    version_range = Property(properties.String, default='*')
+    version_range = Property(properties.String, default="*")
 
 
 class DebReplaces(PackageExtractNativeBase):
     """An edge of a deb package capturing package replacement.."""
 
-    version_range = Property(properties.String, default='*')
+    version_range = Property(properties.String, default="*")
 
 
-ALL_MODELS = frozenset((
-    BuildsIn,
-    BuildsOn,
-    BuildtimeEnvironment,
-    BuildObservation,
-    CreatesStack,
-    CVE,
-    DebDepends,
-    DebPackageVersion,
-    DebPreDepends,
-    DebReplaces,
-    DependsOn,
-    EcosystemSolver,
-    HasVersion,
-    HasVulnerability,
-    IsPartOf,
-    Package,
-    PythonArtifact,
-    PythonPackageIndex,
-    PythonPackageVersion,
-    Requires,
-    RPMPackageVersion,
-    RPMRequirement,
-    RunsIn,
-    RunsOn,
-    RuntimeEnvironment,
-    SoftwareStack,
-    Solved,
-    Observed,
-    HardwareInformation,
-    SoftwareStackObservation,
-))
+ALL_MODELS = frozenset(
+    (
+        BuildsIn,
+        BuildsOn,
+        BuildtimeEnvironment,
+        BuildObservation,
+        CreatesStack,
+        CVE,
+        DebDepends,
+        DebPackageVersion,
+        DebPreDepends,
+        DebReplaces,
+        DependsOn,
+        EcosystemSolver,
+        HasVersion,
+        HasVulnerability,
+        IsPartOf,
+        Package,
+        PythonArtifact,
+        PythonPackageIndex,
+        PythonPackageVersion,
+        Requires,
+        RPMPackageVersion,
+        RPMRequirement,
+        RunsIn,
+        RunsOn,
+        RuntimeEnvironment,
+        SoftwareStack,
+        Solved,
+        Observed,
+        HardwareInformation,
+        SoftwareStackObservation,
+    )
+)

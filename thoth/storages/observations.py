@@ -23,4 +23,4 @@ from .result_base import ResultStorageBase
 class ObservationResultsStore(ResultStorageBase):
     """Store resulting observation reports."""
 
-    RESULT_TYPE = 'observations'
+    RESULT_TYPE = "observations"
