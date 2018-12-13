@@ -745,6 +745,13 @@ class GraphDatabase(StorageBase):
 
     def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:
         """Create a software stack inside graph database from a Pipfile.lock."""
+        def get_index_url(index_name: str):
+            for source_index in pipfile_locked['_meta']['sources']:
+                if source_index['name'] == index_name:
+                    return source_index['url']
+
+            raise ValueError(f"Index with name {index_name!r} not found in Pipfile.lock metadata")
+
         python_packages = []
         for package_name, package_info in pipfile_locked['default'].items():
             # TODO: extend with index
@@ -758,11 +765,12 @@ class GraphDatabase(StorageBase):
             else:
                 package_version = package_info['version'][len('=='):]
 
-            # TODO: assing index_url from sources?
+            index_url = get_index_url(package_info['index'])
+
             _, v, python_package_version = self.create_pypi_package_version(
                     package_name,
                     package_version,
-                    index_url=None
+                    index_url=index_url
             )
             python_packages.append(python_package_version)
 
