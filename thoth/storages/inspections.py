@@ -23,10 +23,10 @@ from .result_base import ResultStorageBase
 class InspectionResultsStore(ResultStorageBase):
     """Adapter for persisting Amun inspection results."""
 
-    RESULT_TYPE = 'inspection'
+    RESULT_TYPE = "inspection"
     SCHEMA = None
 
     @classmethod
     def get_document_id(cls, document: dict) -> str:
         """Get id under which the given document will be stored."""
-        return document['inspection_id']
+        return document["inspection_id"]

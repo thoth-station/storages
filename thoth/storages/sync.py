@@ -35,8 +35,7 @@ from .graph import GraphDatabase
 _LOGGER = logging.getLogger(__name__)
 
 
-def sync_solver_documents(document_ids: list = None, force: bool = False,
-                          graceful: bool = False) -> tuple:
+def sync_solver_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
     """Sync solver documents into graph."""
     graph = GraphDatabase()
     graph.connect()
@@ -70,8 +69,7 @@ def sync_solver_documents(document_ids: list = None, force: bool = False,
     return processed, synced, skipped, failed
 
 
-def sync_analysis_documents(document_ids: list = None, force: bool = False,
-                            graceful: bool = False) -> tuple:
+def sync_analysis_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
     """Sync image analysis documents into graph."""
     graph = GraphDatabase()
     graph.connect()
@@ -106,8 +104,9 @@ def sync_analysis_documents(document_ids: list = None, force: bool = False,
     return processed, synced, skipped, failed
 
 
-def sync_inspection_documents(amun_api_url: str, document_ids: list = None, force_sync: bool = False,
-                              graceful: bool = False) -> tuple:
+def sync_inspection_documents(
+    amun_api_url: str, document_ids: list = None, force_sync: bool = False, graceful: bool = False
+) -> tuple:
     """Sync observations made on Amun into graph databaes."""
     inspection_store = InspectionResultsStore()
     inspection_store.connect()
@@ -135,11 +134,11 @@ def sync_inspection_documents(amun_api_url: str, document_ids: list = None, forc
                         job_log = get_inspection_job_log(amun_api_url, inspection_id)
 
                     document = {
-                        'specification': specification,
-                        'build_log': build_log,
-                        'job_log': job_log,
-                        'inspection_id': inspection_id,
-                        'status': status
+                        "specification": specification,
+                        "build_log": build_log,
+                        "job_log": job_log,
+                        "inspection_id": inspection_id,
+                        "status": status,
                     }
 
                     # First we store results into graph database and then onto

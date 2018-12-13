@@ -23,4 +23,4 @@ from .ceph_cache import CephCache
 class AdvisersCacheStore(CephCache):
     """Adapter for retrieving and storing hashes for cached adviser results."""
 
-    RESULT_TYPE = 'adviser-cache'
+    RESULT_TYPE = "adviser-cache"

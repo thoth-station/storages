@@ -23,4 +23,4 @@ from .ceph_cache import CephCache
 class ProvenanceCacheStore(CephCache):
     """Adapter for retrieving and storing hashes for cached provenance checker results."""
 
-    RESULT_TYPE = 'provenance-cache'
+    RESULT_TYPE = "provenance-cache"

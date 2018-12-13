@@ -39,7 +39,7 @@ class Cache(object):
 
     def get(self, item):
         """Get the given item from cache."""
-        item.pop('id', None)
+        item.pop("id", None)
         for entry in self._cache:
             if entry[0] == item:
                 return entry[1]
@@ -48,5 +48,5 @@ class Cache(object):
 
     def put(self, item, value):
         """Store the given item with the given value into a cache."""
-        item.pop('id', None)  # Do not store ids as they are the actual value.
+        item.pop("id", None)  # Do not store ids as they are the actual value.
         self._cache.appendleft((item, value))

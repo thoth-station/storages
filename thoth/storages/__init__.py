@@ -36,5 +36,5 @@ from .sync import sync_solver_documents
 from .sync import sync_inspection_documents
 
 
-__name__ = 'thoth-storages'
+__name__ = "thoth-storages"
 __version__ = "0.9.4"

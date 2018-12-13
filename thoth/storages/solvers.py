@@ -24,4 +24,4 @@ from .result_base import ResultStorageBase
 class SolverResultsStore(ResultStorageBase):
     """Adapter for persisting solver results."""
 
-    RESULT_TYPE = 'solver'
+    RESULT_TYPE = "solver"
