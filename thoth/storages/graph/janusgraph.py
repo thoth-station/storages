@@ -358,6 +358,59 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
+    def _get_stack(self, packages: typing.List[tuple]) -> AsyncGraphTraversal:
+        """Get all stacks that include the given set of packages."""
+        # The query starts in a package and ends first in a software stack - this
+        # way we get all the software stacks where the first package is present. We
+        # then traverse backwards to the second package from the stack where we
+        # ended up first and continue from package to back to all software stacks
+        # in which the second package is present. As we are chaining these queries
+        # we get a software stack where there is the first and the second package
+        # present at the same time. The query continues for all N packages giving
+        # back all software stacks where all N packages are present (note there can
+        # be also other packages).
+        if len(packages) == 0:
+            raise ValueError("Cannot query for a stack with no packages.")
+
+        package_name, package_version, index_url = packages[0]
+        query = self.g.V().has('__type__', 'vertex') \
+            .has('__label__', 'python_package_version') \
+            .has('ecosystem', 'pypi') \
+            .has('package_version', package_version) \
+            .has('package_name', package_name) \
+            .has('index_url', index_url) \
+            .outE() \
+            .has('__type__', 'edge') \
+            .has('__label__', 'creates_stack') \
+            .inV().has('__type__', 'vertex').has('__label__', 'software_stack')
+
+        for package_name, package_version, index_url in packages[1:]:
+            query = query.inE() \
+                .has('__type__', 'edge').has('__label__', 'creates_stack') \
+                .outV() \
+                .has('__type__', 'vertex') \
+                .has('__label__', 'python_package_version') \
+                .has('ecosystem', 'pypi') \
+                .has('package_version', package_version) \
+                .has('package_name', package_name) \
+                .has('index_url', index_url) \
+                .outE() \
+                .has('__type__', 'edge') \
+                .has('__label__', 'creates_stack') \
+                .inV().has('__type__', 'vertex').has('__label__', 'software_stack')
+
+        return query
+
+    def get_software_stacks(self, packages: typing.List[tuple]) -> typing.List[SoftwareStack]:
+        """Get all stacks that include the given set of packages.
+
+        Packages in stacks returned are superset of packages in the original set of
+        packages given in parameters - meaning a returned stack has packages as
+        provided in the parameter, but can also have additional packages.
+        """
+        query = self._get_stack(packages)
+        return asyncio.get_event_loop().run_until_complete(query.toList())
+
     def _compute_python_package_version_avg_performance_on_hw(
         self, query, hardware_specs: dict, runtime_environment_name: str
     ) -> float:
@@ -378,43 +431,27 @@ class GraphDatabase(StorageBase):
 
     def compute_python_package_version_avg_performance(
         self,
-        package_name: str,
-        package_version: str,
-        index_url: str = None,
+        packages: tuple,
         *,
         runtime_environment_name: str = None,
         hardware_specs: dict = None,
     ) -> float:
-        """Get average performance of a Python package on the given runtime environment.
+        """Get average performance of Python packages on the given runtime environment.
 
         We derive this average performance based on software stacks we have
         evaluated on the given runtime environment including the given
         package in specified version. There are also included stacks that
         failed for some reason that have negative performance impact on the overall value.
 
+        There are considered software stacks that include packages listed,
+        they can however include also other packages.
+
         Optional parameters additionally slice results - e.g. if runtime_environment is set,
         it picks only resutls that match the given parameters criteria.
         """
-        query = (
-            self.g.V()
-            .has("__label__", PythonPackageVersion.__label__)
-            .has("__type__", "vertex")
-            .has("ecosystem", "pypi")
-            .has("package_name", package_name)
-            .has("package_version", package_version)
-        )
+        query = self._get_stack(packages)
+        query = query.outE().has("__label__", RunsIn.__label__)
 
-        if index_url:
-            query = query.has("index_url", index_url)
-
-        query = (
-            query.outE()
-            .has("__label__", CreatesStack.__label__)
-            .inV()
-            .has("__label__", SoftwareStack.__label__)
-            .outE()
-            .has("__label__", RunsIn.__label__)
-        )
         if runtime_environment_name and not hardware_specs:
             query = (
                 query.inV()
@@ -427,7 +464,7 @@ class GraphDatabase(StorageBase):
         if hardware_specs:
             # We pass runtime environment name to optimize traversal (no need to go back).
             return self._compute_python_package_version_avg_performance_on_hw(
-                graph, query, hardware_specs, runtime_environment_name
+                query, hardware_specs, runtime_environment_name
             )
 
         query = query.values("performance_index").mean().next()
