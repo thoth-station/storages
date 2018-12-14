@@ -24,6 +24,7 @@ import os
 import typing
 import re
 from itertools import chain
+from collections import ChainMap
 
 import uvloop
 from gremlin_python.process.traversal import Order
@@ -681,8 +682,40 @@ class GraphDatabase(StorageBase):
 
         return asyncio.get_event_loop().run_until_complete(query)
 
+    async def get_python_package_tuple(self, python_package_node_id: int) -> typing.Dict[int, tuple]:
+        session = await self.app.session()
+        result = (
+            await session.g.V(python_package_node_id).values("package_name", "package_version", "index_url").toList()
+        )
+
+        return {python_package_node_id: result}
+
+    def get_python_package_tuples(self, python_package_node_ids: typing.Set[int]) -> typing.Dict[int, dict]:
+        """Get package name, package version and index URL for each python package node.
+
+        This query is good to be used in conjunction with query retrieving
+        transitive dependencies. The main benefit of this function is that it
+        performs all the queries in an event loop per each package.
+        """
+        result = dict.fromkeys(python_package_node_ids)
+
+        tasks = []
+        for python_package_node_id in python_package_node_ids:
+            task = asyncio.ensure_future(self.get_python_package_tuple(python_package_node_id))
+            tasks.append(task)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(asyncio.gather(*tasks))
+        results_dict = list(chain(results))
+        return dict(ChainMap(*results_dict))
+
     def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index_url: str) -> list:
-        """Get all transitive dependencies for the given package by traversing dependency graph."""
+        """Get all transitive dependencies for the given package by traversing dependency graph.
+
+        It's much faster to retieve just dependencies for the transitive
+        dependencies as most of the time is otherwise spent in serialization
+        and deserialization of query results.
+        """
         package_name = self.normalize_python_package_name(package_name)
         query = (
             self.g.V()
@@ -692,11 +725,10 @@ class GraphDatabase(StorageBase):
             .has("package_version", package_version)
             .has("package_name", package_name)
             .has("index_url", index_url)
-            .repeat(outE().simplePath().has("__label__", "depends_on").inV().has("__label__", "python_package_version"))
+            .repeat(flatMap(outE().simplePath().has("__type__", "edge").has("__label__", "depends_on").inV()))
             .emit()
             .path()
-            .by(project("package", "version", "index_url").by("package_name").by("package_version").by("index_url"))
-            .by(project("depends_on").by("version_range"))
+            .by(id_())
             .toList()
         )
 
