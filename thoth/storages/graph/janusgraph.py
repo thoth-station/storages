@@ -91,7 +91,7 @@ def _get_hashable_id(val):
     return result
 
 
-def requires_connection(func):
+def requires_connection(func):  # Ignore PyDocStyleBear
     """Force implicit connection if not connected already."""
 
     @functools.wraps(func)
@@ -831,7 +831,7 @@ class GraphDatabase(StorageBase):
             ram_size=self._parse_memory(specs["memory"]) if specs.get("memory") else None,
         )
 
-    def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:
+    def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:  # Ignore PyDocStyleBear
         """Create a software stack inside graph database from a Pipfile.lock."""
 
         def get_index_url(index_name: str):
@@ -852,7 +852,7 @@ class GraphDatabase(StorageBase):
                 )
                 package_version = package_info["version"]
             else:
-                package_version = package_info["version"][len("==") :]
+                package_version = package_info["version"][len("==") :]  # Ignore PycodestyleBear (E203)
 
             index_url = get_index_url(package_info["index"])
 
@@ -1069,7 +1069,7 @@ class GraphDatabase(StorageBase):
                     for index_entry in dependency["resolved_versions"]:
                         index_url = index_entry["index"]
                         for dependency_version in index_entry["versions"]:
-                            python_package_dependency, _, python_package_version_dependency = self.create_pypi_package_version(
+                            python_package_dependency, _, python_package_version_dependency = self.create_pypi_package_version(  # Ignore PycodestyleBear (E501)
                                 package_name=dependency["package_name"],
                                 package_version=dependency_version,
                                 index_url=index_url,
@@ -1128,7 +1128,7 @@ class GraphDatabase(StorageBase):
                 )
                 continue
 
-            package_version = unsolvable["version_spec"][len("==") :]
+            package_version = unsolvable["version_spec"][len("==") :]  # Ignore PycodestyleBear (E203)
             try:
                 python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=unsolvable["package_name"],

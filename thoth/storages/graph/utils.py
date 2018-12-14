@@ -35,7 +35,7 @@ from .models_base import EdgeBase
 _LOGGER = logging.getLogger(__name__)
 
 
-def enable_vertex_cache(func: typing.Callable):
+def enable_vertex_cache(func: typing.Callable):  # Ignore PyDocStyleBear
     """Enable vertex caching."""
 
     @wraps(func)
@@ -60,7 +60,7 @@ def enable_vertex_cache(func: typing.Callable):
     return wrapped
 
 
-def enable_edge_cache(func: typing.Callable):
+def enable_edge_cache(func: typing.Callable):  # Ignore PyDocStyleBear
     """Enable caching for edge handling."""
 
     @wraps(func)
