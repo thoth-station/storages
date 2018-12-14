@@ -27,6 +27,7 @@ from itertools import chain
 from collections import ChainMap
 
 import uvloop
+from aiogremlin.process.graph_traversal import AsyncGraphTraversal
 from gremlin_python.process.traversal import Order
 from gremlin_python.process.traversal import without
 from gremlin_python.process.traversal import gt
@@ -905,7 +906,7 @@ class GraphDatabase(StorageBase):
             ram_size=self._parse_memory(specs["memory"]) if specs.get("memory") else None,
         )
 
-    def create_software_stack_pipfile(self, pipfile_locked: dict) -> SoftwareStack:  # Ignore PyDocStyleBear
+    def create_software_stack_pipfile(self, pipfile_locked: dict, software_stack_name: str) -> SoftwareStack:  # Ignore PyDocStyleBear
         """Create a software stack inside graph database from a Pipfile.lock."""
 
         def get_index_url(index_name: str):
@@ -935,7 +936,7 @@ class GraphDatabase(StorageBase):
             )
             python_packages.append(python_package_version)
 
-        software_stack = SoftwareStack()
+        software_stack = SoftwareStack.from_properties(software_stack_name=software_stack_name)
         software_stack.get_or_create(self.g)
 
         for python_package_version in python_packages:
@@ -948,7 +949,8 @@ class GraphDatabase(StorageBase):
         software_stack = None
         if document["specification"].get("python"):
             software_stack = self.create_software_stack_pipfile(
-                document["specification"]["python"]["requirements_locked"]
+                document["specification"]["python"]["requirements_locked"],
+                document["inspection_id"]
             )
 
         if document["job_log"] is not None:
