@@ -113,6 +113,13 @@ class BuildtimeEnvironment(VertexBase):
 class SoftwareStack(VertexBase):
     """A software stack crated by packages in specific versions."""
 
+    # The name uniquely identifies a software stack. The main reason we have it
+    # here - we can reference a software stack as well as making sure we do not
+    # assign all the packages to one software stack as get_or_create() creates
+    # node if a node with the given properties does not exist (and as we do not
+    # have any properties, there is used always the same node).
+    software_stack_name = VertexProperty(properties.String)
+
 
 class SoftwareStackObservation(VertexBase):
     """Observations we have about the given stack based on run on a specific hardware."""
