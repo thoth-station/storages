@@ -61,7 +61,7 @@ class CephStore(StorageBase):
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
-            yield obj.key[len(self.prefix) :]
+            yield obj.key[len(self.prefix) :]  # Ignore PycodestyleBear (E203)
 
     @staticmethod
     def dict2blob(dictionary: dict) -> bytes:
