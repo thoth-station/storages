@@ -35,7 +35,6 @@ from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import id as id_
 from gremlin_python.process.graph_traversal import outE
 from gremlin_python.process.graph_traversal import constant
-from gremlin_python.process.graph_traversal import project
 from gremlin_python.process.graph_traversal import flatMap
 from goblin import Goblin
 
@@ -58,7 +57,6 @@ from .models import HasVulnerability
 from .models import IsPartOf
 from .models import Package
 from .models import PythonArtifact
-from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
 from .models import RunsIn
