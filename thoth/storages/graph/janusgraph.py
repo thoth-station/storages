@@ -31,9 +31,11 @@ from gremlin_python.process.traversal import Order
 from gremlin_python.process.traversal import without
 from gremlin_python.process.traversal import gt
 from gremlin_python.process.graph_traversal import inE
+from gremlin_python.process.graph_traversal import id as id_
 from gremlin_python.process.graph_traversal import outE
 from gremlin_python.process.graph_traversal import constant
 from gremlin_python.process.graph_traversal import project
+from gremlin_python.process.graph_traversal import flatMap
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
@@ -734,6 +736,9 @@ class GraphDatabase(StorageBase):
         transitive dependencies. The main benefit of this function is that it
         performs all the queries in an event loop per each package.
         """
+        if len(python_package_node_ids) == 0:
+            return {}
+
         result = dict.fromkeys(python_package_node_ids)
 
         tasks = []
