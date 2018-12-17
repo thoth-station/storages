@@ -201,13 +201,13 @@ class GraphDatabase(StorageBase):
         return result
 
     def register_python_package_index(
-        url: str, *, warehouse_api_url: str = None, verify_ssl: bool = True, warehouse: bool = False
-    ) -> bool:
+        self, url: str, *, warehouse_api_url: str = None, verify_ssl: bool = True, warehouse: bool = False
+    ) -> typing.Tuple[PythonPackageIndex, bool]:
         """Return a list of available Python package indexes."""
         python_package_index = PythonPackageIndex.from_properties(
             url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl, warehouse=warehouse
         )
-        existed = python_package.get_or_create(self.g)
+        existed = python_package_index.get_or_create(self.g)
         return python_package_index, existed
 
     def runtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
@@ -412,8 +412,9 @@ class GraphDatabase(StorageBase):
         query = self._get_stack(packages)
         return asyncio.get_event_loop().run_until_complete(query.toList())
 
+    @staticmethod
     def _compute_python_package_version_avg_performance_on_hw(
-        self, query, hardware_specs: dict, runtime_environment_name: str
+        query, hardware_specs: dict, runtime_environment_name: str
     ) -> float:
         """Extend the avg performance query so that there is taken into account hardware we run on."""
         query = query.inV().has("__label__", RuntimeEnvironment.__label__)
@@ -471,7 +472,7 @@ class GraphDatabase(StorageBase):
         query = query.values("performance_index").mean().next()
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_all_versions_python_package(self, package_name: str, index_url: str = None) -> typing.List[str]:
+    def get_all_versions_python_package(self, package_name: str, index_url: str = None) -> typing.List[tuple]:
         """Get all versions available for a Python package."""
         package_name = self.normalize_python_package_name(package_name)
         query = (
@@ -738,8 +739,6 @@ class GraphDatabase(StorageBase):
         if len(python_package_node_ids) == 0:
             return {}
 
-        result = dict.fromkeys(python_package_node_ids)
-
         tasks = []
         for python_package_node_id in python_package_node_ids:
             task = asyncio.ensure_future(self.get_python_package_tuple(python_package_node_id))
@@ -836,7 +835,7 @@ class GraphDatabase(StorageBase):
         """Check if there is an inspection document record with the given id."""
         loop = asyncio.get_event_loop()
 
-        query = self.g.E().has("inspection_document_id", analysis_document_id).count().is_(gt(0)).next()
+        query = self.g.E().has("inspection_document_id", inspection_document_id).count().is_(gt(0)).next()
 
         return bool(loop.run_until_complete(query))
 
@@ -951,6 +950,7 @@ class GraphDatabase(StorageBase):
                 document["inspection_id"]
             )
 
+        environment_name = document["inspection_id"]
         if document["job_log"] is not None:
             performance_index = None
             if document["status"]["job"]["exit_code"] != 0:
@@ -965,7 +965,6 @@ class GraphDatabase(StorageBase):
             if performance_index is None:
                 _LOGGER.warning("No performance index found in document for inspection %r", document["inspection_id"])
 
-            environment_name = document["inspection_id"]
             if not document["specification"].get("packages"):
                 # Use the base image as an environment name if there were not
                 # installed any native packages.
@@ -1040,7 +1039,7 @@ class GraphDatabase(StorageBase):
         self,
         package_name: str,
         package_version: str,
-        index_url: str,
+        index_url: typing.Optional[str],
         *,
         hashes: list = None,
         only_if_package_seen: bool = False,
