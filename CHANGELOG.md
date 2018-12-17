@@ -679,3 +679,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create initial classes with interface
 * Add .travis.yml configuration file
 * Initial project import
+
+## Release 0.9.5 (2018-12-17T12:53:16)
+* Remove unused imports
+* Introduce name for a software stack
+* Do not query graph database if no id is provided
+* Introduce query for querying software stacks
+* Retrieve python package versions using asyncio
+* Automatic update of dependency boto3 from 1.9.65 to 1.9.66
+* Automatic update of dependency pytest from 4.0.1 to 4.0.2
+* Automatic update of dependency cython from 0.29.1 to 0.29.2
+* Automatic update of dependency boto3 from 1.9.64 to 1.9.65
+* ignoring some coala errors
+* Reformat using black
+* Extend performance query so it is more generic
+* Assign index to all packages in inspection sync
+* Do not handle exception twice
+* Automatic update of dependency boto3 from 1.9.63 to 1.9.64
+* Automatic update of dependency thoth-common from 0.4.6 to 0.5.0
+* Automatic update of dependency boto3 from 1.9.62 to 1.9.63
