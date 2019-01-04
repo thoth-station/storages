@@ -433,7 +433,7 @@ class GraphDatabase(StorageBase):
 
     def compute_python_package_version_avg_performance(
         self,
-        packages: tuple,
+        packages: typing.List[tuple],
         *,
         runtime_environment_name: str = None,
         hardware_specs: dict = None,
@@ -729,7 +729,7 @@ class GraphDatabase(StorageBase):
 
         return {python_package_node_id: result}
 
-    def get_python_package_tuples(self, python_package_node_ids: typing.Set[int]) -> typing.Dict[int, dict]:
+    def get_python_package_tuples(self, python_package_node_ids: typing.Set[int]) -> typing.Dict[int, tuple]:
         """Get package name, package version and index URL for each python package node.
 
         This query is good to be used in conjunction with query retrieving
@@ -1434,7 +1434,7 @@ class GraphDatabase(StorageBase):
         )
         return cve_record, has_vulnerability_existed
 
-    def get_python_cve_records(self, package_name: str, package_version: str) -> typing.List[CVE]:
+    def get_python_cve_records(self, package_name: str, package_version: str) -> typing.List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
         query = (
@@ -1444,7 +1444,11 @@ class GraphDatabase(StorageBase):
             .has("package_version", package_version)
             .outE()
             .has("__label__", "has_vulnerability")
+            .has("__type__", "edge")
             .inV()
+            .has("__label__", "cve")
+            .has("__type__", "vertex")
+            .project("advisory", "cve_name", "cve_id").by("advisory").by("cve_name").by("cve_id")
             .toList()
         )
 
