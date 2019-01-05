@@ -127,6 +127,10 @@ class GraphDatabase(StorageBase):
         self.port = port or self.DEFAULT_PORT
         self.serializer = serializer or self.DEFAULT_SERIALIZER
 
+    def __del__(self):
+        """Disconnect properly on object destruction."""
+        self.disconnect()
+
     @classmethod
     def create(cls, host, port=None):
         """Create a graph adapter, only for one host (syntax sugar)."""
