@@ -715,7 +715,7 @@ class GraphDatabase(StorageBase):
             .has("package_name", package_name)
             .has("package_version", package_version)
             .has("index", index)
-            .invV()
+            .inV()
             .dedup()
             .group()
             .by("package_name")
