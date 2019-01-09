@@ -726,12 +726,15 @@ class GraphDatabase(StorageBase):
         return asyncio.get_event_loop().run_until_complete(query)
 
     async def get_python_package_tuple(self, python_package_node_id: int) -> typing.Dict[int, tuple]:
+        """Get Python's package name, package version, package index tuple for the given package id."""
         session = await self.app.session()
         result = (
-            await session.g.V(python_package_node_id).values("package_name", "package_version", "index_url").toList()
+            await session.g.V(python_package_node_id).valueMap().select("package_name", "package_version", "index_url").next()
         )
 
-        return {python_package_node_id: result}
+        return {
+            python_package_node_id: (result["package_name"][0], result["package_version"][0], result["index_url"][0])
+        }
 
     def get_python_package_tuples(self, python_package_node_ids: typing.Set[int]) -> typing.Dict[int, tuple]:
         """Get package name, package version and index URL for each python package node.
