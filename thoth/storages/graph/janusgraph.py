@@ -40,6 +40,7 @@ from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
 from thoth.common import timestamp2datetime
+from thoth.common import OpenShift
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
@@ -846,58 +847,6 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
-    @staticmethod
-    def _parse_cpu(cpu_spec) -> float:
-        """Parse the given CPU requirement as used by OpenShift/Kubernetes."""
-        if isinstance(cpu_spec, str):
-            if cpu_spec.endswith("m"):
-                cpu_spec = cpu_spec[:-1]
-                return int(cpu_spec) / 1000
-
-        return float(cpu_spec)
-
-    @staticmethod
-    def _parse_memory(memory_spec) -> float:
-        if isinstance(memory_spec, (float, int)):
-            return float(memory_spec)
-
-        if memory_spec.endswith("E"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000 ** 6
-        elif memory_spec.endswith("P"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000 ** 5
-        elif memory_spec.endswith("T"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000 ** 4
-        elif memory_spec.endswith("G"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000 ** 3
-        elif memory_spec.endswith("M"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000 ** 2
-        elif memory_spec.endswith("K"):
-            memory_spec = float(memory_spec[:-1])
-            return memory_spec * 1000
-        elif memory_spec.endswith("Ei"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024 ** 6
-        elif memory_spec.endswith("Pi"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024 ** 5
-        elif memory_spec.endswith("Ti"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024 ** 4
-        elif memory_spec.endswith("Gi"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024 ** 3
-        elif memory_spec.endswith("Mi"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024 ** 2
-        elif memory_spec.endswith("Ki"):
-            memory_spec = float(memory_spec[:-2])
-            return memory_spec * 1024
-
     def _get_hardware_information(self, specs: dict) -> HardwareInformation:
         """Get hardware information based on requests provided."""
         hardware = specs.get("hardware") or {}
@@ -906,8 +855,8 @@ class GraphDatabase(StorageBase):
             cpu_model=hardware.get("cpu_model"),
             cpu_physical_cpus=hardware.get("physical_cpus"),
             cpu_model_name=hardware.get("processor"),
-            cpu_cores=self._parse_cpu(specs["cpu"]) if specs.get("cpu") else None,
-            ram_size=self._parse_memory(specs["memory"]) if specs.get("memory") else None,
+            cpu_cores=OpenShift.parse_cpu_spec(specs["cpu"]) if specs.get("cpu") else None,
+            ram_size=OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None,
         )
 
     def create_software_stack_pipfile(self, pipfile_locked: dict, software_stack_name: str) -> SoftwareStack:  # Ignore PyDocStyleBear
