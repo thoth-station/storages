@@ -699,3 +699,15 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency boto3 from 1.9.63 to 1.9.64
 * Automatic update of dependency thoth-common from 0.4.6 to 0.5.0
 * Automatic update of dependency boto3 from 1.9.62 to 1.9.63
+
+## Release 0.9.6 (2019-01-16T10:04:37)
+* Move OpenShift specific bits to OpenShift
+* Do not rely in Gremlin queries for order of received items
+* Fix typo in retrieve_dependencies(...) query
+* Minor fixes in method signatures
+* Disconnect in destructor
+* Automatic update of dependency boto3 from 1.9.71 to 1.9.73
+* Avoid goblin model details in output
+* Update README.rst
+* Automatic update of dependency boto3 from 1.9.67 to 1.9.71
+* Automatic update of dependency boto3 from 1.9.66 to 1.9.67
