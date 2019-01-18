@@ -105,9 +105,18 @@ def sync_analysis_documents(document_ids: list = None, force: bool = False, grac
 
 
 def sync_inspection_documents(
-    amun_api_url: str, document_ids: list = None, force_sync: bool = False, graceful: bool = False
+    amun_api_url: str,
+    document_ids: list = None,
+    *,
+    force_sync: bool = False,
+    graceful: bool = False,
+    only_graph_sync: bool = False,
+    only_ceph_sync: bool = False,
 ) -> tuple:
     """Sync observations made on Amun into graph databaes."""
+    if only_graph_sync and only_ceph_sync:
+        raise ValueError("At least one of Ceph or Graph should be performed")
+
     inspection_store = InspectionResultsStore()
     inspection_store.connect()
 
@@ -145,10 +154,14 @@ def sync_inspection_documents(
                     # Ceph. This way in the next run we can sync documents that
                     # failed to sync to graph - see if statement that is asking
                     # for Ceph document presents first.
-                    _LOGGER.info(f"Syncing inspection {inspection_id!r} to {graph.hosts}")
-                    graph.sync_inspection_result(document)
-                    _LOGGER.info(f"Syncing inspection {inspection_id!r} to {inspection_store.ceph.host}")
-                    inspection_store.store_document(document)
+                    if not only_ceph_sync:
+                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to {graph.hosts}")
+                        graph.sync_inspection_result(document)
+
+                    if not only_graph_sync:
+                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to {inspection_store.ceph.host}")
+                        inspection_store.store_document(document)
+
                     synced += 1
                 except Exception as exc:
                     if not graceful:
