@@ -130,7 +130,8 @@ class GraphDatabase(StorageBase):
 
     def __del__(self):
         """Disconnect properly on object destruction."""
-        self.disconnect()
+        if self.is_connected():
+            self.disconnect()
 
     @classmethod
     def create(cls, host, port=None):
