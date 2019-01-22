@@ -1478,3 +1478,32 @@ class GraphDatabase(StorageBase):
         query = self.g.V().has("__label__", PythonPackageIndex.__label__).valueMap().select("url").toList()
 
         return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
+
+    @staticmethod
+    def parse_python_solver_name(solver_name: str) -> dict:
+        """Parse os and Python identifiers encoded into solver name."""
+        if solver_name.startswith('solver-'):
+            solver_identifiers = solver_name[len('solver-'):]
+        else:
+            raise ValueError("Solver name has to start with 'solver-' prefix")
+
+        parts = solver_identifiers.split('-')
+        if len(parts) != 3:
+            raise ValueError(
+                "Solver should be in a form of 'solver-<os_name>-<os_version>-<python_version>, "
+                f"solver name {solver_name} does not correspond to this naming schema"
+            )
+
+        python_version = parts[2]
+        if python_version.startswith('py'):
+            python_version = python_version[len('py'):]
+        else:
+            raise ValueError(
+                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
+            )
+
+        return {
+            "os_name": parts[0],
+            "os_version": parts[1],
+            "python_version": python_version
+        }
