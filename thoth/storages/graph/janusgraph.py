@@ -884,7 +884,7 @@ class GraphDatabase(StorageBase):
 
             index_url = get_index_url(package_info["index"])
 
-            _, v, python_package_version = self.create_pypi_package_version(
+            existed, _, v, python_package_version = self.create_pypi_package_version(
                 package_name, package_version, index_url=index_url
             )
             python_packages.append(python_package_version)
@@ -1000,7 +1000,13 @@ class GraphDatabase(StorageBase):
         hashes: list = None,
         only_if_package_seen: bool = False,
     ) -> typing.Union[None, tuple]:
-        """Create entries for PyPI package version."""
+        """Create entries for PyPI package version.
+
+        The return value is a tuple. The first item in tuple is a flag signalizing if the given package was newly
+        added ("existed" flag). The rest 3 touples are models representing python package, has version and
+        python package version. If only seen flag is set to true, the return value can be None in case of
+        package was not previously seen - in that case no action is done.
+        """
         package_name = self.normalize_python_package_name(package_name)
 
         if only_if_package_seen:
@@ -1023,7 +1029,7 @@ class GraphDatabase(StorageBase):
         python_package_version = PythonPackageVersion.from_properties(
             ecosystem="pypi", package_name=package_name, package_version=package_version, index_url=index_url
         )
-        python_package_version.get_or_create(self.g)
+        existed = python_package_version.get_or_create(self.g)
 
         has_version = HasVersion.from_properties(source=python_package, target=python_package_version)
         has_version.get_or_create(self.g)
@@ -1034,7 +1040,7 @@ class GraphDatabase(StorageBase):
 
             HasArtifact.from_properties(source=python_package_version, target=python_artifact).get_or_create(self.g)
 
-        return python_package, has_version, python_package_version
+        return existed, python_package, has_version, python_package_version
 
     def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
         """Get unsolved runtime environment which are not connected and attached to python package version."""
@@ -1073,7 +1079,7 @@ class GraphDatabase(StorageBase):
 
         for python_package_info in document["result"]["tree"]:
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     python_package_info["package_name"],
                     python_package_info["package_version"],
                     python_package_info["index_url"],
@@ -1098,7 +1104,7 @@ class GraphDatabase(StorageBase):
                     for index_entry in dependency["resolved_versions"]:
                         index_url = index_entry["index"]
                         for dependency_version in index_entry["versions"]:
-                            python_package_dependency, _, python_package_version_dependency = self.create_pypi_package_version(  # Ignore PycodestyleBear (E501)
+                            existed, python_package_dependency, _, python_package_version_dependency = self.create_pypi_package_version(  # Ignore PycodestyleBear (E501)
                                 package_name=dependency["package_name"],
                                 package_version=dependency_version,
                                 index_url=index_url,
@@ -1128,7 +1134,7 @@ class GraphDatabase(StorageBase):
 
         for error_info in document["result"]["errors"]:
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=error_info.get("package_name") or error_info["package"],
                     package_version=error_info["version"],
                     index_url=error_info["index"],
@@ -1159,7 +1165,7 @@ class GraphDatabase(StorageBase):
 
             package_version = unsolvable["version_spec"][len("==") :]  # Ignore PycodestyleBear (E203)
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=unsolvable["package_name"],
                     package_version=package_version,
                     index_url=unsolvable["index"],
@@ -1188,7 +1194,7 @@ class GraphDatabase(StorageBase):
 
             package_name, package_version = parts
             try:
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=package_name, package_version=package_version, index_url=None
                 )
 
@@ -1340,7 +1346,7 @@ class GraphDatabase(StorageBase):
                 # in the graph database triggering solver runs
                 # TODO: we should check for hashes in the graph database to see
                 # if we have the given package
-                python_package, _, python_package_version = self.create_pypi_package_version(
+                existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=python_package_info["result"]["name"],
                     package_version=python_package_info["result"]["version"],
                     index_url=None,
@@ -1374,7 +1380,7 @@ class GraphDatabase(StorageBase):
         _LOGGER.debug("CVE record wit id %r ", record_id, "added" if not cve_record_existed else "was already present")
 
         # We explicitly track vulnerable packages (only_if_package_seen=False).
-        python_package, _, python_package_version = self.create_pypi_package_version(
+        existed, python_package, _, python_package_version = self.create_pypi_package_version(
             package_name, package_version, index_url=index_url, only_if_package_seen=False
         )
 
