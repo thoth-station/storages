@@ -623,7 +623,7 @@ class GraphDatabase(StorageBase):
 
     def get_error_python_packages_count(self, unsolvable: bool = False, unparsable: bool = False) -> int:
         """Retrieve number of Python packages stored in the graph database with error flag."""
-        if unsolvable and uparsable:
+        if unsolvable and unparsable:
             raise ValueError("Properties unsolvable and unparsable are disjoin")
 
         query = (
@@ -1069,9 +1069,17 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
+        solver_name = document["metadata"]["analyzer"]
+        solver_info = self.parse_python_solver_name(solver_name)
+
         ecosystem_solver = EcosystemSolver.from_properties(
-            solver_name=document["metadata"]["analyzer"], solver_version=document["metadata"]["analyzer_version"]
+            solver_name=solver_name,
+            solver_version=document["metadata"]["analyzer_version"],
+            os_name=solver_info["os_name"],
+            os_version=solver_info["os_version"],
+            python_version=solver_info["python_version"]
         )
+
         ecosystem_solver.get_or_create(self.g)
 
         solver_document_id = SolverResultsStore.get_document_id(document)
@@ -1094,6 +1102,9 @@ class GraphDatabase(StorageBase):
                     solver_error=False,
                     solver_error_unsolvable=False,
                     solver_error_unparsable=False,
+                    os_name=solver_info["os_name"],
+                    os_version=solver_info["os_version"],
+                    python_version=solver_info["python_version"],
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
@@ -1118,6 +1129,9 @@ class GraphDatabase(StorageBase):
                                 solver_error=False,
                                 solver_error_unsolvable=False,
                                 solver_error_unparsable=False,
+                                os_name=solver_info["os_name"],
+                                os_version=solver_info["os_version"],
+                                python_version=solver_info["python_version"],
                             ).get_or_create(self.g)
 
                             # TODO: mark extras
@@ -1148,6 +1162,9 @@ class GraphDatabase(StorageBase):
                     solver_error=True,
                     solver_error_unsolvable=False,
                     solver_error_unparsable=False,
+                    os_name=solver_info["os_name"],
+                    os_version=solver_info["os_version"],
+                    python_version=solver_info["python_version"],
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync Python package, error is not fatal: %r", error_info)
@@ -1179,6 +1196,9 @@ class GraphDatabase(StorageBase):
                     solver_error=True,
                     solver_error_unsolvable=True,
                     solver_error_unparsable=False,
+                    os_name=solver_info["os_name"],
+                    os_version=solver_info["os_version"],
+                    python_version=solver_info["python_version"],
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unsolvable Python package, error is not fatal: %r", unsolvable)
@@ -1206,6 +1226,9 @@ class GraphDatabase(StorageBase):
                     solver_error=True,
                     solver_error_unsolvable=False,
                     solver_error_unparsable=True,
+                    os_name=solver_info["os_name"],
+                    os_version=solver_info["os_version"],
+                    python_version=solver_info["python_version"],
                 ).get_or_create(self.g)
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
