@@ -1485,6 +1485,21 @@ class GraphDatabase(StorageBase):
 
         return list(chain(*asyncio.get_event_loop().run_until_complete(query)))
 
+    def get_python_packages_for_index(self, index_url: str) -> typing.Set[str]:
+        """Retrieve listing of Python packages known to graph database instance for the given index."""
+        query = (
+            self.g.V()
+            .has("__label__", PythonPackageVersion.__label__)
+            .has("index_url", index_url)
+            .has("ecosystem", "pypi")
+            .valueMap()
+            .select("package_name")
+            .dedup()
+            .toList()
+        )
+
+        return set(chain(*asyncio.get_event_loop().run_until_complete(query)))
+
     @staticmethod
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
