@@ -760,7 +760,7 @@ class GraphDatabase(StorageBase):
     def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index_url: str) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
-        It's much faster to retieve just dependencies for the transitive
+        It's much faster to retrieve just dependencies for the transitive
         dependencies as most of the time is otherwise spent in serialization
         and deserialization of query results.
         """
@@ -1141,6 +1141,9 @@ class GraphDatabase(StorageBase):
                                 target=python_package_version_dependency,
                                 package_name=python_package_version_dependency.package_name.value,
                                 version_range=dependency["required_version"] or "*",
+                                os_name=solver_info["os_name"],
+                                os_version=solver_info["os_version"],
+                                python_version=solver_info["python_version"],
                             ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(
