@@ -847,7 +847,8 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
-    def _get_hardware_information(self, specs: dict) -> HardwareInformation:
+    @staticmethod
+    def _get_hardware_information(specs: dict) -> HardwareInformation:
         """Get hardware information based on requests provided."""
         hardware = specs.get("hardware") or {}
         return HardwareInformation.from_properties(
