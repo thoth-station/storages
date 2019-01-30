@@ -34,6 +34,7 @@ from .solvers import SolverResultsStore
 from .sync import sync_analysis_documents
 from .sync import sync_solver_documents
 from .sync import sync_inspection_documents
+from .analyses_by_digest import AnalysisByDigest
 
 
 __name__ = "thoth-storages"
