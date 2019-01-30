@@ -159,6 +159,11 @@ class EcosystemSolver(VertexBase):
     solver_name = VertexProperty(properties.String)
     solver_version = VertexProperty(properties.String)
 
+    # These properties could be derived from solver name, but make them properties so that they are queryable.
+    os_name = VertexProperty(properties.String)
+    os_version = VertexProperty(properties.String)
+    python_version = VertexProperty(properties.String)
+
 
 class DependsOn(EdgeBase):
     """Dependency between packages modeling based on ecosystem specification."""
@@ -204,6 +209,11 @@ class Solved(EdgeBase):
     # set to True, solver_error is True as well. But NOT vice versa.
     # This behaviour is to simplify queries during recommendations.
     solver_error_unparsable = Property(properties.Boolean, default=False)
+
+    # Properties derived from solver name, used in queries to gather platform specific features.
+    os_name = Property(properties.String)
+    os_version = Property(properties.String)
+    python_version = Property(properties.String)
 
 
 class PackageExtractNativeBase(EdgeBase):
