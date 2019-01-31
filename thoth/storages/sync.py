@@ -28,11 +28,47 @@ from amun import has_inspection_job
 
 from .solvers import SolverResultsStore
 from .analyses import AnalysisResultsStore
+from .advisers import AdvisersResultsStore
 from .inspections import InspectionResultsStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def sync_adviser_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
+    """Sync adviser documents into graph."""
+    graph = GraphDatabase()
+    graph.connect()
+
+    adviser_store = AdvisersResultsStore()
+    adviser_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for document_id in document_ids or adviser_store.get_document_listing():
+        processed += 1
+
+        if force or not graph.adviser_document_id_exist(document_id):
+            _LOGGER.info(
+                f"Syncing adviser document from {adviser_store.ceph.host} "
+                f"with id {document_id!r} to graph {graph.hosts}"
+            )
+
+            try:
+                document = adviser_store.retrieve_document(document_id)
+                graph.sync_adviser_result(document)
+                synced += 1
+            except Exception:
+                if not graceful:
+                    raise
+
+                _LOGGER.exception("Failed to sync adviser result with document id %r", document_id)
+                failed += 1
+        else:
+            _LOGGER.info(f"Sync of adviser document with id {document_id!r} skipped - already synced")
+            skipped += 1
+
+    return processed, synced, skipped, failed
 
 
 def sync_solver_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
