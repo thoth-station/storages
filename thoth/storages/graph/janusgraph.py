@@ -1128,13 +1128,15 @@ class GraphDatabase(StorageBase):
             )
 
         for idx, result in enumerate(document["result"]["report"]):
-            if len(result) != 3:
+            if len(result) != 2:
                 _LOGGER.debug("Omitting stack as no output Pipfile.lock was provided - was the report error report?")
                 continue
 
-            # result[0] is score report, result[1] is Pipfile and result[2] is Pipfile.lock.
+            # result[0] is score report
+            # result[1]["requirements"] is Pipfile
+            # result[1]["requirements_locked"] is Pipfile.lock
             self.create_software_stack_pipfile(
-                result[2],
+                result[1]["requirements_locked"],
                 document_id=adviser_document_id,
                 is_user_stack=False,
                 is_adviser_stack=True,
