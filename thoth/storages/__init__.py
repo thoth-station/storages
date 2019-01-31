@@ -31,6 +31,7 @@ from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
 from .solvers import SolverResultsStore
+from .sync import sync_adviser_documents
 from .sync import sync_analysis_documents
 from .sync import sync_solver_documents
 from .sync import sync_inspection_documents

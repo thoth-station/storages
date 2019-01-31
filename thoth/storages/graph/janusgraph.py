@@ -76,6 +76,7 @@ from .models import CreatesStack
 
 # from .utils import enable_edge_cache
 from .utils import enable_vertex_cache
+from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
 from ..solvers import SolverResultsStore
 
@@ -813,6 +814,14 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
+    def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
+        """Check if there is a adviser document record with the given id."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V().has("document_id", adviser_document_id).count().is_(gt(0)).next()
+
+        return bool(loop.run_until_complete(query))
+
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
         loop = asyncio.get_event_loop()
@@ -861,8 +870,35 @@ class GraphDatabase(StorageBase):
             ram_size=OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None,
         )
 
-    def create_software_stack_pipfile(self, pipfile_locked: dict, software_stack_name: str) -> SoftwareStack:  # Ignore PyDocStyleBear
+    def create_software_stack_pipfile(
+            self,
+            pipfile_locked: dict,
+            document_id: str,
+            *,
+            is_user_stack: bool,
+            is_adviser_stack: bool,
+            is_inspection_stack: bool,
+            adviser_stack_index: int = None
+    ) -> SoftwareStack:  # Ignore PyDocStyleBear
         """Create a software stack inside graph database from a Pipfile.lock."""
+        only_one_stated = sum((
+            int(is_user_stack),
+            int(is_adviser_stack),
+            int(is_inspection_stack),
+        ))
+
+        if not only_one_stated:
+            raise ValueError("Only one of type is_user_stack, is_adviser_stack, is_inspection_stack allowed")
+
+        if adviser_stack_index is not None and not is_adviser_stack:
+            raise ValueError(
+                "Index of adviser stack is allowed only for adviser stacks (is_adviser_stack should be set to True)"
+            )
+
+        if is_adviser_stack is True and adviser_stack_index is None:
+            raise ValueError(
+                "Adviser stack index has to be set in case of adviser stacks"
+            )
 
         def get_index_url(index_name: str):
             for source_index in pipfile_locked["_meta"]["sources"]:
@@ -891,7 +927,13 @@ class GraphDatabase(StorageBase):
             )
             python_packages.append(python_package_version)
 
-        software_stack = SoftwareStack.from_properties(software_stack_name=software_stack_name)
+        software_stack = SoftwareStack.from_properties(
+            document_id=document_id,
+            is_user_stack=is_user_stack,
+            is_adviser_stack=is_adviser_stack,
+            is_inspection_stack=is_inspection_stack,
+            adviser_stack_index=adviser_stack_index,
+        )
         software_stack.get_or_create(self.g)
 
         for python_package_version in python_packages:
@@ -905,7 +947,10 @@ class GraphDatabase(StorageBase):
         if document["specification"].get("python"):
             software_stack = self.create_software_stack_pipfile(
                 document["specification"]["python"]["requirements_locked"],
-                document["inspection_id"]
+                document["inspection_id"],
+                is_user_stack=False,
+                is_adviser_stack=False,
+                is_inspection_stack=True,
             )
 
         environment_name = document["inspection_id"]
@@ -1066,6 +1111,36 @@ class GraphDatabase(StorageBase):
         )
 
         return asyncio.get_event_loop().run_until_complete(query)
+
+    @enable_vertex_cache
+    def sync_adviser_result(self, document: dict) -> None:
+        """Sync adviser result into graph database."""
+        adviser_document_id = AdvisersResultsStore.get_document_id(document)
+
+        if document["result"]["input"]["requirements_locked"]:
+            # User provided a Pipfile.lock, we can sync it.
+            self.create_software_stack_pipfile(
+                document["result"]["input"]["requirements_locked"],
+                document_id=adviser_document_id,
+                is_user_stack=True,
+                is_adviser_stack=False,
+                is_inspection_stack=False,
+            )
+
+        for idx, result in enumerate(document["result"]["report"]):
+            if len(result) != 3:
+                _LOGGER.debug("Omitting stack as no output Pipfile.lock was provided - was the report error report?")
+                continue
+
+            # result[0] is score report, result[1] is Pipfile and result[2] is Pipfile.lock.
+            self.create_software_stack_pipfile(
+                result[2],
+                document_id=adviser_document_id,
+                is_user_stack=False,
+                is_adviser_stack=True,
+                is_inspection_stack=False,
+                adviser_stack_index=idx
+            )
 
     # @enable_edge_cache
     @enable_vertex_cache

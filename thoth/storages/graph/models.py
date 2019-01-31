@@ -112,13 +112,21 @@ class BuildtimeEnvironment(VertexBase):
 
 class SoftwareStack(VertexBase):
     """A software stack crated by packages in specific versions."""
+    # Only one of the following can be set at one time.
+    # That also means a SoftwareStack vertex with same document_ids can differ if is_adviser_stack
+    # and if is_user_stack is used.
+    is_user_stack = VertexProperty(properties.Boolean)
+    is_adviser_stack = VertexProperty(properties.Boolean)
+    is_inspection_stack = VertexProperty(properties.Boolean)
 
-    # The name uniquely identifies a software stack. The main reason we have it
-    # here - we can reference a software stack as well as making sure we do not
-    # assign all the packages to one software stack as get_or_create() creates
-    # node if a node with the given properties does not exist (and as we do not
-    # have any properties, there is used always the same node).
-    software_stack_name = VertexProperty(properties.String)
+    # As adviser can output multiple stacks, this property states the index in
+    # the resulting adviser document if is_adviser stack is set to True.
+    adviser_stack_index = VertexProperty(properties.Integer, default=None)
+
+    # If is_user_stack is set to True, document id points to adviser document that introduced the stack.
+    # If is_adviser_stack is set to True, document_id points to adviser document that introduced the stack.
+    # If is_inspection_stack is set to True, document_id points to inspection document that introduced the stack.
+    document_id = VertexProperty(properties.String)
 
 
 class SoftwareStackObservation(VertexBase):
