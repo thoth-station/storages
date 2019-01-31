@@ -36,10 +36,16 @@ from .graph import GraphDatabase
 _LOGGER = logging.getLogger(__name__)
 
 
-def sync_adviser_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
+def sync_adviser_documents(
+        document_ids: list = None,
+        force: bool = False,
+        graceful: bool = False,
+        graph: GraphDatabase = None,
+) -> tuple:
     """Sync adviser documents into graph."""
-    graph = GraphDatabase()
-    graph.connect()
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
 
     adviser_store = AdvisersResultsStore()
     adviser_store.connect()
@@ -71,10 +77,16 @@ def sync_adviser_documents(document_ids: list = None, force: bool = False, grace
     return processed, synced, skipped, failed
 
 
-def sync_solver_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
+def sync_solver_documents(
+        document_ids: list = None,
+        force: bool = False,
+        graceful: bool = False,
+        graph: GraphDatabase = None,
+) -> tuple:
     """Sync solver documents into graph."""
-    graph = GraphDatabase()
-    graph.connect()
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
 
     solver_store = SolverResultsStore()
     solver_store.connect()
@@ -105,10 +117,16 @@ def sync_solver_documents(document_ids: list = None, force: bool = False, gracef
     return processed, synced, skipped, failed
 
 
-def sync_analysis_documents(document_ids: list = None, force: bool = False, graceful: bool = False) -> tuple:
+def sync_analysis_documents(
+        document_ids: list = None,
+        force: bool = False,
+        graceful: bool = False,
+        graph: GraphDatabase = None,
+) -> tuple:
     """Sync image analysis documents into graph."""
-    graph = GraphDatabase()
-    graph.connect()
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
 
     analysis_store = AnalysisResultsStore()
     analysis_store.connect()
@@ -148,6 +166,7 @@ def sync_inspection_documents(
     graceful: bool = False,
     only_graph_sync: bool = False,
     only_ceph_sync: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync observations made on Amun into graph databaes."""
     if only_graph_sync and only_ceph_sync:
@@ -159,8 +178,9 @@ def sync_inspection_documents(
     dependency_mokey_reports_store = DependencyMonkeyReportsStore()
     dependency_mokey_reports_store.connect()
 
-    graph = GraphDatabase()
-    graph.connect()
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_id in document_ids or dependency_mokey_reports_store.iterate_inspection_ids():
