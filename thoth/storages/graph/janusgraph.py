@@ -71,7 +71,10 @@ from .models import RPMRequirement
 from .models import RuntimeEnvironment
 from .models import HardwareInformation
 from .models import Solved
-from .models import SoftwareStack
+from .models import AdviserSoftwareStack
+from .models import InspectionSoftwareStack
+from .models import UserSoftwareStack
+from .models import SoftwareStackBase
 from .models import CreatesStack
 
 # from .utils import enable_edge_cache
@@ -409,7 +412,7 @@ class GraphDatabase(StorageBase):
 
         return query
 
-    def get_software_stacks(self, packages: typing.List[tuple]) -> typing.List[SoftwareStack]:
+    def get_software_stacks(self, packages: typing.List[tuple]) -> typing.List[SoftwareStackBase]:
         """Get all stacks that include the given set of packages.
 
         Packages in stacks returned are superset of packages in the original set of
@@ -879,7 +882,7 @@ class GraphDatabase(StorageBase):
             is_adviser_stack: bool,
             is_inspection_stack: bool,
             adviser_stack_index: int = None
-    ) -> SoftwareStack:  # Ignore PyDocStyleBear
+    ) -> SoftwareStackBase:  # Ignore PyDocStyleBear
         """Create a software stack inside graph database from a Pipfile.lock."""
         only_one_stated = sum((
             int(is_user_stack),
@@ -895,10 +898,29 @@ class GraphDatabase(StorageBase):
                 "Index of adviser stack is allowed only for adviser stacks (is_adviser_stack should be set to True)"
             )
 
-        if is_adviser_stack is True and adviser_stack_index is None:
-            raise ValueError(
-                "Adviser stack index has to be set in case of adviser stacks"
-            )
+        software_stack_properties = {
+            "document_id": document_id
+        }
+        software_stack_class = None
+
+        if is_adviser_stack is True:
+            if adviser_stack_index is None:
+                raise ValueError(
+                    "Adviser stack index has to be set in case of adviser stacks"
+                )
+
+            software_stack_class = AdviserSoftwareStack
+            software_stack_properties["adviser_stack_index"] = adviser_stack_index
+
+        if is_user_stack:
+            # TODO: state origin in software stack properties.
+            software_stack_class = UserSoftwareStack
+
+        if is_inspection_stack:
+            software_stack_class = InspectionSoftwareStack
+
+        if software_stack_class is None:
+            raise ValueError("Unknown software stack type - should be at least one of user, inspection, adviser")
 
         def get_index_url(index_name: str):
             for source_index in pipfile_locked["_meta"]["sources"]:
@@ -927,13 +949,7 @@ class GraphDatabase(StorageBase):
             )
             python_packages.append(python_package_version)
 
-        software_stack = SoftwareStack.from_properties(
-            document_id=document_id,
-            is_user_stack=is_user_stack,
-            is_adviser_stack=is_adviser_stack,
-            is_inspection_stack=is_inspection_stack,
-            adviser_stack_index=adviser_stack_index,
-        )
+        software_stack = software_stack_class.from_properties(**software_stack_properties)
         software_stack.get_or_create(self.g)
 
         for python_package_version in python_packages:
