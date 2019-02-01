@@ -110,23 +110,34 @@ class BuildtimeEnvironment(VertexBase):
     # TODO: capture hashes of layers to be precise?
 
 
-class SoftwareStack(VertexBase):
-    """A software stack crated by packages in specific versions."""
-    # Only one of the following can be set at one time.
-    # That also means a SoftwareStack vertex with same document_ids can differ if is_adviser_stack
-    # and if is_user_stack is used.
-    is_user_stack = VertexProperty(properties.Boolean)
-    is_adviser_stack = VertexProperty(properties.Boolean)
-    is_inspection_stack = VertexProperty(properties.Boolean)
+class SoftwareStackBase(VertexBase):
+    """A software stack crated by packages in specific versions.
 
+    This is just a base class for creating software stack instances inside graph database.
+    See specific software stack types for specific software stacks we are interested in.
+    """
+    # If a user stack, document id points to adviser document that introduced the stack.
+    # If an adviser stack, document_id points to adviser document that introduced the stack.
+    # If an inspection stack, document_id points to inspection document that introduced the stack.
+    document_id = VertexProperty(properties.String)
+
+
+class AdviserSoftwareStack(SoftwareStackBase):
+    """A software stack as produced by adviser (the output of recommendation engine)."""
     # As adviser can output multiple stacks, this property states the index in
     # the resulting adviser document if is_adviser stack is set to True.
     adviser_stack_index = VertexProperty(properties.Integer, default=None)
 
-    # If is_user_stack is set to True, document id points to adviser document that introduced the stack.
-    # If is_adviser_stack is set to True, document_id points to adviser document that introduced the stack.
-    # If is_inspection_stack is set to True, document_id points to inspection document that introduced the stack.
-    document_id = VertexProperty(properties.String)
+
+class UserSoftwareStack(SoftwareStackBase):
+    """A software stack as used by a user (input for the recommendation engine)."""
+
+    # Origin of the software stack.
+    origin = VertexProperty(properties.String, default=None)
+
+
+class InspectionSoftwareStack(SoftwareStackBase):
+    """A software stack which was used on Amun during inspection runs (e.g. as produced by dependency-monkey)."""
 
 
 class SoftwareStackObservation(VertexBase):
@@ -332,7 +343,9 @@ ALL_MODELS = frozenset(
         RunsIn,
         RunsOn,
         RuntimeEnvironment,
-        SoftwareStack,
+        AdviserSoftwareStack,
+        UserSoftwareStack,
+        InspectionSoftwareStack,
         Solved,
         Observed,
         HardwareInformation,
