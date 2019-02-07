@@ -11,7 +11,6 @@ from .models import Package
 from .models import PythonPackageVersion
 from .models import RPMPackageVersion
 from .models import RuntimeEnvironment
-from .models import SoftwareStack
 from .models import Observed
 from .models import HardwareInformation
 from .models import SoftwareStackObservation
