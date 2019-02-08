@@ -1531,7 +1531,7 @@ class GraphDatabase(StorageBase):
             .inV()
             .has("__label__", "cve")
             .has("__type__", "vertex")
-            .project('cve_id', 'advisory').by('cve_id').by('advisory')
+            .project("cve_id", "advisory", "version_range").by("cve_id").by("advisory").by("version_range")
             .toList()
         )
 
