@@ -68,7 +68,7 @@ class CVE(VertexBase):
     """Information about a CVE."""
 
     advisory = VertexProperty(properties.String)
-    cve_name = VertexProperty(properties.String, default=None)
+    cve_name = VertexProperty(properties.String, default='-')
     cve_id = VertexProperty(properties.String)
     version_range = VertexProperty(properties.String)
 
