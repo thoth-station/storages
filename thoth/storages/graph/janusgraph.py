@@ -435,7 +435,8 @@ class GraphDatabase(StorageBase):
         query = query.outE().has("__label__", RunsOn.__label__).inV().has("__label__", HardwareInformation.__label__)
 
         for attribute_name, attribute_value in hardware_specs.items():
-            query = query.has(attribute_name, attribute_value)
+            if attribute_value is not None:
+                query = query.has(attribute_name, attribute_value)
 
         query = query.inE().has("__label__", "runs_on").values("performance_index").mean().next()
 
