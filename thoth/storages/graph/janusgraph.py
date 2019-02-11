@@ -483,11 +483,35 @@ class GraphDatabase(StorageBase):
         query = query.values("performance_index").mean().next()
         return asyncio.get_event_loop().run_until_complete(query)
 
-    def get_all_versions_python_package(self, package_name: str, index_url: str = None) -> typing.List[tuple]:
+    def get_all_versions_python_package(
+            self,
+            package_name: str,
+            index_url: str = None,
+            *,
+            os_name: str = None,
+            os_version: str = None,
+            python_version: str = None,
+            without_error: bool = False,
+    ) -> typing.List[tuple]:
         """Get all versions available for a Python package."""
         package_name = self.normalize_python_package_name(package_name)
+
+        query = self.g.E().has("__label__", "solved").has("__type__", "edge")
+
+        if os_name:
+            query = query.has("os_name", os_name)
+
+        if os_version:
+            query = query.has("os_version", os_version)
+
+        if python_version:
+            query = query.has("python_version", python_version)
+
+        if without_error:
+            query = query.has("solver_error", False)
+
         query = (
-            self.g.V()
+            query.inV()
             .has("__label__", "python_package_version")
             .has("__type__", "vertex")
             .has("ecosystem", "pypi")
@@ -499,7 +523,6 @@ class GraphDatabase(StorageBase):
 
         query = query.valueMap().select("package_version", "index_url").dedup().toList()
 
-        # TODO: we could optimize this query
         result = []
         query_result = asyncio.get_event_loop().run_until_complete(query)
         for item in query_result:
