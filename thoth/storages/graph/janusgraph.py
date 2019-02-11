@@ -762,7 +762,16 @@ class GraphDatabase(StorageBase):
         results_dict = list(chain(results))
         return dict(ChainMap(*results_dict))
 
-    def retrieve_transitive_dependencies_python(self, package_name: str, package_version: str, index_url: str) -> list:
+    def retrieve_transitive_dependencies_python(
+            self,
+            package_name: str,
+            package_version: str,
+            index_url: str,
+            *,
+            os_name: str = None,
+            os_version: str = None,
+            python_version: str = None,
+    ) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
         It's much faster to retrieve just dependencies for the transitive
@@ -770,15 +779,49 @@ class GraphDatabase(StorageBase):
         and deserialization of query results.
         """
         package_name = self.normalize_python_package_name(package_name)
-        query = (
-            self.g.V()
+
+        # Add platform specific features to the query if provided.
+        inner_query = outE().simplePath().has("__type__", "edge").has("__label__", "depends_on")
+        if os_name:
+            inner_query = inner_query.has("os_name", os_name)
+
+        if os_version:
+            inner_query = inner_query.has("os_version", os_version)
+
+        if python_version:
+            inner_query = inner_query.has("python_version", python_version)
+
+        # We start in a package that that was solved by a solver if there is provided platform specification in
+        # the query. Otherwise start in any vertex matching the package.
+        if os_name or os_version or python_version:
+            query_start = self.g.E().has("__type__", "edge").has("__label__", "solved").has("solver_error", False)
+
+            if os_name:
+                query_start = query_start.has("os_name", os_name)
+
+            if os_version:
+                query_start = query_start.has("os_version", os_version)
+
+            if python_version:
+                query_start = query_start.has("python_version", python_version)
+
+            query_start.inV()
+        else:
+            query_start = self.g.V()
+
+        query_start = (
+            query_start
             .has("__type__", "vertex")
             .has("__label__", "python_package_version")
             .has("ecosystem", "pypi")
             .has("package_version", package_version)
             .has("package_name", package_name)
             .has("index_url", index_url)
-            .repeat(flatMap(outE().simplePath().has("__type__", "edge").has("__label__", "depends_on").inV()))
+        )
+
+        query = (
+            query_start
+            .repeat(flatMap(inner_query.inV()))
             .emit()
             .path()
             .by(id_())
