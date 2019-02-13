@@ -1217,14 +1217,15 @@ class GraphDatabase(StorageBase):
             # result[0] is score report
             # result[1]["requirements"] is Pipfile
             # result[1]["requirements_locked"] is Pipfile.lock
-            self.create_software_stack_pipfile(
-                result[1]["requirements_locked"],
-                document_id=adviser_document_id,
-                is_user_stack=False,
-                is_adviser_stack=True,
-                is_inspection_stack=False,
-                adviser_stack_index=idx
-            )
+            if result[1] and "requirements_locked" in result[1]:
+                self.create_software_stack_pipfile(
+                    result[1]["requirements_locked"],
+                    document_id=adviser_document_id,
+                    is_user_stack=False,
+                    is_adviser_stack=True,
+                    is_inspection_stack=False,
+                    adviser_stack_index=idx
+                )
 
     # @enable_edge_cache
     @enable_vertex_cache
