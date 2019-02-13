@@ -699,3 +699,51 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency boto3 from 1.9.63 to 1.9.64
 * Automatic update of dependency thoth-common from 0.4.6 to 0.5.0
 * Automatic update of dependency boto3 from 1.9.62 to 1.9.63
+
+## Release 0.9.6 (2019-02-13T18:07:13)
+* If adviser analysis was not succesfull no lockfile is provided
+* Respect runtime environment in queries for direct dependencies
+* Let callee preserve None values
+* Consider hardware with no None values
+* Automatic update of dependency boto3 from 1.9.84 to 1.9.91
+* Automatic update of dependency pytest from 4.1.1 to 4.2.0
+* Automatic update of dependency cython from 0.29.3 to 0.29.5
+* Add platform specific features to the transitive query
+* Adjust CVE query to include version range
+* Default to dash if the CVE has no name assigned
+* Fix wrong import
+* It's already 2019
+* Distinguish different software stacks by their types
+* Introduce method for listing all py packages
+* Make graph optional parameter to reduce number of connections
+* Fix reference to Pipfile.lock in ther result
+* Adjust schema document
+* Introduce mechanism for syncing adviser results
+* Guard disconnect in destructor
+* Introduce adapter for storing caching analysis ids based on image digest
+* Depends on has to take account also environment
+* Method can be static
+* Adjust schema to reflect the current implementation
+* Adjust solver related parts of schema for platform specifc features
+* Introduce method for gathering packages known to thoth based on index
+* Provide method for solver name parsing
+* Introduce flag exposing "existed" for Python package version
+* Automatic update of dependency thoth-common from 0.5.0 to 0.6.0
+* Automatic update of dependency boto3 from 1.9.83 to 1.9.84
+* Automatic update of dependency pytest from 4.0.2 to 4.1.1
+* Automatic update of dependency boto3 from 1.9.73 to 1.9.83
+* Automatic update of dependency cython from 0.29.2 to 0.29.3
+* Automatic update of dependency uvloop from 0.11.3 to 0.12.0
+* Automatic update of dependency pytest-cov from 2.6.0 to 2.6.1
+* Automatic update of dependency flexmock from 0.10.2 to 0.10.3
+* Perform only graph or ceph sync if requested
+* Move OpenShift specific bits to OpenShift
+* Do not rely in Gremlin queries for order of received items
+* Fix typo in retrieve_dependencies(...) query
+* Minor fixes in method signatures
+* Disconnect in destructor
+* Automatic update of dependency boto3 from 1.9.71 to 1.9.73
+* Avoid goblin model details in output
+* Update README.rst
+* Automatic update of dependency boto3 from 1.9.67 to 1.9.71
+* Automatic update of dependency boto3 from 1.9.66 to 1.9.67
