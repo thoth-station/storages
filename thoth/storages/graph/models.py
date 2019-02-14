@@ -139,6 +139,14 @@ class InspectionSoftwareStack(SoftwareStackBase):
     """A software stack which was used on Amun during inspection runs (e.g. as produced by dependency-monkey)."""
 
 
+class Advised(EdgeBase):
+    """A relationship between user software stack and the advised software stack by Thoth's adviser."""
+
+    adviser_version = Property(properties.String)
+    adviser_document_id = Property(properties.String)
+    adviser_datetime = Property(properties.Integer)
+
+
 class SoftwareStackObservation(VertexBase):
     """Observations we have about the given stack based on run on a specific hardware."""
 
