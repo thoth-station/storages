@@ -30,6 +30,7 @@ from .solvers import SolverResultsStore
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
 from .inspections import InspectionResultsStore
+from .provenance import ProvenanceResultsStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
 
@@ -153,6 +154,47 @@ def sync_analysis_documents(
                 failed += 1
         else:
             _LOGGER.info(f"Sync of analysis document with id {document_id!r} skipped - already synced")
+            skipped += 1
+
+    return processed, synced, skipped, failed
+
+
+def sync_provenance_checker_documents(
+        document_ids: list = None,
+        force: bool = False,
+        graceful: bool = False,
+        graph: GraphDatabase = None,
+) -> tuple:
+    """Sync provenance check documents into graph."""
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
+
+    provenance_check_store = ProvenanceResultsStore()
+    provenance_check_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for document_id in document_ids or provenance_check_store.get_document_listing():
+        processed += 1
+
+        if force or not graph.provenance_checker_document_id_exist(document_id):
+            _LOGGER.info(
+                f"Syncing provenance-checker document from {provenance_check_store.ceph.host} "
+                f"with id {document_id!r} to graph {graph.hosts}"
+            )
+
+            try:
+                document = provenance_check_store.retrieve_document(document_id)
+                graph.sync_provenance_checker_result(document)
+                synced += 1
+            except Exception:
+                if not graceful:
+                    raise
+
+                _LOGGER.exception("Failed to sync provenance-checker result with document id %r", document_id)
+                failed += 1
+        else:
+            _LOGGER.info(f"Sync of provenance-checker document with id {document_id!r} skipped - already synced")
             skipped += 1
 
     return processed, synced, skipped, failed

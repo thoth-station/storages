@@ -41,6 +41,7 @@ from goblin import Goblin
 from thoth.common import datetime_str2timestamp
 from thoth.common import timestamp2datetime
 from thoth.common import OpenShift
+from thoth.common import RuntimeEnvironment
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
@@ -81,6 +82,7 @@ from .models import CreatesStack
 from .utils import enable_vertex_cache
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
+from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 
 _LOGGER = logging.getLogger(__name__)
@@ -1215,6 +1217,7 @@ class GraphDatabase(StorageBase):
         """Sync adviser result into graph database."""
         adviser_document_id = AdvisersResultsStore.get_document_id(document)
 
+        # TODO: capture runtime env with hardware information
         if document["result"]["input"]["requirements_locked"]:
             # User provided a Pipfile.lock, we can sync it.
             self.create_software_stack_pipfile(
@@ -1225,6 +1228,7 @@ class GraphDatabase(StorageBase):
                 is_inspection_stack=False,
             )
 
+        # TODO: create edge between input and results
         for idx, result in enumerate(document["result"]["report"]):
             if len(result) != 2:
                 _LOGGER.debug("Omitting stack as no output Pipfile.lock was provided - was the report error report?")
@@ -1233,7 +1237,7 @@ class GraphDatabase(StorageBase):
             # result[0] is score report
             # result[1]["requirements"] is Pipfile
             # result[1]["requirements_locked"] is Pipfile.lock
-            if result[1] and "requirements_locked" in result[1]:
+            if result[1] and result[1].get("requirements_locked"):
                 self.create_software_stack_pipfile(
                     result[1]["requirements_locked"],
                     document_id=adviser_document_id,
@@ -1242,6 +1246,30 @@ class GraphDatabase(StorageBase):
                     is_inspection_stack=False,
                     adviser_stack_index=idx
                 )
+
+    def provenance_checker_document_id_exist(self, provenance_checker_document_id: str) -> bool:
+        """Check if there is a provenance-checker document record with the given id."""
+        loop = asyncio.get_event_loop()
+
+        query = self.g.V().has("document_id", provenance_checker_document_id).count().is_(gt(0)).next()
+
+        return bool(loop.run_until_complete(query))
+
+    @enable_vertex_cache
+    def sync_provenance_checker_result(self, document: dict) -> None:
+        """Sync provenance checker results into graph database."""
+        provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
+
+        # TODO: capture runtime env with hardware information
+        user_input = document["result"]["input"]
+        if user_input.get("requirements_locked"):
+            self.create_software_stack_pipfile(
+                user_input["requirements_locked"],
+                document_id=provenance_checker_document_id,
+                is_user_stack=True,
+                is_adviser_stack=False,
+                is_inspection_stack=False,
+            )
 
     # @enable_edge_cache
     @enable_vertex_cache
