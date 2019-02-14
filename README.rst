@@ -30,7 +30,7 @@ Automatically generate schema for Graph database
 To automatically generate schema for the graph database from models defined in
 this module, run:
 
-.. code-block
+.. code-block:: console
 
    # Install dev dependencies which include goblinoid:
    pipenv install --dev
