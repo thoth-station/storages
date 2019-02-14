@@ -145,6 +145,7 @@ class Advised(EdgeBase):
     adviser_version = Property(properties.String)
     adviser_document_id = Property(properties.String)
     adviser_datetime = Property(properties.Integer)
+    recommendation_type = Property(properties.String)
 
 
 class SoftwareStackObservation(VertexBase):
