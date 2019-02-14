@@ -7,3 +7,4 @@ thoth_storages.egg-info/
 .vscode/
 docs/schema.dia~
 dist/
+schema.groovy
