@@ -24,6 +24,25 @@ You can run prepared testsuite via the following command:
     pipenv install --dev
     pipenv run python3 setup.py test
 
+Automatically generate schema for Graph database
+================================================
+
+To automatically generate schema for the graph database from models defined in
+this module, run:
+
+.. code-block
+
+   # Install dev dependencies which include goblinoid:
+   pipenv install --dev
+   # From root of this repository:
+   PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS
+
+After running this command, there will be present file called `schema.groovy`
+which is generated automatically from models stated in `ALL_MODELS` (see file
+thoth/storages/graph/models.py).
+
+See `https://github.com/thoth-station/goblinoid` for more info on how to
+configure models generation.
 
 Known Issues
 ============
