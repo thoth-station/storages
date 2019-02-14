@@ -34,8 +34,13 @@ this module, run:
 
    # Install dev dependencies which include goblinoid:
    pipenv install --dev
+
    # From root of this repository:
    PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS
+
+   # Or to directly adjust used schema:
+   PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS --schema-file ../janusgraph-thoth-config/scripts/thoth_schema_definition.groovy
+
 
 After running this command, there will be present file called `schema.groovy`
 which is generated automatically from models stated in `ALL_MODELS` (see file
