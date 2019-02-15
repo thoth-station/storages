@@ -81,10 +81,10 @@
         },
         "botocore": {
             "hashes": [
-                "sha256:48f780477904795b0ce559b335d0aab4c3bb9efa96fbdf24c418e22ef0745e08",
-                "sha256:d931f98e392af6b1f000719d1e14f7d85194d36d2c0a4121cbc59abc8ad64274"
+                "sha256:226c55f4be702c84561e43a2ced5738faefa277a9ec31ee0064fce478f18730d",
+                "sha256:6d04f1211e132eabcd3d13d87b45d3243bae18acd03c7e3e6767ec68e55f256e"
             ],
-            "version": "==1.12.94"
+            "version": "==1.12.95"
         },
         "certifi": {
             "hashes": [
@@ -498,10 +498,10 @@
         },
         "botocore": {
             "hashes": [
-                "sha256:48f780477904795b0ce559b335d0aab4c3bb9efa96fbdf24c418e22ef0745e08",
-                "sha256:d931f98e392af6b1f000719d1e14f7d85194d36d2c0a4121cbc59abc8ad64274"
+                "sha256:226c55f4be702c84561e43a2ced5738faefa277a9ec31ee0064fce478f18730d",
+                "sha256:6d04f1211e132eabcd3d13d87b45d3243bae18acd03c7e3e6767ec68e55f256e"
             ],
-            "version": "==1.12.94"
+            "version": "==1.12.95"
         },
         "certifi": {
             "hashes": [
@@ -775,11 +775,18 @@
         },
         "goblinoid": {
             "hashes": [
-                "sha256:4c64c3a70665170425cb507da31afbee08d57e2166311e0066ae55fa53e20f61",
-                "sha256:a164c7b835582de0b4c847ee381f20f2d19326ddbb9f673eb2f81ffd6c9555aa"
+                "sha256:089f617206252a51c28287d92eb30549a13b2d41f34511dcc450a0414531ba3d"
             ],
             "index": "pypi",
-            "version": "==0.0.0"
+            "version": "==0.1.0"
+        },
+        "gremlinpython": {
+            "hashes": [
+                "sha256:09d152fa6fed406336a5d410fb499cee5f5c8e6ba2f0b26a22224318aed1a02f",
+                "sha256:ff9493df9419b99332533ef4185e41da0e252ec55cf77b4d44264643f86dd0f0"
+            ],
+            "index": "pypi",
+            "version": "==3.2.6"
         },
         "guess-language-spirit": {
             "hashes": [
@@ -1354,6 +1361,14 @@
                 "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"
             ],
             "version": "==1.1.0"
+        },
+        "tornado": {
+            "hashes": [
+                "sha256:371d0cf3d56c47accc66116a77ad558d76eebaa8458a6b677af71ca606522146",
+                "sha256:3b57939955588055be29c93c2ea533e44ee8ee75a6c1dd14f103eef92d01829f",
+                "sha256:af9ee9f93109a98526a29cdea756802f1aab7897def0330532af4c4337895565"
+            ],
+            "version": "==4.4.1"
         },
         "traitlets": {
             "hashes": [
