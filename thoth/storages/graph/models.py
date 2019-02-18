@@ -136,6 +136,9 @@ class UserSoftwareStack(SoftwareStackBase):
 
     # Origin of the software stack.
     origin = VertexProperty(properties.String, default=None)
+    # Holds True/False if there was an error during advises in adviser.
+    # Holds None if user stack came from provenance-checks.
+    adviser_error = VertexProperty(properties.Boolean, default=None)
 
 
 class InspectionSoftwareStack(SoftwareStackBase):
