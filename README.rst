@@ -39,12 +39,16 @@ this module, run:
    PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS
 
    # Or to directly adjust used schema:
-   PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS --schema-file ../janusgraph-thoth-config/scripts/thoth_schema_definition.groovy
+   export PYTHONPATH=.
+   # Or export also ../goblinoid to have the most recent Goblinoid version (devel from master).
+   export PYTHONPATH=.:../goblinoid
+   pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS --output-file ../janusgraph-thoth-config/scripts/init.groovy --index-file ../janusgraph-thoth-config/scripts/indexes.groovy.template
 
-
-After running this command, there will be present file called `schema.groovy`
+After running this command, there will be present file called `init.groovy`
 which is generated automatically from models stated in `ALL_MODELS` (see file
-thoth/storages/graph/models.py).
+thoth/storages/graph/models.py) as well as with indexes as configured in the
+indexes.groovy.template (placed into a single file to run it in one
+transaction).
 
 See `https://github.com/thoth-station/goblinoid` for more info on how to
 configure models generation.
