@@ -99,6 +99,8 @@ class RuntimeEnvironment(VertexBase):
     """Environment such as container image which consists of various packages."""
 
     runtime_environment_name = VertexProperty(properties.String)
+    os_name = VertexProperty(properties.String, default=None)
+    os_version = VertexProperty(properties.String, default=None)
     python_version = VertexProperty(properties.String, default=None)
     cuda_version = VertexProperty(properties.String, default=None)
     # TODO: capture hashes of layers to be precise?
@@ -273,17 +275,17 @@ class HasVersion(EdgeBase):
 class RunsIn(EdgeBase):
     """The given software stack runs in a runtime environment."""
 
-    inspection_document_id = Property(properties.String)
-    run_error = Property(properties.Boolean)
-    performance_index = Property(properties.Float)
+    document_id = Property(properties.String)
+    run_error = Property(properties.Boolean, default=None)
+    performance_index = Property(properties.Float, default=None)
 
 
 class RunsOn(EdgeBase):
     """The given software stack runs on the given hardware."""
 
-    inspection_document_id = Property(properties.String)
-    run_error = Property(properties.Boolean)
-    performance_index = Property(properties.Float)
+    document_id = Property(properties.String)
+    run_error = Property(properties.Boolean, default=None)
+    performance_index = Property(properties.Float, default=None)
 
 
 class BuildsIn(EdgeBase):
