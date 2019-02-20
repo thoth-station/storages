@@ -1661,11 +1661,11 @@ class GraphDatabase(StorageBase):
             .inV()
             .has("__label__", "cve")
             .has("__type__", "vertex")
-            .project("cve_id", "advisory", "version_range").by("cve_id").by("advisory").by("version_range")
+            .project("cve_id", "advisory", "version_range", "cve_name")
+            .by("cve_id").by("advisory").by("version_range").by("cve_name")
             .toList()
         )
 
-        # TODO: add cve_name to the projected result once we re-create janusgraph instance.
         return asyncio.get_event_loop().run_until_complete(query)
 
     def get_python_package_version_hashes_sha256(
