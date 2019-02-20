@@ -25,3 +25,6 @@ coala-bears = "*"
 flexmock = "*"
 moto = "*"
 goblinoid = "*"
+
+[requires]
+python_version = "3.6"
