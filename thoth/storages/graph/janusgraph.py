@@ -529,8 +529,23 @@ class GraphDatabase(StorageBase):
 
         return result
 
-    def retrieve_unsolved_pypi_packages(self) -> dict:
-        """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved."""
+    def retrieve_unsolved_pypi_packages(self, solver_name: str = None) -> dict:
+        """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
+
+        If solver_name argument is provided the given solver, query narrows down to packages that were
+        not resolved by the given solver.
+        """
+        edge_query = inE().has("__label__", Solved.__label__).has("__type__", "edge")
+
+        if not solver_name:
+            solver_info = self.parse_python_solver_name(solver_name)
+            edge_query = (
+                edge_query
+                .has("os_version", solver_info["os_version"])
+                .has("os_name", solver_info["os_name"])
+                .has("python_version", solver_info["python_version"])
+            )
+
         query = (
             self.g.V()
             .has("__label__", "python_package_version")
@@ -538,7 +553,7 @@ class GraphDatabase(StorageBase):
             .has("ecosystem", "pypi")
             .has("package_name")
             .has("package_version")
-            .not_(inE().has("__label__", Solved.__label__).has("__type__", "edge"))
+            .not_(edge_query)
             .group()
             .by("package_name")
             .by("package_version")
@@ -980,6 +995,7 @@ class GraphDatabase(StorageBase):
 
         if is_user_stack:
             # TODO: state origin in software stack properties.
+            # TODO: state adviser error in the class
             software_stack_class = UserSoftwareStack
 
         if is_inspection_stack:
