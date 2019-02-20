@@ -291,14 +291,14 @@ class RunsOn(EdgeBase):
 class BuildsIn(EdgeBase):
     """The given software stack builds in a build environment."""
 
-    inspection_document_id = Property(properties.String)
+    document_id = Property(properties.String)
     build_error = Property(properties.Boolean)
 
 
 class BuildsOn(EdgeBase):
     """The given software stack builds on the given hardware."""
 
-    inspection_document_id = Property(properties.String)
+    document_id = Property(properties.String)
     build_error = Property(properties.Boolean)
 
 
