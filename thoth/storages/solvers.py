@@ -24,3 +24,8 @@ class SolverResultsStore(ResultStorageBase):
     """Adapter for persisting solver results."""
 
     RESULT_TYPE = "solver"
+
+    @staticmethod
+    def get_solver_name_from_document_id(solver_document_id: str) -> str:
+        """Retrieve solver name from solver's document id."""
+        return solver_document_id.rsplit("-", maxsplit=2)[0]
