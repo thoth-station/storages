@@ -1189,7 +1189,7 @@ class GraphDatabase(StorageBase):
     def sync_adviser_result(self, document: dict) -> None:
         """Sync adviser result into graph database."""
         adviser_document_id = AdvisersResultsStore.get_document_id(document)
-        origin = document["metadata"]["arguments"]["provenance"].get("metadata", {}).get("origin")
+        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
@@ -1278,7 +1278,7 @@ class GraphDatabase(StorageBase):
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
         provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
-        origin = document["metadata"]["arguments"]["provenance"].get("metadata", {}).get("origin")
+        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
 
         if not origin:
             _LOGGER.warning("No origin stated in the provenance-checker result %r", provenance_checker_document_id)
@@ -1710,6 +1710,7 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
+        # TODO: we should sync also origin of analysed images
         runtime_environment = RuntimeEnvironment.from_properties(
             runtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
         )
