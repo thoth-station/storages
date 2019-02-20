@@ -1294,7 +1294,8 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
-        solver_name = document["metadata"]["analyzer"]
+        solver_document_id = SolverResultsStore.get_document_id(document)
+        solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
         solver_info = self.parse_python_solver_name(solver_name)
 
         ecosystem_solver = EcosystemSolver.from_properties(
@@ -1306,10 +1307,7 @@ class GraphDatabase(StorageBase):
         )
 
         ecosystem_solver.get_or_create(self.g)
-
-        solver_document_id = SolverResultsStore.get_document_id(document)
         solver_datetime = datetime_str2timestamp(document["metadata"]["datetime"])
-
         for python_package_info in document["result"]["tree"]:
             try:
                 existed, python_package, _, python_package_version = self.create_pypi_package_version(
