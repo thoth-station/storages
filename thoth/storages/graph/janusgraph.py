@@ -73,6 +73,7 @@ from .models import RuntimeEnvironment
 from .models import HardwareInformation
 from .models import Solved
 from .models import AdviserSoftwareStack
+from .models import Advised
 from .models import InspectionSoftwareStack
 from .models import UserSoftwareStack
 from .models import SoftwareStackBase
@@ -956,56 +957,8 @@ class GraphDatabase(StorageBase):
             ram_size=OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None,
         )
 
-    def create_software_stack_pipfile(
-            self,
-            pipfile_locked: dict,
-            document_id: str,
-            *,
-            is_user_stack: bool,
-            is_adviser_stack: bool,
-            is_inspection_stack: bool,
-            adviser_stack_index: int = None
-    ) -> SoftwareStackBase:  # Ignore PyDocStyleBear
-        """Create a software stack inside graph database from a Pipfile.lock."""
-        only_one_stated = sum((
-            int(is_user_stack),
-            int(is_adviser_stack),
-            int(is_inspection_stack),
-        ))
-
-        if not only_one_stated:
-            raise ValueError("Only one of type is_user_stack, is_adviser_stack, is_inspection_stack allowed")
-
-        if adviser_stack_index is not None and not is_adviser_stack:
-            raise ValueError(
-                "Index of adviser stack is allowed only for adviser stacks (is_adviser_stack should be set to True)"
-            )
-
-        software_stack_properties = {
-            "document_id": document_id
-        }
-        software_stack_class = None
-
-        if is_adviser_stack is True:
-            if adviser_stack_index is None:
-                raise ValueError(
-                    "Adviser stack index has to be set in case of adviser stacks"
-                )
-
-            software_stack_class = AdviserSoftwareStack
-            software_stack_properties["adviser_stack_index"] = adviser_stack_index
-
-        if is_user_stack:
-            # TODO: state origin in software stack properties.
-            # TODO: state adviser error in the class
-            software_stack_class = UserSoftwareStack
-
-        if is_inspection_stack:
-            software_stack_class = InspectionSoftwareStack
-
-        if software_stack_class is None:
-            raise ValueError("Unknown software stack type - should be at least one of user, inspection, adviser")
-
+    def create_python_packages_pipfile(self, pipfile_locked: dict) -> typing.List[PythonPackageVersion]:
+        """Create Python packages from Pipfile.lock entries and return them."""
         def get_index_url(index_name: str):
             for source_index in pipfile_locked["_meta"]["sources"]:
                 if source_index["name"] == index_name:
@@ -1033,24 +986,44 @@ class GraphDatabase(StorageBase):
             )
             python_packages.append(python_package_version)
 
-        software_stack = software_stack_class.from_properties(**software_stack_properties)
-        software_stack.get_or_create(self.g)
+        return python_packages
 
-        for python_package_version in python_packages:
+    def _python_packages_create_stack(self, python_package_versions: typing.Iterable[PythonPackageVersion], software_stack: SoftwareStackBase) -> None:
+        """Assign the given set of packages to the stack."""
+        for python_package_version in python_package_versions:
             CreatesStack.from_properties(source=python_package_version, target=software_stack).get_or_create(self.g)
 
+    def create_user_software_stack_pipfile(self, document_id: str, pipfile_locked: dict, *, origin: str = None) -> UserSoftwareStack:
+        """Create a user software stack entry from Pipfile.lock."""
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
+        software_stack = UserSoftwareStack.from_properties(document_id=document_id, origin=origin)
+        software_stack.get_or_create(self.g)
+        self._python_packages_create_stack(python_package_versions, software_stack)
+        return software_stack
+
+    def create_inspection_software_stack_pipfile(self, document_id: str, pipfile_locked: dict) -> InspectionSoftwareStack:
+        """Create an inspection software stack entry from Pipfile.lock."""
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
+        software_stack = InspectionSoftwareStack.from_properties(document_id=document_id)
+        software_stack.get_or_create(self.g)
+        self._python_packages_create_stack(python_package_versions, software_stack)
+        return software_stack
+
+    def create_adviser_software_stack_pipfile(self, document_id: str, pipfile_locked: dict, *, adviser_stack_index: int) -> AdviserSoftwareStack:
+        """Create an inspection software stack entry from Pipfile.lock."""
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
+        software_stack = AdviserSoftwareStack.from_properties(document_id=document_id, adviser_stack_index=adviser_stack_index)
+        software_stack.get_or_create(self.g)
+        self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
 
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         software_stack = None
         if document["specification"].get("python"):
-            software_stack = self.create_software_stack_pipfile(
-                document["specification"]["python"]["requirements_locked"],
+            software_stack = self.create_inspection_software_stack_pipfile(
                 document["inspection_id"],
-                is_user_stack=False,
-                is_adviser_stack=False,
-                is_inspection_stack=True,
+                document["specification"]["python"]["requirements_locked"]
             )
 
         environment_name = document["inspection_id"]
@@ -1086,7 +1059,7 @@ class GraphDatabase(StorageBase):
                     RunsIn.from_properties(
                         source=software_stack,
                         target=runtime_environment,
-                        inspection_document_id=document["inspection_id"],
+                        document_id=document["inspection_id"],
                         run_error=run_error,
                         performance_index=performance_index,
                     ).get_or_create(self.g)
@@ -1095,7 +1068,7 @@ class GraphDatabase(StorageBase):
                     RunsIn.from_properties(
                         source=software_stack,
                         target=runtime_environment,
-                        inspection_document_id=document["inspection_id"],
+                        document_id=document["inspection_id"],
                         run_error=run_error,
                     ).get_or_create(self.g)
 
@@ -1103,7 +1076,7 @@ class GraphDatabase(StorageBase):
                 RunsOn.from_properties(
                     source=runtime_environment,
                     target=runtime_hardware,
-                    inspection_document_id=document["inspection_id"],
+                    document_id=document["inspection_id"],
                     run_error=run_error,
                     performance_index=performance_index,
                 ).get_or_create(self.g)
@@ -1111,7 +1084,7 @@ class GraphDatabase(StorageBase):
                 RunsOn.from_properties(
                     source=runtime_environment,
                     target=runtime_hardware,
-                    inspection_document_id=document["inspection_id"],
+                    document_id=document["inspection_id"],
                     run_error=run_error,
                 ).get_or_create(self.g)
 
@@ -1216,19 +1189,52 @@ class GraphDatabase(StorageBase):
     def sync_adviser_result(self, document: dict) -> None:
         """Sync adviser result into graph database."""
         adviser_document_id = AdvisersResultsStore.get_document_id(document)
+        origin = document["metadata"]["arguments"]["provenance"].get("metadata", {}).get("origin")
 
-        # TODO: capture runtime env with hardware information
+        if not origin:
+            _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
+
+        user_software_stack = None
         if document["result"]["input"]["requirements_locked"]:
             # User provided a Pipfile.lock, we can sync it.
-            self.create_software_stack_pipfile(
+            user_software_stack = self.create_user_software_stack_pipfile(
+                adviser_document_id,
                 document["result"]["input"]["requirements_locked"],
-                document_id=adviser_document_id,
-                is_user_stack=True,
-                is_adviser_stack=False,
-                is_inspection_stack=False,
+                origin=origin
             )
 
-        # TODO: create edge between input and results
+        runtime_info = document["result"]["parameters"]["runtime_environment"]
+
+        hardware_info = runtime_info.pop("hardware", {})
+        hardware_information = HardwareInformation.from_properties(**hardware_info)
+        hardware_information.get_or_create(self.g)
+
+        operating_system = runtime_info.pop("operating_system", {})
+        # TODO: we should derive name from image sha to have exact match.
+        runtime_info.pop("name", None)  # We do not rely on user's input here, it can be anything...
+        runtime_environment_name = operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
+        runtime_environment = RuntimeEnvironment.from_properties(
+            runtime_environment_name=runtime_environment_name,
+            os_name=operating_system.get("name"),
+            os_version=operating_system.get("version"),
+            **runtime_info
+        )
+        runtime_environment.get_or_create(self.g)
+
+        RunsOn.from_properties(
+            source=runtime_environment,
+            target=hardware_information,
+            document_id=adviser_document_id
+        ).get_or_create(self.g)
+
+        RunsIn.from_properties(
+            source=user_software_stack,
+            target=runtime_environment,
+            document_id=adviser_document_id
+        ).get_or_create(self.g)
+
+        adviser_datetime = datetime_str2timestamp(document["metadata"]["datetime"])
+        adviser_version = document["analyzer"]["version"]
         for idx, result in enumerate(document["result"]["report"]):
             if len(result) != 2:
                 _LOGGER.debug("Omitting stack as no output Pipfile.lock was provided - was the report error report?")
@@ -1238,14 +1244,27 @@ class GraphDatabase(StorageBase):
             # result[1]["requirements"] is Pipfile
             # result[1]["requirements_locked"] is Pipfile.lock
             if result[1] and result[1].get("requirements_locked"):
-                self.create_software_stack_pipfile(
+                adviser_software_stack = self.create_adviser_software_stack_pipfile(
+                    adviser_document_id,
                     result[1]["requirements_locked"],
-                    document_id=adviser_document_id,
-                    is_user_stack=False,
-                    is_adviser_stack=True,
-                    is_inspection_stack=False,
                     adviser_stack_index=idx
                 )
+
+                # The linkage to hardware information is already done when user software stack was created.
+                RunsIn.from_properties(
+                    source=adviser_software_stack,
+                    target=runtime_environment,
+                    document_id=adviser_document_id
+                ).get_or_create(self.g)
+
+                if user_software_stack:
+                    Advised.from_properties(
+                        source=user_software_stack,
+                        target=adviser_software_stack,
+                        adviser_document_id=adviser_document_id,
+                        adviser_version=adviser_version,
+                        adviser_datetime=adviser_datetime,
+                    ).get_or_create(self.g)
 
     def provenance_checker_document_id_exist(self, provenance_checker_document_id: str) -> bool:
         """Check if there is a provenance-checker document record with the given id."""
@@ -1259,16 +1278,16 @@ class GraphDatabase(StorageBase):
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
         provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
+        origin = document["metadata"]["arguments"]["provenance"].get("metadata", {}).get("origin")
 
-        # TODO: capture runtime env with hardware information
+        if not origin:
+            _LOGGER.warning("No origin stated in the provenance-checker result %r", provenance_checker_document_id)
+
         user_input = document["result"]["input"]
         if user_input.get("requirements_locked"):
-            self.create_software_stack_pipfile(
-                user_input["requirements_locked"],
-                document_id=provenance_checker_document_id,
-                is_user_stack=True,
-                is_adviser_stack=False,
-                is_inspection_stack=False,
+            self.create_user_software_stack_pipfile(
+                provenance_checker_document_id, user_input["requirements_locked"],
+                origin=origin
             )
 
     # @enable_edge_cache
