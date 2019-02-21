@@ -959,7 +959,6 @@ class GraphDatabase(StorageBase):
 
     def create_python_packages_pipfile(self, pipfile_locked: dict) -> typing.List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
-
         def get_index_url(index_name: str):
             for source_index in pipfile_locked["_meta"]["sources"]:
                 if source_index["name"] == index_name:
@@ -1773,7 +1772,7 @@ class GraphDatabase(StorageBase):
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
         if solver_name.startswith("solver-"):
-            solver_identifiers = solver_name[len("solver-") :]
+            solver_identifiers = solver_name[len("solver-"):]
         else:
             raise ValueError("Solver name has to start with 'solver-' prefix")
 
@@ -1786,11 +1785,10 @@ class GraphDatabase(StorageBase):
 
         python_version = parts[2]
         if python_version.startswith("py"):
-            python_version = python_version[len("py") :]
+            python_version = python_version[len("py"):]
         else:
             raise ValueError(
                 f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
             )
 
         return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
-
