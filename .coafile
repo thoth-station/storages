@@ -13,12 +13,6 @@ language = Python
 editor = vim
 ignore = setup.py, tests/**
 
-[all.yaml]
-bears = YAMLLintBear
-files = **.yaml
-ignore = .zuul.yaml
-max_line_length = 120
-
 [zuul.yaml]
 bears = YAMLLintBear
 files = .zuul.yaml

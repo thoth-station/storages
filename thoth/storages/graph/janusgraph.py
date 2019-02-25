@@ -387,31 +387,41 @@ class GraphDatabase(StorageBase):
             raise ValueError("Cannot query for a stack with no packages.")
 
         package_name, package_version, index_url = packages[0]
-        query = self.g.V().has('__type__', 'vertex') \
-            .has('__label__', 'python_package_version') \
-            .has('ecosystem', 'pypi') \
-            .has('package_version', package_version) \
-            .has('package_name', package_name) \
-            .has('index_url', index_url) \
-            .outE() \
-            .has('__type__', 'edge') \
-            .has('__label__', 'creates_stack') \
-            .inV().has('__type__', 'vertex').has('__label__', 'software_stack')
+        query = (
+            self.g.V()
+            .has("__type__", "vertex")
+            .has("__label__", "python_package_version")
+            .has("ecosystem", "pypi")
+            .has("package_version", package_version)
+            .has("package_name", package_name)
+            .has("index_url", index_url)
+            .outE()
+            .has("__type__", "edge")
+            .has("__label__", "creates_stack")
+            .inV()
+            .has("__type__", "vertex")
+            .has("__label__", "software_stack")
+        )
 
         for package_name, package_version, index_url in packages[1:]:
-            query = query.inE() \
-                .has('__type__', 'edge').has('__label__', 'creates_stack') \
-                .outV() \
-                .has('__type__', 'vertex') \
-                .has('__label__', 'python_package_version') \
-                .has('ecosystem', 'pypi') \
-                .has('package_version', package_version) \
-                .has('package_name', package_name) \
-                .has('index_url', index_url) \
-                .outE() \
-                .has('__type__', 'edge') \
-                .has('__label__', 'creates_stack') \
-                .inV().has('__type__', 'vertex').has('__label__', 'software_stack')
+            query = (
+                query.inE()
+                .has("__type__", "edge")
+                .has("__label__", "creates_stack")
+                .outV()
+                .has("__type__", "vertex")
+                .has("__label__", "python_package_version")
+                .has("ecosystem", "pypi")
+                .has("package_version", package_version)
+                .has("package_name", package_name)
+                .has("index_url", index_url)
+                .outE()
+                .has("__type__", "edge")
+                .has("__label__", "creates_stack")
+                .inV()
+                .has("__type__", "vertex")
+                .has("__label__", "software_stack")
+            )
 
         return query
 
@@ -445,11 +455,7 @@ class GraphDatabase(StorageBase):
         return asyncio.get_event_loop().run_until_complete(query)
 
     def compute_python_package_version_avg_performance(
-        self,
-        packages: typing.List[tuple],
-        *,
-        runtime_environment_name: str = None,
-        hardware_specs: dict = None,
+        self, packages: typing.List[tuple], *, runtime_environment_name: str = None, hardware_specs: dict = None
     ) -> float:
         """Get average performance of Python packages on the given runtime environment.
 
@@ -486,14 +492,14 @@ class GraphDatabase(StorageBase):
         return asyncio.get_event_loop().run_until_complete(query)
 
     def get_all_versions_python_package(
-            self,
-            package_name: str,
-            index_url: str = None,
-            *,
-            os_name: str = None,
-            os_version: str = None,
-            python_version: str = None,
-            without_error: bool = False,
+        self,
+        package_name: str,
+        index_url: str = None,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        without_error: bool = False,
     ) -> typing.List[tuple]:
         """Get all versions available for a Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -543,8 +549,7 @@ class GraphDatabase(StorageBase):
         if not solver_name:
             solver_info = self.parse_python_solver_name(solver_name)
             edge_query = (
-                edge_query
-                .has("os_version", solver_info["os_version"])
+                edge_query.has("os_version", solver_info["os_version"])
                 .has("os_name", solver_info["os_name"])
                 .has("python_version", solver_info["python_version"])
             )
@@ -776,7 +781,10 @@ class GraphDatabase(StorageBase):
         """Get Python's package name, package version, package index tuple for the given package id."""
         session = await self.app.session()
         result = (
-            await session.g.V(python_package_node_id).valueMap().select("package_name", "package_version", "index_url").next()
+            await session.g.V(python_package_node_id)
+            .valueMap()
+            .select("package_name", "package_version", "index_url")
+            .next()
         )
 
         return {
@@ -804,14 +812,14 @@ class GraphDatabase(StorageBase):
         return dict(ChainMap(*results_dict))
 
     def retrieve_transitive_dependencies_python(
-            self,
-            package_name: str,
-            package_version: str,
-            index_url: str,
-            *,
-            os_name: str = None,
-            os_version: str = None,
-            python_version: str = None,
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
     ) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
@@ -851,8 +859,7 @@ class GraphDatabase(StorageBase):
             query_start = self.g.V()
 
         query_start = (
-            query_start
-            .has("__type__", "vertex")
+            query_start.has("__type__", "vertex")
             .has("__label__", "python_package_version")
             .has("ecosystem", "pypi")
             .has("package_version", package_version)
@@ -860,14 +867,7 @@ class GraphDatabase(StorageBase):
             .has("index_url", index_url)
         )
 
-        query = (
-            query_start
-            .repeat(flatMap(inner_query.inV()))
-            .emit()
-            .path()
-            .by(id_())
-            .toList()
-        )
+        query = query_start.repeat(flatMap(inner_query.inV())).emit().path().by(id_()).toList()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
@@ -988,12 +988,16 @@ class GraphDatabase(StorageBase):
 
         return python_packages
 
-    def _python_packages_create_stack(self, python_package_versions: typing.Iterable[PythonPackageVersion], software_stack: SoftwareStackBase) -> None:
+    def _python_packages_create_stack(
+        self, python_package_versions: typing.Iterable[PythonPackageVersion], software_stack: SoftwareStackBase
+    ) -> None:
         """Assign the given set of packages to the stack."""
         for python_package_version in python_package_versions:
             CreatesStack.from_properties(source=python_package_version, target=software_stack).get_or_create(self.g)
 
-    def create_user_software_stack_pipfile(self, document_id: str, pipfile_locked: dict, *, origin: str = None) -> UserSoftwareStack:
+    def create_user_software_stack_pipfile(
+        self, document_id: str, pipfile_locked: dict, *, origin: str = None
+    ) -> UserSoftwareStack:
         """Create a user software stack entry from Pipfile.lock."""
         python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
         software_stack = UserSoftwareStack.from_properties(document_id=document_id, origin=origin)
@@ -1001,7 +1005,9 @@ class GraphDatabase(StorageBase):
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
 
-    def create_inspection_software_stack_pipfile(self, document_id: str, pipfile_locked: dict) -> InspectionSoftwareStack:
+    def create_inspection_software_stack_pipfile(
+        self, document_id: str, pipfile_locked: dict
+    ) -> InspectionSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
         python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
         software_stack = InspectionSoftwareStack.from_properties(document_id=document_id)
@@ -1009,10 +1015,14 @@ class GraphDatabase(StorageBase):
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
 
-    def create_adviser_software_stack_pipfile(self, document_id: str, pipfile_locked: dict, *, adviser_stack_index: int) -> AdviserSoftwareStack:
+    def create_adviser_software_stack_pipfile(
+        self, document_id: str, pipfile_locked: dict, *, adviser_stack_index: int
+    ) -> AdviserSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
         python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
-        software_stack = AdviserSoftwareStack.from_properties(document_id=document_id, adviser_stack_index=adviser_stack_index)
+        software_stack = AdviserSoftwareStack.from_properties(
+            document_id=document_id, adviser_stack_index=adviser_stack_index
+        )
         software_stack.get_or_create(self.g)
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
@@ -1022,8 +1032,7 @@ class GraphDatabase(StorageBase):
         software_stack = None
         if document["specification"].get("python"):
             software_stack = self.create_inspection_software_stack_pipfile(
-                document["inspection_id"],
-                document["specification"]["python"]["requirements_locked"]
+                document["inspection_id"], document["specification"]["python"]["requirements_locked"]
             )
 
         environment_name = document["inspection_id"]
@@ -1198,9 +1207,7 @@ class GraphDatabase(StorageBase):
         if document["result"]["input"]["requirements_locked"]:
             # User provided a Pipfile.lock, we can sync it.
             user_software_stack = self.create_user_software_stack_pipfile(
-                adviser_document_id,
-                document["result"]["input"]["requirements_locked"],
-                origin=origin
+                adviser_document_id, document["result"]["input"]["requirements_locked"], origin=origin
             )
 
         runtime_info = document["result"]["parameters"]["runtime_environment"]
@@ -1212,25 +1219,23 @@ class GraphDatabase(StorageBase):
         operating_system = runtime_info.pop("operating_system", {})
         # TODO: we should derive name from image sha to have exact match.
         runtime_info.pop("name", None)  # We do not rely on user's input here, it can be anything...
-        runtime_environment_name = operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
+        runtime_environment_name = (
+            operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
+        )
         runtime_environment = RuntimeEnvironment.from_properties(
             runtime_environment_name=runtime_environment_name,
             os_name=operating_system.get("name"),
             os_version=operating_system.get("version"),
-            **runtime_info
+            **runtime_info,
         )
         runtime_environment.get_or_create(self.g)
 
         RunsOn.from_properties(
-            source=runtime_environment,
-            target=hardware_information,
-            document_id=adviser_document_id
+            source=runtime_environment, target=hardware_information, document_id=adviser_document_id
         ).get_or_create(self.g)
 
         RunsIn.from_properties(
-            source=user_software_stack,
-            target=runtime_environment,
-            document_id=adviser_document_id
+            source=user_software_stack, target=runtime_environment, document_id=adviser_document_id
         ).get_or_create(self.g)
 
         adviser_datetime = datetime_str2timestamp(document["metadata"]["datetime"])
@@ -1245,16 +1250,12 @@ class GraphDatabase(StorageBase):
             # result[1]["requirements_locked"] is Pipfile.lock
             if result[1] and result[1].get("requirements_locked"):
                 adviser_software_stack = self.create_adviser_software_stack_pipfile(
-                    adviser_document_id,
-                    result[1]["requirements_locked"],
-                    adviser_stack_index=idx
+                    adviser_document_id, result[1]["requirements_locked"], adviser_stack_index=idx
                 )
 
                 # The linkage to hardware information is already done when user software stack was created.
                 RunsIn.from_properties(
-                    source=adviser_software_stack,
-                    target=runtime_environment,
-                    document_id=adviser_document_id
+                    source=adviser_software_stack, target=runtime_environment, document_id=adviser_document_id
                 ).get_or_create(self.g)
 
                 if user_software_stack:
@@ -1286,8 +1287,7 @@ class GraphDatabase(StorageBase):
         user_input = document["result"]["input"]
         if user_input.get("requirements_locked"):
             self.create_user_software_stack_pipfile(
-                provenance_checker_document_id, user_input["requirements_locked"],
-                origin=origin
+                provenance_checker_document_id, user_input["requirements_locked"], origin=origin
             )
 
     # @enable_edge_cache
@@ -1303,7 +1303,7 @@ class GraphDatabase(StorageBase):
             solver_version=document["metadata"]["analyzer_version"],
             os_name=solver_info["os_name"],
             os_version=solver_info["os_version"],
-            python_version=solver_info["python_version"]
+            python_version=solver_info["python_version"],
         )
 
         ecosystem_solver.get_or_create(self.g)
@@ -1660,7 +1660,10 @@ class GraphDatabase(StorageBase):
             .has("__label__", "cve")
             .has("__type__", "vertex")
             .project("cve_id", "advisory", "version_range", "cve_name")
-            .by("cve_id").by("advisory").by("version_range").by("cve_name")
+            .by("cve_id")
+            .by("advisory")
+            .by("version_range")
+            .by("cve_name")
             .toList()
         )
 
@@ -1768,12 +1771,12 @@ class GraphDatabase(StorageBase):
     @staticmethod
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
-        if solver_name.startswith('solver-'):
-            solver_identifiers = solver_name[len('solver-'):]
+        if solver_name.startswith("solver-"):
+            solver_identifiers = solver_name[len("solver-"):]
         else:
             raise ValueError("Solver name has to start with 'solver-' prefix")
 
-        parts = solver_identifiers.split('-')
+        parts = solver_identifiers.split("-")
         if len(parts) != 3:
             raise ValueError(
                 "Solver should be in a form of 'solver-<os_name>-<os_version>-<python_version>, "
@@ -1781,15 +1784,11 @@ class GraphDatabase(StorageBase):
             )
 
         python_version = parts[2]
-        if python_version.startswith('py'):
-            python_version = python_version[len('py'):]
+        if python_version.startswith("py"):
+            python_version = python_version[len("py"):]
         else:
             raise ValueError(
                 f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
             )
 
-        return {
-            "os_name": parts[0],
-            "os_version": parts[1],
-            "python_version": python_version
-        }
+        return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}

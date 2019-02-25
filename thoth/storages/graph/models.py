@@ -120,16 +120,20 @@ class SoftwareStackBase(VertexBase):
     This is just a base class for creating software stack instances inside graph database.
     See specific software stack types for specific software stacks we are interested in.
     """
+
     # If a user stack, document id points to adviser document that introduced the stack.
     # If an adviser stack, document_id points to adviser document that introduced the stack.
     # If an inspection stack, document_id points to inspection document that introduced the stack.
+
     document_id = VertexProperty(properties.String)
 
 
 class AdviserSoftwareStack(SoftwareStackBase):
     """A software stack as produced by adviser (the output of recommendation engine)."""
+
     # As adviser can output multiple stacks, this property states the index in
     # the resulting adviser document if is_adviser stack is set to True.
+
     adviser_stack_index = VertexProperty(properties.Integer, default=None)
 
 
