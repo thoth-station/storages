@@ -310,10 +310,6 @@ class HasVulnerability(EdgeBase):
     """The given package version has a vulnerability."""
 
 
-class HasArtifact(EdgeBase):
-    """The given package-version has an artifact."""
-
-
 class Requires(PackageExtractNativeBase):
     """Requirement edge of an RPM package."""
 
@@ -350,6 +346,7 @@ ALL_MODELS = frozenset(
         DebReplaces,
         DependsOn,
         EcosystemSolver,
+        HasArtifact,
         HasVersion,
         HasVulnerability,
         IsPartOf,
