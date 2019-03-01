@@ -1653,6 +1653,7 @@ class GraphDatabase(StorageBase):
             .has("__label__", "python_package_version")
             .has("package_name", package_name)
             .has("package_version", package_version)
+            .has("ecosystem", "pypi")
             .outE()
             .has("__label__", "has_vulnerability")
             .has("__type__", "edge")
