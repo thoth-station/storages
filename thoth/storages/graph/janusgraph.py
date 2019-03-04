@@ -1300,6 +1300,19 @@ class GraphDatabase(StorageBase):
         solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
         solver_info = self.parse_python_solver_name(solver_name)
 
+        errors = {}
+        for error_info in document["result"]["errors"]:
+            package_name = error_info.get("package_name") or error_info["package"]
+            package_version = error_info["version"]
+
+            if package_name not in errors:
+                errors[package_name] = {}
+
+            if package_version not in errors[package_name]:
+                errors[package_name][package_version] = True
+
+                print(package_name, package_version)
+
         ecosystem_solver = EcosystemSolver.from_properties(
             solver_name=solver_name,
             solver_version=document["metadata"]["analyzer_version"],
@@ -1359,6 +1372,10 @@ class GraphDatabase(StorageBase):
                                 python_version=solver_info["python_version"],
                             ).get_or_create(self.g)
 
+                            solver_error = errors.get(
+                                python_package_version_dependency.package_name.value, {}
+                            ).get(python_package_version_dependency.package_version.value, False)
+
                             # TODO: mark extras
                             DependsOn.from_properties(
                                 source=python_package_version,
@@ -1368,7 +1385,7 @@ class GraphDatabase(StorageBase):
                                 os_name=solver_info["os_name"],
                                 os_version=solver_info["os_version"],
                                 python_version=solver_info["python_version"],
-                                solver_error=False,
+                                solver_error=solver_error,
                             ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(
