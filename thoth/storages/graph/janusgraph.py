@@ -35,7 +35,7 @@ from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import id as id_
 from gremlin_python.process.graph_traversal import outE
 from gremlin_python.process.graph_traversal import constant
-from gremlin_python.process.graph_traversal import flatMap
+from gremlin_python.process.graph_traversal import valueMap
 from goblin import Goblin
 
 from thoth.common import datetime_str2timestamp
@@ -867,7 +867,9 @@ class GraphDatabase(StorageBase):
             .has("index_url", index_url)
         )
 
-        query = query_start.repeat(flatMap(inner_query.inV())).emit().path().by(id_()).toList()
+        query = query_start.repeat(
+            inner_query.inV()
+        ).emit().path().by(id_()).by(valueMap().select("solver_error")).toList()
 
         return asyncio.get_event_loop().run_until_complete(query)
 
@@ -1366,6 +1368,7 @@ class GraphDatabase(StorageBase):
                                 os_name=solver_info["os_name"],
                                 os_version=solver_info["os_version"],
                                 python_version=solver_info["python_version"],
+                                solver_error=False,
                             ).get_or_create(self.g)
                 except Exception:  # pylint: disable=broad-except
                     _LOGGER.exception(
