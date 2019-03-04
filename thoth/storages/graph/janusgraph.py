@@ -1311,8 +1311,6 @@ class GraphDatabase(StorageBase):
             if package_version not in errors[package_name]:
                 errors[package_name][package_version] = True
 
-                print(package_name, package_version)
-
         ecosystem_solver = EcosystemSolver.from_properties(
             solver_name=solver_name,
             solver_version=document["metadata"]["analyzer_version"],
@@ -1812,4 +1810,5 @@ class GraphDatabase(StorageBase):
                 f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
             )
 
+        python_version = ".".join(list(python_version))
         return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
