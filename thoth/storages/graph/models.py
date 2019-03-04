@@ -211,6 +211,11 @@ class DependsOn(EdgeBase):
     package_name = Property(properties.String)
     extras = Property(properties.String)
 
+    os_name = Property(properties.String)
+    os_version = Property(properties.String)
+    python_version = Property(properties.String)
+    solver_error = Property(properties.Boolean, default=False)
+
 
 class Observed(EdgeBase):
     """Information about observations gathered on run."""
