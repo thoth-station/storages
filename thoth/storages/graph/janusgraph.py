@@ -1304,12 +1304,16 @@ class GraphDatabase(StorageBase):
         for error_info in document["result"]["errors"]:
             package_name = error_info.get("package_name") or error_info["package"]
             package_version = error_info["version"]
+            index_url = error_info["index"]
 
             if package_name not in errors:
                 errors[package_name] = {}
 
             if package_version not in errors[package_name]:
-                errors[package_name][package_version] = True
+                errors[package_name][package_version] = {}
+
+            if index_url not in errors[package_name][package_version]:
+                errors[package_name][package_version][index_url] = True
 
         ecosystem_solver = EcosystemSolver.from_properties(
             solver_name=solver_name,
@@ -1372,7 +1376,9 @@ class GraphDatabase(StorageBase):
 
                             solver_error = errors.get(
                                 python_package_version_dependency.package_name.value, {}
-                            ).get(python_package_version_dependency.package_version.value, False)
+                            ).get(
+                                python_package_version_dependency.package_version.value, {}
+                            ).get(python_package_version_dependency.index_url.value, False)
 
                             # TODO: mark extras
                             DependsOn.from_properties(
