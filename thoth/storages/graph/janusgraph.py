@@ -867,9 +867,9 @@ class GraphDatabase(StorageBase):
             .has("index_url", index_url)
         )
 
-        query = query_start.repeat(
-            inner_query.inV()
-        ).emit().path().by(id_()).by(valueMap().select("solver_error")).toList()
+        query = (
+            query_start.repeat(inner_query.inV()).emit().path().by(id_()).by(valueMap().select("solver_error")).toList()
+        )
 
         return asyncio.get_event_loop().run_until_complete(query)
 
@@ -979,7 +979,7 @@ class GraphDatabase(StorageBase):
                 )
                 package_version = package_info["version"]
             else:
-                package_version = package_info["version"][len("==") :]  # Ignore PycodestyleBear (E203)
+                package_version = package_info["version"][len("=="):]  # Ignore PycodestyleBear (E203)
 
             index_url = get_index_url(package_info["index"])
 
@@ -1374,11 +1374,11 @@ class GraphDatabase(StorageBase):
                                 python_version=solver_info["python_version"],
                             ).get_or_create(self.g)
 
-                            solver_error = errors.get(
-                                python_package_version_dependency.package_name.value, {}
-                            ).get(
-                                python_package_version_dependency.package_version.value, {}
-                            ).get(python_package_version_dependency.index_url.value, False)
+                            solver_error = (
+                                errors.get(python_package_version_dependency.package_name.value, {})
+                                .get(python_package_version_dependency.package_version.value, {})
+                                .get(python_package_version_dependency.index_url.value, False)
+                            )
 
                             # TODO: mark extras
                             DependsOn.from_properties(
@@ -1430,7 +1430,7 @@ class GraphDatabase(StorageBase):
                 )
                 continue
 
-            package_version = unsolvable["version_spec"][len("==") :]  # Ignore PycodestyleBear (E203)
+            package_version = unsolvable["version_spec"][len("=="):]
             try:
                 existed, python_package, _, python_package_version = self.create_pypi_package_version(
                     package_name=unsolvable["package_name"],
