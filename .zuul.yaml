@@ -15,7 +15,7 @@
       jobs:
         - trigger-build:
             vars:
-              webhook_url: https://paas.upshift.redhat.com/oapi/v1/namespaces/thoth-test-core/buildconfigs/user-api/
+              webhook_url: https://paas.upshift.redhat.com/oapi/v1/namespaces/thoth-test-core/buildconfigs/user-api
     kebechet-auto-gate:
       queue: thoth-station/core
       jobs:
