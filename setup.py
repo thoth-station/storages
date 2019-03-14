@@ -47,10 +47,10 @@ class Test(TestCommand):
         import pytest
         sys.exit(pytest.main(self.pytest_args))
 
-
+VERSION = get_version()
 setup(
     name='thoth-storages',
-    version=get_version(),
+    version=VERSION,
     description='Storage and database adapters available in project Thoth',
     long_description=Path('README.rst').read_text(),
     author='Fridolin Pokorny',
@@ -64,4 +64,9 @@ setup(
     install_requires=get_install_requires(),
     tests_require=get_test_requires(),
     cmdclass={'test': Test},
+    command_options={
+        'build_sphinx': {
+            'version': ('setup.py', VERSION),
+        }
+    }
 )

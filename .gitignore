@@ -8,3 +8,5 @@ thoth_storages.egg-info/
 docs/schema.dia~
 dist/
 schema.groovy
+build/
+docs/source/thoth.*.rst

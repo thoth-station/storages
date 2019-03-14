@@ -1,14 +1,17 @@
-thoth-storages
+Thoth Storages
 --------------
-This repo provides a library called
-`thoth-storages <https://pypi.org/project/thoth-storages>`_.
-The library exposes core queries and methods for JanusGraph database as well
-as adapters for manipulating with Ceph via its S3 compatible API.
+
+This library provides a library called `thoth-storages
+<https://pypi.org/project/thoth-storages>`_ used in project `Thoth
+<https://thoth-station.ninja>`_.  The library exposes core queries and methods
+for JanusGraph database as well as adapters for manipulating with Ceph via its
+S3 compatible API.
 
 Installation and Usage
 ======================
 
-The library can be installed via pip or pipenv:
+The library can be installed via pip or Pipenv from
+`PyPI <https://pypi.org/project/thoth-storages>`_:
 
 .. code-block:: console
 
@@ -21,8 +24,11 @@ You can run prepared testsuite via the following command:
 
 .. code-block:: console
 
-    pipenv install --dev
-    pipenv run python3 setup.py test
+  pipenv install --dev
+  pipenv run python3 setup.py test
+
+  # To generate docs:
+  pipenv run python3 setup.py build_sphinx
 
 Automatically generate schema for Graph database
 ================================================
@@ -50,12 +56,17 @@ thoth/storages/graph/models.py) as well as with indexes as configured in the
 indexes.groovy.template (placed into a single file to run it in one
 transaction).
 
-See `https://github.com/thoth-station/goblinoid` for more info on how to
-configure models generation.
+See `goblinoid <https://github.com/thoth-station/goblinoid>`_ for more info
+on how to configure models generation.
 
 Known Issues
 ============
 
 - Gremlin queries are hanging:
 
-   When using :code:`aiogremlin==3.3.1` (despite being not part of our specification, it might happen that another library overrides that dependency), gremlin queries might _hang indeffinitely_ without throwing any error in Jupyter Notebooks. Make sure to check that correct version of :code:`aiogremlin` is installed.
+   When using :code:`aiogremlin==3.3.1` (despite being not part of our
+   specification, it might happen that another library overrides that
+   dependency), gremlin queries might hang indeffinitely without throwing any
+   error in Jupyter Notebooks. Make sure to check that correct version of
+   :code:`aiogremlin` is installed.
+
