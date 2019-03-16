@@ -950,13 +950,18 @@ class GraphDatabase(StorageBase):
     def _get_hardware_information(specs: dict) -> HardwareInformation:
         """Get hardware information based on requests provided."""
         hardware = specs.get("hardware") or {}
+        ram_size = OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None
+        if ram_size is not None:
+            # Convert bytes to GiB, we need float number for Gremlin/JanusGraph serialization
+            ram_size = ram_size / (1024**3)
+
         return HardwareInformation.from_properties(
             cpu_family=hardware.get("cpu_family"),
             cpu_model=hardware.get("cpu_model"),
             cpu_physical_cpus=hardware.get("physical_cpus"),
             cpu_model_name=hardware.get("processor"),
             cpu_cores=OpenShift.parse_cpu_spec(specs["cpu"]) if specs.get("cpu") else None,
-            ram_size=OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None,
+            ram_size=ram_size
         )
 
     def create_python_packages_pipfile(self, pipfile_locked: dict) -> typing.List[PythonPackageVersion]:

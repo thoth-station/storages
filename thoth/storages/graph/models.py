@@ -189,7 +189,9 @@ class HardwareInformation(VertexBase):
     # gpu_cores = VertexProperty(properties.Integer)
     # gpu_memory_size = VertexProperty(properties.Integer)
 
-    ram_size = VertexProperty(properties.Integer)
+    # We use float here as using Integer can lead to serialization/deserialization
+    # issues on Graph database side. JanusGraph treats Integer in fixed size of int32.
+    ram_size = VertexProperty(properties.Float)
 
 
 class EcosystemSolver(VertexBase):
