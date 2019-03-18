@@ -747,3 +747,43 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Update README.rst
 * Automatic update of dependency boto3 from 1.9.67 to 1.9.71
 * Automatic update of dependency boto3 from 1.9.66 to 1.9.67
+
+## Release 0.9.7 (2019-03-18T10:03:56)
+* Fix clash of runtime environment - model versus representing class
+* Add type to queries to hit index
+* Turn ram size into float to fix serialization/deserialization issues
+* Use Sphinx for documentation
+* Delete ceph.py.orig
+* :bug: removed the trailing slash
+* Fix coala warnings
+* Automatic update of dependency boto3 from 1.9.98 to 1.9.101
+* Fix solver error flag handling
+* Add missing dot in Python version
+* Respect errors in dependencies of packages
+* Adjust query to track solver errors on the given runtime env
+* Track solver_errors on depends_on edges
+* Add missing ecosystem in query
+* Remove duplicit definition
+* fixing some coala errors
+* black reformatted the file
+* this part of the path is no longer required
+* This repo requires Python 3.6
+* Fix split count
+* Fix solver name handling
+* Add missing export from thoth.storages module
+* Fix path to origin value of adviser and provenance-checker resutls
+* Be consistent with property naming
+* Update schema in docs
+* Add CVE name when querying for CVEs
+* Create relations between all the models in the graph database
+* Introduce adviser error flag in user stack
+* Introduce logic for syncing provenance check documents
+* Adjust query to return unsolved packages for the given solver
+* Update README with the most recent information about schema generation
+* Increase number of lines per file
+* Add python version and cuda version to graph schema
+* Capture recommendation type in the graph model
+* Introduce advised relationship
+* Fix in markup
+* State thoth-schema file path directly
+* State automatic schema generation in README file
