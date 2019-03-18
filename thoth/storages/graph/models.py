@@ -95,7 +95,11 @@ class PythonArtifact(VertexBase):
     artifact_hash_sha256 = VertexProperty(properties.String)
 
 
-class RuntimeEnvironment(VertexBase):
+class EnvironmentBase(VertexBase):
+    """A base class for environment types."""
+
+
+class RuntimeEnvironment(EnvironmentBase):
     """Environment such as container image which consists of various packages."""
 
     runtime_environment_name = VertexProperty(properties.String)
@@ -106,7 +110,7 @@ class RuntimeEnvironment(VertexBase):
     # TODO: capture hashes of layers to be precise?
 
 
-class BuildtimeEnvironment(VertexBase):
+class BuildtimeEnvironment(EnvironmentBase):
     """Environment such as container image which consists of various packages."""
 
     buildtime_environment_name = VertexProperty(properties.String)
