@@ -41,7 +41,6 @@ from goblin import Goblin
 from thoth.common import datetime_str2timestamp
 from thoth.common import timestamp2datetime
 from thoth.common import OpenShift
-from thoth.common import RuntimeEnvironment
 
 from ..base import StorageBase
 from ..exceptions import NotFoundError
@@ -69,7 +68,7 @@ from .models import BuildsOn
 from .models import BuildtimeEnvironment
 from .models import RPMPackageVersion
 from .models import RPMRequirement
-from .models import RuntimeEnvironment
+from .models import RuntimeEnvironment as RuntimeEnvironmentModel
 from .models import HardwareInformation
 from .models import Solved
 from .models import AdviserSoftwareStack
@@ -227,7 +226,7 @@ class GraphDatabase(StorageBase):
         """Get listing of runtime environments available."""
         query = (
             self.g.V()
-            .has("__label__", RuntimeEnvironment.__label__)
+            .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
             .values("runtime_environment_name")
             .dedup()
@@ -244,7 +243,7 @@ class GraphDatabase(StorageBase):
         """Get listing of analyses available for the given environment."""
         query = (
             self.g.V()
-            .has("__label__", RuntimeEnvironment.__label__)
+            .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
             .has("runtime_environment_name", runtime_environment_name)
             .inE()
@@ -268,7 +267,7 @@ class GraphDatabase(StorageBase):
             # TODO: we could optimize this into a single query
             query = (
                 self.g.V()
-                .has("__label__", RuntimeEnvironment.__label__)
+                .has("__label__", RuntimeEnvironmentModel.__label__)
                 .has("__type__", "vertex")
                 .has("runtime_environment_name", runtime_environment_name)
                 .count()
@@ -294,7 +293,7 @@ class GraphDatabase(StorageBase):
         if not analysis_document_id:
             analysis_document_id = loop.run_until_complete(
                 self.g.V()
-                .has("__label__", RuntimeEnvironment.__label__)
+                .has("__label__", RuntimeEnvironmentModel.__label__)
                 .has("__type__", "vertex")
                 .has("runtime_environment_name", runtime_environment_name)
                 .inE()
@@ -312,7 +311,7 @@ class GraphDatabase(StorageBase):
 
         query = (
             self.g.V()
-            .has("__label__", RuntimeEnvironment.__label__)
+            .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
             .has("runtime_environment_name", runtime_environment_name)
             .coalesce(
@@ -440,7 +439,7 @@ class GraphDatabase(StorageBase):
         query, hardware_specs: dict, runtime_environment_name: str
     ) -> float:
         """Extend the avg performance query so that there is taken into account hardware we run on."""
-        query = query.inV().has("__label__", RuntimeEnvironment.__label__)
+        query = query.inV().has("__label__", RuntimeEnvironmentModel.__label__)
 
         if runtime_environment_name:
             query = query.has("runtime_environment_name", runtime_environment_name)
@@ -468,7 +467,7 @@ class GraphDatabase(StorageBase):
         they can however include also other packages.
 
         Optional parameters additionally slice results - e.g. if runtime_environment is set,
-        it picks only resutls that match the given parameters criteria.
+        it picks only results that match the given parameters criteria.
         """
         query = self._get_stack(packages)
         query = query.outE().has("__label__", RunsIn.__label__)
@@ -476,7 +475,7 @@ class GraphDatabase(StorageBase):
         if runtime_environment_name and not hardware_specs:
             query = (
                 query.inV()
-                .has("__label__", RuntimeEnvironment.__label__)
+                .has("__label__", RuntimeEnvironmentModel.__label__)
                 .has("runtime_environment_name", runtime_environment_name)
                 .inE()
                 .has("__label__", RunsIn.__label__)
@@ -1062,7 +1061,7 @@ class GraphDatabase(StorageBase):
                 # installed any native packages.
                 environment_name = document["specification"]["base"]
 
-            runtime_environment = RuntimeEnvironment.from_properties(runtime_environment_name=environment_name)
+            runtime_environment = RuntimeEnvironmentModel.from_properties(runtime_environment_name=environment_name)
             runtime_environment.get_or_create(self.g)
 
             runtime_hardware = self._get_hardware_information(document["specification"]["run"]["requests"])
@@ -1230,7 +1229,7 @@ class GraphDatabase(StorageBase):
         runtime_environment_name = (
             operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
         )
-        runtime_environment = RuntimeEnvironment.from_properties(
+        runtime_environment = RuntimeEnvironmentModel.from_properties(
             runtime_environment_name=runtime_environment_name,
             os_name=operating_system.get("name"),
             os_version=operating_system.get("version"),
@@ -1490,7 +1489,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
 
     def _deb_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironment
+        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
     ) -> None:
         """Sync results of deb packages found in the given container image."""
         for deb_package_info in document["result"]["deb-dependencies"]:
@@ -1548,7 +1547,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
 
     def _rpm_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironment
+        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
     ) -> None:
         """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document["result"]["rpm-dependencies"]:
@@ -1604,7 +1603,7 @@ class GraphDatabase(StorageBase):
                     )
 
     def _python_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironment
+        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
     ) -> None:
         """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
@@ -1746,7 +1745,7 @@ class GraphDatabase(StorageBase):
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
         # TODO: we should sync also origin of analysed images
-        runtime_environment = RuntimeEnvironment.from_properties(
+        runtime_environment = RuntimeEnvironmentModel.from_properties(
             runtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
         )
         runtime_environment.get_or_create(self.g)
