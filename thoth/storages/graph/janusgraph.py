@@ -1184,6 +1184,7 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.V()
             .has("__label__", "python_package_version")
+            .has("__type__", "vertex")
             .has("package_name", package_name)
             .has("package_version", package_version)
             .inE()
@@ -1680,6 +1681,7 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.V()
             .has("__label__", "python_package_version")
+            .has("__type__", "vertex")
             .has("package_name", package_name)
             .has("package_version", package_version)
             .has("ecosystem", "pypi")
@@ -1706,6 +1708,7 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.V()
             .has("__label__", "python_package_version")
+            .has("__type__", "vertex")
             .has("package_name", package_name)
             .has("package_version", package_version)
             .has("index_url", index_url)
@@ -1724,6 +1727,7 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.V()
             .has("__label__", "python_package_version")
+            .has("__type__", "vertex")
             .has("package_name", package_name)
             .has("package_version", package_version)
             .flatMap(outE().inV())
