@@ -65,10 +65,11 @@ from .models import PythonPackageIndex
 from .models import RunsOn
 from .models import BuildsIn
 from .models import BuildsOn
-from .models import BuildtimeEnvironment
 from .models import RPMPackageVersion
 from .models import RPMRequirement
+from .models import EnvironmentBase
 from .models import RuntimeEnvironment as RuntimeEnvironmentModel
+from .models import BuildtimeEnvironment as BuildtimeEnvironmentModel
 from .models import HardwareInformation
 from .models import Solved
 from .models import AdviserSoftwareStack
@@ -1103,7 +1104,7 @@ class GraphDatabase(StorageBase):
                     run_error=run_error,
                 ).get_or_create(self.g)
 
-        buildtime_environment = BuildtimeEnvironment.from_properties(buildtime_environment_name=environment_name)
+        buildtime_environment = BuildtimeEnvironmentModel.from_properties(buildtime_environment_name=environment_name)
         buildtime_environment.get_or_create(self.g)
 
         buildtime_hardware = self._get_hardware_information(document["specification"]["build"]["requests"])
@@ -1489,7 +1490,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
 
     def _deb_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
+        self, document_id: str, document: dict, environment: EnvironmentBase
     ) -> None:
         """Sync results of deb packages found in the given container image."""
         for deb_package_info in document["result"]["deb-dependencies"]:
@@ -1512,7 +1513,7 @@ class GraphDatabase(StorageBase):
 
                 IsPartOf.from_properties(
                     source=deb_package_version,
-                    target=runtime_environment,
+                    target=environment,
                     analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
                     analysis_document_id=document_id,
                     analyzer_name=document["metadata"]["analyzer"],
@@ -1547,7 +1548,7 @@ class GraphDatabase(StorageBase):
                 _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
 
     def _rpm_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
+        self, document_id: str, document: dict, environment: EnvironmentBase
     ) -> None:
         """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document["result"]["rpm-dependencies"]:
@@ -1573,7 +1574,7 @@ class GraphDatabase(StorageBase):
 
                 IsPartOf.from_properties(
                     source=rpm_package_version,
-                    target=runtime_environment,
+                    target=environment,
                     analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
                     analysis_document_id=document_id,
                     analyzer_name=document["metadata"]["analyzer"],
@@ -1603,7 +1604,7 @@ class GraphDatabase(StorageBase):
                     )
 
     def _python_sync_analysis_result(
-        self, document_id: str, document: dict, runtime_environment: RuntimeEnvironmentModel
+        self, document_id: str, document: dict, environment: EnvironmentBase
     ) -> None:
         """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
@@ -1632,7 +1633,7 @@ class GraphDatabase(StorageBase):
 
                 IsPartOf.from_properties(
                     source=python_package_version,
-                    target=runtime_environment,
+                    target=environment,
                     analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
                     analysis_document_id=document_id,
                     analyzer_name=document["metadata"]["analyzer"],
@@ -1744,15 +1745,25 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
+        environment_type = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["environment_type"]
         # TODO: we should sync also origin of analysed images
-        runtime_environment = RuntimeEnvironmentModel.from_properties(
-            runtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
-        )
-        runtime_environment.get_or_create(self.g)
+        if environment_type == "runtime":
+            environment = RuntimeEnvironmentModel.from_properties(
+                runtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+            )
+            environment.get_or_create(self.g)
+        elif environment_type == "buildtime":
+            environment = BuildtimeEnvironmentModel.from_properties(
+                buildtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+            )
+            environment.get_or_create(self.g)
+        else:
+            raise ValueError("Unknown environment type %r, should be buildtime or runtime" % environment_type)
+
         document_id = AnalysisResultsStore.get_document_id(document)
-        self._rpm_sync_analysis_result(document_id, document, runtime_environment)
-        self._deb_sync_analysis_result(document_id, document, runtime_environment)
-        self._python_sync_analysis_result(document_id, document, runtime_environment)
+        self._rpm_sync_analysis_result(document_id, document, environment)
+        self._deb_sync_analysis_result(document_id, document, environment)
+        self._python_sync_analysis_result(document_id, document, environment)
 
     def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True):
         """Register the given Python package index in the graph database."""
