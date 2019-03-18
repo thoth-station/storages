@@ -212,16 +212,6 @@ class GraphDatabase(StorageBase):
 
         return result
 
-    def register_python_package_index(
-        self, url: str, *, warehouse_api_url: str = None, verify_ssl: bool = True, warehouse: bool = False
-    ) -> typing.Tuple[PythonPackageIndex, bool]:
-        """Return a list of available Python package indexes."""
-        python_package_index = PythonPackageIndex.from_properties(
-            url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl, warehouse=warehouse
-        )
-        existed = python_package_index.get_or_create(self.g)
-        return python_package_index, existed
-
     def runtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of runtime environments available."""
         query = (
