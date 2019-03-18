@@ -219,7 +219,7 @@ class GraphDatabase(StorageBase):
             self.g.V()
             .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
-            .values("runtime_environment_name")
+            .values("environment_name")
             .dedup()
             .order()
             .range(start_offset, start_offset + count)
@@ -236,7 +236,7 @@ class GraphDatabase(StorageBase):
             self.g.V()
             .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
-            .has("runtime_environment_name", runtime_environment_name)
+            .has("environment_name", runtime_environment_name)
             .inE()
             .has("__label__", IsPartOf.__label__)
             .has("__type__", "edge")
@@ -260,7 +260,7 @@ class GraphDatabase(StorageBase):
                 self.g.V()
                 .has("__label__", RuntimeEnvironmentModel.__label__)
                 .has("__type__", "vertex")
-                .has("runtime_environment_name", runtime_environment_name)
+                .has("environment_name", runtime_environment_name)
                 .count()
                 .next()
             )
@@ -286,7 +286,7 @@ class GraphDatabase(StorageBase):
                 self.g.V()
                 .has("__label__", RuntimeEnvironmentModel.__label__)
                 .has("__type__", "vertex")
-                .has("runtime_environment_name", runtime_environment_name)
+                .has("environment_name", runtime_environment_name)
                 .inE()
                 .has("__label__", IsPartOf.__label__)
                 .order()
@@ -304,7 +304,7 @@ class GraphDatabase(StorageBase):
             self.g.V()
             .has("__label__", RuntimeEnvironmentModel.__label__)
             .has("__type__", "vertex")
-            .has("runtime_environment_name", runtime_environment_name)
+            .has("environment_name", runtime_environment_name)
             .coalesce(
                 inE().has("__label__", IsPartOf.__label__).has("analysis_document_id", analysis_document_id).outV(),
                 constant(False),
@@ -433,7 +433,7 @@ class GraphDatabase(StorageBase):
         query = query.inV().has("__label__", RuntimeEnvironmentModel.__label__)
 
         if runtime_environment_name:
-            query = query.has("runtime_environment_name", runtime_environment_name)
+            query = query.has("environment_name", runtime_environment_name)
 
         query = query.outE().has("__label__", RunsOn.__label__).inV().has("__label__", HardwareInformation.__label__)
 
@@ -467,7 +467,7 @@ class GraphDatabase(StorageBase):
             query = (
                 query.inV()
                 .has("__label__", RuntimeEnvironmentModel.__label__)
-                .has("runtime_environment_name", runtime_environment_name)
+                .has("environment_name", runtime_environment_name)
                 .inE()
                 .has("__label__", RunsIn.__label__)
             )
@@ -1052,7 +1052,7 @@ class GraphDatabase(StorageBase):
                 # installed any native packages.
                 environment_name = document["specification"]["base"]
 
-            runtime_environment = RuntimeEnvironmentModel.from_properties(runtime_environment_name=environment_name)
+            runtime_environment = RuntimeEnvironmentModel.from_properties(environment_name=environment_name)
             runtime_environment.get_or_create(self.g)
 
             runtime_hardware = self._get_hardware_information(document["specification"]["run"]["requests"])
@@ -1094,7 +1094,7 @@ class GraphDatabase(StorageBase):
                     run_error=run_error,
                 ).get_or_create(self.g)
 
-        buildtime_environment = BuildtimeEnvironmentModel.from_properties(buildtime_environment_name=environment_name)
+        buildtime_environment = BuildtimeEnvironmentModel.from_properties(environment_name=environment_name)
         buildtime_environment.get_or_create(self.g)
 
         buildtime_hardware = self._get_hardware_information(document["specification"]["build"]["requests"])
@@ -1221,7 +1221,7 @@ class GraphDatabase(StorageBase):
             operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
         )
         runtime_environment = RuntimeEnvironmentModel.from_properties(
-            runtime_environment_name=runtime_environment_name,
+            environment_name=runtime_environment_name,
             os_name=operating_system.get("name"),
             os_version=operating_system.get("version"),
             **runtime_info,
@@ -1739,12 +1739,12 @@ class GraphDatabase(StorageBase):
         # TODO: we should sync also origin of analysed images
         if environment_type == "runtime":
             environment = RuntimeEnvironmentModel.from_properties(
-                runtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+                environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
             )
             environment.get_or_create(self.g)
         elif environment_type == "buildtime":
             environment = BuildtimeEnvironmentModel.from_properties(
-                buildtime_environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+                environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
             )
             environment.get_or_create(self.g)
         else:

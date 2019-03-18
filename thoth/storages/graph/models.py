@@ -98,24 +98,23 @@ class PythonArtifact(VertexBase):
 class EnvironmentBase(VertexBase):
     """A base class for environment types."""
 
+    environment_name = VertexProperty(properties.String)
+    python_version = VertexProperty(properties.String, default=None)
+
+    # TODO: capture hashes of layers to be precise?
+
 
 class RuntimeEnvironment(EnvironmentBase):
     """Environment such as container image which consists of various packages."""
 
-    runtime_environment_name = VertexProperty(properties.String)
     os_name = VertexProperty(properties.String, default=None)
     os_version = VertexProperty(properties.String, default=None)
     python_version = VertexProperty(properties.String, default=None)
     cuda_version = VertexProperty(properties.String, default=None)
-    # TODO: capture hashes of layers to be precise?
 
 
 class BuildtimeEnvironment(EnvironmentBase):
     """Environment such as container image which consists of various packages."""
-
-    buildtime_environment_name = VertexProperty(properties.String)
-    python_version = VertexProperty(properties.String, default=None)
-    # TODO: capture hashes of layers to be precise?
 
 
 class SoftwareStackBase(VertexBase):
