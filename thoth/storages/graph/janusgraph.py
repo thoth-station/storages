@@ -714,7 +714,7 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.E()
             .has("__type__", "edge")
-            .has("__type__", Requires.__label__)
+            .has("__label__", Requires.__label__)
             .has("analysis_datetime")
             .has("analysis_document_id")
             .has("analyzer_name")
