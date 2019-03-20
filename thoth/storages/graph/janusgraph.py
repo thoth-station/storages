@@ -30,6 +30,7 @@ import uvloop
 from aiogremlin.process.graph_traversal import AsyncGraphTraversal
 from gremlin_python.process.traversal import Order
 from gremlin_python.process.traversal import without
+from gremlin_python.process.traversal import within
 from gremlin_python.process.traversal import gt
 from gremlin_python.process.graph_traversal import inE
 from gremlin_python.process.graph_traversal import id as id_
@@ -390,7 +391,7 @@ class GraphDatabase(StorageBase):
             .has("__label__", "creates_stack")
             .inV()
             .has("__type__", "vertex")
-            .has("__label__", "software_stack")
+            .has("__label__", InspectionSoftwareStack.__label__)
         )
 
         for package_name, package_version, index_url in packages[1:]:
@@ -410,7 +411,7 @@ class GraphDatabase(StorageBase):
                 .has("__label__", "creates_stack")
                 .inV()
                 .has("__type__", "vertex")
-                .has("__label__", "software_stack")
+                .has("__label__", InspectionSoftwareStack.__label__)
             )
 
         return query
@@ -425,29 +426,10 @@ class GraphDatabase(StorageBase):
         query = self._get_stack(packages)
         return asyncio.get_event_loop().run_until_complete(query.toList())
 
-    @staticmethod
-    def _compute_python_package_version_avg_performance_on_hw(
-        query, hardware_specs: dict, runtime_environment_name: str
-    ) -> float:
-        """Extend the avg performance query so that there is taken into account hardware we run on."""
-        query = query.inV().has("__label__", RuntimeEnvironmentModel.__label__)
-
-        if runtime_environment_name:
-            query = query.has("environment_name", runtime_environment_name)
-
-        query = query.outE().has("__label__", RunsOn.__label__).inV().has("__label__", HardwareInformation.__label__)
-
-        for attribute_name, attribute_value in hardware_specs.items():
-            query = query.has(attribute_name, attribute_value)
-
-        query = query.inE().has("__label__", "runs_on").values("performance_index").mean().next()
-
-        return asyncio.get_event_loop().run_until_complete(query)
-
     def compute_python_package_version_avg_performance(
-        self, packages: typing.List[tuple], *, runtime_environment_name: str = None, hardware_specs: dict = None
-    ) -> float:
-        """Get average performance of Python packages on the given runtime environment.
+        self, packages: typing.List[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
+    ) -> typing.Optional[float]:
+        """Get average performance of Python packages on the given runtime environment with hardware specs.
 
         We derive this average performance based on software stacks we have
         evaluated on the given runtime environment including the given
@@ -461,24 +443,53 @@ class GraphDatabase(StorageBase):
         it picks only results that match the given parameters criteria.
         """
         query = self._get_stack(packages)
-        query = query.outE().has("__label__", RunsIn.__label__)
+        software_stack_ids = asyncio.get_event_loop().run_until_complete(query.id().toList())
 
-        if runtime_environment_name and not hardware_specs:
-            query = (
-                query.inV()
-                .has("__label__", RuntimeEnvironmentModel.__label__)
-                .has("environment_name", runtime_environment_name)
-                .inE()
-                .has("__label__", RunsIn.__label__)
-            )
+        if not software_stack_ids:
+            # No software stacks for the given package set found.
+            return None
 
+        query = None
         if hardware_specs:
-            # We pass runtime environment name to optimize traversal (no need to go back).
-            return self._compute_python_package_version_avg_performance_on_hw(
-                query, hardware_specs, runtime_environment_name
+            query = self.g.V().has("__label__", HardwareInformation.__label__).has("__type__", "vertex")
+            for key, value in hardware_specs.items():
+                query = query.has(key, value)
+
+            query = (
+                query
+                .inE()
+                .has("__label__", "runs_on")
+                .has("__type__", "edge")
+                .outV()
+                .has("__label__", RuntimeEnvironmentModel.__label__)
+                .has("__type__", "vertex")
             )
 
-        query = query.values("performance_index").mean().next()
+        if not query:
+            # No hardware specs supplied, start in a runtime environment.
+            query = self.g.V().has("__label__", RuntimeEnvironmentModel.__label__).has("__type__", "vertex")
+
+        if runtime_environment:
+            # We have a specific runtime environment, add attributes of it to the query.
+            for key, value in runtime_environment.items():
+                query = query.has(key, value)
+
+        query = (
+            query
+            .inE()
+            .has("__label__", "runs_in")
+            .has("__type__", "edge")
+            .as_("runs_in_edge")
+            .has("performance_index")
+            .outV()
+            .has("__label__", InspectionSoftwareStack.__label__)
+            .has("__type__", "vertex")
+            .id().is_(within(software_stack_ids))
+            .select("runs_in_edge")
+            .dedup()
+            .values("performance_index").mean().next()
+        )
+
         return asyncio.get_event_loop().run_until_complete(query)
 
     def get_all_versions_python_package(
@@ -1026,11 +1037,16 @@ class GraphDatabase(StorageBase):
 
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
-        software_stack = None
+        software_stack, python_version, os_name, os_version = None, None, None, None
         if document["specification"].get("python"):
             software_stack = self.create_inspection_software_stack_pipfile(
                 document["inspection_id"], document["specification"]["python"]["requirements_locked"]
             )
+            python_version = document["specification"]["python"]["requirements"].get("requires", {}).get("python_version")
+
+        if ":" in document["specification"]["base"]:
+            # TODO: we should capture os info in inspection report directly.
+            os_name, os_version = document["specification"]["base"].split(":")
 
         environment_name = document["inspection_id"]
         if document["job_log"] is not None:
@@ -1052,7 +1068,12 @@ class GraphDatabase(StorageBase):
                 # installed any native packages.
                 environment_name = document["specification"]["base"]
 
-            runtime_environment = RuntimeEnvironmentModel.from_properties(environment_name=environment_name)
+            runtime_environment = RuntimeEnvironmentModel.from_properties(
+                environment_name=environment_name,
+                python_version=python_version,
+                os_name=os_name,
+                os_version=os_version,
+            )
             runtime_environment.get_or_create(self.g)
 
             runtime_hardware = self._get_hardware_information(document["specification"]["run"]["requests"])
