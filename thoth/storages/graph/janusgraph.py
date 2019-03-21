@@ -17,6 +17,7 @@
 
 """A Gremlin server adapter communicating via a web socket."""
 
+import math
 import asyncio
 import functools
 import logging
@@ -447,7 +448,7 @@ class GraphDatabase(StorageBase):
 
         if not software_stack_ids:
             # No software stacks for the given package set found.
-            return None
+            return math.nan
 
         query = None
         if hardware_specs:
