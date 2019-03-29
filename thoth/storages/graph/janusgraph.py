@@ -364,7 +364,7 @@ class GraphDatabase(StorageBase):
 
         return bool(loop.run_until_complete(query))
 
-    def _get_stack(self, packages: typing.List[tuple]) -> AsyncGraphTraversal:
+    def _get_stack(self, packages: typing.Set[tuple]) -> AsyncGraphTraversal:
         """Get all stacks that include the given set of packages."""
         # The query starts in a package and ends first in a software stack - this
         # way we get all the software stacks where the first package is present. We
@@ -378,6 +378,8 @@ class GraphDatabase(StorageBase):
         if len(packages) == 0:
             raise ValueError("Cannot query for a stack with no packages.")
 
+        # Make access to the first one.
+        packages = list(packages)
         package_name, package_version, index_url = packages[0]
         query = (
             self.g.V()
@@ -428,7 +430,7 @@ class GraphDatabase(StorageBase):
         return asyncio.get_event_loop().run_until_complete(query.toList())
 
     def compute_python_package_version_avg_performance(
-        self, packages: typing.List[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
+        self, packages: typing.Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
     ) -> typing.Optional[float]:
         """Get average performance of Python packages on the given runtime environment with hardware specs.
 
@@ -457,8 +459,7 @@ class GraphDatabase(StorageBase):
                 query = query.has(key, value)
 
             query = (
-                query
-                .inE()
+                query.inE()
                 .has("__label__", "runs_on")
                 .has("__type__", "edge")
                 .outV()
@@ -476,8 +477,7 @@ class GraphDatabase(StorageBase):
                 query = query.has(key, value)
 
         query = (
-            query
-            .inE()
+            query.inE()
             .has("__label__", "runs_in")
             .has("__type__", "edge")
             .as_("runs_in_edge")
@@ -485,10 +485,13 @@ class GraphDatabase(StorageBase):
             .outV()
             .has("__label__", InspectionSoftwareStack.__label__)
             .has("__type__", "vertex")
-            .id().is_(within(software_stack_ids))
+            .id()
+            .is_(within(software_stack_ids))
             .select("runs_in_edge")
             .dedup()
-            .values("performance_index").mean().next()
+            .values("performance_index")
+            .mean()
+            .next()
         )
 
         return asyncio.get_event_loop().run_until_complete(query)
@@ -955,7 +958,7 @@ class GraphDatabase(StorageBase):
         ram_size = OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None
         if ram_size is not None:
             # Convert bytes to GiB, we need float number for Gremlin/JanusGraph serialization
-            ram_size = ram_size / (1024**3)
+            ram_size = ram_size / (1024 ** 3)
 
         return HardwareInformation.from_properties(
             cpu_family=hardware.get("cpu_family"),
@@ -963,7 +966,7 @@ class GraphDatabase(StorageBase):
             cpu_physical_cpus=hardware.get("physical_cpus"),
             cpu_model_name=hardware.get("processor"),
             cpu_cores=OpenShift.parse_cpu_spec(specs["cpu"]) if specs.get("cpu") else None,
-            ram_size=ram_size
+            ram_size=ram_size,
         )
 
     def create_python_packages_pipfile(self, pipfile_locked: dict) -> typing.List[PythonPackageVersion]:
@@ -986,7 +989,7 @@ class GraphDatabase(StorageBase):
                 )
                 package_version = package_info["version"]
             else:
-                package_version = package_info["version"][len("=="):]  # Ignore PycodestyleBear (E203)
+                package_version = package_info["version"][len("==") :]  # Ignore PycodestyleBear (E203)
 
             index_url = get_index_url(package_info["index"])
 
@@ -1043,7 +1046,9 @@ class GraphDatabase(StorageBase):
             software_stack = self.create_inspection_software_stack_pipfile(
                 document["inspection_id"], document["specification"]["python"]["requirements_locked"]
             )
-            python_version = document["specification"]["python"]["requirements"].get("requires", {}).get("python_version")
+            python_version = (
+                document["specification"]["python"]["requirements"].get("requires", {}).get("python_version")
+            )
 
         if ":" in document["specification"]["base"]:
             # TODO: we should capture os info in inspection report directly.
@@ -1070,10 +1075,7 @@ class GraphDatabase(StorageBase):
                 environment_name = document["specification"]["base"]
 
             runtime_environment = RuntimeEnvironmentModel.from_properties(
-                environment_name=environment_name,
-                python_version=python_version,
-                os_name=os_name,
-                os_version=os_version,
+                environment_name=environment_name, python_version=python_version, os_name=os_name, os_version=os_version
             )
             runtime_environment.get_or_create(self.g)
 
@@ -1501,9 +1503,7 @@ class GraphDatabase(StorageBase):
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Failed to sync unparsed Python package, error is not fatal: %r", unparsed)
 
-    def _deb_sync_analysis_result(
-        self, document_id: str, document: dict, environment: EnvironmentBase
-    ) -> None:
+    def _deb_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
         """Sync results of deb packages found in the given container image."""
         for deb_package_info in document["result"]["deb-dependencies"]:
             try:
@@ -1559,9 +1559,7 @@ class GraphDatabase(StorageBase):
             except Exception:
                 _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
 
-    def _rpm_sync_analysis_result(
-        self, document_id: str, document: dict, environment: EnvironmentBase
-    ) -> None:
+    def _rpm_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
         """Sync results of RPMs found in the given container image."""
         for rpm_package_info in document["result"]["rpm-dependencies"]:
             try:
@@ -1615,9 +1613,7 @@ class GraphDatabase(StorageBase):
                         f"Failed to sync dependencies for " f"RPM {rpm_package_version.to_dict()}: {dependency!r}"
                     )
 
-    def _python_sync_analysis_result(
-        self, document_id: str, document: dict, environment: EnvironmentBase
-    ) -> None:
+    def _python_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
         """Sync results of Python packages found in the given container image."""
         # or [] should go to analyzer to be consistent
         for python_package_info in document["result"]["mercator"] or []:
