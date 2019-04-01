@@ -342,6 +342,10 @@ class DebReplaces(PackageExtractNativeBase):
     version_range = Property(properties.String, default="*")
 
 
+class HasIndex(EdgeBase):
+    """The given package version has an index."""
+
+
 ALL_MODELS = frozenset(
     (
         BuildsIn,
@@ -357,6 +361,7 @@ ALL_MODELS = frozenset(
         DependsOn,
         EcosystemSolver,
         HasArtifact,
+        HasIndex,
         HasVersion,
         HasVulnerability,
         IsPartOf,
