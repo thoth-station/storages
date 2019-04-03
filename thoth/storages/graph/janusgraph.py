@@ -631,7 +631,7 @@ class GraphDatabase(StorageBase):
                 .has("__type__", "edge")
                 .has("solver_error", True)
                 .has("solver_error_unparsable", True)
-                .has("solver_error_unpsolvable", False)
+                .has("solver_error_unsolvable", False)
             )
             .group()
             .by("package_name")
@@ -685,7 +685,6 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.E()
             .has("__label__", Solved.__label__)
-            .has("__type__", "edge")
             .has("solver_document_id")
             .has("solver_datetime")
             .has("solver_error", True)
@@ -709,7 +708,6 @@ class GraphDatabase(StorageBase):
         query = (
             self.g.E()
             .has("__label__", Solved.__label__)
-            .has("__type__", "edge")
             .has("solver_document_id")
             .has("solver_datetime")
             .has("solver_error")
@@ -728,8 +726,8 @@ class GraphDatabase(StorageBase):
         """Get number of image analysis documents synced into graph."""
         query = (
             self.g.E()
-            .has("__type__", "edge")
             .has("__label__", Requires.__label__)
+            .has("__type__", "edge")
             .has("analysis_datetime")
             .has("analysis_document_id")
             .has("analyzer_name")
@@ -1576,7 +1574,7 @@ class GraphDatabase(StorageBase):
                 rpm_package_version.get_or_create(self.g)
 
                 rpm_package = Package.from_properties(
-                    ecosystem=rpm_package_version.ecosystem, package_name=rpm_package_version.package_name
+                    ecosystem=rpm_package_version.ecosystem, package_name=rpm_package_version.package_name.value
                 )
                 rpm_package.get_or_create(self.g)
 
@@ -1845,3 +1843,67 @@ class GraphDatabase(StorageBase):
 
         python_version = ".".join(list(python_version))
         return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
+
+    def get_total_number_of_vertex_instances_count(self) -> int:
+        """Count the total number of instances of all edges in the graph database."""
+        query = self.g.V().has("__type__", "vertex").count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_total_number_of_instances_for_each_vertex_count(self) -> dict:
+        """Dictionary with the total number of instances for each vertex in the graph database."""
+        # List of vertex labels
+        vertex_labels = [element.__label__ for element in ALL_MODELS if element.__type__ == "vertex"]
+
+        query = self.g.V().has("__type__", "vertex").groupCount().by("__label__").next()
+
+        # Extracts the number of instances for vertex label which have at least one instance
+        known_vertices_count = asyncio.get_event_loop().run_until_complete(query)
+
+        vertex_instances_count = dict.fromkeys(
+            (element.__label__ for element in ALL_MODELS if element.__type__ == "vertex"), 0
+        )
+        vertex_instances_count.update(known_vertices_count)
+
+        return vertex_instances_count
+
+    def get_total_number_of_edge_instances_count(self) -> int:
+        """Dictionary with the total number of instances of all edges in the graph database."""
+        query = self.g.E().has("__type__", "edge").count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_total_number_of_instances_for_each_edge_count(self) -> dict:
+        """Count the total number of instances for each edge in the graph database."""
+        # List of edge labels
+        edge_labels = [element.__label__ for element in ALL_MODELS if element.__type__ == "edge"]
+
+        query = self.g.E().has("__type__", "edge").groupCount().by("__label__").next()
+
+        # Extracts the number of instances for edge label which have at least one instance
+        known_edges_count = asyncio.get_event_loop().run_until_complete(query)
+
+        edge_instances_count = dict.fromkeys(
+            (element.__label__ for element in ALL_MODELS if element.__type__ == "edge"), 0
+        )
+        edge_instances_count.update(known_edges_count)
+
+        return edge_instances_count
+
+    def get_total_number_of_python_artifact_vertex_instances_count(self) -> int:
+        """Count the total number of python_artifact vertex instances in the graph database."""
+        query = self.g.V().has("__label__", PythonArtifact.__label__).has("__type__", "vertex").count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_total_number_of_has_artifact_edge_instances_count(self) -> int:
+        """Count the total number of has_artifact edge instances in the graph database."""
+        query = self.g.E().has("__label__", HasArtifact.__label__).has("__type__", "edge").count().next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
+
+    def get_total_number_of_packages_per_url_index_count(self) -> dict:
+        """Dictionary with total number of packages for each url_index in the graph database."""
+        query = self.g.V().has("index_url").groupCount().by("index_url").next()
+
+        return asyncio.get_event_loop().run_until_complete(query)
