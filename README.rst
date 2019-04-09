@@ -38,35 +38,19 @@ this module, run:
 
 .. code-block:: console
 
-   # Install dev dependencies which include goblinoid:
-   pipenv install --dev
+   PYTHONPATH=. pipenv run python3 ./create_schema.py --output thoth/storages/graph/schema.rdf
 
-   # From root of this repository:
-   PYTHONPATH=. pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS
 
-   # Or to directly adjust used schema:
-   export PYTHONPATH=.
-   # Or export also ../goblinoid to have the most recent Goblinoid version (devel from master).
-   export PYTHONPATH=.:../goblinoid
-   pipenv run goblinoid -m thoth.storages.graph.models -i ALL_MODELS --output-file ../janusgraph-thoth-config/scripts/init.groovy --index-file ../janusgraph-thoth-config/scripts/indexes.groovy.template
+After running this command, the RDF file describing schema will be updated
+based on changes in model.
 
-After running this command, there will be present file called `init.groovy`
-which is generated automatically from models stated in `ALL_MODELS` (see file
-thoth/storages/graph/models.py) as well as with indexes as configured in the
-indexes.groovy.template (placed into a single file to run it in one
-transaction).
 
-See `goblinoid <https://github.com/thoth-station/goblinoid>`_ for more info
-on how to configure models generation.
+.. code-block:: python3
 
-Known Issues
-============
+  from thoth.storages import GraphDatabase
 
-- Gremlin queries are hanging:
-
-   When using :code:`aiogremlin==3.3.1` (despite being not part of our
-   specification, it might happen that another library overrides that
-   dependency), gremlin queries might hang indeffinitely without throwing any
-   error in Jupyter Notebooks. Make sure to check that correct version of
-   :code:`aiogremlin` is installed.
+  # Also provide configuration if needed.
+  graph = GraphDatabase()
+  graph.connect()
+  graph.initialize_schema()
 

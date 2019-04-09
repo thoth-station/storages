@@ -32,3 +32,7 @@ class SchemaError(ThothStorageException):
 
 class CacheMiss(ThothStorageException):
     """Raised if the requested document was not found in the cache."""
+
+
+class NotConnected(ThothStorageException):
+    """Raised if there was no connection established when communicating with a storage."""

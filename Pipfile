@@ -4,18 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiogremlin = "==3.2.6rc1"
-gremlinpython = "==3.2.6"
-goblin = "==2.1.0"
-requests = "*"
 voluptuous = "*"
 "boto3" = "*"
 thoth-common = "*"
-cython = "*"
-ujson = "*"
-uvloop = "*"
-yarl = "<1.2"
 amun = "*"
+pydgraph = "*"
 
 [dev-packages]
 pytest = "*"
@@ -24,7 +17,6 @@ pytest-cov = "*"
 coala-bears = "*"
 flexmock = "*"
 moto = "*"
-goblinoid = "*"
 
 [requires]
 python_version = "3.6"
