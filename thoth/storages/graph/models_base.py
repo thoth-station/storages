@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # thoth-storages
-# Copyright(C) 2018, 2019 Fridolin Pokorny
+# Copyright(C) 2019 Fridolin Pokorny
 #
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,107 +15,221 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""A base classes for model representation."""
+"""Base operations on top of Dgraph's models."""
 
-import asyncio
+import re
+import os
+from typing import Optional
+from typing import Callable
+import logging
+import json
+from functools import wraps
 
-from goblin import Vertex
-from goblin import VertexProperty
-from goblin import Edge
-
-from aiogremlin.process.graph_traversal import AsyncGraphTraversalSource
+from hashlib import sha1
 
 
-class VertexBase(Vertex):
-    """A base class for edges that extends Goblin's vertex implementation."""
+from pydgraph import DgraphClient
+from pydgraph import AbortedError
 
-    # Vertex cache to be used.
-    cache = None
 
-    def __repr__(self):
-        """Show vertex representation."""
-        values = ""
-        for key, value in self.to_dict().items():
-            if key.startswith("__"):
-                continue
-            values += "{}={}, ".format(key, repr(value) if isinstance(value, str) else value)
+import attr
 
-        return f"{self.__class__.__name__}({values[:-2]})"
 
-    def to_pretty_dict(self) -> dict:
-        """Return a dict representation of this object.
+_LOGGER = logging.getLogger(__name__)
 
-        It can be exposed on API endpoints directly.
+
+def model_property(type, default=None, index=None, reverse=None, count=None):
+    """Define a property with its attributes.
+
+    Make sure metadata get stored for later automatic schema generation.
+    """
+    metadata = {"dgraph": ""}
+
+    if index:
+        metadata["dgraph"] += f"@index({index}) "
+
+    if reverse:
+        metadata["dgraph"] += f"@reverse "
+
+    if count:
+        metadata["count"] += f"@count"
+
+    return attr.ib(kw_only=True, type=type, default=default, metadata=metadata)
+
+
+@attr.s(slots=True)
+class Element:
+    """An abstract class with common methods for vertex and edge."""
+
+    _RE_CAMEL2SNAKE = re.compile("(?!^)([A-Z]+)")
+    ELEMENT_NAME = None
+
+    # Dgraph uses uint64_t for UID.
+    _uid = attr.ib(type=int, default=None)
+
+    @property
+    def uid(self) -> Optional[int]:
+        """Return uid for the given element (vertex or edge).
+
+        If uid is set to None, the given model is not mapped to any database representative.
         """
-        result = {}
+        return self._uid
 
-        for property_name, property_value in self.__properties__.items():
-            if isinstance(property_value, VertexProperty):
-                prop = getattr(self, property_name, None)
-                result[property_name] = prop.value if prop else None
+    @staticmethod
+    def compute_label_hash(data) -> str:
+        """Get hash of this element."""
+        content = json.dumps(data, sort_keys=True)
+        return sha1(content.encode()).hexdigest()
+
+    @classmethod
+    def get_label(cls) -> str:
+        """Retrieve label of the given vertex or edge."""
+        return cls.get_name() + '_label'
+
+    @classmethod
+    def get_name(cls) -> str:
+        """Get name of edge."""
+        return cls.ELEMENT_NAME or cls._RE_CAMEL2SNAKE.sub(r"_\1", cls.__name__).lower()
+
+    def to_dict(self, *, without_uid: bool = False) -> dict:
+        """Covert an edge or vertex representation to a dict."""
+        result = attr.asdict(self)
+        if without_uid:
+            result.pop("_uid")
 
         return result
 
-    # pylint: disable=invalid-name
-    def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
-        """Get or create this vertex."""
-        # Avoid cyclic imports due to typing.
-        from .utils import get_or_create_vertex
+    def _do_upsert(self, client: DgraphClient, label: str, label_hash: str, data: dict):
+        transaction = client.txn(read_only=False)
+        upsert_query = """
+        query q($label: string) {
+            all(func: eq(%s, $label)) {
+                uid
+            }   
+        }""" % label
+        try:
+            res = client.query(upsert_query, variables={"$label": label_hash})
+            entries = json.loads(res.json)
 
-        loop = asyncio.get_event_loop()
-        _, existed = loop.run_until_complete(get_or_create_vertex(g, self))
-        return existed
+            if len(entries["all"]) != 0:
+                if len(entries["all"]) > 1:
+                    _LOGGER.error(f"Found multiple entities with label {label!r} with hash {label_hash!r}")
 
-    @classmethod
-    def from_properties(cls, **vertex_properties):
-        """Create a vertex based on its properties."""
-        instance = cls()
+                self._uid = entries["all"][0]["uid"]
+                _LOGGER.debug("Using entity %r with uid %r", data, self._uid)
+                transaction.commit()
+                return
 
-        for attr, value in vertex_properties.items():
-            # Ensure that the instance has the given attribute.
-            getattr(instance, attr)
-            setattr(instance, attr, value)
+            res = transaction.mutate(set_obj=data)
+            transaction.commit()
+        except AbortedError:
+            _LOGGER.exception(
+                f"Transaction has been aborted - concurrent upsert writes for {label!r} with hash {label_hash}?"
+            )
+            raise
+        finally:
+            transaction.discard()
+        # If JSON is sent as an input, Dgraph assigns "blank-0" for the blank node being
+        # synced. We use it as a key to obtain assigned UID from the graph.
+        self._uid = res.uids["blank-0"]
+        _LOGGER.debug("Created a new entity %r with uid %r", data, self._uid)
 
-        return instance
 
+@attr.s(slots=True)
+class VertexBase(Element):
+    """A base class for implementing vertexes."""
 
-class EdgeBase(Edge):
-    """A base class for edges that extends Goblin's edge implementation."""
-
-    # Edge cache to be used.
-    cache = None
-
-    def __repr__(self):  # Ignore PyDocStyleBear
-        values = ""
-        for key, value in self.to_dict().items():
-            if key.startswith("__"):
-                continue
-            values += "{}={}, ".format(key, repr(value) if isinstance(value, str) else value)
-
-        return f"{self.__class__.__name__}({values[:-2]})"
-
-    # pylint: disable=invalid-name
-    def get_or_create(self, g: AsyncGraphTraversalSource) -> bool:
-        """Get or create a this edge."""
-        # Avoid cyclic imports due to typing.
-        from .utils import get_or_create_edge
-
-        loop = asyncio.get_event_loop()
-        _, existed = loop.run_until_complete(get_or_create_edge(g, self))
-
-        return existed
+    _CACHE = None
 
     @classmethod
-    def from_properties(cls, **edge_properties):
-        """Create edge based on its properties.
+    def from_properties(cls, **properties):
+        """Instantiate a vertex from properties."""
+        return cls(**properties)
 
-        >>> source_node = PackageVersion.from_properties(ecosystem='pypi', name='selinon', version='1.0.0rc1')
-        >>> target_node = PackageVersion.from_properties(ecosystem='pypi', name='pyyaml', version='1.0.0')
-        >>> edge = DependsOn.from_properties(version_range='>=10', source=source_node, target=target_node)
+    def get_or_create(self, client: DgraphClient):
+        """Get or create the given vertex.
+
+        This is implementation of the upsert procedure.
         """
-        instance = cls()
+        data = self.to_dict(without_uid=True)
+        label = self.get_label()
+        label_hash = self.compute_label_hash(data)
+        data[label] = label_hash
 
-        for attr, value in edge_properties.items():
-            setattr(instance, attr, value)
+        if self._CACHE and label_hash in self._CACHE:
+            _LOGGER.debug("Vertex with label %r found in vertex cache %r", label, label_hash)
+            self._uid = self._CACHE[label_hash]
 
-        return instance
+        self._do_upsert(client, label, label_hash, data)
+
+
+@attr.s(slots=True)
+class EdgeBase(Element):
+    """A base class for implementing edges."""
+
+    source = attr.ib(type=VertexBase, default=None, kw_only=True)
+    target = attr.ib(type=VertexBase, default=None, kw_only=True)
+
+    @classmethod
+    def from_properties(cls, *, source, target, **properties):
+        """Instantiate a vertex from properties."""
+        return cls(source=source, target=target, **properties)
+
+    def get_or_create(self, client: DgraphClient):
+        """Get or create the given edge."""
+        assert self.source is not None, "No source vertex provided"
+        assert self.target is not None, "No target vertex provided"
+
+        if self.source.uid is None:
+            raise ValueError(
+                "Source vertex not mapped to any entity in graph database, was get_or_create() called?"
+            )
+
+        if self.target.uid is None:
+            raise ValueError(
+                "Target vertex not mapped to any entity in graph database, was get_or_create() called?"
+            )
+
+        edge_name = self.get_name()
+        edge_def = {
+            "uid": self.source.uid,
+            edge_name: self.to_dict(without_uid=True),
+        }
+        edge_def[edge_name]["uid"] = self.target.uid
+        label = self.get_label()
+        data = self.to_dict(without_uid=True)
+        data.pop("target")
+        data.pop("source")
+        label_hash = self.compute_label_hash(data)
+        edge_def[edge_name][label] = label_hash
+        self._do_upsert(client, label, label_hash, edge_def)
+
+
+@attr.s(slots=True)
+class ReverseEdgeBase(EdgeBase):
+    """An edge which stores also reverse direction."""
+
+
+def enable_vertex_cache(func: Callable):  # Ignore PyDocStyleBear
+    """Enable vertex caching."""
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        if bool(int(os.getenv("THOTH_STORAGES_DISABLE_CACHE", "0"))):
+            _LOGGER.debug("Disabling vertex graph cache")
+            # We could just return directly function call here, but
+            # this version works as expected in Jupyter notebooks.
+            return func(*args, **kwargs)
+
+        _LOGGER.debug("Enabling vertex graph cache")
+        VertexBase._CACHE = {}
+
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            # We delete cache once sync is done.
+            VertexBase._CACHE = None
+
+        return result
+
+    return wrapped
