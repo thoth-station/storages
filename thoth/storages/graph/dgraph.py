@@ -152,7 +152,11 @@ class GraphDatabase(StorageBase):
 
     def initialize_schema(self) -> None:
         """Initialize Dgraph's schema."""
-        version_self = pkg_resources.get_distribution("thoth-storages").version
+        try:
+            version_self = pkg_resources.get_distribution("thoth-storages").version
+        except pkg_resources.DistributionNotFound:
+            version_self = "UNKNOWN"
+
         _LOGGER.info("Initializing Dgraph with schema, schema version is %r", version_self)
         schema = (Path(__file__).parent / "schema.rdf").read_text()
         operation = pydgraph.Operation(schema=schema)
