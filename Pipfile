@@ -9,6 +9,7 @@ voluptuous = "*"
 thoth-common = "*"
 amun = "*"
 pydgraph = "*"
+python-dateutil = "*"
 
 [dev-packages]
 pytest = "*"
