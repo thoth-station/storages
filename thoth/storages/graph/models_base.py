@@ -196,7 +196,8 @@ class EdgeBase(Element):
         data.pop("source")
         edge_def = {
             "uid": self.source.uid,
-            edge_name: data,
+            # Respect Facets syntax in JSON.
+            edge_name: {f"{edge_name}|{k}": v for k, v in data.items()},
         }
         edge_def[edge_name]["uid"] = self.target.uid
         label = self.get_label()
