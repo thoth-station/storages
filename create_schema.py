@@ -40,7 +40,7 @@ def create_schema(models: frozenset):
     """Create schema based on models defined."""
     schema = ""
     properties_seen = set()
-    for model in models:
+    for model in sorted(models, key=lambda x: x.__name__):
         # Used to guarantee a node exists exactly once.
         schema += f"{model.get_label()}: string @count @upsert @index(exact) .\n"
         if issubclass(model, ReverseEdgeBase):

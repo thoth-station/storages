@@ -39,6 +39,8 @@ class Package(VertexBase):
 class RPMRequirement(VertexBase):
     """Requirement of an RPM as stated in a spec file."""
 
+    ELEMENT_NAME = "rpm_requirement"
+
     rpm_requirement_name = model_property(type=str, index="exact")
 
 
@@ -55,6 +57,8 @@ class PackageVersionBase(VertexBase):
 @attr.s(slots=True)
 class RPMPackageVersion(PackageVersionBase):
     """RPM-specific package version."""
+
+    ELEMENT_NAME = "rpm_package_version"
 
     release = model_property(type=str, index="exact")
     epoch = model_property(type=str, index="exact")
@@ -74,6 +78,8 @@ class DebPackageVersion(PackageVersionBase):
 @attr.s(slots=True)
 class CVE(VertexBase):
     """Information about a CVE."""
+
+    ELEMENT_NAME = "cve"
 
     advisory = model_property(type=str, index="exact")
     cve_name = model_property(type=str, index="exact", default='-')
