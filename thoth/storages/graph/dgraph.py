@@ -32,7 +32,6 @@ from dateutil import parser
 from datetime import timezone
 from itertools import chain
 
-
 import pkg_resources
 import grpc
 import pydgraph
@@ -271,7 +270,15 @@ class GraphDatabase(StorageBase):
 
     def runtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of runtime environments available."""
-        return []
+        query = """
+        {
+            f(func: has(%s), first: %d, offset: %d) {
+			    e: environment_name
+            }   
+        }
+        """ % (RuntimeEnvironmentModel.get_label(), count, start_offset)
+        result = self._query_raw(query)
+        return list(chain(item['e'] for item in result["f"]))
 
     def runtime_environment_analyses_listing(
         self, runtime_environment_name: str, start_offset: int = 0, count: int = 100
