@@ -3,4 +3,4 @@ boto3
 thoth-common
 amun
 pydgraph
-
+python-dateutil

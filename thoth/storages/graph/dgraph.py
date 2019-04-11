@@ -28,7 +28,10 @@ from typing import Optional
 from typing import Dict
 from typing import Iterable
 from pathlib import Path
+from dateutil import parser
+from datetime import timezone
 from itertools import chain
+
 
 import pkg_resources
 import grpc
@@ -233,8 +236,8 @@ class GraphDatabase(StorageBase):
 
         if not result:
             raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
-             
-        #result["f"][0]["analysis_datetime"] = timestamp2datetime(result["f"][0]["analysis_datetime"])
+        
+        result["f"][0]["analysis_datetime"] = parser.parse(result["f"][0]["analysis_datetime"]).replace(tzinfo=timezone.utc)
 
         return result["f"][0]
 
