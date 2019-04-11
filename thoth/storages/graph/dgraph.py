@@ -319,7 +319,7 @@ class GraphDatabase(StorageBase):
     def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
         query = """
-        query q($l: string) {
+        {
             f(func: has(%s)) {
                 cnt: count(uid)
             }   
@@ -378,7 +378,15 @@ class GraphDatabase(StorageBase):
 
     def solver_document_id_exist(self, solver_document_id: str) -> bool:
         """Check if there is a solver document record with the given id."""
-        return True
+        query = """
+        query q($l: string) {
+            f(func: has(%s)) @filter(eq(solver_document_id, "%s")) {
+                count(uid)
+            }   
+        }
+        """ % (Solved.get_label(), solver_document_id)
+        result = self._query_raw(query)
+        return result["f"][0]["count"] > 0
 
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
