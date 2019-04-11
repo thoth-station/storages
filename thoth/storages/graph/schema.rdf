@@ -1,66 +1,48 @@
-python_artifact_label: string @count @upsert @index(exact) .
-artifact_hash_sha256: string @index(exact) .
-software_stack_observation_label: string @count @upsert @index(exact) .
-performance_index: float .
+adviser_software_stack_label: string @count @upsert @index(exact) .
+document_id: string @index(exact) .
+adviser_stack_index: int .
+build_observation_label: string @count @upsert @index(exact) .
 inspection_document_id: string @index(exact) .
-depends_on_label: string @count @upsert @index(exact) .
-depends_on: uid @reverse @count .
-version_range: string @index(exact) .
-package_name: string @index(exact) .
-os_name: string @index(exact) .
-os_version: string @index(exact) .
-python_version: string @index(exact) .
-solver_error: bool .
 builds_in_label: string @count @upsert @index(exact) .
 builds_in: uid @reverse @count .
-document_id: string @index(exact) .
 build_error: bool .
-is_part_of_label: string @count @upsert @index(exact) .
-is_part_of: uid @reverse @count .
-analysis_datetime: dateTime .
+builds_on_label: string @count @upsert @index(exact) .
+builds_on: uid @reverse @count .
+buildtime_environment_label: string @count @upsert @index(exact) .
+environment_name: string @index(exact) .
+python_version: string @index(exact) .
+cve_label: string @count @upsert @index(exact) .
+advisory: string @index(exact) .
+cve_name: string @index(exact) .
+cve_id: string @index(exact) .
+version_range: string @index(exact) .
+creates_stack_label: string @count @upsert @index(exact) .
+creates_stack: uid @reverse @count .
+deb_depends_label: string @count @upsert @index(exact) .
+deb_depends: uid @reverse @count .
 analysis_document_id: string @index(exact) .
+analysis_datetime: dateTime .
 analyzer_name: string @index(exact) .
 analyzer_version: string @index(exact) .
+deb_package_version_label: string @count @upsert @index(exact) .
+ecosystem: string @index(exact) .
+package_name: string @index(exact) .
+package_version: string @index(exact) .
+index_url: string @index(exact) .
+epoch: string @index(exact) .
+arch: string @index(exact) .
 deb_pre_depends_label: string @count @upsert @index(exact) .
 deb_pre_depends: uid @reverse @count .
+deb_replaces_label: string @count @upsert @index(exact) .
+deb_replaces: uid @reverse @count .
+depends_on_label: string @count @upsert @index(exact) .
+depends_on: uid @reverse @count .
+os_name: string @index(exact) .
+os_version: string @index(exact) .
+solver_error: bool .
 ecosystem_solver_label: string @count @upsert @index(exact) .
 solver_name: string @index(exact) .
 solver_version: string @index(exact) .
-has_artifact_label: string @count @upsert @index(exact) .
-has_artifact: uid @reverse @count .
-python_package_index_label: string @count @upsert @index(exact) .
-url: string @index(exact) .
-warehouse_api_url: string @index(exact) .
-verify_ssl: bool .
-python_package_version_label: string @count @upsert @index(exact) .
-ecosystem: string @index(exact) .
-package_version: string @index(exact) .
-index_url: string @index(exact) .
-requires_label: string @count @upsert @index(exact) .
-requires: uid @reverse @count .
-user_software_stack_label: string @count @upsert @index(exact) .
-origin: string @index(exact) .
-adviser_error: bool .
-build_observation_label: string @count @upsert @index(exact) .
-runs_in_label: string @count @upsert @index(exact) .
-runs_in: uid @reverse @count .
-run_error: bool .
-builds_on_label: string @count @upsert @index(exact) .
-builds_on: uid @reverse @count .
-r_pmpackage_version_label: string @count @upsert @index(exact) .
-release: string @index(exact) .
-epoch: string @index(exact) .
-arch: string @index(exact) .
-src: bool .
-package_identifier: string @index(exact) .
-has_vulnerability_label: string @count @upsert @index(exact) .
-has_vulnerability: uid @reverse @count .
-runs_on_label: string @count @upsert @index(exact) .
-runs_on: uid @reverse @count .
-deb_package_version_label: string @count @upsert @index(exact) .
-buildtime_environment_label: string @count @upsert @index(exact) .
-environment_name: string @index(exact) .
-package_label: string @count @upsert @index(exact) .
 hardware_information_label: string @count @upsert @index(exact) .
 cpu_model_name: string @index(exact) .
 cpu_model: int .
@@ -68,30 +50,48 @@ cpu_family: int .
 cpu_cores: int .
 cpu_physical_cpus: int .
 ram_size: float .
-creates_stack_label: string @count @upsert @index(exact) .
-creates_stack: uid @reverse @count .
-c_ve_label: string @count @upsert @index(exact) .
-advisory: string @index(exact) .
-cve_name: string @index(exact) .
-cve_id: string @index(exact) .
-deb_depends_label: string @count @upsert @index(exact) .
-deb_depends: uid @reverse @count .
+has_artifact_label: string @count @upsert @index(exact) .
+has_artifact: uid @reverse @count .
+has_version_label: string @count @upsert @index(exact) .
+has_version: uid @reverse @count .
+has_vulnerability_label: string @count @upsert @index(exact) .
+has_vulnerability: uid @reverse @count .
+inspection_software_stack_label: string @count @upsert @index(exact) .
+is_part_of_label: string @count @upsert @index(exact) .
+is_part_of: uid @reverse @count .
 observed_label: string @count @upsert @index(exact) .
 observed: uid @reverse @count .
-adviser_software_stack_label: string @count @upsert @index(exact) .
-adviser_stack_index: int .
-inspection_software_stack_label: string @count @upsert @index(exact) .
-r_pmrequirement_label: string @count @upsert @index(exact) .
+package_label: string @count @upsert @index(exact) .
+python_artifact_label: string @count @upsert @index(exact) .
+artifact_hash_sha256: string @index(exact) .
+python_package_index_label: string @count @upsert @index(exact) .
+url: string @index(exact) .
+warehouse_api_url: string @index(exact) .
+verify_ssl: bool .
+python_package_version_label: string @count @upsert @index(exact) .
+rpm_package_version_label: string @count @upsert @index(exact) .
+release: string @index(exact) .
+src: bool .
+package_identifier: string @index(exact) .
+rpm_requirement_label: string @count @upsert @index(exact) .
 rpm_requirement_name: string @index(exact) .
+requires_label: string @count @upsert @index(exact) .
+requires: uid @reverse @count .
+runs_in_label: string @count @upsert @index(exact) .
+runs_in: uid @reverse @count .
+run_error: bool .
+performance_index: float .
+runs_on_label: string @count @upsert @index(exact) .
+runs_on: uid @reverse @count .
 runtime_environment_label: string @count @upsert @index(exact) .
 cuda_version: string @index(exact) .
+software_stack_observation_label: string @count @upsert @index(exact) .
 solved_label: string @count @upsert @index(exact) .
 solved: uid @reverse @count .
 solver_document_id: string @index(exact) .
 solver_datetime: dateTime .
 solver_error_unsolvable: bool .
 solver_error_unparsable: bool .
-deb_replaces_label: string @count @upsert @index(exact) .
-deb_replaces: uid @reverse @count .
-has_version_label: string @count @upsert @index(exact) .
-has_version: uid @reverse @count .
+user_software_stack_label: string @count @upsert @index(exact) .
+origin: string @index(exact) .
+adviser_error: bool .
