@@ -99,26 +99,27 @@ class Element:
 
         return result
 
-    def _do_upsert(self, client: DgraphClient, label: str, label_hash: str, data: dict):
-        transaction = client.txn(read_only=False)
+    def _do_upsert(self, client: DgraphClient, label: str, label_hash: str, data: dict) -> int:
         upsert_query = """
-        query q($label: string) {
-            all(func: eq(%s, $label)) {
+        {
+            all(func: eq(%s, "%s")) {
                 uid
+                %s
             }   
-        }""" % label
+        }""" % (label, label_hash, label)
+        transaction = client.txn(read_only=False)
         try:
-            res = client.query(upsert_query, variables={"$label": label_hash})
+            res = client.query(upsert_query)
             entries = json.loads(res.json)
 
             if len(entries["all"]) != 0:
                 if len(entries["all"]) > 1:
                     _LOGGER.error(f"Found multiple entities with label {label!r} with hash {label_hash!r}")
 
-                self._uid = entries["all"][0]["uid"]
-                _LOGGER.debug("Using entity %r with uid %r", data, self._uid)
+                uid = entries["all"][0]["uid"]
+                _LOGGER.debug("Using entity %r with uid %r", data, uid)
                 transaction.commit()
-                return
+                return uid
 
             res = transaction.mutate(set_obj=data)
             transaction.commit()
@@ -131,8 +132,9 @@ class Element:
             transaction.discard()
         # If JSON is sent as an input, Dgraph assigns "blank-0" for the blank node being
         # synced. We use it as a key to obtain assigned UID from the graph.
-        self._uid = res.uids["blank-0"]
-        _LOGGER.debug("Created a new entity %r with uid %r", data, self._uid)
+        uid = res.uids["blank-0"]
+        _LOGGER.debug("Created a new entity %r with uid %r", data, uid)
+        return uid
 
 
 @attr.s(slots=True)
@@ -159,8 +161,9 @@ class VertexBase(Element):
         if self._CACHE and label_hash in self._CACHE:
             _LOGGER.debug("Vertex with label %r found in vertex cache %r", label, label_hash)
             self._uid = self._CACHE[label_hash]
+            return
 
-        self._do_upsert(client, label, label_hash, data)
+        self._uid = self._do_upsert(client, label, label_hash, data)
 
 
 @attr.s(slots=True)
@@ -192,16 +195,17 @@ class EdgeBase(Element):
 
         edge_name = self.get_name()
         data = self.to_dict(without_uid=True)
+        data["uid"] = self.target.uid
         data.pop("target")
         data.pop("source")
         edge_def = {
             "uid": self.source.uid,
             edge_name: data,
         }
-        edge_def[edge_name]["uid"] = self.target.uid
         label = self.get_label()
-        label_hash = self.compute_label_hash(data)
+        label_hash = self.compute_label_hash(edge_def)
         edge_def[edge_name][label] = label_hash
+        # Edges have no uid, do not assign it.
         self._do_upsert(client, label, label_hash, edge_def)
 
 
