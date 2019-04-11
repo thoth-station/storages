@@ -191,15 +191,15 @@ class EdgeBase(Element):
             )
 
         edge_name = self.get_name()
-        edge_def = {
-            "uid": self.source.uid,
-            edge_name: self.to_dict(without_uid=True),
-        }
-        edge_def[edge_name]["uid"] = self.target.uid
-        label = self.get_label()
         data = self.to_dict(without_uid=True)
         data.pop("target")
         data.pop("source")
+        edge_def = {
+            "uid": self.source.uid,
+            edge_name: data,
+        }
+        edge_def[edge_name]["uid"] = self.target.uid
+        label = self.get_label()
         label_hash = self.compute_label_hash(data)
         edge_def[edge_name][label] = label_hash
         self._do_upsert(client, label, label_hash, edge_def)
