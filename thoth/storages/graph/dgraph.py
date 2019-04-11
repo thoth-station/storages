@@ -28,6 +28,7 @@ from typing import Optional
 from typing import Dict
 from typing import Iterable
 from pathlib import Path
+from itertools import chain
 
 import pkg_resources
 import grpc
@@ -63,7 +64,7 @@ from .models import IsPartOf
 # from .models import Observed
 from .models import Package
 from .models import PythonArtifact
-# from .models import PythonPackageIndex
+from .models import PythonPackageIndex
 from .models import PythonPackageVersion
 from .models import Requires
 from .models import RPMPackageVersion
@@ -322,7 +323,7 @@ class GraphDatabase(StorageBase):
         query q($l: string) {
             f(func: has(%s)) {
                 cnt: count(uid)
-            }   
+            }
         }
         """ % EcosystemSolver.get_label()
         result = self._query_raw(query)
@@ -424,7 +425,15 @@ class GraphDatabase(StorageBase):
 
     def get_python_package_index_urls(self) -> list:
         """Retrieve all the URLs of registered Python package indexes."""
-        return []
+        query = """
+        query q($l: string) {
+            f(func: has(%s)) {
+                u: url
+            }
+        }
+        """ % PythonPackageIndex.get_label()
+        result = self._query_raw(query)
+        return list(chain(item['u'] for item in result["f"]))
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
