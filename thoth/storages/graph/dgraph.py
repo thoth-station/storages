@@ -461,10 +461,6 @@ class GraphDatabase(StorageBase):
         """Get hashes for a Python package per index."""
         return []
 
-    def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True):
-        """Register the given Python package index in the graph database."""
-        return None
-
     def python_package_index_listing(self) -> list:
         """Get listing of Python package indexes registered in the JanusGraph database."""
         return []
@@ -1183,3 +1179,10 @@ class GraphDatabase(StorageBase):
             "added" if not has_vulnerability_existed else "was already present",
         )
         return cve_record, has_vulnerability_existed
+
+    def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True):
+        """Register the given Python package index in the graph database."""
+        package_index = PythonPackageIndex.from_properties(
+            url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl
+        )
+        package_index.get_or_create(self.client)
