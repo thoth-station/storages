@@ -35,7 +35,7 @@ import grpc
 import pydgraph
 
 from thoth.common import datetime_str2timestamp
-# from thoth.common import timestamp2datetime
+from thoth.common import timestamp2datetime
 from thoth.common import OpenShift
 
 from ..base import StorageBase
@@ -92,7 +92,7 @@ class GraphDatabase(StorageBase):
 
     TLS_PATH = os.getenv("GRAPH_TLS_PATH")
     ENVVAR_HOST_NAME = "GRAPH_SERVICE_HOST"
-    DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or "localhost:8080"
+    DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or "localhost:9080"
 
     def __init__(self, hosts: List[str] = None, tls_path: str = None):
         """Initialize Dgraph server database adapter."""
@@ -219,7 +219,24 @@ class GraphDatabase(StorageBase):
 
     def get_analysis_metadata(self, analysis_document_id: str) -> dict:
         """Get metadata stored for the given analysis document."""
-        return {}
+        query = """
+        {
+            f(func: has(%s)) @filter(eq(analysis_document_id, %s)) {
+                analysis_datetime
+                analysis_document_id
+                analyzer_name
+                analyzer_version
+            }   
+        }
+        """ % (IsPartOf.get_label(), analysis_document_id)
+        result = self._query_raw(query)
+
+        if not result:
+            raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
+             
+        #result["f"][0]["analysis_datetime"] = timestamp2datetime(result["f"][0]["analysis_datetime"])
+
+        return result["f"][0]
 
     def runtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of runtime environments available."""
