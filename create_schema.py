@@ -51,7 +51,7 @@ def create_schema(models: frozenset):
             raise ValueError(f"Unknown entity - not derived from vertex nor edge: {model}")
 
         for attribute in model.__attrs_attrs__:
-            if attribute.name in ("source", "target", "_uid"):
+            if attribute.name in ("source", "target", "uid"):
                 # Edge attributes for storing source and target vertex or uid which is automatically generated.
                 continue
 
