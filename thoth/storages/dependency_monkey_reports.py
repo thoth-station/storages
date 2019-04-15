@@ -25,7 +25,7 @@ class DependencyMonkeyReportsStore(ResultStorageBase):
 
     RESULT_TYPE = "dependency-monkey-reports"
 
-    def iterate_inspection_ids() -> str:
+    def iterate_inspection_ids(self) -> str:
         """Iterate over all inspection ids that were run."""
         for _, report in self.iterate_results():
             # Yield inspections.
