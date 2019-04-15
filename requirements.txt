@@ -4,3 +4,4 @@ thoth-common
 amun
 pydgraph
 python-dateutil
+thoth-python
