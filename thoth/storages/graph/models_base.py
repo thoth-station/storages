@@ -21,18 +21,21 @@ import re
 import os
 from typing import Optional
 from typing import Callable
+from typing import Tuple
+from typing import List
 import logging
 import json
 from functools import wraps
 
 from hashlib import sha1
 
-
 from pydgraph import DgraphClient
 from pydgraph import AbortedError
 
-
 import attr
+
+from ..exceptions import MultipleFoundError
+from ..exceptions import NotFoundError
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,7 +49,10 @@ def model_property(type, default=None, index=None, reverse=None, count=None):
     metadata = {"dgraph": ""}
 
     if index:
-        metadata["dgraph"] += f"@index({index}) "
+        if isinstance(index, str):
+            metadata["dgraph"] += f"@index({index}) "
+        elif isinstance(index, bool) and index is True:
+            metadata["dgraph"] += f"@index "
 
     if reverse:
         metadata["dgraph"] += f"@reverse "
@@ -65,15 +71,7 @@ class Element:
     ELEMENT_NAME = None
 
     # Dgraph uses uint64_t for UID.
-    _uid = attr.ib(type=int, default=None)
-
-    @property
-    def uid(self) -> Optional[int]:
-        """Return uid for the given element (vertex or edge).
-
-        If uid is set to None, the given model is not mapped to any database representative.
-        """
-        return self._uid
+    uid = attr.ib(type=int, default=None)
 
     @staticmethod
     def compute_label_hash(data) -> str:
@@ -95,11 +93,30 @@ class Element:
         """Covert an edge or vertex representation to a dict."""
         result = attr.asdict(self)
         if without_uid:
-            result.pop("_uid")
+            result.pop("uid")
 
         return result
 
-    def _do_upsert(self, client: DgraphClient, label: str, label_hash: str, data: dict) -> int:
+    def get_or_create(self, client: DgraphClient) -> bool:
+        """Get or create the given entity."""
+        raise NotImplementedError
+
+    @classmethod
+    def get_properties(cls) -> dict:
+        """Get all properties with their corresponding type."""
+        result = {}
+        for attribute in cls.__attrs_attrs__:
+            if attribute.name in ("source", "target", "uid"):
+                # Edge attributes for storing source and target vertex or uid which is automatically generated.
+                continue
+
+            result[attribute.name] = attribute.type
+
+        return result
+
+    @staticmethod
+    def _do_upsert(client: DgraphClient, label: str, label_hash: str, data: dict) -> Tuple[int, bool]:
+        """Perform upsert operation."""
         upsert_query = """
         {
             all(func: eq(%s, "%s")) {
@@ -109,7 +126,7 @@ class Element:
         }""" % (label, label_hash, label)
         transaction = client.txn(read_only=False)
         try:
-            res = client.query(upsert_query)
+            res = transaction.query(upsert_query)
             entries = json.loads(res.json)
 
             if len(entries["all"]) != 0:
@@ -119,7 +136,7 @@ class Element:
                 uid = entries["all"][0]["uid"]
                 _LOGGER.debug("Using entity %r with uid %r", data, uid)
                 transaction.commit()
-                return uid
+                return uid, True
 
             res = transaction.mutate(set_obj=data)
             transaction.commit()
@@ -134,7 +151,169 @@ class Element:
         # synced. We use it as a key to obtain assigned UID from the graph.
         uid = res.uids["blank-0"]
         _LOGGER.debug("Created a new entity %r with uid %r", data, uid)
-        return uid
+        return uid, False
+
+    @classmethod
+    def _do_query(cls, client: DgraphClient, keys: dict) -> List["Element"]:
+        """Perform the actual query to the Dgraph instance."""
+        label = cls.get_label()
+
+        filter_str = ""
+        for key, value in keys.items():
+            if filter_str:
+                filter_str += " AND "
+            if isinstance(value, str):
+                filter_str += f'eq({key}, "{value}")'
+            else:
+                filter_str += f'eq({key}, {value})'
+
+        query = """
+        {
+            q(func: has(%s)) @filter(%s) {
+                uid
+                %s
+            }
+        }
+        """ % (label, filter_str, "\n".join(cls.get_properties().keys()))
+        query_result = client.query(query)
+        query_result = json.loads(query_result.json)["q"]
+
+        result = []
+        for attrs in query_result:
+            instance = cls(**attrs)
+            result.append(instance)
+
+        return result
+
+    @classmethod
+    def query_all(cls, client: DgraphClient, *, raise_on_not_found: bool = False, **keys) -> List["Element"]:
+        """Query graph database for entity with the given set of parameters."""
+        result = cls._do_query(client, keys)
+        if not result and raise_on_not_found:
+            raise NotFoundError(
+                f"Entity with label {cls.get_label()!r} not found in the database with: {keys!r}"
+            )
+
+        return result
+
+    @classmethod
+    def query_one(cls, client: DgraphClient, *, raise_on_not_found: bool = False, **keys) -> "Element":
+        """Query graph database for entity with the given set of parameters for an entity."""
+        result = cls._do_query(client, keys)
+        if not result and raise_on_not_found:
+            raise NotFoundError(
+                f"Entity with label {cls.get_label()!r} not found in the database with properties: {keys!r}"
+            )
+
+        if len(result) > 1:
+            raise MultipleFoundError(
+                f"Multiple entities with label {cls.get_label()!r} found with properties: {keys!r}"
+            )
+
+        return result[0] if len(result) > 0 else []
+
+    @classmethod
+    def _do_modify(
+            cls,
+            client: DgraphClient,
+            *,
+            keys: dict,
+            properties: dict,
+            raise_on_not_found: bool = False,
+            only_one: bool = False
+    ) -> List["Element"]:
+        """Perform modification of an entity matching the given keys."""
+        label = cls.get_label()
+
+        filter_str = ""
+        for key, value in keys.items():
+            if filter_str:
+                filter_str += " AND "
+            if isinstance(value, str):
+                filter_str += f'eq({key}, "{value}")'
+            else:
+                filter_str += f'eq({key}, {value})'
+
+        if not keys:
+            raise ValueError(f"No keys supplied to perform modification on {label}")
+
+        if not properties:
+            raise ValueError(f"No properties supplied to perform modification on {label}")
+
+        query = """
+        {
+            q(func: has(%s)) @filter(%s) {
+                uid
+                %s
+            }
+        }
+        """ % (label, filter_str, "\n".join(cls.get_properties().keys()))
+
+        instances = []
+        transaction = client.txn(read_only=False)
+        try:
+            result = transaction.query(query)
+            result = json.loads(result.json)["q"]
+
+            if raise_on_not_found and not result:
+                raise NotFoundError(
+                    f"No entities {label} found for modification with filter criteria {filter_str}"
+                )
+
+            if only_one and len(result) > 1:
+                raise MultipleFoundError(
+                    f"Multiple entities {label} found for modification with filter criteria {filter_str}"
+                )
+
+            for original_properties in result:
+                instance = cls(**original_properties)
+                for property_key, property_value in properties.items():
+                    setattr(instance, property_key, property_value)
+                    transaction.mutate(set_obj=instance.to_dict(without_uid=False))
+                    instances.append(instance)
+
+            transaction.commit()
+        finally:
+            transaction.discard()
+
+        return instances
+
+    @classmethod
+    def modify_all(
+            cls,
+            client: DgraphClient,
+            *,
+            properties: dict,
+            raise_on_not_found: bool = False,
+            **keys,
+    ) -> List["Element"]:
+        """Modify all properties of models stored inside graph database matching the given keys."""
+        return cls._do_modify(
+            client,
+            keys=keys,
+            raise_on_not_found=raise_on_not_found,
+            properties=properties,
+            only_one=False,
+        )
+
+    @classmethod
+    def modify_one(
+            cls,
+            client: DgraphClient,
+            *,
+            properties: dict,
+            raise_on_not_found: bool = False,
+            **keys,
+    ) -> "Element":
+        """Modify all properties of models stored inside graph database matching the given keys."""
+        result = cls._do_modify(
+            client,
+            keys=keys,
+            raise_on_not_found=raise_on_not_found,
+            properties=properties,
+            only_one=False,
+        )
+        return result[0] if len(result) > 0 else []
 
 
 @attr.s(slots=True)
@@ -148,7 +327,7 @@ class VertexBase(Element):
         """Instantiate a vertex from properties."""
         return cls(**properties)
 
-    def get_or_create(self, client: DgraphClient):
+    def get_or_create(self, client: DgraphClient) -> bool:
         """Get or create the given vertex.
 
         This is implementation of the upsert procedure.
@@ -160,10 +339,11 @@ class VertexBase(Element):
 
         if self._CACHE and label_hash in self._CACHE:
             _LOGGER.debug("Vertex with label %r found in vertex cache %r", label, label_hash)
-            self._uid = self._CACHE[label_hash]
-            return
+            self.uid = self._CACHE[label_hash]
+            return True
 
-        self._uid = self._do_upsert(client, label, label_hash, data)
+        self.uid, existed = self._do_upsert(client, label, label_hash, data)
+        return existed
 
 
 @attr.s(slots=True)
@@ -178,7 +358,7 @@ class EdgeBase(Element):
         """Instantiate a vertex from properties."""
         return cls(source=source, target=target, **properties)
 
-    def get_or_create(self, client: DgraphClient):
+    def get_or_create(self, client: DgraphClient) -> bool:
         """Get or create the given edge."""
         assert self.source is not None, "No source vertex provided"
         assert self.target is not None, "No target vertex provided"
@@ -206,8 +386,9 @@ class EdgeBase(Element):
         label = self.get_label()
         label_hash = self.compute_label_hash(edge_def)
         edge_def[edge_name][label] = label_hash
-        # Edges have no uid, do not assign it.
-        self._do_upsert(client, label, label_hash, edge_def)
+        # Edges have no relevant uid, do not assign it.
+        _, existed = self._do_upsert(client, label, label_hash, edge_def)
+        return existed
 
 
 @attr.s(slots=True)

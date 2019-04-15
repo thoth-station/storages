@@ -10,6 +10,7 @@ thoth-common = "*"
 amun = "*"
 pydgraph = "*"
 python-dateutil = "*"
+thoth-python = "*"
 
 [dev-packages]
 pytest = "*"

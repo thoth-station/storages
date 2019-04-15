@@ -40,51 +40,74 @@ import pydgraph
 from thoth.common import datetime_str2timestamp
 from thoth.common import timestamp2datetime
 from thoth.common import OpenShift
+from thoth.common import RuntimeEnvironment as RuntimeEnvironmentConfig
+from thoth.common import HardwareInformation as HardwareInformationConfig
+from thoth.python import Pipfile
+from thoth.python import PipfileLock
 
 from ..base import StorageBase
 from .models_base import enable_vertex_cache
+from .models import AdviserRun
+from .models import AdvisedSoftwareStack
+from .models import AdviserRuntimeEnvironmentInput
+from .models import AdviserStackInput
 from .models import Advised
-from .models import AdviserSoftwareStack
-# from .models import BuildObservation
-from .models import BuildsIn
-from .models import BuildsOn
+from .models import AnalyzedBy
 from .models import BuildtimeEnvironment as BuildtimeEnvironmentModel
 from .models import CreatesStack
 from .models import CVE
 from .models import DebDepends
+from .models import DebDependency
 from .models import DebPackageVersion
 from .models import DebPreDepends
 from .models import DebReplaces
+from .models import DependencyMonkeyRun
+from .models import DependencyMonkeyEnvironmentInput
 from .models import DependsOn
-from .models import EcosystemSolver
+from .models import EcosystemSolverRun
 from .models import EnvironmentBase
-from .models import HardwareInformation
+from .models import HardwareInformation as HardwareInformationModel
 from .models import HasArtifact
-from .models import HasVersion
 from .models import HasVulnerability
+from .models import Identified
+from .models import InspectionBuildtimeEnvironmentInput
+from .models import InspectionRun
+from .models import InspectionRuntimeEnvironmentInput
 from .models import InspectionSoftwareStack
-from .models import IsPartOf
-# from .models import Observed
-from .models import Package
+from .models import InspectionStackInput
+from .models import InstalledFrom
+from .models import ObservedPerformance
+from .models import PackageExtractRun
+from .models import PiMatmul
+from .models import ProvenanceCheckerRun
+from .models import ProvenanceCheckerStackInput
+from .models import ProvidedBy
 from .models import PythonArtifact
 from .models import PythonPackageIndex
+from .models import PythonPackageRequirement
 from .models import PythonPackageVersion
+from .models import PythonPackageVersionEntity
+from .models import RequirementsInput
 from .models import Requires
+from .models import Resolved
 from .models import RPMPackageVersion
 from .models import RPMRequirement
-from .models import RunsIn
-from .models import RunsOn
 from .models import RuntimeEnvironment as RuntimeEnvironmentModel
-from .models import SoftwareStackBase
-# from .models import SoftwareStackObservation
 from .models import Solved
+from .models import SoftwareStackBase
+from .models import UsedIn
+from .models import UsedInBuild
+from .models import UsedInJob
 from .models import UserSoftwareStack
 
-# from ..exceptions import NotFoundError
+from ..exceptions import NotFoundError
+from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import NotConnected
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
+from ..inspections import InspectionResultsStore
 from ..provenance import ProvenanceResultsStore
+from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..solvers import SolverResultsStore
 
 _LOGGER = logging.getLogger(__name__)
@@ -111,6 +134,11 @@ class GraphDatabase(StorageBase):
             raise NotConnected("No client established to talk to a Draph instance")
 
         return self._client
+
+    @property
+    def hosts(self) -> List[str]:
+        """Get hosts configured for this adapter."""
+        return self._hosts
 
     def __del__(self) -> None:
         """Disconnect properly on object destruction."""
@@ -280,7 +308,7 @@ class GraphDatabase(StorageBase):
         packages given in parameters - meaning a returned stack has packages as
         provided in the parameter, but can also have additional packages.
         """
-        return []
+        return self._get_stack(set(("Flask", "click")))
 
     def compute_python_package_version_avg_performance(
         self, packages: Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
@@ -409,7 +437,19 @@ class GraphDatabase(StorageBase):
         dependencies as most of the time is otherwise spent in serialization
         and deserialization of query results.
         """
-        return []
+        query = """
+        {
+            node(func: has(python_package_version_label)) @filter(eq(package_name, "Flask") 
+                 AND eq(python_version, "3.6") AND eq(os_name, "fedora") AND eq(os_version, "29")
+            ) @recurse(loop: false) {
+                package_name
+                package_version
+                index_url
+                depends_on
+            }
+        }
+        """
+        return self._query_raw(query)
 
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check if the given solver document record exists."""
@@ -426,6 +466,9 @@ class GraphDatabase(StorageBase):
         """ % (Solved.get_label(), solver_document_id)
         result = self._query_raw(query)
         return result["f"][0]["count"] > 0
+
+    def dependency_monkey_document_id_exist(self, document_id):
+        """Check if the given depednency monkey report record exists in the graph database."""
 
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
@@ -461,21 +504,46 @@ class GraphDatabase(StorageBase):
         """Get hashes for a Python package per index."""
         return []
 
-    def python_package_index_listing(self) -> list:
-        """Get listing of Python package indexes registered in the JanusGraph database."""
-        return []
+    def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True) -> bool:
+        """Register the given Python package index in the graph database."""
+        existed = PythonPackageIndex.from_properties(
+            url=url,
+            warehouse_api_url=warehouse_api_url,
+            verify_ssl=verify_ssl
+        ).get_or_create(self.client)
+        return existed
 
-    def get_python_package_index_urls(self) -> list:
+    def python_package_index_listing(self) -> list:
+        """Get listing of Python package indexes registered in the graph database database."""
+        query = """
+        {
+            f(func: has(%s)) {
+                url
+                warehouse_api_url
+                verify_ssl
+            }
+        }
+        """ % PythonPackageIndex.get_label()
+
+        # State explicitly warehouse API url is None if no was configured.
+        result = self._query_raw(query)["f"]
+        for item in result:
+            if "warehouse_api_url" not in item:
+                item["warehouse_api_url"] = None
+
+        return result
+
+    def get_python_package_index_urls(self) -> set:
         """Retrieve all the URLs of registered Python package indexes."""
         query = """
-        query q($l: string) {
+        {
             f(func: has(%s)) {
                 u: url
             }
         }
         """ % PythonPackageIndex.get_label()
         result = self._query_raw(query)
-        return list(chain(item['u'] for item in result["f"]))
+        return set(chain(item['u'] for item in result["f"]))
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
@@ -490,374 +558,140 @@ class GraphDatabase(StorageBase):
     ) -> None:
         """Assign the given set of packages to the stack."""
         for python_package_version in python_package_versions:
-            CreatesStack.from_properties(source=python_package_version, target=software_stack).get_or_create(self.client)
+            CreatesStack.from_properties(
+                source=python_package_version,
+                target=software_stack
+            ).get_or_create(self.client)
 
-    def create_python_packages_pipfile(self, pipfile_locked: dict) -> List[PythonPackageVersion]:
-        """Create Python packages from Pipfile.lock entries and return them."""
-        def get_index_url(index_name: str):
-            for source_index in pipfile_locked["_meta"]["sources"]:
-                if source_index["name"] == index_name:
-                    return source_index["url"]
+    def _create_python_package_record(
+            self,
+            python_package_version: PythonPackageVersion,
+            verify_index: bool = True
+    ) -> None:
+        """Create a record for the given Python package.
 
-            raise ValueError(f"Index with name {index_name!r} not found in Pipfile.lock metadata")
+        @raises PythonIndexNotRegistered: if there is no index registered from which the Python version came.
+        """
+        assert python_package_version.uid is None, "The given Python package has been already synced into graph database"
 
-        python_packages = []
-        for package_name, package_info in pipfile_locked["default"].items():
-            # TODO: sync also test packages?
-            if not package_info["version"].startswith("=="):
-                _LOGGER.error(
-                    "Package %r in version %r in the Pipfile.lock was not pinned to a specific version correctly",
-                    package_name,
-                    package_info["version"],
-                )
-                package_version = package_info["version"]
-            else:
-                package_version = package_info["version"][len("==") :]  # Ignore PycodestyleBear (E203)
-
-            index_url = get_index_url(package_info["index"])
-
-            existed, _, v, python_package_version = self.create_pypi_package_version(
-                package_name, package_version, index_url=index_url
+        package_index = PythonPackageIndex.query_one(
+            self.client,
+            url=python_package_version.index_url,
+        )
+        if verify_index and not package_index:
+            raise PythonIndexNotRegistered(
+                f"Python package index for {python_package_version.index_url} not registered, "
+                f"cannot insert package {python_package_version.to_dict()}"
             )
-            python_packages.append(python_package_version)
 
-        return python_packages
+        entity = PythonPackageVersionEntity.from_properties(
+            ecosystem=python_package_version.ecosystem,
+            package_name=python_package_version.package_name,
+            package_version=python_package_version.package_version,
+            index_url=python_package_version.index_url,
+        )
+        entity.get_or_create(self.client)
+
+        if package_index:
+            ProvidedBy.from_properties(
+                source=entity,
+                target=package_index,
+            ).get_or_create(self.client)
+
+        # Finally, create it...
+        python_package_version.get_or_create(self.client)
+
+        InstalledFrom.from_properties(
+            source=entity,
+            target=python_package_version,
+        ).get_or_create(self.client)
+
+    def create_python_packages_pipfile(self, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None) -> List[PythonPackageVersion]:
+        """Create Python packages from Pipfile.lock entries and return them."""
+        result = []
+        pipfile_locked = PipfileLock.from_dict(pipfile_locked, pipfile=None)
+        for package in pipfile_locked.packages.packages.values():
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem="python",
+                package_name=package.name,
+                package_version=package.locked_version,
+                index_url=package.index.url if package.index else None,
+                extras=None,
+                os_name=runtime_environment.os_name if runtime_environment else None,
+                os_version=runtime_environment.os_version if runtime_environment else None,
+                python_version=runtime_environment.python_version if runtime_environment else None,
+                # We assume these to be false as these are inputs or recommendation output.
+                solver_error=False,
+                solver_error_unparseable=False,
+                solver_error_unsolvable=False,
+            )
+            self._create_python_package_record(python_package_version, verify_index=False)
+            result.append(python_package_version)
+
+        return result
 
     def create_user_software_stack_pipfile(
-        self, document_id: str, pipfile_locked: dict, *, origin: str = None
+        self, adviser_document_id: str, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None
     ) -> UserSoftwareStack:
         """Create a user software stack entry from Pipfile.lock."""
-        python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
-        software_stack = UserSoftwareStack.from_properties(document_id=document_id, origin=origin)
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, runtime_environment)
+        software_stack = UserSoftwareStack.from_properties(adviser_document_id=adviser_document_id)
         software_stack.get_or_create(self.client)
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
+
+    def create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
+        """Create requirements for un-pinned Python packages."""
+        result = []
+        pipfile = Pipfile.from_dict(requirements)
+        for requirement in pipfile.packages.packages.values():
+            python_package_requirement = PythonPackageRequirement.from_properties(
+                ecosystem="python",
+                package_name=requirement.name,
+                version_range=requirement.version,
+                index_url=requirement.index.url if requirement.index else None,
+                markers=requirement.markers,
+                develop=requirement.develop,
+            )
+            python_package_requirement.get_or_create(self.client)
+            result.append(python_package_requirement)
+
+        return result
 
     def create_inspection_software_stack_pipfile(
         self, document_id: str, pipfile_locked: dict
     ) -> InspectionSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
         python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
-        software_stack = InspectionSoftwareStack.from_properties(document_id=document_id)
+        software_stack = InspectionSoftwareStack.from_properties(inspection_document_id=document_id)
         software_stack.get_or_create(self.client)
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
 
-    def create_adviser_software_stack_pipfile(
-        self, document_id: str, pipfile_locked: dict, *, adviser_stack_index: int
-    ) -> AdviserSoftwareStack:
-        """Create an inspection software stack entry from Pipfile.lock."""
-        python_package_versions = self.create_python_packages_pipfile(pipfile_locked)
-        software_stack = AdviserSoftwareStack.from_properties(
-            document_id=document_id, adviser_stack_index=adviser_stack_index
-        )
-        software_stack.get_or_create(self.client)
-        self._python_packages_create_stack(python_package_versions, software_stack)
-        return software_stack
-
-    def create_pypi_package_version(
+    def create_advised_software_stack_pipfile(
         self,
-        package_name: str,
-        package_version: str,
-        index_url: Optional[str],
+        adviser_document_id: str,
+        pipfile_locked: dict,
         *,
-        hashes: list = None,
-        only_if_package_seen: bool = False,
-    ) -> Optional[tuple]:
-        """Create entries for PyPI package version.
-
-        The return value is a tuple. The first item in tuple is a flag signalizing if the given package was newly
-        added ("existed" flag). The rest 3 touples are models representing python package, has version and
-        python package version. If only seen flag is set to true, the return value can be None in case of
-        package was not previously seen - in that case no action is done.
-        """
-        package_name = self.normalize_python_package_name(package_name)
-
-        if only_if_package_seen and not self.python_package_version_exists(package_name, package_version, index_url):
-            return None
-
-        python_package = Package.from_properties(ecosystem="pypi", package_name=package_name)
-        python_package.get_or_create(self.client)
-
-        python_package_version = PythonPackageVersion.from_properties(
-            ecosystem="pypi", package_name=package_name, package_version=package_version, index_url=index_url
+        advised_stack_index: int,
+        performance_score: float,
+        overall_score: float,
+        runtime_environment: RuntimeEnvironmentModel,
+    ) -> AdvisedSoftwareStack:
+        """Create an advised software stack entry from Pipfile.lock."""
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, runtime_environment)
+        software_stack = AdvisedSoftwareStack.from_properties(
+            adviser_document_id=adviser_document_id,
+            advised_stack_index=advised_stack_index,
+            performance_score=performance_score,
+            overall_score=overall_score,
         )
-        existed = python_package_version.get_or_create(self.client)
-
-        has_version = HasVersion.from_properties(source=python_package, target=python_package_version)
-        has_version.get_or_create(self.client)
-
-        for digest in hashes or []:
-            python_artifact = PythonArtifact.from_properties(artifact_hash_sha256=digest)
-            python_artifact.get_or_create(self.client)
-
-            HasArtifact.from_properties(source=python_package_version, target=python_artifact).get_or_create(self.client)
-
-        return existed, python_package, has_version, python_package_version
-
-    @enable_vertex_cache
-    def sync_solver_result(self, document: dict) -> None:
-        """Sync the given solver result to the graph database."""
-        solver_document_id = SolverResultsStore.get_document_id(document)
-        solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
-        solver_info = self.parse_python_solver_name(solver_name)
-
-        # Construct errors first so that we have flag for edges.
-        errors = {}
-        for error_info in document["result"]["errors"]:
-            package_name = error_info.get("package_name") or error_info["package"]
-            package_version = error_info["version"]
-            index_url = error_info["index"]
-
-            if package_name not in errors:
-                errors[package_name] = {}
-
-            if package_version not in errors[package_name]:
-                errors[package_name][package_version] = {}
-
-            if index_url not in errors[package_name][package_version]:
-                errors[package_name][package_version][index_url] = True
-
-        ecosystem_solver = EcosystemSolver.from_properties(
-            solver_name=solver_name,
-            solver_version=document["metadata"]["analyzer_version"],
-            os_name=solver_info["os_name"],
-            os_version=solver_info["os_version"],
-            python_version=solver_info["python_version"],
-        )
-
-        ecosystem_solver.get_or_create(self.client)
-        solver_datetime = datetime_str2timestamp(document["metadata"]["datetime"])
-        for python_package_info in document["result"]["tree"]:
-            existed, python_package, _, python_package_version = self.create_pypi_package_version(
-                python_package_info["package_name"],
-                python_package_info["package_version"],
-                python_package_info["index_url"],
-                hashes=python_package_info["sha256"],
-            )
-
-            Solved.from_properties(
-                source=ecosystem_solver,
-                target=python_package_version,
-                solver_document_id=solver_document_id,
-                solver_datetime=solver_datetime,
-                solver_error=False,
-                solver_error_unsolvable=False,
-                solver_error_unparsable=False,
-                os_name=solver_info["os_name"],
-                os_version=solver_info["os_version"],
-                python_version=solver_info["python_version"],
-            ).get_or_create(self.client)
-
-            for dependency in python_package_info["dependencies"]:
-                for index_entry in dependency["resolved_versions"]:
-                    index_url = index_entry["index"]
-                    for dependency_version in index_entry["versions"]:
-                        existed, python_package_dependency, _, python_package_version_dependency = self.create_pypi_package_version(  # Ignore PycodestyleBear (E501)
-                            package_name=dependency["package_name"],
-                            package_version=dependency_version,
-                            index_url=index_url,
-                        )
-
-                        Solved.from_properties(
-                            source=ecosystem_solver,
-                            target=python_package_version_dependency,
-                            solver_document_id=solver_document_id,
-                            solver_datetime=solver_datetime,
-                            solver_error=False,
-                            solver_error_unsolvable=False,
-                            solver_error_unparsable=False,
-                            os_name=solver_info["os_name"],
-                            os_version=solver_info["os_version"],
-                            python_version=solver_info["python_version"],
-                        ).get_or_create(self.client)
-
-                        solver_error = (
-                            errors.get(python_package_version_dependency.package_name, {})
-                            .get(python_package_version_dependency.package_version, {})
-                            .get(python_package_version_dependency.index_url, False)
-                        )
-
-                        # TODO: mark extras
-                        DependsOn.from_properties(
-                            source=python_package_version,
-                            target=python_package_version_dependency,
-                            package_name=python_package_version_dependency.package_name,
-                            version_range=dependency["required_version"] or "*",
-                            os_name=solver_info["os_name"],
-                            os_version=solver_info["os_version"],
-                            python_version=solver_info["python_version"],
-                            solver_error=solver_error,
-                        ).get_or_create(self.client)
-
-        for error_info in document["result"]["errors"]:
-            existed, python_package, _, python_package_version = self.create_pypi_package_version(
-                package_name=error_info.get("package_name") or error_info["package"],
-                package_version=error_info["version"],
-                index_url=error_info["index"],
-            )
-
-            Solved.from_properties(
-                source=ecosystem_solver,
-                target=python_package_version,
-                solver_document_id=solver_document_id,
-                solver_datetime=solver_datetime,
-                solver_error=True,
-                solver_error_unsolvable=False,
-                solver_error_unparsable=False,
-                os_name=solver_info["os_name"],
-                os_version=solver_info["os_version"],
-                python_version=solver_info["python_version"],
-            ).get_or_create(self.client)
-
-        for unsolvable in document["result"]["unresolved"]:
-            if not unsolvable["version_spec"].startswith("=="):
-                # No resolution can be perfomed so no identifier is captured, report warning and continue.
-                # We would like to capture this especially when there are
-                # packages in ecosystem that we cannot find (e.g. not configured private index
-                # or removed package).
-                _LOGGER.warning(
-                    f"Cannot sync unsolvable package {unsolvable} as package is not locked to as specific version"
-                )
-                continue
-
-            package_version = unsolvable["version_spec"][len("=="):]
-            existed, python_package, _, python_package_version = self.create_pypi_package_version(
-                package_name=unsolvable["package_name"],
-                package_version=package_version,
-                index_url=unsolvable["index"],
-            )
-
-            Solved.from_properties(
-                source=ecosystem_solver,
-                target=python_package_version,
-                solver_document_id=solver_document_id,
-                solver_datetime=solver_datetime,
-                solver_error=True,
-                solver_error_unsolvable=True,
-                solver_error_unparsable=False,
-                os_name=solver_info["os_name"],
-                os_version=solver_info["os_version"],
-                python_version=solver_info["python_version"],
-            ).get_or_create(self.client)
-
-        for unparsed in document["result"]["unparsed"]:
-            parts = unparsed["requirement"].rsplit("==", maxsplit=1)
-            if len(parts) != 2:
-                # This request did not come from graph-refresh job as there is not pinned version.
-                _LOGGER.warning(
-                    f"Cannot sync unparsed package {unparsed} as package is not locked to as specific version"
-                )
-                continue
-
-            package_name, package_version = parts
-            existed, python_package, _, python_package_version = self.create_pypi_package_version(
-                package_name=package_name, package_version=package_version, index_url=None
-            )
-
-            Solved.from_properties(
-                source=ecosystem_solver,
-                target=python_package_version,
-                solver_document_id=solver_document_id,
-                solver_datetime=solver_datetime,
-                solver_error=True,
-                solver_error_unsolvable=False,
-                solver_error_unparsable=True,
-                os_name=solver_info["os_name"],
-                os_version=solver_info["os_version"],
-                python_version=solver_info["python_version"],
-            ).get_or_create(self.client)
-
-    @enable_vertex_cache
-    def sync_adviser_result(self, document: dict) -> None:
-        """Sync adviser result into graph database."""
-        adviser_document_id = AdvisersResultsStore.get_document_id(document)
-        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
-
-        if not origin:
-            _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
-
-        user_software_stack = None
-        if document["result"]["input"]["requirements_locked"]:
-            # User provided a Pipfile.lock, we can sync it.
-            user_software_stack = self.create_user_software_stack_pipfile(
-                adviser_document_id, document["result"]["input"]["requirements_locked"], origin=origin
-            )
-
-        runtime_info = document["result"]["parameters"]["runtime_environment"]
-
-        hardware_info = runtime_info.pop("hardware", {})
-        hardware_information = HardwareInformation.from_properties(**hardware_info)
-        hardware_information.get_or_create(self.client)
-
-        operating_system = runtime_info.pop("operating_system", {})
-        # TODO: we should derive name from image sha to have exact match.
-        runtime_info.pop("name", None)  # We do not rely on user's input here, it can be anything...
-        runtime_environment_name = (
-            operating_system.get("name", "unknown") + ":" + operating_system.get("version", "unknown")
-        )
-        runtime_environment = RuntimeEnvironmentModel.from_properties(
-            environment_name=runtime_environment_name,
-            os_name=operating_system.get("name"),
-            os_version=operating_system.get("version"),
-            **runtime_info,
-        )
-        runtime_environment.get_or_create(self.client)
-
-        RunsOn.from_properties(
-            source=runtime_environment, target=hardware_information, document_id=adviser_document_id
-        ).get_or_create(self.client)
-
-        RunsIn.from_properties(
-            source=user_software_stack, target=runtime_environment, document_id=adviser_document_id
-        ).get_or_create(self.client)
-
-        adviser_datetime = datetime_str2timestamp(document["metadata"]["datetime"])
-        adviser_version = document["analyzer"]["version"]
-        for idx, result in enumerate(document["result"]["report"]):
-            if len(result) != 2:
-                _LOGGER.debug("Omitting stack as no output Pipfile.lock was provided - was the report error report?")
-                continue
-
-            # result[0] is score report
-            # result[1]["requirements"] is Pipfile
-            # result[1]["requirements_locked"] is Pipfile.lock
-            if result[1] and result[1].get("requirements_locked"):
-                adviser_software_stack = self.create_adviser_software_stack_pipfile(
-                    adviser_document_id, result[1]["requirements_locked"], adviser_stack_index=idx
-                )
-
-                # The linkage to hardware information is already done when user software stack was created.
-                RunsIn.from_properties(
-                    source=adviser_software_stack, target=runtime_environment, document_id=adviser_document_id
-                ).get_or_create(self.client)
-
-                if user_software_stack:
-                    Advised.from_properties(
-                        source=user_software_stack,
-                        target=adviser_software_stack,
-                        adviser_document_id=adviser_document_id,
-                        adviser_version=adviser_version,
-                        adviser_datetime=adviser_datetime,
-                    ).get_or_create(self.client)
-
-    @enable_vertex_cache
-    def sync_provenance_checker_result(self, document: dict) -> None:
-        """Sync provenance checker results into graph database."""
-        provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
-        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
-
-        if not origin:
-            _LOGGER.warning("No origin stated in the provenance-checker result %r", provenance_checker_document_id)
-
-        user_input = document["result"]["input"]
-        if user_input.get("requirements_locked"):
-            self.create_user_software_stack_pipfile(
-                provenance_checker_document_id, user_input["requirements_locked"], origin=origin
-            )
+        software_stack.get_or_create(self.client)
+        self._python_packages_create_stack(python_package_versions, software_stack)
+        return software_stack
 
     @staticmethod
-    def _get_hardware_information(specs: dict) -> HardwareInformation:
+    def _get_hardware_information(specs: dict) -> HardwareInformationModel:
         """Get hardware information based on requests provided."""
         hardware = specs.get("hardware") or {}
         ram_size = OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None
@@ -865,7 +699,7 @@ class GraphDatabase(StorageBase):
             # Convert bytes to GiB, we need float number for Gremlin/JanusGraph serialization
             ram_size = ram_size / (1024 ** 3)
 
-        return HardwareInformation.from_properties(
+        return HardwareInformationModel.from_properties(
             cpu_family=hardware.get("cpu_family"),
             cpu_model=hardware.get("cpu_model"),
             cpu_physical_cpus=hardware.get("physical_cpus"),
@@ -877,275 +711,120 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
-        software_stack, python_version, os_name, os_version = None, None, None, None
-        if document["specification"].get("python"):
-            software_stack = self.create_inspection_software_stack_pipfile(
-                document["inspection_id"], document["specification"]["python"]["requirements_locked"]
+        inspection_document_id = InspectionResultsStore.get_document_id(document)
+
+        build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
+        build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
+        run_cpu = OpenShift.parse_cpu_spec(document["specification"]["run"]["requests"]["cpu"])
+        run_memory = OpenShift.parse_memory_spec(document["specification"]["run"]["requests"]["memory"])
+
+        # Convert bytes to GiB, we need float number given the fixed int size.
+        run_memory = run_memory / (1024 ** 3)
+        build_memory = build_memory / (1024 ** 3)
+
+        inspection_run = InspectionRun.from_properties(
+            inspection_document_id=inspection_document_id,
+            inspection_datetime=document.get("created"),
+            amun_version=None,  # TODO: propagate Amun version here which should match API version
+            build_requests_cpu=build_cpu,
+            build_requests_memory=build_memory,
+            run_requests_cpu=run_cpu,
+            run_requests_memory=run_memory,
+        )
+        inspection_run.get_or_create(self.client)
+
+        if "python" in document["specification"]:
+            inspection_software_stack = self.create_inspection_software_stack_pipfile(
+                inspection_document_id, document["specification"]["python"]["requirements_locked"]
             )
-            python_version = (
-                document["specification"]["python"]["requirements"].get("requires", {}).get("python_version")
+            InspectionStackInput.from_properties(
+                source=inspection_software_stack,
+                target=inspection_run
+            ).get_or_create(self.client)
+
+        # We query for an existing analysis of buildtime and runtime image, if it did not exist, we create
+        # a placeholder which will be used in package-extract sync.
+        buildtime_environment = BuildtimeEnvironmentModel.query_one(
+            self.client,
+            environment_name=inspection_document_id
+        )
+        if not buildtime_environment:
+            # TODO: we will need to use fully-qualified images in inspection runs as base.
+            buildtime_environment = BuildtimeEnvironmentModel.from_properties(
+                environment_name=document["specification"]["base"]
             )
+            buildtime_environment.get_or_create(self.client)
 
-        if ":" in document["specification"]["base"]:
-            # TODO: we should capture os info in inspection report directly.
-            os_name, os_version = document["specification"]["base"].split(":")
+        InspectionBuildtimeEnvironmentInput.from_properties(
+            source=buildtime_environment,
+            target=inspection_run,
+        ).get_or_create(self.client)
 
-        environment_name = document["inspection_id"]
-        if document["job_log"] is not None:
-            performance_index = None
-            if document["status"]["job"]["exit_code"] != 0:
-                # Negative performance index - the application does not run.
-                performance_index = -1.0
-            elif isinstance(document["job_log"]["stdout"], dict):
-                try:
-                    performance_index = float(document["job_log"]["stdout"].get("performance_index"))
-                except Exception:
-                    _LOGGER.error("Failed to parse performance index - not a float: %s", performance_index)
-
-            if performance_index is None:
-                _LOGGER.warning("No performance index found in document for inspection %r", document["inspection_id"])
-
-            if not document["specification"].get("packages"):
-                # Use the base image as an environment name if there were not
-                # installed any native packages.
-                environment_name = document["specification"]["base"]
-
+        runtime_environment = RuntimeEnvironmentModel.query_one(
+            self.client,
+            environment_name=inspection_document_id
+        )
+        if not runtime_environment:
             runtime_environment = RuntimeEnvironmentModel.from_properties(
-                environment_name=environment_name, python_version=python_version, os_name=os_name, os_version=os_version
+                environment_name=inspection_document_id
             )
             runtime_environment.get_or_create(self.client)
 
-            runtime_hardware = self._get_hardware_information(document["specification"]["run"]["requests"])
-            runtime_hardware.get_or_create(self.client)
-
-            run_error = document["status"]["job"]["exit_code"] == 0
-
-            if software_stack:
-                if performance_index is not None:
-                    RunsIn.from_properties(
-                        source=software_stack,
-                        target=runtime_environment,
-                        document_id=document["inspection_id"],
-                        run_error=run_error,
-                        performance_index=performance_index,
-                    ).get_or_create(self.client)
-                else:
-                    # We cannot pass performance_index as None as goblin will complain.
-                    RunsIn.from_properties(
-                        source=software_stack,
-                        target=runtime_environment,
-                        document_id=document["inspection_id"],
-                        run_error=run_error,
-                    ).get_or_create(self.client)
-
-            if performance_index is not None:
-                RunsOn.from_properties(
-                    source=runtime_environment,
-                    target=runtime_hardware,
-                    document_id=document["inspection_id"],
-                    run_error=run_error,
-                    performance_index=performance_index,
-                ).get_or_create(self.client)
-            else:
-                RunsOn.from_properties(
-                    source=runtime_environment,
-                    target=runtime_hardware,
-                    document_id=document["inspection_id"],
-                    run_error=run_error,
-                ).get_or_create(self.client)
-
-        buildtime_environment = BuildtimeEnvironmentModel.from_properties(environment_name=environment_name)
-        buildtime_environment.get_or_create(self.client)
-
-        buildtime_hardware = self._get_hardware_information(document["specification"]["build"]["requests"])
-        buildtime_hardware.get_or_create(self.client)
-
-        build_error = document["status"]["build"]["exit_code"] == 0
-
-        if software_stack:
-            BuildsIn.from_properties(
-                source=software_stack,
-                target=buildtime_environment,
-                document_id=document["inspection_id"],
-                build_error=build_error,
-            ).get_or_create(self.client)
-
-        BuildsOn.from_properties(
-            source=buildtime_environment,
-            target=buildtime_hardware,
-            document_id=document["inspection_id"],
-            build_error=build_error,
+        InspectionRuntimeEnvironmentInput.from_properties(
+            source=runtime_environment,
+            target=inspection_run,
         ).get_or_create(self.client)
 
-    def _deb_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
-        """Sync results of deb packages found in the given container image."""
-        for deb_package_info in document["result"]["deb-dependencies"]:
-            try:
-                deb_package_version = DebPackageVersion.from_properties(
-                    ecosystem="deb",
-                    package_name=deb_package_info["name"],
-                    package_version=deb_package_info["version"],
-                    arch=deb_package_info["arch"],
-                    epoch=deb_package_info.get("epoch"),
-                )
-                deb_package_version.get_or_create(self.client)
+        hardware = HardwareInformationConfig.from_dict(
+            document["specification"]["build"].get("requests", {}).get("hardware", {})
+        )
+        hardware_information_build = HardwareInformationModel.from_properties(
+            **hardware.to_dict(),
+        )
+        hardware_information_build.get_or_create(self.client)
+        UsedInBuild.from_properties(
+            source=hardware_information_build,
+            target=inspection_run,
+        ).get_or_create(self.client)
 
-                deb_package = Package.from_properties(
-                    ecosystem=deb_package_version.ecosystem, package_name=deb_package_version.package_name
-                )
-                deb_package.get_or_create(self.client)
-
-                HasVersion.from_properties(source=deb_package, target=deb_package_version).get_or_create(self.client)
-
-                IsPartOf.from_properties(
-                    source=deb_package_version,
-                    target=environment,
-                    analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
-                    analysis_document_id=document_id,
-                    analyzer_name=document["metadata"]["analyzer"],
-                    analyzer_version=document["metadata"]["analyzer_version"],
-                ).get_or_create(self.client)
-
-                # These three can be grouped with a zip, but that is not that readable...
-                for pre_depends in deb_package_info.get("pre-depends") or []:
-                    package = Package.from_properties(ecosystem="deb", package_name=pre_depends["name"])
-                    package.get_or_create(self.client)
-
-                    DebPreDepends.from_properties(
-                        source=deb_package_version, target=package, version_range=pre_depends.get("version")
-                    ).get_or_create(self.client)
-
-                for depends in deb_package_info.get("depends") or []:
-                    package = Package.from_properties(ecosystem="deb", package_name=depends["name"])
-                    package.get_or_create(self.client)
-
-                    DebDepends.from_properties(
-                        source=deb_package_version, target=package, version_range=depends.get("version")
-                    ).get_or_create(self.client)
-
-                for replaces in deb_package_info.get("replaces") or []:
-                    package = Package.from_properties(ecosystem="deb", package_name=replaces["name"])
-                    package.get_or_create(self.client)
-
-                    DebReplaces.from_properties(
-                        source=deb_package_version, target=package, version_range=replaces.get("version")
-                    ).get_or_create(self.client)
-            except Exception:
-                _LOGGER.exception("Failed to sync debian package, error is not fatal: %r", deb_package_info)
-
-    def _rpm_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
-        """Sync results of RPMs found in the given container image."""
-        for rpm_package_info in document["result"]["rpm-dependencies"]:
-            try:
-                rpm_package_version = RPMPackageVersion.from_properties(
-                    ecosystem="rpm",
-                    package_name=rpm_package_info["name"],
-                    package_version=rpm_package_info["version"],
-                    release=rpm_package_info.get("release"),
-                    epoch=rpm_package_info.get("epoch"),
-                    arch=rpm_package_info.get("arch"),
-                    src=rpm_package_info.get("src", False),
-                    package_identifier=rpm_package_info.get("package_identifier", rpm_package_info["name"]),
-                )
-                rpm_package_version.get_or_create(self.client)
-
-                rpm_package = Package.from_properties(
-                    ecosystem=rpm_package_version.ecosystem, package_name=rpm_package_version.package_name
-                )
-                rpm_package.get_or_create(self.client)
-
-                HasVersion.from_properties(source=rpm_package, target=rpm_package_version).get_or_create(self.client)
-
-                IsPartOf.from_properties(
-                    source=rpm_package_version,
-                    target=environment,
-                    analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
-                    analysis_document_id=document_id,
-                    analyzer_name=document["metadata"]["analyzer"],
-                    analyzer_version=document["metadata"]["analyzer_version"],
-                ).get_or_create(self.client)
-
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception(f"Failed to sync RPM package, error is not fatal: {rpm_package_info!r}")
-                continue
-
-            for dependency in rpm_package_info["dependencies"]:
-                try:
-                    rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
-                    rpm_requirement.get_or_create(self.client)
-
-                    Requires.from_properties(
-                        source=rpm_package_version,
-                        target=rpm_requirement,
-                        analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
-                        analysis_document_id=document_id,
-                        analyzer_name=document["metadata"]["analyzer"],
-                        analyzer_version=document["metadata"]["analyzer_version"],
-                    ).get_or_create(self.client)
-                except Exception:  # pylint: disable=broad-except
-                    _LOGGER.exception(
-                        f"Failed to sync dependencies for " f"RPM {rpm_package_version.to_dict()}: {dependency!r}"
-                    )
-
-    def _python_sync_analysis_result(self, document_id: str, document: dict, environment: EnvironmentBase) -> None:
-        """Sync results of Python packages found in the given container image."""
-        # or [] should go to analyzer to be consistent
-        for python_package_info in document["result"]["mercator"] or []:
-            if python_package_info["ecosystem"] == "Python-RequirementsTXT":
-                # We don't want to sync found requirement.txt artifacts as
-                # they do not carry any valuable information for us.
-                continue
-
-            if "result" not in python_package_info or "error" in python_package_info["result"]:
-                # Mercator was unable to process this - e.g. there was a
-                # setup.py that is not distutils setup.py
-                _LOGGER.info("Skipping error entry - %r", python_package_info)
-                continue
-
-            try:
-                # TODO: we should run analysis on packages not to have packages
-                # in the graph database triggering solver runs
-                # TODO: we should check for hashes in the graph database to see
-                # if we have the given package
-                existed, python_package, _, python_package_version = self.create_pypi_package_version(
-                    package_name=python_package_info["result"]["name"],
-                    package_version=python_package_info["result"]["version"],
-                    index_url=None,
-                )
-
-                IsPartOf.from_properties(
-                    source=python_package_version,
-                    target=environment,
-                    analysis_datetime=datetime_str2timestamp(document["metadata"]["datetime"]),
-                    analysis_document_id=document_id,
-                    analyzer_name=document["metadata"]["analyzer"],
-                    analyzer_version=document["metadata"]["analyzer_version"],
-                ).get_or_create(self.client)
-            except Exception:  # pylint: disable=broad-exception
-                _LOGGER.exception(f"Failed to sync Python package, error is not fatal: {python_package_info!r}")
-
-    @enable_vertex_cache
-    def sync_analysis_result(self, document: dict) -> None:
-        """Sync the given analysis result to the graph database."""
-        environment_type = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["environment_type"]
-        # TODO: we should sync also origin of analysed images
-        if environment_type == "runtime":
-            environment = RuntimeEnvironmentModel.from_properties(
-                environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+        if document["specification"].get("script"):  # We have run an inspection job.
+            hardware = HardwareInformationConfig.from_dict(
+                document["specification"]["run"].get("requests", {}).get("hardware", {})
             )
-            environment.get_or_create(self.client)
-        elif environment_type == "buildtime":
-            environment = BuildtimeEnvironmentModel.from_properties(
-                environment_name=document["metadata"]["arguments"]["extract-image"]["image"]
+            hardware_information_job = HardwareInformationModel.from_properties(
+                **hardware.to_dict(),
             )
-            environment.get_or_create(self.client)
-        else:
-            raise ValueError("Unknown environment type %r, should be buildtime or runtime" % environment_type)
+            hardware_information_job.get_or_create(self.client)
+            UsedInJob.from_properties(
+                source=hardware_information_job,
+                target=inspection_run,
+            ).get_or_create(self.client)
 
-        document_id = AnalysisResultsStore.get_document_id(document)
-        self._rpm_sync_analysis_result(document_id, document, environment)
-        self._deb_sync_analysis_result(document_id, document, environment)
-        self._python_sync_analysis_result(document_id, document, environment)
+            overall_score = document["job_log"]["stdout"].get("overall_score")
+            if document["job_log"].get("exit_code") != 0:
+                # We assign negative information here for now if the given performance indicator failed.
+                overall_score = -1.0
+
+            if not overall_score:
+                _LOGGER.warning(
+                    "No overall score found when syncing inspection document %r",
+                    inspection_document_id
+                )
+
+            # We support only matmul here, we should re-think and re-design how we handle performance indicators here.
+            performance_indicator_matmul = PiMatmul.from_properties(
+                origin=document["specification"]["script"],
+                reference=document["job_log"]["script_sha256"],
+                matrix_size=None,  # TODO assign matrix size once we allow parameters on Amun.
+                overall_score=overall_score,
+            )
+            performance_indicator_matmul.get_or_create(self.client)
+
+            ObservedPerformance.from_properties(
+                source=inspection_run,
+                target=performance_indicator_matmul,
+                performance_indicator_index=0,  # We can now run only one performance indicator per inspection request.
+            ).get_or_create(self.client)
 
     def create_python_cve_record(
         self,
@@ -1159,16 +838,38 @@ class GraphDatabase(StorageBase):
         cve: str = None,
     ) -> Tuple[CVE, bool]:
         """Store information about a CVE in the graph database for the given Python package."""
-        cve_record = CVE.from_properties(cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve)
+        python_index = PythonPackageIndex.query_one(self.client, url=index_url)
+        if not python_index:
+            raise PythonIndexNotRegistered(
+                f"Cannot insert CVE record into database, no Python index with url {index_url} registered"
+            )
+
+        entity = PythonPackageVersionEntity.from_properties(
+            ecosystem="python",
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+        )
+        entity.get_or_create(self.client)
+
+        ProvidedBy.from_properties(
+            source=entity,
+            target=python_index,
+        ).get_or_create(self.client)
+
+        cve_record = CVE.from_properties(
+            cve_id=record_id,
+            version_range=version_range,
+            advisory=advisory,
+            cve_name=cve
+        )
         cve_record_existed = cve_record.get_or_create(self.client)
         _LOGGER.debug("CVE record wit id %r ", record_id, "added" if not cve_record_existed else "was already present")
 
-        # We explicitly track vulnerable packages (only_if_package_seen=False).
-        existed, python_package, _, python_package_version = self.create_pypi_package_version(
-            package_name, package_version, index_url=index_url, only_if_package_seen=False
+        has_vulnerability = HasVulnerability.from_properties(
+            source=entity,
+            target=cve_record
         )
-
-        has_vulnerability = HasVulnerability.from_properties(source=python_package_version, target=cve_record)
         has_vulnerability_existed = has_vulnerability.get_or_create(self.client)
 
         _LOGGER.debug(
@@ -1178,11 +879,623 @@ class GraphDatabase(StorageBase):
             package_version,
             "added" if not has_vulnerability_existed else "was already present",
         )
+
         return cve_record, has_vulnerability_existed
 
-    def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True):
-        """Register the given Python package index in the graph database."""
-        package_index = PythonPackageIndex.from_properties(
-            url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl
+    def _deb_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of deb packages found in the given container image."""
+        for deb_package_info in document["result"]["deb-dependencies"]:
+            deb_package_version = DebPackageVersion.from_properties(
+                ecosystem="deb",
+                package_name=deb_package_info["name"],
+                package_version=deb_package_info["version"],
+                epoch=deb_package_info.get("epoch"),
+                arch=deb_package_info["arch"],
+            )
+            deb_package_version.get_or_create(self.client)
+            Identified.from_properties(
+                source=package_extract_run,
+                target=deb_package_version
+            ).get_or_create(self.client)
+
+            # These three can be grouped with a zip, but that is not that readable...
+            for pre_depends in deb_package_info.get("pre-depends") or []:
+                deb_dependency = DebDependency.from_properties(
+                    ecosystem="deb",
+                    package_name=pre_depends["name"]
+                )
+                deb_dependency.get_or_create(self.client)
+
+                DebPreDepends.from_properties(
+                    source=deb_package_version,
+                    target=deb_dependency,
+                    version_range=pre_depends.get("version")
+                ).get_or_create(self.client)
+
+            for depends in deb_package_info.get("depends") or []:
+                deb_dependency = DebDependency.from_properties(
+                    ecosystem="deb",
+                    package_name=depends["name"]
+                )
+                deb_dependency.get_or_create(self.client)
+
+                DebDepends.from_properties(
+                    source=deb_package_version,
+                    target=deb_dependency,
+                    version_range=depends.get("version")
+                ).get_or_create(self.client)
+
+            for replaces in deb_package_info.get("replaces") or []:
+                deb_dependency = DebDependency.from_properties(
+                    ecosystem="deb",
+                    package_name=replaces["name"]
+                )
+                deb_dependency.get_or_create(self.client)
+
+                DebReplaces.from_properties(
+                    source=deb_package_version,
+                    target=deb_dependency,
+                    version_range=replaces.get("version")
+                ).get_or_create(self.client)
+
+    def _rpm_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of RPMs found in the given container image."""
+        for rpm_package_info in document["result"]["rpm-dependencies"]:
+            rpm_package_version = RPMPackageVersion.from_properties(
+                ecosystem="rpm",
+                package_name=rpm_package_info["name"],
+                package_version=rpm_package_info["version"],
+                release=rpm_package_info.get("release"),
+                epoch=rpm_package_info.get("epoch"),
+                arch=rpm_package_info.get("arch"),
+                src=rpm_package_info.get("src", False),
+                package_identifier=rpm_package_info.get("package_identifier", rpm_package_info["name"]),
+            )
+            rpm_package_version.get_or_create(self.client)
+
+            Identified.from_properties(
+                source=package_extract_run,
+                target=rpm_package_version,
+            ).get_or_create(self.client)
+
+            for dependency in rpm_package_info["dependencies"]:
+                rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
+                rpm_requirement.get_or_create(self.client)
+
+                Requires.from_properties(
+                    source=rpm_package_version,
+                    target=rpm_requirement,
+                ).get_or_create(self.client)
+
+    def _python_sync_analysis_result(
+            self,
+            package_extract_run: PackageExtractRun,
+            document: dict,
+            environment: EnvironmentBase
+    ) -> None:
+        """Sync results of Python packages found in the given container image."""
+        for python_package_info in document["result"]["mercator"] or []:
+            if python_package_info["ecosystem"] == "Python-RequirementsTXT":
+                # We don't want to sync found requirement.txt artifacts as
+                # they do not carry any valuable information for us.
+                continue
+
+            if "result" not in python_package_info or "error" in python_package_info["result"]:
+                # Mercator was unable to process this - e.g. there was a
+                # setup.py that is not distutils setup.py
+                _LOGGER.info("Skipping error entry - %r", python_package_info)
+                continue
+
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem="python",
+                package_name=python_package_info["result"]["name"],
+                package_version=python_package_info["result"]["version"],
+                index_url=None,
+                extras=None,
+                os_name=environment.os_name,
+                os_version=environment.os_version,
+                python_version=environment.python_version,
+                solver_error=False,
+                solver_error_unparseable=False,
+                solver_error_unsolvable=False,
+            )
+            self._create_python_package_record(python_package_version, verify_index=False)
+
+            Identified.from_properties(
+                source=package_extract_run,
+                target=python_package_version,
+            ).get_or_create(self.client)
+
+    @enable_vertex_cache
+    def sync_analysis_result(self, document: dict) -> None:
+        """Sync the given analysis result to the graph database."""
+        analysis_document_id = AnalysisResultsStore.get_document_id(document)
+        environment_type = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["environment_type"]
+        origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["origin"]
+        environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
+
+        image_tag = "latest"
+        image_name = environment_name
+        parts = environment_name.rsplit(":", maxsplit=1)
+        if len(parts) == 2:
+            image_name = parts[0]
+            image_tag = parts[1]
+
+        # TODO: capture errors on image analysis? result of package-extract should be a JSON with error flag
+        package_extract_run = PackageExtractRun.from_properties(
+            analysis_document_id=analysis_document_id,
+            analysis_datetime=document["metadata"]["datetime"],
+            package_extract_version=document["metadata"]["analyzer_version"],
+            environment_type=environment_type,
+            origin=origin,
+            debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
+            package_extract_error=False,
+            image_tag=image_tag,
+            duration=None,  # TODO: assign duration
         )
-        package_index.get_or_create(self.client)
+        package_extract_run.get_or_create(self.client)
+
+        environment_parameters = {
+            "environment_name": environment_name,
+            # TODO: find Python version which would be used by default
+            "python_version": None,
+            "image_name": image_name,
+            "image_sha": document["result"]["layers"][-1],
+            # TODO: assign OS name, OS version
+            "os_name": None,
+            "os_version": None,
+            # TODO: assign CUDA
+        }
+
+        if environment_type == "runtime":
+            environment_class = RuntimeEnvironmentModel
+        elif environment_type == "buildtime":
+            environment_class = BuildtimeEnvironmentModel
+        else:
+            raise ValueError("Unknown environment type %r, should be 'buildtime' or 'runtime'" % environment_type)
+
+        environment = environment_class.query_one(
+            self.client,
+            environment_name=environment_name,
+        )
+
+        if not environment:
+            environment = environment_class.from_properties(
+                **environment_parameters
+            )
+            environment.get_or_create(self.client)
+
+        AnalyzedBy.from_properties(
+            source=environment,
+            target=package_extract_run
+        ).get_or_create(self.client)
+
+        self._rpm_sync_analysis_result(package_extract_run, document)
+        self._deb_sync_analysis_result(package_extract_run, document)
+        self._python_sync_analysis_result(package_extract_run, document, environment)
+
+    @enable_vertex_cache
+    def sync_solver_result(self, document: dict) -> None:
+        """Sync the given solver result to the graph database."""
+        solver_document_id = SolverResultsStore.get_document_id(document)
+        solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
+        solver_info = self.parse_python_solver_name(solver_name)
+        solver_datetime = document["metadata"]["datetime"]
+        solver_version = document["metadata"]["analyzer_version"]
+        os_name = solver_info["os_name"]
+        os_version = solver_info["os_version"]
+        python_version = solver_info["python_version"]
+
+        registered_indexes = self.get_python_package_index_urls()
+
+        ecosystem_solver_run = EcosystemSolverRun.from_properties(
+            ecosystem="python",
+            solver_document_id=solver_document_id,
+            solver_datetime=solver_datetime,
+            solver_name=solver_name,
+            solver_version=solver_version,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+            duration=None,   # TODO: propagate duration information
+        )
+        ecosystem_solver_run.get_or_create(self.client)
+
+        for python_package_info in document["result"]["tree"]:
+            package_name = python_package_info["package_name"]
+            package_version = python_package_info["package_version"]
+            index_url = python_package_info["index_url"]
+
+            if index_url not in registered_indexes:
+                _LOGGER.error(
+                    "Attempt to sync package %r in version %r provided by %r but the given index is "
+                    "not registered in Thoth, error during syncing solver document %r",
+                    package_name, package_version, index_url, solver_document_id
+                )
+                continue
+
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem="python",
+                package_name=self.normalize_python_package_name(package_name),
+                package_version=package_version,
+                index_url=index_url,
+                os_name=ecosystem_solver_run.os_name,
+                os_version=ecosystem_solver_run.os_version,
+                python_version=ecosystem_solver_run.python_version,
+                solver_error=False,
+                solver_error_unparseable=False,
+                solver_error_unsolvable=False,
+            )
+            self._create_python_package_record(python_package_version, verify_index=True)
+            Solved.from_properties(
+                source=ecosystem_solver_run,
+                target=python_package_version
+            ).get_or_create(self.client)
+
+            # TODO: detect and store extras
+            # TODO: detect and store markers
+            for dependency in python_package_info["dependencies"]:
+                for index_entry in dependency["resolved_versions"]:
+                    dependency_index_url = index_entry["index"]
+                    package_name = dependency["package_name"]
+
+                    for dependency_version in index_entry["versions"]:
+                        if dependency_index_url not in registered_indexes:
+                            _LOGGER.error(
+                                "Attempt to sync package %r in version %r provided by %r but the given index is "
+                                "not registered in Thoth, error during syncing solver document %r",
+                                package_name, package_version, dependency_index_url, solver_document_id
+                            )
+                            continue
+
+                        python_package_dependency = PythonPackageVersion.from_properties(
+                            ecosystem="python",
+                            package_name=self.normalize_python_package_name(package_name),
+                            package_version=dependency_version,
+                            index_url=dependency_index_url,
+                            os_name=ecosystem_solver_run.os_name,
+                            os_version=ecosystem_solver_run.os_version,
+                            python_version=ecosystem_solver_run.python_version,
+                            solver_error=False,
+                            solver_error_unparseable=False,
+                            solver_error_unsolvable=False,
+                        )
+                        self._create_python_package_record(python_package_version, verify_index=True)
+                        Solved.from_properties(
+                            source=ecosystem_solver_run,
+                            target=python_package_dependency
+                        ).get_or_create(self.client)
+                        DependsOn.from_properties(
+                            source=python_package_version,
+                            target=python_package_dependency,
+                            version_range=dependency.get("required_version") or "*",
+                        ).get_or_create(self.client)
+
+        for error_info in document["result"]["errors"]:
+            package_name = error_info.get("package_name") or error_info["package"]
+            package_version = error_info["version"]
+            index_url = error_info["index"]
+
+            if index_url not in registered_indexes:
+                _LOGGER.error(
+                    "Attempt to sync package %r in version %r provided by %r but the given index is "
+                    "not registered in Thoth, error during syncing solver document %r",
+                    package_name, package_version, index_url, solver_document_id
+                )
+                continue
+
+            python_package_version = PythonPackageVersion.from_properties(
+                ecosystem="python",
+                package_name=self.normalize_python_package_name(package_name),
+                package_version=package_version,
+                index_url=index_url,
+                os_name=ecosystem_solver_run.os_name,
+                os_version=ecosystem_solver_run.os_version,
+                python_version=ecosystem_solver_run.python_version,
+                solver_error=True,
+                solver_error_unparseable=False,
+                solver_error_unsolvable=False,
+            )
+            self._create_python_package_record(python_package_version, verify_index=True)
+            Solved.from_properties(
+                source=ecosystem_solver_run,
+                target=python_package_version
+            ).get_or_create(self.client)
+
+        for unsolvable in document["result"]["unresolved"]:
+            if not unsolvable["version_spec"].startswith("=="):
+                # No resolution can be perfomed so no identifier is captured, report warning and continue.
+                # We would like to capture this especially when there are
+                # packages in ecosystem that we cannot find (e.g. not configured private index
+                # or removed package).
+                _LOGGER.warning(
+                    "Cannot sync unsolvable package %r as package is not locked to as specific version",
+                    unsolvable
+                )
+                continue
+
+            package_name = unsolvable["package_name"]
+            index_url = unsolvable["index"]
+            package_version = unsolvable["version_spec"][len("=="):]
+
+            if index_url not in registered_indexes:
+                _LOGGER.error(
+                    "Attempt to sync package %r in version %r provided by %r but the given index is "
+                    "not registered in Thoth, error during syncing solver document %r",
+                    package_name, package_version, index_url, solver_document_id
+                )
+                continue
+
+            python_package_version = PythonPackageVersion.from_properties(
+                package_name=self.normalize_python_package_name(package_name),
+                package_version=package_version,
+                index_url=index_url,
+                os_name=ecosystem_solver_run.os_name,
+                os_version=ecosystem_solver_run.os_version,
+                python_version=ecosystem_solver_run.python_version,
+                solver_error=True,
+                solver_error_unparseable=False,
+                solver_error_unsolvable=True,
+            )
+            self._create_python_package_record(python_package_version, verify_index=True)
+            Solved.from_properties(
+                source=ecosystem_solver_run,
+                target=python_package_version
+            ).get_or_create(self.client)
+
+        for unparsed in document["result"]["unparsed"]:
+            parts = unparsed["requirement"].rsplit("==", maxsplit=1)
+            if len(parts) != 2:
+                # This request did not come from graph-refresh job as there is not pinned version.
+                _LOGGER.warning(
+                    "Cannot sync unparsed package %r as package is not locked to as specific version",
+                    unparsed
+                )
+                continue
+
+            package_name, package_version = parts
+            python_package_version = PythonPackageVersion.from_properties(
+                package_name=self.normalize_python_package_name(package_name),
+                package_version=package_version,
+                index_url=None,
+                os_name=ecosystem_solver_run.os_name,
+                os_version=ecosystem_solver_run.os_version,
+                python_version=ecosystem_solver_run.python_version,
+                solver_error=True,
+                solver_error_unparseable=True,
+                solver_error_unsolvable=False,
+            )
+            self._create_python_package_record(python_package_version, verify_index=True)
+            Solved.from_properties(
+                source=ecosystem_solver_run,
+                target=python_package_version
+            ).get_or_create(self.client)
+
+    @staticmethod
+    def _runtime_environment_conf2models(runtime_properties: dict) -> Tuple[HardwareInformationModel, RuntimeEnvironmentModel]:
+        """Convert runtime environment configuration into model representatives."""
+        hardware_properties = runtime_properties.pop("hardware", {})
+        hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
+
+        runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
+        # We construct our own name as we do not trust user's name input (it can be basically anything).
+        runtime_environment_name = (
+                f"{runtime_environment_config.operating_system.name or 'unknown'}"
+                f":{runtime_environment_config.operating_system.version or 'unknown'}"
+        )
+
+        # TODO: assign image_name and image_sha once we will have this info present in Thoth's configuration file
+        runtime_environment = RuntimeEnvironmentModel.from_properties(
+            environment_name=runtime_environment_name,
+            python_version=runtime_environment_config.python_version,
+            os_name=runtime_environment_config.operating_system.name,
+            os_version=runtime_environment_config.operating_system.version,
+            cuda_version=runtime_environment_config.cuda_version,
+        )
+
+        return hardware_information, runtime_environment
+
+    @enable_vertex_cache
+    def sync_adviser_result(self, document: dict) -> None:
+        """Sync adviser result into graph database."""
+        adviser_document_id = AdvisersResultsStore.get_document_id(document)
+        cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
+        origin = (cli_arguments.get("metadata") or {}).get("origin")
+
+        if not origin:
+            _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
+
+        parameters = document["result"]["parameters"]
+        adviser_run = AdviserRun.from_properties(
+            adviser_document_id=adviser_document_id,
+            adviser_datetime=document["metadata"]["datetime"],
+            adviser_version=document["metadata"]["analyzer_version"],
+            count=parameters["count"],
+            limit=parameters["limit"],
+            origin=origin,
+            debug=cli_arguments.get("verbose", False),
+            limit_latest_versions=parameters.get("limit_latest_versions"),
+            adviser_error=document["result"]["error"],
+            recommendation_type=parameters["recommendation_type"],
+            requirements_format=parameters["requirements_format"],
+            duration=None,  # TODO: assign duration
+            advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+            additional_stack_info=bool(document["result"].get("stack_info")),
+        )
+        adviser_run.get_or_create(self.client)
+
+        # Hardware information.
+        hardware_information, runtime_environment = self._runtime_environment_conf2models(
+            document["result"]["parameters"]["runtime_environment"]
+        )
+        hardware_information.get_or_create(self.client)
+        runtime_environment.get_or_create(self.client)
+
+        UsedIn.from_properties(
+            source=hardware_information,
+            target=adviser_run,
+        ).get_or_create(self.client)
+
+        AdviserRuntimeEnvironmentInput.from_properties(
+            source=runtime_environment,
+            target=adviser_run,
+        ).get_or_create(self.client)
+
+        # Input stack.
+        if document["result"]["input"]["requirements_locked"]:
+            # User provided a Pipfile.lock, we can sync it.
+            user_software_stack = self.create_user_software_stack_pipfile(
+                adviser_document_id,
+                document["result"]["input"]["requirements_locked"],
+                runtime_environment,
+            )
+            AdviserStackInput.from_properties(
+                source=user_software_stack,
+                target=adviser_run
+            ).get_or_create(self.client)
+
+        python_package_requirements = self.create_python_package_requirement(
+            document["result"]["input"]["requirements"]
+        )
+        for python_package_requirement in python_package_requirements:
+            RequirementsInput.from_properties(
+                source=python_package_requirement,
+                target=adviser_run
+            ).get_or_create(self.client)
+
+        # Output stack.
+        for idx, result in enumerate(document["result"]["report"]):
+            if len(result) != 2:
+                _LOGGER.error("Omitting stack as no output Pipfile.lock was provided")
+                continue
+
+            # result[0] is score report
+            # result[1]["requirements"] is Pipfile
+            # result[1]["requirements_locked"] is Pipfile.lock
+            performance_score = None
+            overall_score = None
+            for entry in result[0] or []:
+                if "performance_score" in entry:
+                    if performance_score is not None:
+                        _LOGGER.error(
+                            "Multiple performance score entries found in %r (index: %d)",
+                            adviser_document_id, idx
+                        )
+                    performance_score = entry["performance_score"]
+
+                if "overall_score" in entry:
+                    if overall_score is not None:
+                        _LOGGER.error(
+                            "Multiple overall score entries found in %r (index: %d)",
+                            adviser_document_id, idx
+                        )
+                    overall_score = entry["overall_score"]
+
+                if result[1] and result[1].get("requirements_locked"):
+                    advised_software_stack = self.create_advised_software_stack_pipfile(
+                        adviser_document_id,
+                        (result[1] or {}).get("requirements_locked") or [],
+                        advised_stack_index=idx,
+                        performance_score=performance_score,
+                        overall_score=overall_score,
+                        runtime_environment=runtime_environment,
+                    )
+                    Advised.from_properties(
+                        source=adviser_run,
+                        target=advised_software_stack
+                    ).get_or_create(self.client)
+
+    @enable_vertex_cache
+    def sync_provenance_checker_result(self, document: dict) -> None:
+        """Sync provenance checker results into graph database."""
+        provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
+        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
+
+        if not origin:
+            _LOGGER.warning("No origin stated in the provenance-checker result %r", provenance_checker_document_id)
+
+        provenance_checker_run = ProvenanceCheckerRun.from_properties(
+            provenance_checker_document_id=provenance_checker_document_id,
+            provenance_checker_datetime=document["metadata"]["datetime"],
+            provenance_checker_version=document["metadata"]["analyzer_version"],
+            origin=origin,
+            debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
+            provenance_checker_error=document["result"]["error"],
+            duration=None,  # TODO: assign duration
+        )
+        provenance_checker_run.get_or_create(self.client)
+
+        user_input = document["result"]["input"]
+        if user_input.get("requirements_locked"):
+            # We do not have any runtime information.
+            user_software_stack = self.create_user_software_stack_pipfile(
+                provenance_checker_document_id, user_input["requirements_locked"]
+            )
+            ProvenanceCheckerStackInput.from_properties(
+                source=user_software_stack,
+                target=provenance_checker_run
+            ).get_or_create(self.client)
+
+        if user_input.get("requirements"):
+            python_package_requirements = self.create_python_package_requirement(user_input["requirements"])
+            for python_package_requirement in python_package_requirements:
+                RequirementsInput.from_properties(
+                    source=python_package_requirement,
+                    target=provenance_checker_run,
+                ).get_or_create(self.client)
+
+    @enable_vertex_cache
+    def sync_dependency_monkey_result(self, document: dict) -> None:
+        """Sync reports of dependency monkey runs."""
+        # TODO: implement
+        dependency_monkey_run = DependencyMonkeyRun.from_properties(
+            dependency_monkey_document_id=DependencyMonkeyReportsStore.get_document_id(document),
+            dependency_monkey_datetime=document["metadata"]["datetime"],
+            dependency_monkey_name=document["metadata"]["analyzer"],
+            dependency_monkey_version=document["metadata"]["analyzer_version"],
+            seed=document["result"]["parameters"].get("seed"),
+            decision=document["result"]["parameters"].get("decision"),
+            count=document["result"]["parameters"].get("count"),
+            limit_latest_versions=document["result"]["parameters"].get("limit_latest_versions"),
+            debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
+            dependency_monkey_error=document["result"]["error"],
+            duration=None,  # TODO: assign duration
+        )
+        dependency_monkey_run.get_or_create(self.client)
+
+        python_package_requirements = self.create_python_package_requirement(
+            document["result"]["parameters"]["requirements"]
+        )
+        for python_package_requirement in python_package_requirements:
+            RequirementsInput.from_properties(
+                source=python_package_requirement,
+                target=dependency_monkey_run,
+            ).get_or_create(self.client)
+
+        hardware_information, runtime_environment = self._runtime_environment_conf2models(
+            document["result"]["parameters"]["runtime_environment"],
+        )
+
+        hardware_information.get_or_create(self.client)
+        runtime_environment.get_or_create(self.client)
+
+        DependencyMonkeyEnvironmentInput.from_properties(
+            source=runtime_environment,
+            target=dependency_monkey_run,
+        ).get_or_create(self.client)
+
+        UsedIn.from_properties(
+            source=hardware_information,
+            target=dependency_monkey_run,
+        ).get_or_create(self.client)
+
+        for inspection_document_id in document["result"]["output"]:
+            inspection_software_stack = InspectionSoftwareStack.from_properties(
+                inspection_document_id=inspection_document_id,
+            )
+            inspection_software_stack.get_or_create(self.client)
+
+            Resolved.from_properties(
+                source=dependency_monkey_run,
+                target=inspection_software_stack,
+            ).get_or_create(self.client)
