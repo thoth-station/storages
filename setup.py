@@ -60,6 +60,11 @@ setup(
         'thoth.storages',
         'thoth.storages.graph'
     ],
+    package_data={
+        'thoth.storages': [
+            os.path.join('graph', 'schema.rdf')
+        ]
+    },
     zip_safe=False,
     install_requires=get_install_requires(),
     tests_require=get_test_requires(),

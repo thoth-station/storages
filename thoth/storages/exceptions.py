@@ -36,3 +36,11 @@ class CacheMiss(ThothStorageException):
 
 class NotConnected(ThothStorageException):
     """Raised if there was no connection established when communicating with a storage."""
+
+
+class MultipleFoundError(ThothStorageException):
+    """Raised if there are multiple entities in the graph database when querying for a single one."""
+
+
+class PythonIndexNotRegistered(ThothStorageException):
+    """Raised if an attempt to insert a Python package with an index not being registered to the system."""
