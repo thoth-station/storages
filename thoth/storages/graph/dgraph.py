@@ -335,7 +335,21 @@ class GraphDatabase(StorageBase):
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
-        return -1
+        if not without_error:
+            query = """{
+                f(func: has(%s)) {
+                    package_name
+                }
+                }""" % PythonPackageVersion.get_label()
+        else:
+            query = """{
+                f(func: has(%s)) @filter(eq(solver_error, false)) {
+                    package_name
+                }
+                }""" % PythonPackageVersion.get_label()
+
+        result = self._query_raw(query)
+        return len(set([python_package['package_name'] for python_package in result["f"]]))
 
     def get_error_python_packages_count(self, unsolvable: bool = False, unparsable: bool = False) -> int:
         """Retrieve number of Python packages stored in the graph database with error flag."""
