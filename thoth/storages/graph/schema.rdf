@@ -39,7 +39,7 @@ depends_on_label: string @count @upsert @index(exact) .
 depends_on: uid @reverse @count .
 os_name: string @index(exact) .
 os_version: string @index(exact) .
-solver_error: bool .
+solver_error: bool @index(bool) .
 ecosystem_solver_label: string @count @upsert @index(exact) .
 solver_name: string @index(exact) .
 solver_version: string @index(exact) .
