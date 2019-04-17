@@ -787,3 +787,18 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix in markup
 * State thoth-schema file path directly
 * State automatic schema generation in README file
+
+## Release 0.10.0 (2019-04-17T12:59:43)
+* New functions for janusgraph
+* update schema file
+* Fix coala complains
+* Adjust method signatures
+* New Edge between PythonPackageVersion and PythonPackageIndex
+* Be consistent with return type, return always nan
+* Adjust performance query to respect runtime environment
+* Update schema
+* Error in query get_analyzer_documents_count()
+* Add Thoth's configuration file
+* Make runtime and buildtime environment names shared
+* Distinguish between runtime and buildtime environment
+* Remove duplicit method
