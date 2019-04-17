@@ -343,7 +343,37 @@ class GraphDatabase(StorageBase):
         without_error: bool = False,
     ) -> List[Tuple[str, str]]:
         """Get all versions available for a Python package."""
-        return []
+        package_name = self.normalize_python_package_name(package_name)
+
+        q = ""
+        if os_name:
+            q = q + " AND eq(os_name, %s)" % os_name
+
+        if os_version:
+            q = q + " AND eq(os_version, %s)" % os_version
+
+        if python_version:
+            q = q + " AND eq(python_version, %s)" % python_version
+
+        if without_error:
+            q = q + " AND eq(solver_error, %s)" % False
+        else:
+            q = q + " AND eq(solver_error, %s)" % True
+        
+        if index_url:
+            q = q + " AND eq(index_url, %s)" % index_url
+
+        query = """
+            {
+                f(func: has(%s)) @filter(eq(package_name, %s)%s) {
+                    package_version
+                    index_url
+                }
+            } 
+            """ % (PythonPackageVersion.get_label(), package_name, q)
+
+        result = self._query_raw(query)
+        return [[python_package['package_version'],python_package['index_url']] for python_package in result["f"][0]]
 
     def retrieve_unsolved_pypi_packages(self, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
