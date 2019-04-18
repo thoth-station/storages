@@ -395,12 +395,12 @@ class GraphDatabase(StorageBase):
         query = """
         {
             f(func: has(%s)) {
-                cnt: count(uid)
+                c: count(uid)
             }
         }
-        """ % EcosystemSolver.get_label()
+        """ % EcosystemSolverRun.get_label()
         result = self._query_raw(query)
-        return result["f"][0]["cnt"]
+        return result["f"][0]["c"]
 
     def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
