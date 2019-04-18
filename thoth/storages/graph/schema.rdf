@@ -63,10 +63,6 @@ decision: string @index(exact) .
 dependency_monkey_error: bool .
 depends_on_label: string @count @upsert @index(exact) .
 depends_on: uid @reverse @count .
-os_name: string @index(exact) .
-os_version: string @index(exact) .
-solver_error: bool @index(bool) .
-ecosystem_solver_label: string @count @upsert @index(exact) .
 ecosystem_solver_run_label: string @count @upsert @index(exact) .
 solver_document_id: string @index(exact) .
 solver_datetime: dateTime @index(hour) .
@@ -130,6 +126,8 @@ provenance_checker_stack_input: uid @reverse @count .
 provided_by_label: string @count @upsert @index(exact) .
 provided_by: uid @reverse @count .
 python_artifact_label: string @count @upsert @index(exact) .
+artifact_hash_sha256: string @index(exact) .
+artifact_name: string @index(exact) .
 python_package_index_label: string @count @upsert @index(exact) .
 url: string @index(exact) .
 warehouse_api_url: string @index(exact) .
@@ -140,9 +138,9 @@ index_url: string @index(exact) .
 extras: string @index(exact) .
 markers: string .
 python_package_version_label: string @count @upsert @index(exact) .
-solver_error: bool .
-solver_error_unparseable: bool .
-solver_error_unsolvable: bool .
+solver_error: bool @index(bool) .
+solver_error_unparseable: bool @index(bool) .
+solver_error_unsolvable: bool @index(bool) .
 python_package_version_entity_label: string @count @upsert @index(exact) .
 rpm_package_version_label: string @count @upsert @index(exact) .
 release: string @index(exact) .
