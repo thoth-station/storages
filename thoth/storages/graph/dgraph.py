@@ -254,13 +254,12 @@ class GraphDatabase(StorageBase):
             f(func: has(%s)) @filter(eq(analysis_document_id, %s)) {
                 analysis_datetime
                 analysis_document_id
-                analyzer_name
-                analyzer_version
+                package_extract_name
+                package_extract_version
             }   
         }
-        """ % (IsPartOf.get_label(), analysis_document_id)
+        """ % (PackageExtractRun.get_label(), analysis_document_id)
         result = self._query_raw(query)
-
         if not result:
             raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
         
@@ -1099,6 +1098,7 @@ class GraphDatabase(StorageBase):
             analysis_document_id=analysis_document_id,
             analysis_datetime=document["metadata"]["datetime"],
             package_extract_version=document["metadata"]["analyzer_version"],
+            package_extract_name=document["metadata"]["analyzer"],
             environment_type=environment_type,
             origin=origin,
             debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
@@ -1365,6 +1365,7 @@ class GraphDatabase(StorageBase):
             adviser_document_id=adviser_document_id,
             adviser_datetime=document["metadata"]["datetime"],
             adviser_version=document["metadata"]["analyzer_version"],
+            adviser_name=document["metadata"]["analyzer"],
             count=parameters["count"],
             limit=parameters["limit"],
             origin=origin,
@@ -1473,6 +1474,7 @@ class GraphDatabase(StorageBase):
             provenance_checker_document_id=provenance_checker_document_id,
             provenance_checker_datetime=document["metadata"]["datetime"],
             provenance_checker_version=document["metadata"]["analyzer_version"],
+            provenance_checker_name=document["metadata"]["analyzer"],
             origin=origin,
             debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
             provenance_checker_error=document["result"]["error"],
