@@ -500,7 +500,20 @@ class GraphDatabase(StorageBase):
 
     def analysis_document_id_exist(self, analysis_document_id: str) -> bool:
         """Check if there is an analysis document record with the given id."""
-        return True
+        query = """{
+            f(func: has(%s)) @filter(eq(analysis_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (PackageExtractRun.get_label(), analysis_document_id)
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple package-extract runs found for the "
+                f"same image analysis document id: {analysis_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
 
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
