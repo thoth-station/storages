@@ -606,7 +606,21 @@ class GraphDatabase(StorageBase):
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
-        return []
+        query = """{
+            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") AND eq(package_version, "%s")) {
+                v: has_vulnerability {
+                    %s
+                }
+            }
+        }
+        """ % (
+            PythonPackageVersionEntity.get_label(),
+            package_name,
+            package_version,
+            "\n".join(CVE.get_properties().keys())
+        )
+        result = self._query_raw(query)
+        return list(chain(*(item["v"] for item in result["f"])))
 
     def get_python_package_version_hashes_sha256(
         self, package_name: str, package_version: str, index_url: str
