@@ -545,7 +545,30 @@ class GraphDatabase(StorageBase):
         self, package_name: str, package_version: str, index_url: str
     ) -> List[str]:
         """Get hashes for a Python package in specified version."""
-        return []
+        package_name = self.normalize_python_package_name(package_name)
+        # TODO: we should consider os name, os version and other properties to have this matching for the given env
+        query = """{
+            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+                a: has_artifact {
+                    artifact_hash_sha256
+                }
+            }
+        }
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            index_url,
+        )
+        query_result = self._query_raw(query)["f"]
+
+        # Join resulting arrays.
+        result = []
+        for artifact_record in query_result:
+            for item in artifact_record["a"]:
+                result.append(item["artifact_hash_sha256"])
+
+        return result
 
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> list:
         """Get hashes for a Python package per index."""
