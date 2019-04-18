@@ -519,7 +519,20 @@ class GraphDatabase(StorageBase):
 
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
-        return True
+        query = """{
+            f(func: has(%s)) @filter(eq(adviser_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (AdviserRun.get_label(), adviser_document_id)
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple adviser runs found for the "
+                f"same adviser document id: {adviser_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
 
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
