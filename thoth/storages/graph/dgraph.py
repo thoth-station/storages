@@ -572,7 +572,20 @@ class GraphDatabase(StorageBase):
 
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
-        return True
+        query = """{
+            f(func: has(%s)) @filter(eq(inspection_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (InspectionRun.get_label(), inspection_document_id)
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple inspection runs found for the "
+                f"same inspection document id: {inspection_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
 
     def provenance_checker_document_id_exist(self, provenance_checker_document_id: str) -> bool:
         """Check if there is a provenance-checker document record with the given id."""
