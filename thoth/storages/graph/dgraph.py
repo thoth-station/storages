@@ -1132,6 +1132,22 @@ class GraphDatabase(StorageBase):
                 target=python_package_version
             ).get_or_create(self.client)
 
+            if not python_package_info["sha256"]:
+                _LOGGER.error(
+                    f"No hashes found for package {package_name} in version {package_version} from {index_url}, "
+                    f"error during syncing solver document {solver_document_id}"
+                )
+
+            for digest in python_package_info["sha256"]:
+                python_artifact = PythonArtifact.from_properties(
+                    artifact_hash_sha256=digest,
+                )
+                python_artifact.get_or_create(self.client)
+                HasArtifact.from_properties(
+                    source=python_package_version,
+                    target=python_artifact,
+                ).get_or_create(self.client)
+
             # TODO: detect and store extras
             # TODO: detect and store markers
             for dependency in python_package_info["dependencies"]:
