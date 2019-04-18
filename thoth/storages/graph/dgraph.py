@@ -474,8 +474,23 @@ class GraphDatabase(StorageBase):
         result = self._query_raw(query)
         return result["f"][0]["count"] > 0
 
-    def dependency_monkey_document_id_exist(self, document_id):
-        """Check if the given depednency monkey report record exists in the graph database."""
+    def dependency_monkey_document_id_exist(self, dependency_monkey_document_id: str) -> bool:
+        """Check if the given dependency monkey report record exists in the graph database."""
+        query = """{
+        query q($l: string) {
+            f(func: has(%s)) @filter(eq(dependency_monkey_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (DependencyMonkeyRun.get_label(), dependency_monkey_document_id)
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple dependency monkey runs found for the "
+                f"same dependency monkey document id: {dependency_monkey_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
 
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
