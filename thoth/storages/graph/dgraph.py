@@ -386,9 +386,36 @@ class GraphDatabase(StorageBase):
         result = self._query_raw(query)
         return len(set([python_package['package_name'] for python_package in result["f"]]))
 
-    def get_error_python_packages_count(self, unsolvable: bool = False, unparsable: bool = False) -> int:
+    def get_error_python_packages_count(self, *, unsolvable: bool = False, unparseable: bool = False) -> int:
         """Retrieve number of Python packages stored in the graph database with error flag."""
-        return -1
+        if not unsolvable and not unparseable:
+            query = """{
+                f(func: has(%s)) @filter(eq(solver_error, true) AND eq(solver_error_unsolvable, false) AND eq(solver_error_unparseable, false)) {
+                    c: count(uid)
+                }
+            }""" % PythonPackageVersion.get_label()
+        elif unsolvable and not unparseable:
+            query = """{
+                f(func: has(%s)) @filter(eq(solver_error_unsolvable, true)) {
+                    c: count(uid)
+                }
+                }""" % PythonPackageVersion.get_label()
+        elif unparseable and not unsolvable:
+            query = """{
+                f(func: has(%s)) @filter(eq(solver_error_unparseable, true)) {
+                    c: count(uid)
+                }
+                }""" % PythonPackageVersion.get_label()
+        else:
+            raise ValueError("Cannot set both flags - unsolvable and unparseable to retrieve error stats")
+
+        result = self._query_raw(query)
+        if len(result["f"]) == 1:
+            return result["f"][0]["c"]
+        elif len(result["f"]) == 0:
+            return 0
+        else:
+            raise ValueError(f"Internal error - multiple values returned for count query:\n{query}")
 
     def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""

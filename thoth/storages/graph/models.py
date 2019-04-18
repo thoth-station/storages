@@ -260,9 +260,9 @@ class PythonPackageVersion(VertexBase):
     os_name = model_property(type=str, index="exact")
     os_version = model_property(type=str, index="exact")
     python_version = model_property(type=str, index="exact")
-    solver_error = model_property(type=bool)
-    solver_error_unparseable = model_property(type=bool)
-    solver_error_unsolvable = model_property(type=bool)
+    solver_error = model_property(type=bool, index="bool")
+    solver_error_unparseable = model_property(type=bool, index="bool")
+    solver_error_unsolvable = model_property(type=bool, index="bool")
 
 
 @attr.s(slots=True)
