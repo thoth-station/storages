@@ -295,6 +295,7 @@ class HasArtifact(ReverseEdgeBase):
     """The given package has the given artifact."""
 
 
+@attr.s(slots=True)
 class PythonArtifact(VertexBase):
     """An artifact for a python package in a specific version."""
 
@@ -308,10 +309,12 @@ class CreatesStack(ReverseEdgeBase):
     """The given set of packages create a stack."""
 
 
+@attr.s(slots=True)
 class ProvidedBy(ReverseEdgeBase):
     """The given PythonPackageVersion is provided by a Python index."""
 
 
+@attr.s(slots=True)
 class InstalledFrom(ReverseEdgeBase):
     """The given PythonPackageVersion installed from the given Python entity."""
 
