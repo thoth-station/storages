@@ -677,7 +677,7 @@ class GraphDatabase(StorageBase):
     ) -> UserSoftwareStack:
         """Create a user software stack entry from Pipfile.lock."""
         python_package_versions = self.create_python_packages_pipfile(pipfile_locked, runtime_environment)
-        software_stack = UserSoftwareStack.from_properties(adviser_document_id=adviser_document_id)
+        software_stack = UserSoftwareStack.from_properties(document_id=adviser_document_id)
         software_stack.get_or_create(self.client)
         self._python_packages_create_stack(python_package_versions, software_stack)
         return software_stack
