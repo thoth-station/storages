@@ -8,6 +8,7 @@ overall_score: float .
 adviser_run_label: string @count @upsert @index(exact) .
 adviser_datetime: dateTime @index(hour) .
 adviser_version: string @index(exact) .
+adviser_name: string @index(exact) .
 count: int .
 limit: int .
 origin: string @index(exact) .
@@ -110,6 +111,7 @@ package_extract_run_label: string @count @upsert @index(exact) .
 analysis_document_id: string @index(exact) .
 analysis_datetime: dateTime @index(hour) .
 package_extract_version: string @index(exact) .
+package_extract_name: string @index(exact) .
 environment_type: string @index(exact) .
 package_extract_error: bool .
 image_tag: string @index(exact) .
@@ -118,6 +120,7 @@ reference: string @index(exact) .
 matrix_size: int .
 provenance_checker_run_label: string @count @upsert @index(exact) .
 provenance_checker_document_id: string @index(exact) .
+provenance_checker_name: string @index(exact) .
 provenance_checker_datetime: dateTime @index(hour) .
 provenance_checker_version: string @index(exact) .
 provenance_checker_error: bool .
