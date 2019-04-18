@@ -375,17 +375,17 @@ class EdgeBase(Element):
 
         edge_name = self.get_name()
         data = self.to_dict(without_uid=True)
-        data["uid"] = self.target.uid
         data.pop("target")
         data.pop("source")
         edge_def = {
             "uid": self.source.uid,
             # Respect Facets syntax in JSON.
-            edge_name: {f"{edge_name}|{k}": v for k, v in data.items()},
+            edge_name: {f"{edge_name}|{k}": v for k, v in data.items() if k != "uid"},
         }
         label = self.get_label()
         label_hash = self.compute_label_hash(edge_def)
         edge_def[edge_name][label] = label_hash
+        edge_def[edge_name]["uid"] = self.target.uid
         # Edges have no relevant uid, do not assign it.
         _, existed = self._do_upsert(client, label, label_hash, edge_def)
         return existed
