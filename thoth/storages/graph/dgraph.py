@@ -495,7 +495,20 @@ class GraphDatabase(StorageBase):
 
     def provenance_checker_document_id_exist(self, provenance_checker_document_id: str) -> bool:
         """Check if there is a provenance-checker document record with the given id."""
-        return True
+        query = """{
+            f(func: has(%s)) @filter(eq(provenance_checker_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (ProvenanceCheckerRun.get_label(), provenance_checker_document_id)
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple provenance checker runs found for the "
+                f"same provenance checker document id: {provenance_checker_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
