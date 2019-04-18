@@ -165,3 +165,4 @@ used_in_build: uid @reverse @count .
 used_in_job_label: string @count @upsert @index(exact) .
 used_in_job: uid @reverse @count .
 user_software_stack_label: string @count @upsert @index(exact) .
+document_id: string @index(exact) .

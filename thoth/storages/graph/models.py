@@ -406,7 +406,8 @@ class AdvisedSoftwareStack(SoftwareStackBase):
 class UserSoftwareStack(SoftwareStackBase):
     """A software stack as used by a user (input for the recommendation engine)."""
 
-    adviser_document_id = model_property(type=str, index="exact")
+    # Keeps adviser_document_id in case of advises, provenance_checker_document_id in case of provenance checks.
+    document_id = model_property(type=str, index="exact")
 
 
 @attr.s(slots=True)
