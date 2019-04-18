@@ -1086,8 +1086,6 @@ class GraphDatabase(StorageBase):
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
 
-        registered_indexes = self.get_python_package_index_urls()
-
         ecosystem_solver_run = EcosystemSolverRun.from_properties(
             ecosystem="python",
             solver_document_id=solver_document_id,
@@ -1105,14 +1103,6 @@ class GraphDatabase(StorageBase):
             package_name = python_package_info["package_name"]
             package_version = python_package_info["package_version"]
             index_url = python_package_info["index_url"]
-
-            if index_url not in registered_indexes:
-                _LOGGER.error(
-                    "Attempt to sync package %r in version %r provided by %r but the given index is "
-                    "not registered in Thoth, error during syncing solver document %r",
-                    package_name, package_version, index_url, solver_document_id
-                )
-                continue
 
             python_package_version = PythonPackageVersion.from_properties(
                 ecosystem="python",
@@ -1140,14 +1130,6 @@ class GraphDatabase(StorageBase):
                     package_name = dependency["package_name"]
 
                     for dependency_version in index_entry["versions"]:
-                        if dependency_index_url not in registered_indexes:
-                            _LOGGER.error(
-                                "Attempt to sync package %r in version %r provided by %r but the given index is "
-                                "not registered in Thoth, error during syncing solver document %r",
-                                package_name, package_version, dependency_index_url, solver_document_id
-                            )
-                            continue
-
                         python_package_dependency = PythonPackageVersion.from_properties(
                             ecosystem="python",
                             package_name=self.normalize_python_package_name(package_name),
@@ -1175,14 +1157,6 @@ class GraphDatabase(StorageBase):
             package_name = error_info.get("package_name") or error_info["package"]
             package_version = error_info["version"]
             index_url = error_info["index"]
-
-            if index_url not in registered_indexes:
-                _LOGGER.error(
-                    "Attempt to sync package %r in version %r provided by %r but the given index is "
-                    "not registered in Thoth, error during syncing solver document %r",
-                    package_name, package_version, index_url, solver_document_id
-                )
-                continue
 
             python_package_version = PythonPackageVersion.from_properties(
                 ecosystem="python",
@@ -1217,14 +1191,6 @@ class GraphDatabase(StorageBase):
             package_name = unsolvable["package_name"]
             index_url = unsolvable["index"]
             package_version = unsolvable["version_spec"][len("=="):]
-
-            if index_url not in registered_indexes:
-                _LOGGER.error(
-                    "Attempt to sync package %r in version %r provided by %r but the given index is "
-                    "not registered in Thoth, error during syncing solver document %r",
-                    package_name, package_version, index_url, solver_document_id
-                )
-                continue
 
             python_package_version = PythonPackageVersion.from_properties(
                 package_name=self.normalize_python_package_name(package_name),
