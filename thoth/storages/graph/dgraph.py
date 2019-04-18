@@ -431,7 +431,15 @@ class GraphDatabase(StorageBase):
 
     def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
-        return -1
+        query = """
+        {
+            f(func: has(%s)) {
+                c: count(uid)
+            }
+        }
+        """ % PackageExtractRun.get_label()
+        result = self._query_raw(query)
+        return result["f"][0]["c"]
 
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
