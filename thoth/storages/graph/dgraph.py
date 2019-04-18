@@ -36,8 +36,6 @@ import pkg_resources
 import grpc
 import pydgraph
 
-from thoth.common import datetime_str2timestamp
-from thoth.common import timestamp2datetime
 from thoth.common import OpenShift
 from thoth.common import RuntimeEnvironment as RuntimeEnvironmentConfig
 from thoth.common import HardwareInformation as HardwareInformationConfig
