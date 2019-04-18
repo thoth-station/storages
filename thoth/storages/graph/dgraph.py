@@ -1160,7 +1160,7 @@ class GraphDatabase(StorageBase):
                             solver_error_unparseable=False,
                             solver_error_unsolvable=False,
                         )
-                        self._create_python_package_record(python_package_version, verify_index=True)
+                        self._create_python_package_record(python_package_dependency, verify_index=True)
                         Solved.from_properties(
                             source=ecosystem_solver_run,
                             target=python_package_dependency
