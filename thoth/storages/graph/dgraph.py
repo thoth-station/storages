@@ -505,8 +505,13 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }   
         }
-        """ % (Solved.get_label(), solver_document_id)
+        """ % (EcosystemSolverRun.get_label(), solver_document_id)
         result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple solver runs found for the same solver document id: {solver_document_id}"
+            )
+
         return result["f"][0]["count"] > 0
 
     def dependency_monkey_document_id_exist(self, document_id):
