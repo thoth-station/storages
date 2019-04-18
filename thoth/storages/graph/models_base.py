@@ -175,7 +175,7 @@ class Element:
             }
         }
         """ % (label, filter_str, "\n".join(cls.get_properties().keys()))
-        query_result = client.txn().query(query)
+        query_result = client.txn(read_only=True).query(query)
         query_result = json.loads(query_result.json)["q"]
 
         result = []
