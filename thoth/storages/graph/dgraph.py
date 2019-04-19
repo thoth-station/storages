@@ -548,7 +548,21 @@ class GraphDatabase(StorageBase):
 
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
-        return True
+        analysis_document_id = AnalysisResultsStore.get_document_id(analysis_document)
+        query = """
+        {
+            f(func: has(%s)) @filter(eq(analysis_datetime, "%s") AND eq(analysis_document_id, "%s") AND eq(package_extract_name, %s) AND eq(package_extract_version, %s)) {
+                count(uid)
+            }   
+        }
+        """ % (PackageExtractRun.get_label(), 
+                analysis_document["metadata"]["datetime"],
+                analysis_document_id,
+                analysis_document["metadata"]["analyzer"],
+                analysis_document["metadata"]["analyzer_version"])
+        result = self._query_raw(query)
+
+        return result["f"][0]["count"] > 0
 
     def analysis_document_id_exist(self, analysis_document_id: str) -> bool:
         """Check if there is an analysis document record with the given id."""
