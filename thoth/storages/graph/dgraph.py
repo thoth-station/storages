@@ -373,7 +373,8 @@ class GraphDatabase(StorageBase):
             """ % (PythonPackageVersion.get_label(), package_name, q)
 
         result = self._query_raw(query)
-        return [[python_package['package_version'],python_package['index_url']] for python_package in result["f"][0]]
+
+        return [tuple(python_package.values()) for python_package in result["f"]]
 
     def retrieve_unsolved_pypi_packages(self, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
