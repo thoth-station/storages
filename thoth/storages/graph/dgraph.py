@@ -310,7 +310,15 @@ class GraphDatabase(StorageBase):
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
-        return True
+        query = """{
+            f(func: has(%s)) @filter(eq(package_name, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (PythonPackageVersionEntity.get_label(), package_name)
+        result = self._query_raw(query)
+        
+        return result["f"][0]["count"] > 0
 
     def _get_stack(self, packages: Set[tuple]) -> str:
         """Get all stacks that include the given set of packages."""
