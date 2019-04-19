@@ -292,7 +292,21 @@ class GraphDatabase(StorageBase):
 
     def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
-        return True
+        package_name = self.normalize_python_package_name(package_name)
+
+        q = ""
+        if index_url:
+            q = q + ' AND eq(index_url, "%s")' % index_url
+            
+        query = """{
+            f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(ecosystem, python)%s) {
+                count(uid)
+            }
+        }
+        """ % (PythonPackageVersionEntity.get_label(), package_name, package_version, q)
+        result = self._query_raw(query)
+
+        return result["f"][0]["count"] > 0
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
