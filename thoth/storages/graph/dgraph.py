@@ -699,7 +699,15 @@ class GraphDatabase(StorageBase):
 
     def get_python_packages(self) -> Set[str]:
         """Retrieve listing of all Python packages known to graph database instance."""
-        return set()
+        query = """
+            {
+                f(func: has(%s)) @filter(eq(ecosystem, python)) {
+                    package_name
+                }
+            } 
+            """ % PythonPackageVersion.get_label()
+        result = self._query_raw(query)
+        return set([python_package['package_name'] for python_package in result['f']])
 
     def _python_packages_create_stack(
         self, python_package_versions: Iterable[PythonPackageVersion], software_stack: SoftwareStackBase
