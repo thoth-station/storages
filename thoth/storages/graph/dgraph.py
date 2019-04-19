@@ -650,7 +650,21 @@ class GraphDatabase(StorageBase):
 
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> list:
         """Get hashes for a Python package per index."""
-        return []
+        package_name = self.normalize_python_package_name(package_name)
+
+        # The query requires @cascade to filter out the nodes which has index url but not artifact for that package/version
+        query = """{
+            f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s")) @cascade{
+                index_url
+                %s {
+                    artifact_hash_sha256
+                }
+            }
+        }
+        """ % (PythonPackageVersion.get_label(), package_name, package_version, HasArtifact.get_name())
+        result = self._query_raw(query)
+
+        return [[hashes['index_url'], hashes['has_artifact'][0]['artifact_hash_sha256']] for hashes in result['f']]
 
     def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True) -> bool:
         """Register the given Python package index in the graph database."""
