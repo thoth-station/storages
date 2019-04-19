@@ -310,6 +310,7 @@ class GraphDatabase(StorageBase):
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
+        package_name = self.normalize_python_package_name(package_name)
         query = """{
             f(func: has(%s)) @filter(eq(package_name, "%s")) {
                 count(uid)
