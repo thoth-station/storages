@@ -361,7 +361,7 @@ class GraphDatabase(StorageBase):
             q = q + " AND eq(solver_error, %s)" % True
         
         if index_url:
-            q = q + " AND eq(index_url, %s)" % index_url
+            q = q + ' AND eq(index_url, "%s")' % index_url
 
         query = """
             {
