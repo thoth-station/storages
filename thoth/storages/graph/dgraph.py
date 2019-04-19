@@ -384,11 +384,11 @@ class GraphDatabase(StorageBase):
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
         return {}
 
-    def retrieve_unparsable_pypi_packages(self) -> dict:
+    def retrieve_unparseable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
         query = """{
            f(func: has(%s)) {
-               %s @filter(eq(solver_error, true) AND eq(solver_error_unparseble, true)) {
+               %s @filter(eq(solver_error, true) AND eq(solver_error_unparseable, true)) {
                    package_name
                    package_version
                     }
