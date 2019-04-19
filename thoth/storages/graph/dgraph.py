@@ -363,7 +363,26 @@ class GraphDatabase(StorageBase):
 
     def retrieve_unparsable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
-        return {}
+        query = """{
+           f(func: has(%s)) {
+               %s @filter(eq(solver_error, true) AND eq(solver_error_unparseble, true)) {
+                   package_name
+                   package_version
+                    }
+                }
+            }""" % (Solved.get_name(), Solved.get_name())
+        result = self._query_raw(query)
+
+        #Post-Process result
+        pp_result = {}
+        for package in result["f"]:
+
+            if package["solved"][0]['package_name'] in pp_result.keys():
+                pp_result[package["solved"][0]['package_name']] = pp_result[package["solved"][0]['package_name']] + [package["solved"][0]['package_version']]
+            else:
+                pp_result[package["solved"][0]['package_name']] = [package["solved"][0]['package_version']]
+
+        return pp_result
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
