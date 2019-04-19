@@ -725,7 +725,7 @@ class GraphDatabase(StorageBase):
         """Retrieve listing of Python packages known to graph database instance for the given index."""
         query = """
             {
-                f(func: has(%s)) @filter(eq(index_url, "%s")) {
+                f(func: has(%s)) @filter(eq(index_url, "%s") AND eq(ecosystem, python)) {
                     package_name
                 }
             } 
