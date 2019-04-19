@@ -723,7 +723,15 @@ class GraphDatabase(StorageBase):
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
-        return set()
+        query = """
+            {
+                f(func: has(%s)) @filter(eq(index_url, "%s")) {
+                    package_name
+                }
+            } 
+            """ % (PythonPackageVersion.get_label(), index_url)
+        result = self._query_raw(query)
+        return set([python_package['package_name'] for python_package in result['f']])
 
     def get_python_packages(self) -> Set[str]:
         """Retrieve listing of all Python packages known to graph database instance."""
