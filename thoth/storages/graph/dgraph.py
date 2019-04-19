@@ -492,7 +492,21 @@ class GraphDatabase(StorageBase):
 
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check if the given solver document record exists."""
-        return True
+        solver_document_id = SolverResultsStore.get_document_id(solver_document)
+        query = """
+        {
+            f(func: has(%s)) @filter(eq(solver_datetime, "%s") AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
+                count(uid)
+            }   
+        }
+        """ % (Solved.get_name(), 
+                solver_document["metadata"]["datetime"],
+                solver_document_id,
+                SolverResultsStore.get_solver_name_from_document_id(solver_document_id),
+                solver_document["metadata"]["analyzer_version"])
+        result = self._query_raw(query)
+
+        return result["f"][0]["count"] > 0
 
     def solver_document_id_exist(self, solver_document_id: str) -> bool:
         """Check if there is a solver document record with the given id."""
