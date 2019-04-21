@@ -532,7 +532,28 @@ class GraphDatabase(StorageBase):
 
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
-        return {}
+        package_name = self.normalize_python_package_name(package_name)
+        query = """
+        {
+            f(func: has(%s)) @filter(eq(package_name, %s)) @normalize @cascade{
+                ~%s {
+                    package_name:package_name
+                    package_version:package_version
+                    }
+            }   
+        }
+        """ % (PythonPackageVersion.get_label(), package_name, DependsOn.get_name())
+        result = self._query_raw(query)
+        #Post-Process result
+        pp_result = {}
+        for package in result["f"]:
+
+            if package['package_name'] in pp_result.keys():
+                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            else:
+                pp_result[package['package_name']] = [package['package_version']]
+
+        return pp_result
 
     def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, tuple]:
         """Get package name, package version and index URL for each python package node.
