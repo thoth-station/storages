@@ -386,13 +386,29 @@ class GraphDatabase(StorageBase):
 
         return [tuple(python_package.values()) for python_package in result["f"]]
 
-    def retrieve_unsolved_pypi_packages(self, solver_name: str = None) -> dict:
+    def retrieve_unsolved_pypi_packages(self, solver_name: str) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
 
-        If solver_name argument is provided the given solver, query narrows down to packages that were
-        not resolved by the given solver.
+        Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
-        return {}
+
+        solver_info = self.parse_python_solver_name(solver_name)
+        query = """{
+           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s")  AND eq(python_version, "%s") AND NOT has(~%s)) {
+                   package_name:package_name
+                   package_version:package_version
+                }
+            }""" % (PythonPackageVersion.get_label(), solver_info["os_name"], solver_info["os_version"], solver_info["python_version"], Solved.get_name())
+        result = self._query_raw(query)
+        #Post-Process result
+        pp_result = {}
+        for package in result["f"]:
+            if package['package_name'] in pp_result.keys():
+                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            else:
+                pp_result[package['package_name']] = [package['package_version']]
+
+        return pp_result
 
     def retrieve_solved_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved."""
