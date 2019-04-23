@@ -744,19 +744,43 @@ class GraphDatabase(StorageBase):
         dependencies as most of the time is otherwise spent in serialization
         and deserialization of query results.
         """
+        query = ""
+        if os_name:
+            query = f' AND eq(os_name, "{os_name}")'
+
+        if os_version:
+            query += f' AND eq(os_version, "{os_version}")'
+
+        if python_version:
+            query += f' AND eq(python_version, "{python_version}")'
+
         query = """
         {
-            node(func: has(python_package_version_label)) @filter(eq(package_name, "Flask") 
-                 AND eq(python_version, "3.6") AND eq(os_name, "fedora") AND eq(os_version, "29")
-            ) @recurse(loop: false) {
-                package_name
-                package_version
-                index_url
-                depends_on
+            q(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(loop: false) {
+            uid
+            depends_on
             }
         }
-        """
-        return self._query_raw(query)
+        """ % (PythonPackageVersion.get_label(), package_name, package_version, index_url, query)
+        query_result = self._query_raw(query)["q"]
+        if not query_result:
+            raise NotFoundError(
+                f"No packages found for package {package_name} in version {package_version} from {index_url}, "
+                f"operating system is {os_name}:{os_version}, python version: {python_version}"
+            )
+
+        stack = deque((qr, []) for qr in query_result)
+        result = []
+        while stack:
+            item, path = stack.pop()
+            if not item.get("depends_on"):
+                result.append(path + [item["uid"]])
+                continue
+
+            for dep in item.get("depends_on", []):
+                stack.append((dep, path + [item["uid"]]))
+
+        return result
 
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check if the given solver document record exists."""
