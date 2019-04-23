@@ -153,6 +153,7 @@ class ProvenanceCheckerRun(VertexBase):
     provenance_checker_document_id = model_property(type=str, index="exact")
     provenance_checker_datetime = model_property(type=datetime, index="hour")
     provenance_checker_version = model_property(type=str, index="exact")
+    provenance_checker_name = model_property(type=str, index="exact")
     origin = model_property(type=str, index="exact")
     debug = model_property(type=bool)
     provenance_checker_error = model_property(type=bool)
