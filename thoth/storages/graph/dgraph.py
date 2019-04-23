@@ -283,13 +283,6 @@ class GraphDatabase(StorageBase):
         """Get listing of analyses available for the given environment."""
         return []
 
-    def get_runtime_environment(self, runtime_environment_name: str, analysis_document_id: str = None) -> tuple:
-        """Get runtime environment dependencies by its name.
-
-        Select the newest analysis if no document id is present.
-        """
-        return (1,)
-
     def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
         package_name = self.normalize_python_package_name(package_name)
@@ -327,15 +320,6 @@ class GraphDatabase(StorageBase):
             raise ValueError("Cannot query for a stack with no packages.")
 
         return ""
-
-    def get_software_stacks(self, packages: List[Tuple[str, str, str]]) -> List[Set[Tuple[str, str, str]]]:
-        """Get all stacks that include the given set of packages.
-
-        Packages in stacks returned are superset of packages in the original set of
-        packages given in parameters - meaning a returned stack has packages as
-        provided in the parameter, but can also have additional packages.
-        """
-        return self._get_stack(set(("Flask", "click")))
 
     def compute_python_package_version_avg_performance(
         self, packages: Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
@@ -548,11 +532,6 @@ class GraphDatabase(StorageBase):
 
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
-        return {}
-
-    def retrieve_dependencies(self, package_name: str, package_version: str, index: str) -> dict:
-        """Get mapping package name to package version of packages that are dependencies for the given pkg."""
-        package_name = self.normalize_python_package_name(package_name)
         return {}
 
     def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
