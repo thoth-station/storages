@@ -248,6 +248,24 @@ class GraphDatabase(StorageBase):
         _LOGGER.debug("Query statistics:\n%s", result.latency)
         return json.loads(result.json)
 
+    async def _query_raw_async(self, query) -> dict:
+        """An async wrapper for a query call."""
+        return self._query_raw(query)
+
+    def _query_raw_parallel(self, queries: List[str]) -> List[dict]:
+        """Execute multiple queries in parallel."""
+        if len(queries) == 0:
+            return []
+
+        tasks = []
+        for query in queries:
+            task = asyncio.ensure_future(self._query_raw_async(query))
+            tasks.append(task)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(asyncio.gather(*tasks))
+        return list(chain(results))
+
     def get_analysis_metadata(self, analysis_document_id: str) -> dict:
         """Get metadata stored for the given analysis document."""
         query = """
@@ -324,6 +342,19 @@ class GraphDatabase(StorageBase):
 
         return ""
 
+    @staticmethod
+    def _construct_filter_eq_from_dict(dict_) -> str:
+        """Construct a filter query from a dict matching all the properties."""
+        filter_query = ""
+        for key, value in dict_.items():
+            if filter_query:
+                filter_query += " AND "
+            if isinstance(value, str):
+                filter_query += f'eq({key}, "{value}")'
+            else:
+                filter_query += f"eq({key}, {value})"
+        return filter_query
+
     def compute_python_package_version_avg_performance(
         self, packages: Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
     ) -> Optional[float]:
@@ -340,7 +371,90 @@ class GraphDatabase(StorageBase):
         Optional parameters additionally slice results - e.g. if runtime_environment is set,
         it picks only results that match the given parameters criteria.
         """
-        return None
+        if not packages:
+            raise ValueError("No packages provided for the query")
+
+        # Create a list so we can index packages in log messages.
+        packages = list(packages)
+        queries = []
+        for idx, package_tuple in enumerate(packages):
+            package_name, package_version, index_url = package_tuple
+            runtime_env_filter = ""
+            if runtime_environment:
+                runtime_env_filter = "~inspection_runtime_environment_input @filter("
+                runtime_env_filter += self._construct_filter_eq_from_dict(runtime_environment)
+                runtime_env_filter += ") { uid }"
+
+            hw_filter = ""
+            if hardware_specs:
+                hw_filter = "~used_in_job @filter("
+                hw_filter += self._construct_filter_eq_from_dict(hardware_specs)
+                hw_filter += ") { uid }"
+
+            query = """
+            {
+                q(func: has(%s)) @cascade @normalize {
+                    uid: uid
+                    ~inspection_stack_input {
+                        ~creates_stack @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+                            package_name
+                        }
+                    }
+                    %s
+                    %s
+                }
+            }
+            """ % (InspectionRun.get_label(), package_name, package_version, index_url, hw_filter, runtime_env_filter)
+            queries.append(query)
+
+        results = self._query_raw_parallel(queries)
+
+        all_uids = []
+        for idx, item in enumerate(results):
+            if not item["q"]:
+                # No stack was found that would include the given package, return None directly.
+                _LOGGER.debug("No stack was found for package %r", packages[idx])
+                return None
+
+            uids = []
+            for uid in item["q"]:
+                uids.append(uid["uid"])
+
+            all_uids.append(set(uids))
+
+        all_stacks = set.intersection(*all_uids)
+        if not all_stacks:
+            # No intersection was found - no stacks which would include all the packages specified found.
+            return None
+
+        # Now retrieve average performance for each and every micro-benchmark of a performance type.
+        queries = []
+        for inspection_stack_id in all_stacks:
+            # TODO: add performance micro-benchmark type as a parameter
+            query = """
+            {
+                q(func: uid(%s)) @normalize {
+                    observed_performance {
+                        p: overall_score
+                    }
+                }
+            }
+            """ % inspection_stack_id
+            queries.append(query)
+
+        results = self._query_raw_parallel(queries)
+        overall_score = 0.0
+        count = 0
+        for result in results:
+            for performance_indicator_record in result["q"]:
+                overall_score += performance_indicator_record["p"]
+                count += 1
+
+        if count == 0:
+            # No performance indicators found
+            return None
+        else:
+            return overall_score / count
 
     def get_all_versions_python_package(
         self,
