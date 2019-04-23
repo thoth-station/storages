@@ -120,7 +120,6 @@ reference: string @index(exact) .
 matrix_size: int .
 provenance_checker_run_label: string @count @upsert @index(exact) .
 provenance_checker_document_id: string @index(exact) .
-provenance_checker_name: string @index(exact) .
 provenance_checker_datetime: dateTime @index(hour) .
 provenance_checker_version: string @index(exact) .
 provenance_checker_error: bool .
