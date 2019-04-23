@@ -1346,6 +1346,11 @@ class GraphDatabase(StorageBase):
                 _LOGGER.info("Skipping error entry - %r", python_package_info)
                 continue
 
+            if not python_package_info["result"].get("name"):
+                analysis_document_id = AnalysisResultsStore.get_document_id(document)
+                _LOGGER.warning("No package name found in entry %r when syncing document %r", python_package_info, analysis_document_id)
+                continue
+
             python_package_version = PythonPackageVersion.from_properties(
                 ecosystem="python",
                 package_name=python_package_info["result"]["name"],
