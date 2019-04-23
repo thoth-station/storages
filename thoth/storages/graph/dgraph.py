@@ -31,6 +31,9 @@ from pathlib import Path
 from dateutil import parser
 from datetime import timezone
 from itertools import chain
+from collections import deque
+from collections import ChainMap
+import asyncio
 
 import pkg_resources
 import grpc
@@ -534,6 +537,26 @@ class GraphDatabase(StorageBase):
         """Get mapping package name to package version of packages that depend on the given package."""
         return {}
 
+    async def get_python_package_tuple(self, python_package_node_id: int) -> Dict[int, tuple]:
+        """Get Python's package name, package version, package index tuple for the given package id."""
+        query = """
+        {
+            q(func: uid(%s)) @cascade {
+                package_name
+                package_version
+                index_url
+            }
+        }
+        """ % python_package_node_id
+        result = self._query_raw(query)["q"]
+
+        if not result:
+            raise NotFoundError(f"No package with node id {python_package_node_id} found")
+
+        return {
+            python_package_node_id: (result[0]["package_name"], result[0]["package_version"], result[0]["index_url"])
+        }
+
     def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, tuple]:
         """Get package name, package version and index URL for each python package node.
 
@@ -541,7 +564,18 @@ class GraphDatabase(StorageBase):
         transitive dependencies. The main benefit of this function is that it
         performs all the queries in an event loop per each package.
         """
-        return {}
+        if len(python_package_node_ids) == 0:
+            return {}
+
+        tasks = []
+        for python_package_node_id in python_package_node_ids:
+            task = asyncio.ensure_future(self.get_python_package_tuple(python_package_node_id))
+            tasks.append(task)
+
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(asyncio.gather(*tasks))
+        results_dict = list(chain(results))
+        return dict(ChainMap(*results_dict))
 
     def retrieve_transitive_dependencies_python(
         self,
