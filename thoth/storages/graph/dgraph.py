@@ -534,10 +534,6 @@ class GraphDatabase(StorageBase):
         """Get mapping package name to package version of packages that depend on the given package."""
         return {}
 
-    def unsolved_runtime_environments(self, package_name: str, package_version: str) -> list:
-        """Get unsolved runtime environment which are not connected and attached to python package version."""
-        return []
-
     def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, tuple]:
         """Get package name, package version and index URL for each python package node.
 
