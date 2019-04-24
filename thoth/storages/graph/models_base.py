@@ -122,7 +122,7 @@ class Element:
             all(func: eq(%s, "%s")) {
                 uid
                 %s
-            }   
+            }
         }""" % (label, label_hash, label)
         transaction = client.txn(read_only=False)
         try:

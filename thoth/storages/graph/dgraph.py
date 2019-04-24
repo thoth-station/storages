@@ -163,10 +163,8 @@ class GraphDatabase(StorageBase):
             client_cert_key = (Path(self._tls_path) / "./client.user.key").read_bytes()
             client_cert = (Path(self._tls_path) / "./client.user.crt").read_bytes()
 
-            credentials= grpc.ssl_channel_credentials(
-                root_certificates=root_ca_cert,
-                private_key=client_cert_key,
-                certificate_chain=client_cert,
+            credentials = grpc.ssl_channel_credentials(
+                root_certificates=root_ca_cert, private_key=client_cert_key, certificate_chain=client_cert
             )
 
         for address in self._hosts:
@@ -276,14 +274,19 @@ class GraphDatabase(StorageBase):
                 analysis_document_id
                 package_extract_name
                 package_extract_version
-            }   
+            }
         }
-        """ % (PackageExtractRun.get_label(), analysis_document_id)
+        """ % (
+            PackageExtractRun.get_label(),
+            analysis_document_id,
+        )
         result = self._query_raw(query)
         if not result:
             raise NotFoundError(f"Analysis with analysis document if {analysis_document_id} was not found")
-        
-        result["f"][0]["analysis_datetime"] = parser.parse(result["f"][0]["analysis_datetime"]).replace(tzinfo=timezone.utc)
+
+        result["f"][0]["analysis_datetime"] = parser.parse(result["f"][0]["analysis_datetime"]).replace(
+            tzinfo=timezone.utc
+        )
 
         return result["f"][0]
 
@@ -292,12 +295,16 @@ class GraphDatabase(StorageBase):
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) {
-			    e: environment_name
-            }   
+                e: environment_name
+            }
         }
-        """ % (RuntimeEnvironmentModel.get_label(), count, start_offset)
+        """ % (
+            RuntimeEnvironmentModel.get_label(),
+            count,
+            start_offset,
+        )
         result = self._query_raw(query)
-        return list(chain(item['e'] for item in result["f"]))
+        return list(chain(item["e"] for item in result["f"]))
 
     def runtime_environment_analyses_listing(
         self, runtime_environment_name: str, start_offset: int = 0, count: int = 100
@@ -312,13 +319,18 @@ class GraphDatabase(StorageBase):
         q = ""
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
-            
+
         query = """{
             f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(ecosystem, python)%s) {
                 count(uid)
             }
         }
-        """ % (PythonPackageVersionEntity.get_label(), package_name, package_version, q)
+        """ % (
+            PythonPackageVersionEntity.get_label(),
+            package_name,
+            package_version,
+            q,
+        )
         result = self._query_raw(query)
 
         return result["f"][0]["count"] > 0
@@ -331,9 +343,12 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (PythonPackageVersionEntity.get_label(), package_name)
+        """ % (
+            PythonPackageVersionEntity.get_label(),
+            package_name,
+        )
         result = self._query_raw(query)
-        
+
         return result["f"][0]["count"] > 0
 
     def _get_stack(self, packages: Set[tuple]) -> str:
@@ -405,7 +420,14 @@ class GraphDatabase(StorageBase):
                     %s
                 }
             }
-            """ % (InspectionRun.get_label(), package_name, package_version, index_url, hw_filter, runtime_env_filter)
+            """ % (
+                InspectionRun.get_label(),
+                package_name,
+                package_version,
+                index_url,
+                hw_filter,
+                runtime_env_filter,
+            )
             queries.append(query)
 
         results = self._query_raw_parallel(queries)
@@ -432,7 +454,8 @@ class GraphDatabase(StorageBase):
         queries = []
         for inspection_stack_id in all_stacks:
             # TODO: add performance micro-benchmark type as a parameter
-            query = """
+            query = (
+                """
             {
                 q(func: uid(%s)) @normalize {
                     observed_performance {
@@ -440,7 +463,9 @@ class GraphDatabase(StorageBase):
                     }
                 }
             }
-            """ % inspection_stack_id
+            """
+                % inspection_stack_id
+            )
             queries.append(query)
 
         results = self._query_raw_parallel(queries)
@@ -484,7 +509,7 @@ class GraphDatabase(StorageBase):
             q = q + " AND eq(solver_error, %s)" % False
         else:
             q = q + " AND eq(solver_error, %s)" % True
-        
+
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
 
@@ -494,8 +519,12 @@ class GraphDatabase(StorageBase):
                     package_version
                     index_url
                 }
-            } 
-            """ % (PythonPackageVersion.get_label(), package_name, q)
+            }
+            """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            q,
+        )
 
         result = self._query_raw(query)
 
@@ -506,22 +535,27 @@ class GraphDatabase(StorageBase):
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
-
         solver_info = self.parse_python_solver_name(solver_name)
         query = """{
            f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s")  AND eq(python_version, "%s") AND NOT has(~%s)) {
                    package_name:package_name
                    package_version:package_version
                 }
-            }""" % (PythonPackageVersion.get_label(), solver_info["os_name"], solver_info["os_version"], solver_info["python_version"], Solved.get_name())
+            }""" % (
+            PythonPackageVersion.get_label(),
+            solver_info["os_name"],
+            solver_info["os_version"],
+            solver_info["python_version"],
+            Solved.get_name(),
+        )
         result = self._query_raw(query)
-        #Post-Process result
+        # Post-Process result
         pp_result = {}
         for package in result["f"]:
-            if package['package_name'] in pp_result.keys():
-                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            if package["package_name"] in pp_result.keys():
+                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
             else:
-                pp_result[package['package_name']] = [package['package_version']]
+                pp_result[package["package_name"]] = [package["package_version"]]
 
         return pp_result
 
@@ -534,15 +568,18 @@ class GraphDatabase(StorageBase):
                    package_version:package_version
                     }
                 }
-            }""" % (Solved.get_name(), Solved.get_name())
+            }""" % (
+            Solved.get_name(),
+            Solved.get_name(),
+        )
         result = self._query_raw(query)
-        #Post-Process result
+        # Post-Process result
         pp_result = {}
         for package in result["f"]:
-            if package['package_name'] in pp_result.keys():
-                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            if package["package_name"] in pp_result.keys():
+                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
             else:
-                pp_result[package['package_name']] = [package['package_version']]
+                pp_result[package["package_name"]] = [package["package_version"]]
 
         return pp_result
 
@@ -555,19 +592,21 @@ class GraphDatabase(StorageBase):
                    package_version:package_version
                     }
                 }
-            }""" % (Solved.get_name(), Solved.get_name())
+            }""" % (
+            Solved.get_name(),
+            Solved.get_name(),
+        )
         result = self._query_raw(query)
-        #Post-Process result
+        # Post-Process result
         pp_result = {}
         for package in result["f"]:
 
-            if package['package_name'] in pp_result.keys():
-                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            if package["package_name"] in pp_result.keys():
+                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
             else:
-                pp_result[package['package_name']] = [package['package_version']]
+                pp_result[package["package_name"]] = [package["package_version"]]
 
         return pp_result
-
 
     def retrieve_unparseable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
@@ -578,57 +617,75 @@ class GraphDatabase(StorageBase):
                    package_version:package_version
                     }
                 }
-            }""" % (Solved.get_name(), Solved.get_name())
+            }""" % (
+            Solved.get_name(),
+            Solved.get_name(),
+        )
         result = self._query_raw(query)
-        #Post-Process result
+        # Post-Process result
         pp_result = {}
         for package in result["f"]:
 
-            if package['package_name'] in pp_result.keys():
-                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            if package["package_name"] in pp_result.keys():
+                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
             else:
-                pp_result[package['package_name']] = [package['package_version']]
+                pp_result[package["package_name"]] = [package["package_version"]]
 
         return pp_result
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
         if not without_error:
-            query = """{
+            query = (
+                """{
                 f(func: has(%s)) {
                     package_name
                 }
-                }""" % PythonPackageVersion.get_label()
+                }"""
+                % PythonPackageVersion.get_label()
+            )
         else:
-            query = """{
+            query = (
+                """{
                 f(func: has(%s)) @filter(eq(solver_error, false)) {
                     package_name
                 }
-                }""" % PythonPackageVersion.get_label()
+                }"""
+                % PythonPackageVersion.get_label()
+            )
 
         result = self._query_raw(query)
-        return len(set([python_package['package_name'] for python_package in result["f"]]))
+        return len(set([python_package["package_name"] for python_package in result["f"]]))
 
     def get_error_python_packages_count(self, *, unsolvable: bool = False, unparseable: bool = False) -> int:
         """Retrieve number of Python packages stored in the graph database with error flag."""
         if not unsolvable and not unparseable:
-            query = """{
+            query = (
+                """{
                 f(func: has(%s)) @filter(eq(solver_error, true) AND eq(solver_error_unsolvable, false) AND eq(solver_error_unparseable, false)) {
                     c: count(uid)
                 }
-            }""" % PythonPackageVersion.get_label()
+            }"""
+                % PythonPackageVersion.get_label()
+            )
         elif unsolvable and not unparseable:
-            query = """{
+            query = (
+                """{
                 f(func: has(%s)) @filter(eq(solver_error_unsolvable, true)) {
                     c: count(uid)
                 }
-                }""" % PythonPackageVersion.get_label()
+                }"""
+                % PythonPackageVersion.get_label()
+            )
         elif unparseable and not unsolvable:
-            query = """{
+            query = (
+                """{
                 f(func: has(%s)) @filter(eq(solver_error_unparseable, true)) {
                     c: count(uid)
                 }
-                }""" % PythonPackageVersion.get_label()
+                }"""
+                % PythonPackageVersion.get_label()
+            )
         else:
             raise ValueError("Cannot set both flags - unsolvable and unparseable to retrieve error stats")
 
@@ -642,25 +699,31 @@ class GraphDatabase(StorageBase):
 
     def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
-        query = """
+        query = (
+            """
         {
             f(func: has(%s)) {
                 c: count(uid)
             }
         }
-        """ % EcosystemSolverRun.get_label()
+        """
+            % EcosystemSolverRun.get_label()
+        )
         result = self._query_raw(query)
         return result["f"][0]["c"]
 
     def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
-        query = """
+        query = (
+            """
         {
             f(func: has(%s)) {
                 c: count(uid)
             }
         }
-        """ % PackageExtractRun.get_label()
+        """
+            % PackageExtractRun.get_label()
+        )
         result = self._query_raw(query)
         return result["f"][0]["c"]
 
@@ -674,24 +737,29 @@ class GraphDatabase(StorageBase):
                     package_name:package_name
                     package_version:package_version
                     }
-            }   
+            }
         }
-        """ % (PythonPackageVersion.get_label(), package_name, DependsOn.get_name())
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            DependsOn.get_name(),
+        )
         result = self._query_raw(query)
-        #Post-Process result
+        # Post-Process result
         pp_result = {}
         for package in result["f"]:
 
-            if package['package_name'] in pp_result.keys():
-                pp_result[package['package_name']] = pp_result[package['package_name']] + [package['package_version']]
+            if package["package_name"] in pp_result.keys():
+                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
             else:
-                pp_result[package['package_name']] = [package['package_version']]
+                pp_result[package["package_name"]] = [package["package_version"]]
 
         return pp_result
 
     async def get_python_package_tuple(self, python_package_node_id: int) -> Dict[int, tuple]:
         """Get Python's package name, package version, package index tuple for the given package id."""
-        query = """
+        query = (
+            """
         {
             q(func: uid(%s)) @cascade {
                 package_name
@@ -699,7 +767,9 @@ class GraphDatabase(StorageBase):
                 index_url
             }
         }
-        """ % python_package_node_id
+        """
+            % python_package_node_id
+        )
         result = self._query_raw(query)["q"]
 
         if not result:
@@ -762,7 +832,13 @@ class GraphDatabase(StorageBase):
             depends_on
             }
         }
-        """ % (PythonPackageVersion.get_label(), package_name, package_version, index_url, query)
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            index_url,
+            query,
+        )
         query_result = self._query_raw(query)["q"]
         if not query_result:
             raise NotFoundError(
@@ -790,13 +866,15 @@ class GraphDatabase(StorageBase):
         {
             f(func: has(%s)) @filter(eq(solver_datetime, "%s") AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
                 count(uid)
-            }   
+            }
         }
-        """ % (Solved.get_name(), 
-                solver_document["metadata"]["datetime"],
-                solver_document_id,
-                SolverResultsStore.get_solver_name_from_document_id(solver_document_id),
-                solver_document["metadata"]["analyzer_version"])
+        """ % (
+            Solved.get_name(),
+            solver_document["metadata"]["datetime"],
+            solver_document_id,
+            SolverResultsStore.get_solver_name_from_document_id(solver_document_id),
+            solver_document["metadata"]["analyzer_version"],
+        )
         result = self._query_raw(query)
 
         return result["f"][0]["count"] > 0
@@ -807,9 +885,12 @@ class GraphDatabase(StorageBase):
         query q($l: string) {
             f(func: has(%s)) @filter(eq(solver_document_id, "%s")) {
                 count(uid)
-            }   
+            }
         }
-        """ % (EcosystemSolverRun.get_label(), solver_document_id)
+        """ % (
+            EcosystemSolverRun.get_label(),
+            solver_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -826,7 +907,10 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (DependencyMonkeyRun.get_label(), dependency_monkey_document_id)
+        """ % (
+            DependencyMonkeyRun.get_label(),
+            dependency_monkey_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -843,7 +927,10 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (AdviserRun.get_label(), adviser_document_id)
+        """ % (
+            AdviserRun.get_label(),
+            adviser_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -860,13 +947,15 @@ class GraphDatabase(StorageBase):
         {
             f(func: has(%s)) @filter(eq(analysis_datetime, "%s") AND eq(analysis_document_id, "%s") AND eq(package_extract_name, %s) AND eq(package_extract_version, %s)) {
                 count(uid)
-            }   
+            }
         }
-        """ % (PackageExtractRun.get_label(), 
-                analysis_document["metadata"]["datetime"],
-                analysis_document_id,
-                analysis_document["metadata"]["analyzer"],
-                analysis_document["metadata"]["analyzer_version"])
+        """ % (
+            PackageExtractRun.get_label(),
+            analysis_document["metadata"]["datetime"],
+            analysis_document_id,
+            analysis_document["metadata"]["analyzer"],
+            analysis_document["metadata"]["analyzer_version"],
+        )
         result = self._query_raw(query)
 
         return result["f"][0]["count"] > 0
@@ -878,7 +967,10 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (PackageExtractRun.get_label(), analysis_document_id)
+        """ % (
+            PackageExtractRun.get_label(),
+            analysis_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -895,7 +987,10 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (InspectionRun.get_label(), inspection_document_id)
+        """ % (
+            InspectionRun.get_label(),
+            inspection_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -912,7 +1007,10 @@ class GraphDatabase(StorageBase):
                 count(uid)
             }
         }
-        """ % (ProvenanceCheckerRun.get_label(), provenance_checker_document_id)
+        """ % (
+            ProvenanceCheckerRun.get_label(),
+            provenance_checker_document_id,
+        )
         result = self._query_raw(query)
         if result["f"][0]["count"] > 1:
             _LOGGER.error(
@@ -935,7 +1033,7 @@ class GraphDatabase(StorageBase):
             PythonPackageVersionEntity.get_label(),
             package_name,
             package_version,
-            "\n".join(CVE.get_properties().keys())
+            "\n".join(CVE.get_properties().keys()),
         )
         result = self._query_raw(query)
         return list(chain(*(item["v"] for item in result["f"])))
@@ -982,23 +1080,27 @@ class GraphDatabase(StorageBase):
                 }
             }
         }
-        """ % (PythonPackageVersion.get_label(), package_name, package_version, HasArtifact.get_name())
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            HasArtifact.get_name(),
+        )
         result = self._query_raw(query)
 
-        return [[hashes['index_url'], hashes['has_artifact'][0]['artifact_hash_sha256']] for hashes in result['f']]
+        return [[hashes["index_url"], hashes["has_artifact"][0]["artifact_hash_sha256"]] for hashes in result["f"]]
 
     def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True) -> bool:
         """Register the given Python package index in the graph database."""
         existed = PythonPackageIndex.from_properties(
-            url=url,
-            warehouse_api_url=warehouse_api_url,
-            verify_ssl=verify_ssl
+            url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl
         ).get_or_create(self.client)
         return existed
 
     def python_package_index_listing(self) -> list:
         """Get listing of Python package indexes registered in the graph database database."""
-        query = """
+        query = (
+            """
         {
             f(func: has(%s)) {
                 url
@@ -1006,7 +1108,9 @@ class GraphDatabase(StorageBase):
                 verify_ssl
             }
         }
-        """ % PythonPackageIndex.get_label()
+        """
+            % PythonPackageIndex.get_label()
+        )
 
         # State explicitly warehouse API url is None if no was configured.
         result = self._query_raw(query)["f"]
@@ -1018,15 +1122,18 @@ class GraphDatabase(StorageBase):
 
     def get_python_package_index_urls(self) -> set:
         """Retrieve all the URLs of registered Python package indexes."""
-        query = """
+        query = (
+            """
         {
             f(func: has(%s)) {
                 u: url
             }
         }
-        """ % PythonPackageIndex.get_label()
+        """
+            % PythonPackageIndex.get_label()
+        )
         result = self._query_raw(query)
-        return set(chain(item['u'] for item in result["f"]))
+        return set(chain(item["u"] for item in result["f"]))
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
@@ -1035,48 +1142,50 @@ class GraphDatabase(StorageBase):
                 f(func: has(%s)) @filter(eq(index_url, "%s") AND eq(ecosystem, python)) {
                     package_name
                 }
-            } 
-            """ % (PythonPackageVersion.get_label(), index_url)
+            }
+            """ % (
+            PythonPackageVersion.get_label(),
+            index_url,
+        )
         result = self._query_raw(query)
-        return set([python_package['package_name'] for python_package in result['f']])
+        return set([python_package["package_name"] for python_package in result["f"]])
 
     def get_python_packages(self) -> Set[str]:
         """Retrieve listing of all Python packages known to graph database instance."""
-        query = """
+        query = (
+            """
             {
                 f(func: has(%s)) @filter(eq(ecosystem, python)) {
                     package_name
                 }
-            } 
-            """ % PythonPackageVersion.get_label()
+            }
+            """
+            % PythonPackageVersion.get_label()
+        )
         result = self._query_raw(query)
-        return set([python_package['package_name'] for python_package in result['f']])
+        return set([python_package["package_name"] for python_package in result["f"]])
 
     def _python_packages_create_stack(
         self, python_package_versions: Iterable[PythonPackageVersion], software_stack: SoftwareStackBase
     ) -> None:
         """Assign the given set of packages to the stack."""
         for python_package_version in python_package_versions:
-            CreatesStack.from_properties(
-                source=python_package_version,
-                target=software_stack
-            ).get_or_create(self.client)
+            CreatesStack.from_properties(source=python_package_version, target=software_stack).get_or_create(
+                self.client
+            )
 
     def _create_python_package_record(
-            self,
-            python_package_version: PythonPackageVersion,
-            verify_index: bool = True
+        self, python_package_version: PythonPackageVersion, verify_index: bool = True
     ) -> None:
         """Create a record for the given Python package.
 
         @raises PythonIndexNotRegistered: if there is no index registered from which the Python version came.
         """
-        assert python_package_version.uid is None, "The given Python package has been already synced into graph database"
+        assert (
+            python_package_version.uid is None
+        ), "The given Python package has been already synced into graph database"
 
-        package_index = PythonPackageIndex.query_one(
-            self.client,
-            url=python_package_version.index_url,
-        )
+        package_index = PythonPackageIndex.query_one(self.client, url=python_package_version.index_url)
         if verify_index and not package_index:
             raise PythonIndexNotRegistered(
                 f"Python package index for {python_package_version.index_url} not registered, "
@@ -1092,20 +1201,16 @@ class GraphDatabase(StorageBase):
         entity.get_or_create(self.client)
 
         if package_index:
-            ProvidedBy.from_properties(
-                source=entity,
-                target=package_index,
-            ).get_or_create(self.client)
+            ProvidedBy.from_properties(source=entity, target=package_index).get_or_create(self.client)
 
         # Finally, create it...
         python_package_version.get_or_create(self.client)
 
-        InstalledFrom.from_properties(
-            source=entity,
-            target=python_package_version,
-        ).get_or_create(self.client)
+        InstalledFrom.from_properties(source=entity, target=python_package_version).get_or_create(self.client)
 
-    def create_python_packages_pipfile(self, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None) -> List[PythonPackageVersion]:
+    def create_python_packages_pipfile(
+        self, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None
+    ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
         result = []
         pipfile_locked = PipfileLock.from_dict(pipfile_locked, pipfile=None)
@@ -1236,16 +1341,14 @@ class GraphDatabase(StorageBase):
             inspection_software_stack = self.create_inspection_software_stack_pipfile(
                 inspection_document_id, document["specification"]["python"]["requirements_locked"]
             )
-            InspectionStackInput.from_properties(
-                source=inspection_software_stack,
-                target=inspection_run
-            ).get_or_create(self.client)
+            InspectionStackInput.from_properties(source=inspection_software_stack, target=inspection_run).get_or_create(
+                self.client
+            )
 
         # We query for an existing analysis of buildtime and runtime image, if it did not exist, we create
         # a placeholder which will be used in package-extract sync.
         buildtime_environment = BuildtimeEnvironmentModel.query_one(
-            self.client,
-            environment_name=inspection_document_id
+            self.client, environment_name=inspection_document_id
         )
         if not buildtime_environment:
             # TODO: we will need to use fully-qualified images in inspection runs as base.
@@ -1255,49 +1358,32 @@ class GraphDatabase(StorageBase):
             buildtime_environment.get_or_create(self.client)
 
         InspectionBuildtimeEnvironmentInput.from_properties(
-            source=buildtime_environment,
-            target=inspection_run,
+            source=buildtime_environment, target=inspection_run
         ).get_or_create(self.client)
 
-        runtime_environment = RuntimeEnvironmentModel.query_one(
-            self.client,
-            environment_name=inspection_document_id
-        )
+        runtime_environment = RuntimeEnvironmentModel.query_one(self.client, environment_name=inspection_document_id)
         if not runtime_environment:
-            runtime_environment = RuntimeEnvironmentModel.from_properties(
-                environment_name=inspection_document_id
-            )
+            runtime_environment = RuntimeEnvironmentModel.from_properties(environment_name=inspection_document_id)
             runtime_environment.get_or_create(self.client)
 
         InspectionRuntimeEnvironmentInput.from_properties(
-            source=runtime_environment,
-            target=inspection_run,
+            source=runtime_environment, target=inspection_run
         ).get_or_create(self.client)
 
         hardware = HardwareInformationConfig.from_dict(
             document["specification"]["build"].get("requests", {}).get("hardware", {})
         )
-        hardware_information_build = HardwareInformationModel.from_properties(
-            **hardware.to_dict(),
-        )
+        hardware_information_build = HardwareInformationModel.from_properties(**hardware.to_dict())
         hardware_information_build.get_or_create(self.client)
-        UsedInBuild.from_properties(
-            source=hardware_information_build,
-            target=inspection_run,
-        ).get_or_create(self.client)
+        UsedInBuild.from_properties(source=hardware_information_build, target=inspection_run).get_or_create(self.client)
 
         if document["specification"].get("script"):  # We have run an inspection job.
             hardware = HardwareInformationConfig.from_dict(
                 document["specification"]["run"].get("requests", {}).get("hardware", {})
             )
-            hardware_information_job = HardwareInformationModel.from_properties(
-                **hardware.to_dict(),
-            )
+            hardware_information_job = HardwareInformationModel.from_properties(**hardware.to_dict())
             hardware_information_job.get_or_create(self.client)
-            UsedInJob.from_properties(
-                source=hardware_information_job,
-                target=inspection_run,
-            ).get_or_create(self.client)
+            UsedInJob.from_properties(source=hardware_information_job, target=inspection_run).get_or_create(self.client)
 
             overall_score = document["job_log"]["stdout"].get("overall_score")
             if document["job_log"].get("exit_code") != 0:
@@ -1305,10 +1391,7 @@ class GraphDatabase(StorageBase):
                 overall_score = -1.0
 
             if not overall_score:
-                _LOGGER.warning(
-                    "No overall score found when syncing inspection document %r",
-                    inspection_document_id
-                )
+                _LOGGER.warning("No overall score found when syncing inspection document %r", inspection_document_id)
 
             # We support only matmul here, we should re-think and re-design how we handle performance indicators here.
             performance_indicator_matmul = PiMatmul.from_properties(
@@ -1344,31 +1427,17 @@ class GraphDatabase(StorageBase):
             )
 
         entity = PythonPackageVersionEntity.from_properties(
-            ecosystem="python",
-            package_name=package_name,
-            package_version=package_version,
-            index_url=index_url,
+            ecosystem="python", package_name=package_name, package_version=package_version, index_url=index_url
         )
         entity.get_or_create(self.client)
 
-        ProvidedBy.from_properties(
-            source=entity,
-            target=python_index,
-        ).get_or_create(self.client)
+        ProvidedBy.from_properties(source=entity, target=python_index).get_or_create(self.client)
 
-        cve_record = CVE.from_properties(
-            cve_id=record_id,
-            version_range=version_range,
-            advisory=advisory,
-            cve_name=cve
-        )
+        cve_record = CVE.from_properties(cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve)
         cve_record_existed = cve_record.get_or_create(self.client)
         _LOGGER.debug("CVE record wit id %r ", record_id, "added" if not cve_record_existed else "was already present")
 
-        has_vulnerability = HasVulnerability.from_properties(
-            source=entity,
-            target=cve_record
-        )
+        has_vulnerability = HasVulnerability.from_properties(source=entity, target=cve_record)
         has_vulnerability_existed = has_vulnerability.get_or_create(self.client)
 
         _LOGGER.debug(
@@ -1392,49 +1461,33 @@ class GraphDatabase(StorageBase):
                 arch=deb_package_info["arch"],
             )
             deb_package_version.get_or_create(self.client)
-            Identified.from_properties(
-                source=package_extract_run,
-                target=deb_package_version
-            ).get_or_create(self.client)
+            Identified.from_properties(source=package_extract_run, target=deb_package_version).get_or_create(
+                self.client
+            )
 
             # These three can be grouped with a zip, but that is not that readable...
             for pre_depends in deb_package_info.get("pre-depends") or []:
-                deb_dependency = DebDependency.from_properties(
-                    ecosystem="deb",
-                    package_name=pre_depends["name"]
-                )
+                deb_dependency = DebDependency.from_properties(ecosystem="deb", package_name=pre_depends["name"])
                 deb_dependency.get_or_create(self.client)
 
                 DebPreDepends.from_properties(
-                    source=deb_package_version,
-                    target=deb_dependency,
-                    version_range=pre_depends.get("version")
+                    source=deb_package_version, target=deb_dependency, version_range=pre_depends.get("version")
                 ).get_or_create(self.client)
 
             for depends in deb_package_info.get("depends") or []:
-                deb_dependency = DebDependency.from_properties(
-                    ecosystem="deb",
-                    package_name=depends["name"]
-                )
+                deb_dependency = DebDependency.from_properties(ecosystem="deb", package_name=depends["name"])
                 deb_dependency.get_or_create(self.client)
 
                 DebDepends.from_properties(
-                    source=deb_package_version,
-                    target=deb_dependency,
-                    version_range=depends.get("version")
+                    source=deb_package_version, target=deb_dependency, version_range=depends.get("version")
                 ).get_or_create(self.client)
 
             for replaces in deb_package_info.get("replaces") or []:
-                deb_dependency = DebDependency.from_properties(
-                    ecosystem="deb",
-                    package_name=replaces["name"]
-                )
+                deb_dependency = DebDependency.from_properties(ecosystem="deb", package_name=replaces["name"])
                 deb_dependency.get_or_create(self.client)
 
                 DebReplaces.from_properties(
-                    source=deb_package_version,
-                    target=deb_dependency,
-                    version_range=replaces.get("version")
+                    source=deb_package_version, target=deb_dependency, version_range=replaces.get("version")
                 ).get_or_create(self.client)
 
     def _rpm_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
@@ -1452,25 +1505,18 @@ class GraphDatabase(StorageBase):
             )
             rpm_package_version.get_or_create(self.client)
 
-            Identified.from_properties(
-                source=package_extract_run,
-                target=rpm_package_version,
-            ).get_or_create(self.client)
+            Identified.from_properties(source=package_extract_run, target=rpm_package_version).get_or_create(
+                self.client
+            )
 
             for dependency in rpm_package_info["dependencies"]:
                 rpm_requirement = RPMRequirement.from_properties(rpm_requirement_name=dependency)
                 rpm_requirement.get_or_create(self.client)
 
-                Requires.from_properties(
-                    source=rpm_package_version,
-                    target=rpm_requirement,
-                ).get_or_create(self.client)
+                Requires.from_properties(source=rpm_package_version, target=rpm_requirement).get_or_create(self.client)
 
     def _python_sync_analysis_result(
-            self,
-            package_extract_run: PackageExtractRun,
-            document: dict,
-            environment: EnvironmentBase
+        self, package_extract_run: PackageExtractRun, document: dict, environment: EnvironmentBase
     ) -> None:
         """Sync results of Python packages found in the given container image."""
         for python_package_info in document["result"]["mercator"] or []:
@@ -1487,7 +1533,11 @@ class GraphDatabase(StorageBase):
 
             if not python_package_info["result"].get("name"):
                 analysis_document_id = AnalysisResultsStore.get_document_id(document)
-                _LOGGER.warning("No package name found in entry %r when syncing document %r", python_package_info, analysis_document_id)
+                _LOGGER.warning(
+                    "No package name found in entry %r when syncing document %r",
+                    python_package_info,
+                    analysis_document_id,
+                )
                 continue
 
             python_package_version = PythonPackageVersion.from_properties(
@@ -1505,10 +1555,9 @@ class GraphDatabase(StorageBase):
             )
             self._create_python_package_record(python_package_version, verify_index=False)
 
-            Identified.from_properties(
-                source=package_extract_run,
-                target=python_package_version,
-            ).get_or_create(self.client)
+            Identified.from_properties(source=package_extract_run, target=python_package_version).get_or_create(
+                self.client
+            )
 
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
@@ -1559,21 +1608,13 @@ class GraphDatabase(StorageBase):
         else:
             raise ValueError("Unknown environment type %r, should be 'buildtime' or 'runtime'" % environment_type)
 
-        environment = environment_class.query_one(
-            self.client,
-            environment_name=environment_name,
-        )
+        environment = environment_class.query_one(self.client, environment_name=environment_name)
 
         if not environment:
-            environment = environment_class.from_properties(
-                **environment_parameters
-            )
+            environment = environment_class.from_properties(**environment_parameters)
             environment.get_or_create(self.client)
 
-        AnalyzedBy.from_properties(
-            source=environment,
-            target=package_extract_run
-        ).get_or_create(self.client)
+        AnalyzedBy.from_properties(source=environment, target=package_extract_run).get_or_create(self.client)
 
         self._rpm_sync_analysis_result(package_extract_run, document)
         self._deb_sync_analysis_result(package_extract_run, document)
@@ -1600,7 +1641,7 @@ class GraphDatabase(StorageBase):
             os_name=os_name,
             os_version=os_version,
             python_version=python_version,
-            duration=None,   # TODO: propagate duration information
+            duration=None,  # TODO: propagate duration information
         )
         ecosystem_solver_run.get_or_create(self.client)
 
@@ -1622,10 +1663,9 @@ class GraphDatabase(StorageBase):
                 solver_error_unsolvable=False,
             )
             self._create_python_package_record(python_package_version, verify_index=True)
-            Solved.from_properties(
-                source=ecosystem_solver_run,
-                target=python_package_version
-            ).get_or_create(self.client)
+            Solved.from_properties(source=ecosystem_solver_run, target=python_package_version).get_or_create(
+                self.client
+            )
 
             if not python_package_info["sha256"]:
                 _LOGGER.error(
@@ -1634,14 +1674,11 @@ class GraphDatabase(StorageBase):
                 )
 
             for digest in python_package_info["sha256"]:
-                python_artifact = PythonArtifact.from_properties(
-                    artifact_hash_sha256=digest,
-                )
+                python_artifact = PythonArtifact.from_properties(artifact_hash_sha256=digest)
                 python_artifact.get_or_create(self.client)
-                HasArtifact.from_properties(
-                    source=python_package_version,
-                    target=python_artifact,
-                ).get_or_create(self.client)
+                HasArtifact.from_properties(source=python_package_version, target=python_artifact).get_or_create(
+                    self.client
+                )
 
             # TODO: detect and store extras
             # TODO: detect and store markers
@@ -1665,8 +1702,7 @@ class GraphDatabase(StorageBase):
                         )
                         self._create_python_package_record(python_package_dependency, verify_index=True)
                         Solved.from_properties(
-                            source=ecosystem_solver_run,
-                            target=python_package_dependency
+                            source=ecosystem_solver_run, target=python_package_dependency
                         ).get_or_create(self.client)
                         DependsOn.from_properties(
                             source=python_package_version,
@@ -1692,10 +1728,9 @@ class GraphDatabase(StorageBase):
                 solver_error_unsolvable=False,
             )
             self._create_python_package_record(python_package_version, verify_index=True)
-            Solved.from_properties(
-                source=ecosystem_solver_run,
-                target=python_package_version
-            ).get_or_create(self.client)
+            Solved.from_properties(source=ecosystem_solver_run, target=python_package_version).get_or_create(
+                self.client
+            )
 
         for unsolvable in document["result"]["unresolved"]:
             if not unsolvable["version_spec"].startswith("=="):
@@ -1704,8 +1739,7 @@ class GraphDatabase(StorageBase):
                 # packages in ecosystem that we cannot find (e.g. not configured private index
                 # or removed package).
                 _LOGGER.warning(
-                    "Cannot sync unsolvable package %r as package is not locked to as specific version",
-                    unsolvable
+                    "Cannot sync unsolvable package %r as package is not locked to as specific version", unsolvable
                 )
                 continue
 
@@ -1725,18 +1759,16 @@ class GraphDatabase(StorageBase):
                 solver_error_unsolvable=True,
             )
             self._create_python_package_record(python_package_version, verify_index=True)
-            Solved.from_properties(
-                source=ecosystem_solver_run,
-                target=python_package_version
-            ).get_or_create(self.client)
+            Solved.from_properties(source=ecosystem_solver_run, target=python_package_version).get_or_create(
+                self.client
+            )
 
         for unparsed in document["result"]["unparsed"]:
             parts = unparsed["requirement"].rsplit("==", maxsplit=1)
             if len(parts) != 2:
                 # This request did not come from graph-refresh job as there is not pinned version.
                 _LOGGER.warning(
-                    "Cannot sync unparsed package %r as package is not locked to as specific version",
-                    unparsed
+                    "Cannot sync unparsed package %r as package is not locked to as specific version", unparsed
                 )
                 continue
 
@@ -1753,13 +1785,14 @@ class GraphDatabase(StorageBase):
                 solver_error_unsolvable=False,
             )
             self._create_python_package_record(python_package_version, verify_index=True)
-            Solved.from_properties(
-                source=ecosystem_solver_run,
-                target=python_package_version
-            ).get_or_create(self.client)
+            Solved.from_properties(source=ecosystem_solver_run, target=python_package_version).get_or_create(
+                self.client
+            )
 
     @staticmethod
-    def _runtime_environment_conf2models(runtime_properties: dict) -> Tuple[HardwareInformationModel, RuntimeEnvironmentModel]:
+    def _runtime_environment_conf2models(
+        runtime_properties: dict
+    ) -> Tuple[HardwareInformationModel, RuntimeEnvironmentModel]:
         """Convert runtime environment configuration into model representatives."""
         hardware_properties = runtime_properties.pop("hardware", {})
         hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
@@ -1767,8 +1800,8 @@ class GraphDatabase(StorageBase):
         runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
         # We construct our own name as we do not trust user's name input (it can be basically anything).
         runtime_environment_name = (
-                f"{runtime_environment_config.operating_system.name or 'unknown'}"
-                f":{runtime_environment_config.operating_system.version or 'unknown'}"
+            f"{runtime_environment_config.operating_system.name or 'unknown'}"
+            f":{runtime_environment_config.operating_system.version or 'unknown'}"
         )
 
         # TODO: assign image_name and image_sha once we will have this info present in Thoth's configuration file
@@ -1819,37 +1852,27 @@ class GraphDatabase(StorageBase):
         hardware_information.get_or_create(self.client)
         runtime_environment.get_or_create(self.client)
 
-        UsedIn.from_properties(
-            source=hardware_information,
-            target=adviser_run,
-        ).get_or_create(self.client)
+        UsedIn.from_properties(source=hardware_information, target=adviser_run).get_or_create(self.client)
 
-        AdviserRuntimeEnvironmentInput.from_properties(
-            source=runtime_environment,
-            target=adviser_run,
-        ).get_or_create(self.client)
+        AdviserRuntimeEnvironmentInput.from_properties(source=runtime_environment, target=adviser_run).get_or_create(
+            self.client
+        )
 
         # Input stack.
         if document["result"]["input"]["requirements_locked"]:
             # User provided a Pipfile.lock, we can sync it.
             user_software_stack = self.create_user_software_stack_pipfile(
-                adviser_document_id,
-                document["result"]["input"]["requirements_locked"],
-                runtime_environment,
+                adviser_document_id, document["result"]["input"]["requirements_locked"], runtime_environment
             )
-            AdviserStackInput.from_properties(
-                source=user_software_stack,
-                target=adviser_run
-            ).get_or_create(self.client)
+            AdviserStackInput.from_properties(source=user_software_stack, target=adviser_run).get_or_create(self.client)
 
         python_package_requirements = self.create_python_package_requirement(
             document["result"]["input"]["requirements"]
         )
         for python_package_requirement in python_package_requirements:
-            RequirementsInput.from_properties(
-                source=python_package_requirement,
-                target=adviser_run
-            ).get_or_create(self.client)
+            RequirementsInput.from_properties(source=python_package_requirement, target=adviser_run).get_or_create(
+                self.client
+            )
 
         # Output stack.
         for idx, result in enumerate(document["result"]["report"]):
@@ -1866,16 +1889,14 @@ class GraphDatabase(StorageBase):
                 if "performance_score" in entry:
                     if performance_score is not None:
                         _LOGGER.error(
-                            "Multiple performance score entries found in %r (index: %d)",
-                            adviser_document_id, idx
+                            "Multiple performance score entries found in %r (index: %d)", adviser_document_id, idx
                         )
                     performance_score = entry["performance_score"]
 
                 if "overall_score" in entry:
                     if overall_score is not None:
                         _LOGGER.error(
-                            "Multiple overall score entries found in %r (index: %d)",
-                            adviser_document_id, idx
+                            "Multiple overall score entries found in %r (index: %d)", adviser_document_id, idx
                         )
                     overall_score = entry["overall_score"]
 
@@ -1888,10 +1909,9 @@ class GraphDatabase(StorageBase):
                         overall_score=overall_score,
                         runtime_environment=runtime_environment,
                     )
-                    Advised.from_properties(
-                        source=adviser_run,
-                        target=advised_software_stack
-                    ).get_or_create(self.client)
+                    Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(
+                        self.client
+                    )
 
     @enable_vertex_cache
     def sync_provenance_checker_result(self, document: dict) -> None:
@@ -1921,16 +1941,14 @@ class GraphDatabase(StorageBase):
                 provenance_checker_document_id, user_input["requirements_locked"]
             )
             ProvenanceCheckerStackInput.from_properties(
-                source=user_software_stack,
-                target=provenance_checker_run
+                source=user_software_stack, target=provenance_checker_run
             ).get_or_create(self.client)
 
         if user_input.get("requirements"):
             python_package_requirements = self.create_python_package_requirement(user_input["requirements"])
             for python_package_requirement in python_package_requirements:
                 RequirementsInput.from_properties(
-                    source=python_package_requirement,
-                    target=provenance_checker_run,
+                    source=python_package_requirement, target=provenance_checker_run
                 ).get_or_create(self.client)
 
     @enable_vertex_cache
@@ -1957,34 +1975,28 @@ class GraphDatabase(StorageBase):
         )
         for python_package_requirement in python_package_requirements:
             RequirementsInput.from_properties(
-                source=python_package_requirement,
-                target=dependency_monkey_run,
+                source=python_package_requirement, target=dependency_monkey_run
             ).get_or_create(self.client)
 
         hardware_information, runtime_environment = self._runtime_environment_conf2models(
-            document["result"]["parameters"]["runtime_environment"],
+            document["result"]["parameters"]["runtime_environment"]
         )
 
         hardware_information.get_or_create(self.client)
         runtime_environment.get_or_create(self.client)
 
         DependencyMonkeyEnvironmentInput.from_properties(
-            source=runtime_environment,
-            target=dependency_monkey_run,
+            source=runtime_environment, target=dependency_monkey_run
         ).get_or_create(self.client)
 
-        UsedIn.from_properties(
-            source=hardware_information,
-            target=dependency_monkey_run,
-        ).get_or_create(self.client)
+        UsedIn.from_properties(source=hardware_information, target=dependency_monkey_run).get_or_create(self.client)
 
         for inspection_document_id in document["result"]["output"]:
             inspection_software_stack = InspectionSoftwareStack.from_properties(
-                inspection_document_id=inspection_document_id,
+                inspection_document_id=inspection_document_id
             )
             inspection_software_stack.get_or_create(self.client)
 
-            Resolved.from_properties(
-                source=dependency_monkey_run,
-                target=inspection_software_stack,
-            ).get_or_create(self.client)
+            Resolved.from_properties(source=dependency_monkey_run, target=inspection_software_stack).get_or_create(
+                self.client
+            )

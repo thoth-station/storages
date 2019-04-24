@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+"""Create schema out of Thoth's graph models."""
+
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -80,6 +82,7 @@ def create_schema(models: frozenset):
     help="Output file where the generated schema should be stored to."
 )
 def cli(output):
+    """Tool for Thoth - automated creation of RDF schema out of models."""
     schema = create_schema(ALL_MODELS)
 
     if output:
