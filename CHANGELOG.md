@@ -802,3 +802,77 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Make runtime and buildtime environment names shared
 * Distinguish between runtime and buildtime environment
 * Remove duplicit method
+
+## Release 0.11.0 (2019-04-24T19:25:42)
+* :pushpin: Automatic update of dependency pydgraph from 1.0.3 to 1.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.130 to 1.9.134
+* Fix coala complains
+* Return None if no entity was found for in query_one
+* Implemented runtime_environment_analyses_listing method for Dgraph
+* Fix issues reported by coala runs
+* Remove failing test
+* Reformat using black, fix some coala warnings
+* Always return float when computing average performance
+* Implement query for retrieving transitive dependencies
+* Implement method for gathering average performance
+* Fix python_sync_analysis
+* Implemented retrieve_unsolved_pypi_packages method for Dgraph
+* Implemented retrieve_dependent_packages method for Dgraph
+* Add missing provenance checker name
+* Implement get_python_package_tuples for Dgraph
+* Obsolete also unsolved_runtime_environments
+* Remove obsolete queries
+* fix one check
+* Fixed output after tests
+* Implemented get_all_versions_python_package method for Dgraph
+* Add @normalize to flatten results
+* Implemented retrieve_solved_pypi_packages method for Dgraph
+* Add @normalize to flatten results
+* Implemented retrieve_unsolvable_pypi_packages method for Dgraph
+* Add @normalize to flatten results
+* Fix typos
+* Implemented retrieve_unparsable_pypi_packages method for Dgraph
+* Implemented get_all_python_package_version_hashes_sha256 method for Dgraph
+* Add normalization for package_name
+* Implemented python_package_exists method for Dgraph
+* Implemented python_package_version_exists method for Dgraph
+* Added ecoystem filter
+* Implemented get_python_packages_for_index method for Dgraph
+* Implemented get_python_packages method for Dgraph
+* Implemented analysis_records_exist method for Dgraph
+* Implemented solver_records_exist method for Dgraph
+* Fix get_analysis_metadata function, sync_functions, models and graph schema
+* Add Francesco to module authors
+* Remove unused imports in dgraph.py implementation
+* Implement method for gathering CVEs for Python packages
+* Implement query for retrieving artifact hashes from database
+* Add query for checking provenance checker document id presence
+* Add query for checking presence of inspection runs
+* Implement logic for querying for DependencyMonkey document presence
+* Implement logic for checking image analysis run presence
+* Implemment logic for checking if adviser run is present in db
+* Fix query for checking solver document presence
+* Fix query to retrieve solver count
+* User software stack can have adviser or provenance-checker document id
+* Implement query for retrieving image analysis count
+* Implement query for retrieving solver error count
+* Fix handling target UID for vertexes
+* Implement runtime_environment_listing for Dgraph
+* Retrieve read-only transaction for query operations
+* minor change
+* Sync also digests when syncing solver documents
+* Add missing annotations to models
+* Remove checks which are already present in _create_python_package_record
+* Fix syncing dependencies found in solver documents
+* Schema proposal for Dgraph
+* Add register_python_package_index to Dgraph implementation
+* Implemented get_all_python_packages_count method for Dgraph
+* completed method for dgraph
+* Introduce get_analysis_metadata for Dgraph
+* Fix facets syntax when syncing edges dictionaries
+* Introduce solver_document_id_exist method for Dgraph
+* Minor code fixes
+* Implement get_python_package_index_urls for Dgraph
+* Improve schema handling
+* Fix sync of edge sync - source and target should not be part of sync
+* Switch to Dgraph
