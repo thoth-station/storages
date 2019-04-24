@@ -34,6 +34,7 @@ from itertools import chain
 from collections import deque
 from collections import ChainMap
 import asyncio
+from math import nan
 
 import pkg_resources
 import grpc
@@ -357,7 +358,7 @@ class GraphDatabase(StorageBase):
 
     def compute_python_package_version_avg_performance(
         self, packages: Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
-    ) -> Optional[float]:
+    ) -> float:
         """Get average performance of Python packages on the given runtime environment with hardware specs.
 
         We derive this average performance based on software stacks we have
@@ -414,7 +415,7 @@ class GraphDatabase(StorageBase):
             if not item["q"]:
                 # No stack was found that would include the given package, return None directly.
                 _LOGGER.debug("No stack was found for package %r", packages[idx])
-                return None
+                return nan
 
             uids = []
             for uid in item["q"]:
@@ -425,7 +426,7 @@ class GraphDatabase(StorageBase):
         all_stacks = set.intersection(*all_uids)
         if not all_stacks:
             # No intersection was found - no stacks which would include all the packages specified found.
-            return None
+            return nan
 
         # Now retrieve average performance for each and every micro-benchmark of a performance type.
         queries = []
@@ -452,7 +453,7 @@ class GraphDatabase(StorageBase):
 
         if count == 0:
             # No performance indicators found
-            return None
+            return nan
         else:
             return overall_score / count
 
