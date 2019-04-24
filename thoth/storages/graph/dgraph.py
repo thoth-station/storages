@@ -313,14 +313,14 @@ class GraphDatabase(StorageBase):
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) @filter(eq(environment_name,"%s")){
-			    count:count(environment_name)
-                analyzed_by{
+                count:count(environment_name)
+                analyzed_by {
                     analysis_datetime
                     analysis_document_id
                     package_extract_name
                     package_extract_version
                 }
-            }   
+            }
         }
         """ % (
             RuntimeEnvironmentModel.get_label(),
