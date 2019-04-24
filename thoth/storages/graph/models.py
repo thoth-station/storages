@@ -514,10 +514,6 @@ class CVE(VertexBase):
     version_range = model_property(type=str, index="exact")
 
 
-class HasIndex(EdgeBase):
-    """The given package version has an index."""
-
-
 ALL_MODELS = frozenset(
     (
         AdviserRun,
