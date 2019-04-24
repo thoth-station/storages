@@ -210,7 +210,7 @@ class Element:
                 f"Multiple entities with label {cls.get_label()!r} found with properties: {keys!r}"
             )
 
-        return result[0] if len(result) > 0 else []
+        return result[0] if len(result) > 0 else None
 
     @classmethod
     def _do_modify(
