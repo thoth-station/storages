@@ -310,7 +310,30 @@ class GraphDatabase(StorageBase):
         self, runtime_environment_name: str, start_offset: int = 0, count: int = 100
     ) -> list:
         """Get listing of analyses available for the given environment."""
-        return []
+        query = """
+        {
+            f(func: has(%s), first: %d, offset: %d) @filter(eq(environment_name,"%s")){
+			    count:count(environment_name)
+                analyzed_by{
+                    analysis_datetime
+                    analysis_document_id
+                    package_extract_name
+                    package_extract_version
+                }
+            }   
+        }
+        """ % (
+            RuntimeEnvironmentModel.get_label(),
+            count,
+            start_offset,
+            runtime_environment_name,
+        )
+        result = self._query_raw(query)
+        if result["f"][0]["count"] == 0:
+            raise NotFoundError(f"No analyses found for runtime environment {runtime_environment_name!r}")
+        for entry in result["f"][0]["analyzed_by"]:
+            entry["analysis_datetime"] = parser.parse(entry["analysis_datetime"]).replace(tzinfo=timezone.utc)
+        return [analysis for analysis in result["f"][0]["analyzed_by"]]
 
     def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
