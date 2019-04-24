@@ -412,7 +412,8 @@ class GraphDatabase(StorageBase):
                 q(func: has(%s)) @cascade @normalize {
                     uid: uid
                     ~inspection_stack_input {
-                        ~creates_stack @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+                        ~creates_stack @filter(eq(package_name, "%s") """ \
+            """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
                             package_name
                         }
                     }
@@ -537,7 +538,8 @@ class GraphDatabase(StorageBase):
         """
         solver_info = self.parse_python_solver_name(solver_name)
         query = """{
-           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s")  AND eq(python_version, "%s") AND NOT has(~%s)) {
+           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s") """ \
+           """AND eq(python_version, "%s") AND NOT has(~%s)) {
                    package_name:package_name
                    package_version:package_version
                 }
@@ -662,7 +664,8 @@ class GraphDatabase(StorageBase):
         if not unsolvable and not unparseable:
             query = (
                 """{
-                f(func: has(%s)) @filter(eq(solver_error, true) AND eq(solver_error_unsolvable, false) AND eq(solver_error_unparseable, false)) {
+                f(func: has(%s)) @filter(eq(solver_error, true) """
+                """AND eq(solver_error_unsolvable, false) AND eq(solver_error_unparseable, false)) {
                     c: count(uid)
                 }
             }"""
@@ -827,7 +830,8 @@ class GraphDatabase(StorageBase):
 
         query = """
         {
-            q(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(loop: false) {
+            q(func: has(%s)) @filter(eq(package_name, "%s") """ \
+        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(loop: false) {
             uid
             depends_on
             }
@@ -864,7 +868,8 @@ class GraphDatabase(StorageBase):
         solver_document_id = SolverResultsStore.get_document_id(solver_document)
         query = """
         {
-            f(func: has(%s)) @filter(eq(solver_datetime, "%s") AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
+            f(func: has(%s)) @filter(eq(solver_datetime, "%s") """ \
+        """AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
                 count(uid)
             }
         }
@@ -943,18 +948,23 @@ class GraphDatabase(StorageBase):
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
         analysis_document_id = AnalysisResultsStore.get_document_id(analysis_document)
-        query = """
+        query = (
+            """
         {
-            f(func: has(%s)) @filter(eq(analysis_datetime, "%s") AND eq(analysis_document_id, "%s") AND eq(package_extract_name, %s) AND eq(package_extract_version, %s)) {
+            f(func: has(%s)) @filter(eq(analysis_datetime, "%s") """
+            """AND eq(analysis_document_id, "%s") AND eq(package_extract_name, %s) """
+            """AND eq(package_extract_version, %s)) {
                 count(uid)
             }
         }
-        """ % (
-            PackageExtractRun.get_label(),
-            analysis_document["metadata"]["datetime"],
-            analysis_document_id,
-            analysis_document["metadata"]["analyzer"],
-            analysis_document["metadata"]["analyzer_version"],
+        """
+            % (
+                PackageExtractRun.get_label(),
+                analysis_document["metadata"]["datetime"],
+                analysis_document_id,
+                analysis_document["metadata"]["analyzer"],
+                analysis_document["metadata"]["analyzer_version"],
+            )
         )
         result = self._query_raw(query)
 
@@ -1023,7 +1033,8 @@ class GraphDatabase(StorageBase):
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         query = """{
-            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") AND eq(package_version, "%s")) {
+            f(func: has(%s)) @filter(eq(ecosystem, "python") """ \
+        """AND eq(package_name, "%s") AND eq(package_version, "%s")) {
                 v: has_vulnerability {
                     %s
                 }
@@ -1045,7 +1056,8 @@ class GraphDatabase(StorageBase):
         package_name = self.normalize_python_package_name(package_name)
         # TODO: we should consider os name, os version and other properties to have this matching for the given env
         query = """{
-            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") """ \
+        """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
                 a: has_artifact {
                     artifact_hash_sha256
                 }
@@ -1071,7 +1083,8 @@ class GraphDatabase(StorageBase):
         """Get hashes for a Python package per index."""
         package_name = self.normalize_python_package_name(package_name)
 
-        # The query requires @cascade to filter out the nodes which has index url but not artifact for that package/version
+        # The query requires @cascade to filter out the nodes which
+        # has index url but not artifact for that package/version
         query = """{
             f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s")) @cascade{
                 index_url
