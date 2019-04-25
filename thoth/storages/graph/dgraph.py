@@ -406,8 +406,8 @@ class GraphDatabase(StorageBase):
         if not packages:
             raise ValueError("No packages provided for the query")
 
-        # Create a list so we can index packages in log messages.
-        packages = list(packages)
+        # Create a list so we can index packages in log messages, also normalize names according to PEP.
+        packages = list(self.normalize_python_package_name(pkg) for pkg in packages)
         queries = []
         for idx, package_tuple in enumerate(packages):
             package_name, package_version, index_url = package_tuple
@@ -834,6 +834,7 @@ class GraphDatabase(StorageBase):
         dependencies as most of the time is otherwise spent in serialization
         and deserialization of query results.
         """
+        package_name = self.normalize_python_package_name(package_name)
         query = ""
         if os_name:
             query = f' AND eq(os_name, "{os_name}")'
@@ -1048,6 +1049,7 @@ class GraphDatabase(StorageBase):
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
+        package_name = self.normalize_python_package_name(package_name)
         query = """{
             f(func: has(%s)) @filter(eq(ecosystem, "python") """ \
         """AND eq(package_name, "%s") AND eq(package_version, "%s")) {
@@ -1246,7 +1248,7 @@ class GraphDatabase(StorageBase):
         for package in pipfile_locked.packages.packages.values():
             python_package_version = PythonPackageVersion.from_properties(
                 ecosystem="python",
-                package_name=package.name,
+                package_name=self.normalize_python_package_name(package.name),
                 package_version=package.locked_version,
                 index_url=package.index.url if package.index else None,
                 extras=None,
@@ -1280,7 +1282,7 @@ class GraphDatabase(StorageBase):
         for requirement in pipfile.packages.packages.values():
             python_package_requirement = PythonPackageRequirement.from_properties(
                 ecosystem="python",
-                package_name=requirement.name,
+                package_name=self.normalize_python_package_name(requirement.name),
                 version_range=requirement.version,
                 index_url=requirement.index.url if requirement.index else None,
                 markers=requirement.markers,
@@ -1449,6 +1451,7 @@ class GraphDatabase(StorageBase):
         cve: str = None,
     ) -> Tuple[CVE, bool]:
         """Store information about a CVE in the graph database for the given Python package."""
+        package_name = self.normalize_python_package_name(package_name)
         python_index = PythonPackageIndex.query_one(self.client, url=index_url)
         if not python_index:
             raise PythonIndexNotRegistered(
@@ -1571,7 +1574,7 @@ class GraphDatabase(StorageBase):
 
             python_package_version = PythonPackageVersion.from_properties(
                 ecosystem="python",
-                package_name=python_package_info["result"]["name"],
+                package_name=self.normalize_python_package_name(python_package_info["result"]["name"]),
                 package_version=python_package_info["result"]["version"],
                 index_url=None,
                 extras=None,
