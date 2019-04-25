@@ -374,13 +374,6 @@ class GraphDatabase(StorageBase):
 
         return result["f"][0]["count"] > 0
 
-    def _get_stack(self, packages: Set[tuple]) -> str:
-        """Get all stacks that include the given set of packages."""
-        if len(packages) == 0:
-            raise ValueError("Cannot query for a stack with no packages.")
-
-        return ""
-
     @staticmethod
     def _construct_filter_eq_from_dict(dict_) -> str:
         """Construct a filter query from a dict matching all the properties."""
