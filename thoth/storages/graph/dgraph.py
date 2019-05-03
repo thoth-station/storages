@@ -48,6 +48,8 @@ from thoth.python import PipfileLock
 
 from ..base import StorageBase
 from .models_base import enable_vertex_cache
+from .models_base import VertexBase
+from .models import ALL_MODELS
 from .models import AdviserRun
 from .models import AdvisedSoftwareStack
 from .models import AdviserRuntimeEnvironmentInput
@@ -2032,3 +2034,53 @@ class GraphDatabase(StorageBase):
             Resolved.from_properties(source=dependency_monkey_run, target=inspection_software_stack).get_or_create(
                 self.client
             )
+
+    def get_number_of_each_vertex_in_graph(self) -> dict:
+        """Retrieve dictionary with number of vertices per vertex label in the graph database."""
+        node_labels = [model.get_label() for model in ALL_MODELS if issubclass(model, VertexBase)]
+        tot_nodes_per_label = {}
+        for node_label in node_labels:
+            query = (
+                """
+            {
+                f(func: has(%s)) {
+                    c:count(uid)
+                }
+            }
+            """
+                % node_label
+            )
+            result = self._query_raw(query)
+            count = result["f"][0]["c"]
+            tot_nodes_per_label[node_label] = count
+        return tot_nodes_per_label
+
+    def get_python_artifact_vertex_instances_count(self) -> int:
+        """Retrieve total number of nodes per python_artifact in the graph database."""
+        query = (
+            """
+            {
+                f(func: has(%s)) {
+                    c:count(uid)
+                }
+            }
+            """
+            % PythonArtifact.get_label()
+        )
+        result = self._query_raw(query)
+        return result["f"][0]["c"]
+
+    def get_python_package_version_instances_count(self) -> int:
+        """Retrieve total number of nodes for PythonPackageVersion in the graph database."""
+        query = (
+            """
+            {
+                f(func: has(%s)) {
+                    c:count(uid)
+                }
+            }
+            """
+            % PythonPackageVersion.get_label()
+        )
+        result = self._query_raw(query)
+        return result["f"][0]["c"]
