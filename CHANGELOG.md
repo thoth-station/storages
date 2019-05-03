@@ -876,3 +876,18 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Improve schema handling
 * Fix sync of edge sync - source and target should not be part of sync
 * Switch to Dgraph
+
+## Release 0.11.1 (2019-05-03T12:27:35)
+* Fix computing edge hashes
+* Created missing functions for Dgraph
+* :pushpin: Automatic update of dependency pytest-cov from 2.6.1 to 2.7.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.140 to 1.9.141
+* :pushpin: Automatic update of dependency boto3 from 1.9.139 to 1.9.140
+* :pushpin: Automatic update of dependency boto3 from 1.9.138 to 1.9.139
+* :pushpin: Automatic update of dependency boto3 from 1.9.137 to 1.9.138
+* :pushpin: Automatic update of dependency pydgraph from 1.1 to 1.1.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.136 to 1.9.137
+* :pushpin: Automatic update of dependency boto3 from 1.9.135 to 1.9.136
+* Normalize Python package names before inserting them into database
+* Remove unused method
+* :pushpin: Automatic update of dependency boto3 from 1.9.134 to 1.9.135
