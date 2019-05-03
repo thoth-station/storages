@@ -506,6 +506,48 @@ class GraphDatabase(StorageBase):
         else:
             return overall_score / count
 
+    def has_python_solver_error(
+            self,
+            package_name: str,
+            package_version: str,
+            index_url: str,
+            *,
+            os_name: str,
+            os_version: str,
+            python_version: str
+    ) -> bool:
+        """Retrieve information whether the given package has any solver error."""
+        runtime_env = ""
+        if os_name:
+            runtime_env = f" AND eq(os_name, {os_name})"
+
+        if os_version:
+            runtime_env += f" AND eq(os_version, {os_version})"
+
+        if python_version:
+            runtime_env += f" AND eq(python_version, {python_version})"
+
+        query = """
+        {
+            f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")%s) {
+                e: solver_error
+            }
+        }
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            index_url,
+            runtime_env,
+        )
+        result = self._query_raw(query)
+        if not result["f"]:
+            raise NotFoundError(
+                f"Package {package_name} in version {package_version} from index {index_url} not found"
+            )
+
+        return any(i["e"] for i in result["f"])
+
     def get_all_versions_python_package(
         self,
         package_name: str,
