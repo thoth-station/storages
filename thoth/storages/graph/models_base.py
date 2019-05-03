@@ -383,9 +383,9 @@ class EdgeBase(Element):
             edge_name: {f"{edge_name}|{k}": v for k, v in data.items() if k != "uid"},
         }
         label = self.get_label()
+        edge_def[edge_name]["uid"] = self.target.uid
         label_hash = self.compute_label_hash(edge_def)
         edge_def[edge_name][label] = label_hash
-        edge_def[edge_name]["uid"] = self.target.uid
         # Edges have no relevant uid, do not assign it.
         _, existed = self._do_upsert(client, label, label_hash, edge_def)
         return existed
