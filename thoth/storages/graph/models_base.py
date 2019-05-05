@@ -19,7 +19,8 @@
 
 import re
 import os
-from typing import Optional
+import random
+import time
 from typing import Callable
 from typing import Tuple
 from typing import List
@@ -68,6 +69,8 @@ class Element:
     """An abstract class with common methods for vertex and edge."""
 
     _RE_CAMEL2SNAKE = re.compile("(?!^)([A-Z]+)")
+    _UPSERT_RETRIES_COUNT = 3
+
     ELEMENT_NAME = None
 
     # Dgraph uses uint64_t for UID.
@@ -114,8 +117,8 @@ class Element:
 
         return result
 
-    @staticmethod
-    def _do_upsert(client: DgraphClient, label: str, label_hash: str, data: dict) -> Tuple[int, bool]:
+    @classmethod
+    def _do_upsert(cls, client: DgraphClient, label: str, label_hash: str, data: dict) -> Tuple[int, bool]:
         """Perform upsert operation."""
         upsert_query = """
         {
@@ -124,29 +127,44 @@ class Element:
                 %s
             }
         }""" % (label, label_hash, label)
-        transaction = client.txn(read_only=False)
-        try:
-            res = transaction.query(upsert_query)
-            entries = json.loads(res.json)
+        retries_count = 0
+        while True:
+            try:
+                transaction = client.txn(read_only=False)
+                try:
+                    res = transaction.query(upsert_query)
+                    entries = json.loads(res.json)
 
-            if len(entries["all"]) != 0:
-                if len(entries["all"]) > 1:
-                    _LOGGER.error(f"Found multiple entities with label {label!r} with hash {label_hash!r}")
+                    if len(entries["all"]) != 0:
+                        if len(entries["all"]) > 1:
+                            _LOGGER.error(f"Found multiple entities with label {label!r} with hash {label_hash!r}")
 
-                uid = entries["all"][0]["uid"]
-                _LOGGER.debug("Using entity %r with uid %r", data, uid)
-                transaction.commit()
-                return uid, True
+                        uid = entries["all"][0]["uid"]
+                        _LOGGER.debug("Using entity %r with uid %r", data, uid)
+                        transaction.commit()
+                        return uid, True
 
-            res = transaction.mutate(set_obj=data)
-            transaction.commit()
-        except AbortedError:
-            _LOGGER.exception(
-                f"Transaction has been aborted - concurrent upsert writes for {label!r} with hash {label_hash}?"
-            )
-            raise
-        finally:
-            transaction.discard()
+                    res = transaction.mutate(set_obj=data)
+                    transaction.commit()
+                    break
+                finally:
+                    transaction.discard()
+            except AbortedError:
+                if retries_count > cls._UPSERT_RETRIES_COUNT:
+                    _LOGGER.exception(
+                        f"Transaction has been aborted - concurrent upsert writes for {label!r} with"
+                        f"hash {label_hash}; back-off retries count exceeded {retries_count - 1}"
+                    )
+                    raise
+
+                retries_count += 1
+                sleep_time = random.uniform(0.2, 2.0)
+                _LOGGER.warning(
+                    "Transaction has been aborted due to concurrent writes, performing random back-off for %f",
+                    sleep_time
+                )
+                time.sleep(sleep_time)
+
         # If JSON is sent as an input, Dgraph assigns "blank-0" for the blank node being
         # synced. We use it as a key to obtain assigned UID from the graph.
         uid = res.uids["blank-0"]
