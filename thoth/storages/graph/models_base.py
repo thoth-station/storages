@@ -69,7 +69,7 @@ class Element:
     """An abstract class with common methods for vertex and edge."""
 
     _RE_CAMEL2SNAKE = re.compile("(?!^)([A-Z]+)")
-    _UPSERT_RETRIES_COUNT = 3
+    _UPSERT_RETRIES_COUNT = 5
 
     ELEMENT_NAME = None
 
@@ -160,8 +160,9 @@ class Element:
                 retries_count += 1
                 sleep_time = random.uniform(0.2, 2.0)
                 _LOGGER.warning(
-                    "Transaction has been aborted due to concurrent writes, performing random back-off for %f",
-                    sleep_time
+                    "Transaction for %r has been aborted due to concurrent writes, performing "
+                    "random back-off for %.2f seconds",
+                    label, sleep_time
                 )
                 time.sleep(sleep_time)
 
