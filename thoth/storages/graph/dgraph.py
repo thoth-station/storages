@@ -1225,21 +1225,21 @@ class GraphDatabase(StorageBase):
                 f"cannot insert package {python_package_version.to_dict()}"
             )
 
-        entity = PythonPackageVersionEntity.from_properties(
-            ecosystem=python_package_version.ecosystem,
-            package_name=python_package_version.package_name,
-            package_version=python_package_version.package_version,
-            index_url=python_package_version.index_url,
-        )
-        entity.get_or_create(self.client)
+        existed = python_package_version.get_or_create(self.client)
 
-        if package_index:
-            ProvidedBy.from_properties(source=entity, target=package_index).get_or_create(self.client)
+        if not existed:
+            entity = PythonPackageVersionEntity.from_properties(
+                ecosystem=python_package_version.ecosystem,
+                package_name=python_package_version.package_name,
+                package_version=python_package_version.package_version,
+                index_url=python_package_version.index_url,
+            )
+            existed = entity.get_or_create(self.client)
 
-        # Finally, create it...
-        python_package_version.get_or_create(self.client)
+            InstalledFrom.from_properties(source=entity, target=python_package_version).get_or_create(self.client)
 
-        InstalledFrom.from_properties(source=entity, target=python_package_version).get_or_create(self.client)
+            if package_index and not existed:
+                ProvidedBy.from_properties(source=entity, target=package_index).get_or_create(self.client)
 
     def create_python_packages_pipfile(
         self, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None
