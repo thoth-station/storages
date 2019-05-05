@@ -35,6 +35,7 @@ from .sync import sync_analysis_documents
 from .sync import sync_solver_documents
 from .sync import sync_inspection_documents
 from .sync import sync_provenance_checker_documents
+from .sync import sync_dependency_monkey_documents
 from .analyses_by_digest import AnalysisByDigest
 
 
