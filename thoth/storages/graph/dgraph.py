@@ -123,6 +123,9 @@ class GraphDatabase(StorageBase):
     ENVVAR_HOST_NAME = "GRAPH_SERVICE_HOST"
     DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or "localhost:9080"
 
+    # Depth of traversal when transitive query is performed.
+    _TRANSITIVE_QUERY_DEPTH = 3
+
     def __init__(self, hosts: List[str] = None, tls_path: str = None):
         """Initialize Dgraph server database adapter."""
         self._hosts = hosts or [self.DEFAULT_HOST]
@@ -862,7 +865,7 @@ class GraphDatabase(StorageBase):
         results_dict = list(chain(results))
         return dict(ChainMap(*results_dict))
 
-    def retrieve_transitive_dependencies_python(
+    def _do_retrieve_transitive_dependencies_python_uid(
         self,
         package_name: str,
         package_version: str,
@@ -872,29 +875,23 @@ class GraphDatabase(StorageBase):
         os_version: str = None,
         python_version: str = None,
     ) -> list:
-        """Get all transitive dependencies for the given package by traversing dependency graph.
-
-        It's much faster to retrieve just dependencies for the transitive
-        dependencies as most of the time is otherwise spent in serialization
-        and deserialization of query results.
-        """
-        package_name = self.normalize_python_package_name(package_name)
-        query = ""
+        """Perform query for retrieving transitive dependencies, retrieve only uids."""
+        query_filter = ""
         if os_name:
-            query = f' AND eq(os_name, "{os_name}")'
+            query_filter = f' AND eq(os_name, "{os_name}")'
 
         if os_version:
-            query += f' AND eq(os_version, "{os_version}")'
+            query_filter += f' AND eq(os_version, "{os_version}")'
 
         if python_version:
-            query += f' AND eq(python_version, "{python_version}")'
+            query_filter += f' AND eq(python_version, "{python_version}")'
 
         query = """
         {
             q(func: has(%s)) @filter(eq(package_name, "%s") """ \
-        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(loop: false) {
-            uid
-            depends_on
+        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(depth: %d, loop: false) {
+                uid
+                depends_on
             }
         }
         """ % (
@@ -902,7 +899,8 @@ class GraphDatabase(StorageBase):
             package_name,
             package_version,
             index_url,
-            query,
+            query_filter,
+            self._TRANSITIVE_QUERY_DEPTH,
         )
         query_result = self._query_raw(query)["q"]
         if not query_result:
@@ -910,6 +908,43 @@ class GraphDatabase(StorageBase):
                 f"No packages found for package {package_name} in version {package_version} from {index_url}, "
                 f"operating system is {os_name}:{os_version}, python version: {python_version}"
             )
+
+        #
+        # Post-process if we need perform more search in-depth not to reach serialization issues.
+        #
+        # TODO: the manual traversal for transitive dependencies does not include check for cyclic deps
+        #
+
+        # Adjust to add additional filter for uid based queries.
+        if query_filter:
+            query_filter = f" @filter({query_filter})"
+
+        stack = deque((1, item) for item in query_result)
+        while stack:
+            depth, item = stack.pop()
+            if depth == self._TRANSITIVE_QUERY_DEPTH:
+                assert "depends_on" not in item
+                query = """
+                    {
+                        q(func: uid(%s)) %s @recurse(depth: %d, loop: false) {
+                            uid
+                            depends_on
+                    }
+                }
+                """ % (
+                    item["uid"],
+                    query_filter,
+                    self._TRANSITIVE_QUERY_DEPTH,
+                )
+                subquery_result = self._query_raw(query)
+                # We always have one element in the query result - the uid itself.
+                if "depends_on" in subquery_result["q"][0]:
+                    item["depends_on"] = subquery_result["q"][0]["depends_on"]
+                    stack.append((1, subquery_result))
+            else:
+                depth += 1
+                for entry in item.get("depends_on", []):
+                    stack.append((depth, entry))
 
         stack = deque((qr, []) for qr in query_result)
         result = []
@@ -921,6 +956,94 @@ class GraphDatabase(StorageBase):
 
             for dep in item.get("depends_on", []):
                 stack.append((dep, path + [item["uid"]]))
+
+        return result
+
+    def _get_python_package_tuples(
+        self, ids_map: Dict[int, tuple], transitive_dependencies: List
+    ) -> List[List[Tuple[str, str, str]]]:
+        """Retrieve tuples representing package name, package version and index url for the given set of ids."""
+        seen_ids = ids_map.keys()
+        unseen_ids = set()
+        for entry in transitive_dependencies:
+            for idx in range(len(entry)):
+                if entry[idx] not in seen_ids:
+                    unseen_ids.add(entry[idx])
+
+        if len(unseen_ids) > 0:
+            _LOGGER.debug(
+                "Retrieving package tuples for transitive dependencies (count: %d)",
+                len(unseen_ids),
+            )
+
+        package_tuples = self.get_python_package_tuples(unseen_ids)
+        for python_package_id, package_tuple in package_tuples.items():
+            ids_map[python_package_id] = package_tuple
+
+        result = []
+        for entries in transitive_dependencies:
+            new_entries = []
+            for idx, entry in enumerate(entries):
+                new_entries.append(ids_map[entry])
+            result.append(new_entries)
+
+        return result
+
+    def retrieve_transitive_dependencies_python(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        _ids_map: dict = None,
+    ) -> list:
+        """Get all transitive dependencies for the given package by traversing dependency graph.
+
+        It's much faster to retrieve just dependencies for the transitive
+        dependencies as most of the time is otherwise spent in serialization
+        and deserialization of query results.
+
+        The ids map represents a map to optimize number of retrievals - not to perform duplicate
+        queries into graph instance.
+        """
+        _ids_map = _ids_map if _ids_map is not None else {}
+        package_name = self.normalize_python_package_name(package_name)
+        result = self._do_retrieve_transitive_dependencies_python_uid(
+            package_name,
+            package_version,
+            index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+        )
+        result = self._get_python_package_tuples(_ids_map, result)
+        return result
+
+    def retrieve_transitive_dependencies_python_multi(
+            self,
+            package_tuples: Set[Tuple[str, str, str]],
+            *,
+            os_name: str = None,
+            os_version: str = None,
+            python_version: str = None,
+    ) -> dict:
+        """Get all transitive dependencies for a given set of packages by traversing the dependency graph."""
+        ids_map = {}
+        result = {}
+        for package_tuple in package_tuples:
+            paths = self.retrieve_transitive_dependencies_python(
+                package_tuple[0],
+                package_tuple[1],
+                package_tuple[2],
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                _ids_map=ids_map,
+            )
+            result[package_tuple] = paths
 
         return result
 
