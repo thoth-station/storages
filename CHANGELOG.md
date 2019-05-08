@@ -891,3 +891,15 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Normalize Python package names before inserting them into database
 * Remove unused method
 * :pushpin: Automatic update of dependency boto3 from 1.9.134 to 1.9.135
+
+## Release 0.11.2 (2019-05-08T18:02:30)
+* Introduce mechanism to avoid gRPC issues when serializing large stacks
+* Implement query for retrieving information about build-time errors
+* :pushpin: Automatic update of dependency boto3 from 1.9.143 to 1.9.144
+* :pushpin: Automatic update of dependency boto3 from 1.9.142 to 1.9.143
+* Minor fix to display correct release in title of docs html
+* Reorganize Python package creation
+* Increase back-off count
+* Implement back-off for random time in case of concurent upsert writes
+* Fix missing import causing issues in graph-sync-job
+* :pushpin: Automatic update of dependency boto3 from 1.9.141 to 1.9.142
