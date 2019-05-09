@@ -903,3 +903,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Implement back-off for random time in case of concurent upsert writes
 * Fix missing import causing issues in graph-sync-job
 * :pushpin: Automatic update of dependency boto3 from 1.9.141 to 1.9.142
+
+## Release 0.11.3 (2019-05-09T02:24:37)
+* Provide method for buildtime environment listing
+* :pushpin: Automatic update of dependency pytest from 4.4.1 to 4.4.2
+* :pushpin: Automatic update of dependency boto3 from 1.9.144 to 1.9.145
