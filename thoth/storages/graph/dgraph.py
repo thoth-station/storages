@@ -340,7 +340,7 @@ class GraphDatabase(StorageBase):
             for entry in query_result["f"][0].get("analyzed_by", []):
                 entry["analysis_datetime"] = parser.parse(entry["analysis_datetime"]).replace(tzinfo=timezone.utc)
 
-        return [analysis for analysis in query_result["f"][0]["analyzed_by"]]
+        return [analysis for analysis in query_result["f"][0].get("analyzed_by", [])]
 
     def runtime_environment_analyses_listing(
         self, runtime_environment_name: str, start_offset: int = 0, count: int = 100, convert_datetime: bool = True
