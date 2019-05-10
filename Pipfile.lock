@@ -18,11 +18,10 @@
     "default": {
         "amun": {
             "hashes": [
-                "sha256:5cc520a5bb563d5bab23b5c0ba1cd787ab9f7c84f62ee6f701f108bd4833adee",
-                "sha256:70460215448e865856136e58f0acc67bcb550de020085f423aeaa5636cb87394"
+                "sha256:2933c22bae7ad0cae5300a1259ae3b21bb8dc8ff485a5e2d5280fdd4da016be8"
             ],
             "index": "pypi",
-            "version": "==0.2.0"
+            "version": "==0.2.1"
         },
         "attrs": {
             "hashes": [
@@ -449,10 +448,10 @@
         },
         "bandit": {
             "hashes": [
-                "sha256:6102b5d6afd9d966df5054e0bdfc2e73a24d0fea400ec25f2e54c134412158d7",
-                "sha256:9413facfe9de1e1bd291d525c784e1beb1a55c9916b51dae12979af63a69ba4c"
+                "sha256:d31a7b0819fe95d591106ba2d6c35568a513aba24db537ca71984781312a8e95",
+                "sha256:e50fb4ed4ee8a98b8329385e48e606fded0999a2cb3e2acb6e7213c962ff0de1"
             ],
-            "version": "==1.5.1"
+            "version": "==1.6.0"
         },
         "boto": {
             "hashes": [
@@ -518,10 +517,10 @@
         },
         "cfn-lint": {
             "hashes": [
-                "sha256:10c5fae162b73e8d982c97595aeb80a5a8e38d283096083a9c25bf3c7910bbb7",
-                "sha256:4bc16e01ad563234176fdfbb994441dfcddc8f1e9dba6231cfbc289e251677f4"
+                "sha256:afed223f608ba462ab78bc4272f9642d16b2e60ae58d1717aacaa12c6f4ed140",
+                "sha256:fb1c33e5bf71eaf6320b50e21fee777c0939f96f76dc88487aface525538a1a8"
             ],
-            "version": "==0.20.0"
+            "version": "==0.20.1"
         },
         "chardet": {
             "hashes": [
