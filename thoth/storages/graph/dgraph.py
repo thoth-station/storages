@@ -464,9 +464,14 @@ class GraphDatabase(StorageBase):
             raise ValueError("No packages provided for the query")
 
         # Create a list so we can index packages in log messages, also normalize names according to PEP.
-        packages = list(self.normalize_python_package_name(pkg) for pkg in packages)
+        normalized_packages = []
+        for package_tuple in packages:
+            normalized_packages.append(
+                (self.normalize_python_package_name(package_tuple[0]), package_tuple[1], package_tuple[2])
+            )
+
         queries = []
-        for idx, package_tuple in enumerate(packages):
+        for idx, package_tuple in enumerate(normalized_packages):
             package_name, package_version, index_url = package_tuple
             runtime_env_filter = ""
             if runtime_environment:
@@ -510,7 +515,7 @@ class GraphDatabase(StorageBase):
         for idx, item in enumerate(results):
             if not item["q"]:
                 # No stack was found that would include the given package, return None directly.
-                _LOGGER.debug("No stack was found for package %r", packages[idx])
+                _LOGGER.debug("No stack was found for package %r", normalized_packages[idx])
                 return nan
 
             uids = []
