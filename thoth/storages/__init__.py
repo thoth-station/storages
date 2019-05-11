@@ -40,4 +40,4 @@ from .analyses_by_digest import AnalysisByDigest
 
 
 __name__ = "thoth-storages"
-__version__ = "0.11.3"
+__version__ = "0.11.4"
