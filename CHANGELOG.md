@@ -908,3 +908,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Provide method for buildtime environment listing
 * :pushpin: Automatic update of dependency pytest from 4.4.1 to 4.4.2
 * :pushpin: Automatic update of dependency boto3 from 1.9.144 to 1.9.145
+
+## Release 0.11.4 (2019-05-11T01:42:22)
+* Fix normalization issue - normalize only package names
+* :pushpin: Automatic update of dependency boto3 from 1.9.145 to 1.9.146
+* :pushpin: Automatic update of dependency amun from 0.2.0 to 0.2.1
+* An environment can have no analyses associated
