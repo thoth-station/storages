@@ -598,7 +598,8 @@ class GraphDatabase(StorageBase):
         result = self._query_raw(query)
         if not result["f"]:
             raise NotFoundError(
-                f"Package {package_name} in version {package_version} from index {index_url} not found"
+                f"Package {package_name!r} in version {package_version!r} from index {index_url!r} not found for "
+                f"operating system '{os_name}:{os_version}', python version: {python_version!r}"
             )
 
         return any(i["e"] for i in result["f"])
