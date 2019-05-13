@@ -574,13 +574,13 @@ class GraphDatabase(StorageBase):
         """Retrieve information whether the given package has any solver error."""
         runtime_env = ""
         if os_name:
-            runtime_env = f" AND eq(os_name, {os_name})"
+            runtime_env = f' AND eq(os_name, "{os_name}")'
 
         if os_version:
-            runtime_env += f" AND eq(os_version, {os_version})"
+            runtime_env += f' AND eq(os_version, "{os_version}")'
 
         if python_version:
-            runtime_env += f" AND eq(python_version, {python_version})"
+            runtime_env += f' AND eq(python_version, "{python_version}")'
 
         query = """
         {
