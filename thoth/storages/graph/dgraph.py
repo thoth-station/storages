@@ -2156,18 +2156,18 @@ class GraphDatabase(StorageBase):
                         )
                     overall_score = entry["overall_score"]
 
-                if result[1] and result[1].get("requirements_locked"):
-                    advised_software_stack = self.create_advised_software_stack_pipfile(
-                        adviser_document_id,
-                        (result[1] or {}).get("requirements_locked") or [],
-                        advised_stack_index=idx,
-                        performance_score=performance_score,
-                        overall_score=overall_score,
-                        runtime_environment=runtime_environment,
-                    )
-                    Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(
-                        self.client
-                    )
+            if result[1] and result[1].get("requirements_locked"):
+                advised_software_stack = self.create_advised_software_stack_pipfile(
+                    adviser_document_id,
+                    (result[1] or {}).get("requirements_locked") or [],
+                    advised_stack_index=idx,
+                    performance_score=performance_score,
+                    overall_score=overall_score,
+                    runtime_environment=runtime_environment,
+                )
+                Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(
+                    self.client
+                )
 
     @enable_vertex_cache
     def sync_provenance_checker_result(self, document: dict) -> None:
