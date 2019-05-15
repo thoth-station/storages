@@ -70,6 +70,7 @@ from .models import DependsOn
 from .models import EcosystemSolverRun
 from .models import EnvironmentBase
 from .models import HardwareInformation as HardwareInformationModel
+from .models import UserHardwareInformation
 from .models import HasArtifact
 from .models import HasVulnerability
 from .models import Identified
@@ -2051,11 +2052,16 @@ class GraphDatabase(StorageBase):
 
     @staticmethod
     def _runtime_environment_conf2models(
-        runtime_properties: dict
+        runtime_properties: dict, is_user_run: bool=False
     ) -> Tuple[HardwareInformationModel, RuntimeEnvironmentModel]:
         """Convert runtime environment configuration into model representatives."""
         hardware_properties = runtime_properties.pop("hardware", {})
-        hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
+
+        if is_user_run:
+            hardware_information = UserHardwareInformation.from_properties(**hardware_properties)
+
+        else:
+            hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
 
         runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
         # We construct our own name as we do not trust user's name input (it can be basically anything).
@@ -2107,7 +2113,7 @@ class GraphDatabase(StorageBase):
 
         # Hardware information.
         hardware_information, runtime_environment = self._runtime_environment_conf2models(
-            document["result"]["parameters"]["runtime_environment"]
+            document["result"]["parameters"]["runtime_environment"], is_user_run=True
         )
         hardware_information.get_or_create(self.client)
         runtime_environment.get_or_create(self.client)

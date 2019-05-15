@@ -445,6 +445,11 @@ class HardwareInformation(VertexBase):
 
 
 @attr.s(slots=True)
+class UserHardwareInformation(HardwareInformation):
+    """Hardware specification and properties as used by a user (input for the recommendation engine)."""
+
+
+@attr.s(slots=True)
 class UsedIn(ReverseEdgeBase):
     """Information about hardware used when running/checking a stack."""
 
@@ -566,5 +571,6 @@ ALL_MODELS = frozenset(
         UsedInBuild,
         UsedInJob,
         UserSoftwareStack,
+        UserHardwareInformation,
     )
 )
