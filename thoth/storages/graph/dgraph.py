@@ -2132,7 +2132,7 @@ class GraphDatabase(StorageBase):
 
         # Output stack.
         for idx, result in enumerate(document["result"]["report"]):
-            if len(result) != 2:
+            if len(result) != 3:
                 _LOGGER.error("Omitting stack as no output Pipfile.lock was provided")
                 continue
 
