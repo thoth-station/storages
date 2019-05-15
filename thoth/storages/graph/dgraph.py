@@ -949,6 +949,9 @@ class GraphDatabase(StorageBase):
             q(func: has(%s)) @filter(eq(package_name, "%s") """ \
         """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(depth: %d, loop: false) {
                 uid
+                package_name
+                package_version
+                index_url
                 depends_on
             }
         }
@@ -970,17 +973,15 @@ class GraphDatabase(StorageBase):
         #
         # Post-process if we need perform more search in-depth not to reach serialization issues.
         #
-        # TODO: the manual traversal for transitive dependencies does not include check for cyclic deps
-        #
 
         # Adjust to add additional filter for uid based queries.
         if query_filter:
             query_filter = f" @filter({query_filter})"
 
-        stack = deque((1, item) for item in query_result)
+        stack = deque((1, item, set()) for item in query_result)
         while stack:
-            depth, item = stack.pop()
-            if depth == self._TRANSITIVE_QUERY_DEPTH:
+            depth, item, packages_seen = stack.pop()
+            if depth == self._TRANSITIVE_QUERY_DEPTH and item["uid"] not in packages_seen:
                 assert "depends_on" not in item
                 query = """
                     {
@@ -995,14 +996,16 @@ class GraphDatabase(StorageBase):
                     self._TRANSITIVE_QUERY_DEPTH,
                 )
                 subquery_result = self._query_raw(query)
+                assert subquery_result["q"][0]["uid"] == item["uid"]
                 # We always have one element in the query result - the uid itself.
                 if "depends_on" in subquery_result["q"][0]:
                     item["depends_on"] = subquery_result["q"][0]["depends_on"]
-                    stack.append((1, subquery_result))
+                    stack.append((1, subquery_result, packages_seen | {item["uid"]}))
             else:
                 depth += 1
                 for entry in item.get("depends_on", []):
-                    stack.append((depth, entry))
+                    new_packages_seen = packages_seen | {item["uid"]}
+                    stack.append((depth, entry, new_packages_seen))
 
         stack = deque((qr, []) for qr in query_result)
         result = []
