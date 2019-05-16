@@ -4,7 +4,7 @@ Thoth Storages
 This library provides a library called `thoth-storages
 <https://pypi.org/project/thoth-storages>`_ used in project `Thoth
 <https://thoth-station.ninja>`_.  The library exposes core queries and methods
-for JanusGraph database as well as adapters for manipulating with Ceph via its
+for Dgraph database as well as adapters for manipulating with Ceph via its
 S3 compatible API.
 
 Installation and Usage
