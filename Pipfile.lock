@@ -40,18 +40,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:1253809000b3b9020c6dde3e8b0b75e6c02547e2760656d8bccc40fd2a7284a6",
-                "sha256:e32a1a324ddfb652dedd550fd288ad85cc8d448ed19315f39fbe7b6171a30dc8"
+                "sha256:10fd4bf8fe88f9bb449a538e639c1afb9762cb91693dea8c17282ba5c9d00b51",
+                "sha256:4d187262d30befec431b3b52ccce35e55c0062a86f19b9dd5328b18d6332c5aa"
             ],
             "index": "pypi",
-            "version": "==1.9.150"
+            "version": "==1.9.151"
         },
         "botocore": {
             "hashes": [
-                "sha256:946fd5e85378c3c597d6b9f495706576a0fc0000b216e30346ed7ee796ff50c8",
-                "sha256:f82e44af499a8f806c363ab4e26df82195b5b190c4169ccfbfbc98e55aa22bf7"
+                "sha256:5e4774c106bb02f8e4639818c2f8157b8ec114a76e481e17cd3fe6955206e088",
+                "sha256:cfc667e7888aad09ead8f7e32129ea90aa5c7f602531094954bf6305db74aac4"
             ],
-            "version": "==1.12.150"
+            "version": "==1.12.151"
         },
         "certifi": {
             "hashes": [
@@ -304,10 +304,10 @@
         },
         "sentry-sdk": {
             "hashes": [
-                "sha256:5818289868755cfea74e61e532b4b0d11d523901041338d473277db91d4d8173",
-                "sha256:b50948bbb553eef11ba650db858e31f5bb7c8d821a9d7338a01d01487d964e8c"
+                "sha256:e308129104567cee9f8848ed5098de17cbccc19bd21417c8980d47f80f1409ec",
+                "sha256:f5819df450d7b0696be69a0c6d70a09e4890a3844ee8ccb7a461794135bd5965"
             ],
-            "version": "==0.7.14"
+            "version": "==0.8.0"
         },
         "six": {
             "hashes": [
@@ -359,7 +359,6 @@
                 "sha256:2393a695cd12afedd0dcb26fe5d50d0cf248e5a66f75dbd89a3d4eb333a61af4",
                 "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"
             ],
-            "markers": "python_version >= '3.4'",
             "version": "==1.24.3"
         },
         "voluptuous": {
@@ -462,18 +461,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:1253809000b3b9020c6dde3e8b0b75e6c02547e2760656d8bccc40fd2a7284a6",
-                "sha256:e32a1a324ddfb652dedd550fd288ad85cc8d448ed19315f39fbe7b6171a30dc8"
+                "sha256:10fd4bf8fe88f9bb449a538e639c1afb9762cb91693dea8c17282ba5c9d00b51",
+                "sha256:4d187262d30befec431b3b52ccce35e55c0062a86f19b9dd5328b18d6332c5aa"
             ],
             "index": "pypi",
-            "version": "==1.9.150"
+            "version": "==1.9.151"
         },
         "botocore": {
             "hashes": [
-                "sha256:946fd5e85378c3c597d6b9f495706576a0fc0000b216e30346ed7ee796ff50c8",
-                "sha256:f82e44af499a8f806c363ab4e26df82195b5b190c4169ccfbfbc98e55aa22bf7"
+                "sha256:5e4774c106bb02f8e4639818c2f8157b8ec114a76e481e17cd3fe6955206e088",
+                "sha256:cfc667e7888aad09ead8f7e32129ea90aa5c7f602531094954bf6305db74aac4"
             ],
-            "version": "==1.12.150"
+            "version": "==1.12.151"
         },
         "certifi": {
             "hashes": [
@@ -517,10 +516,10 @@
         },
         "cfn-lint": {
             "hashes": [
-                "sha256:90305ff2f9e7ee86b269f095aaaf230d4d54ef731fb41faf8f3d5ca341e1022a",
-                "sha256:c79fd8487dda4451ffddaf98e239728ea345615d86a01da9e1067e5952ef1052"
+                "sha256:761ac05cc22f1b2dd2cd4506652afe3670e6d897b010b8d5c14c74a75a79710d",
+                "sha256:b4457caceca82e1dafc988ac6d560ae122d505ce144f5d21e57811c0ce29f80f"
             ],
-            "version": "==0.20.2"
+            "version": "==0.20.3"
         },
         "chardet": {
             "hashes": [
@@ -1263,7 +1262,6 @@
                 "sha256:2393a695cd12afedd0dcb26fe5d50d0cf248e5a66f75dbd89a3d4eb333a61af4",
                 "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"
             ],
-            "markers": "python_version >= '3.4'",
             "version": "==1.24.3"
         },
         "vulture": {
