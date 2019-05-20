@@ -914,3 +914,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.9.145 to 1.9.146
 * :pushpin: Automatic update of dependency amun from 0.2.0 to 0.2.1
 * An environment can have no analyses associated
+
+## Release 0.12.0 (2019-05-20T11:38:12)
+* Removed unusued functions
+* Update schema, functions and design schema
+* :pushpin: Automatic update of dependency boto3 from 1.9.150 to 1.9.151
+* New UserHardwareInformation entity
+* :pushpin: Automatic update of dependency boto3 from 1.9.149 to 1.9.150
+* Update for Dgraph
+* :pushpin: Automatic update of dependency boto3 from 1.9.148 to 1.9.149
+* Check for cyclic dependencies in transitive query
+* :pushpin: Automatic update of dependency thoth-common from 0.8.5 to 0.8.7
+* :pushpin: Automatic update of dependency boto3 from 1.9.147 to 1.9.148
+* Fix number of overall results
+* Fix wrong indentation in adviser results sync
+* :pushpin: Automatic update of dependency boto3 from 1.9.146 to 1.9.147
+* Correct typo
+* Qute fields as they are stored as strings
+* Enhance exception information to give better information
+* :pushpin: Automatic update of dependency pytest from 4.4.2 to 4.5.0
