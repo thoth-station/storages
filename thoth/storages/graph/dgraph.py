@@ -379,7 +379,9 @@ class GraphDatabase(StorageBase):
         )
         result = self._query_raw(query)
         if result["f"]:
-            return self._postprocess_environment_analysis_listing(result, run_software_environment_name, convert_datetime)
+            return self._postprocess_environment_analysis_listing(
+                result, run_software_environment_name, convert_datetime
+            )
         else:
             return []
 
@@ -411,7 +413,9 @@ class GraphDatabase(StorageBase):
         )
         result = self._query_raw(query)
         if result["f"]:
-            return self._postprocess_environment_analysis_listing(result, build_software_environment_name, convert_datetime)
+            return self._postprocess_environment_analysis_listing(
+                result, build_software_environment_name, convert_datetime
+            )
         else:
             return []
 
@@ -2331,33 +2335,3 @@ class GraphDatabase(StorageBase):
             count = result["f"][0]["c"]
             tot_nodes_per_label[node_label] = count
         return tot_nodes_per_label
-
-    def get_python_artifact_vertex_instances_count(self) -> int:
-        """Retrieve total number of nodes per python_artifact in the graph database."""
-        query = (
-            """
-            {
-                f(func: has(%s)) {
-                    c:count(uid)
-                }
-            }
-            """
-            % PythonArtifact.get_label()
-        )
-        result = self._query_raw(query)
-        return result["f"][0]["c"]
-
-    def get_python_package_version_instances_count(self) -> int:
-        """Retrieve total number of nodes for PythonPackageVersion in the graph database."""
-        query = (
-            """
-            {
-                f(func: has(%s)) {
-                    c:count(uid)
-                }
-            }
-            """
-            % PythonPackageVersion.get_label()
-        )
-        result = self._query_raw(query)
-        return result["f"][0]["c"]
