@@ -52,11 +52,11 @@ from .models_base import VertexBase
 from .models import ALL_MODELS
 from .models import AdviserRun
 from .models import AdvisedSoftwareStack
-from .models import AdviserRuntimeEnvironmentInput
+from .models import AdviserRunSoftwareEnvironmentInput
 from .models import AdviserStackInput
 from .models import Advised
 from .models import AnalyzedBy
-from .models import BuildtimeEnvironment as BuildtimeEnvironmentModel
+from .models import BuildSoftwareEnvironment as BuildSoftwareEnvironmentModel
 from .models import CreatesStack
 from .models import CVE
 from .models import DebDepends
@@ -65,17 +65,18 @@ from .models import DebPackageVersion
 from .models import DebPreDepends
 from .models import DebReplaces
 from .models import DependencyMonkeyRun
-from .models import DependencyMonkeyEnvironmentInput
+from .models import DependencyMonkeyRunSoftwareEnvironmentInput
 from .models import DependsOn
 from .models import EcosystemSolverRun
 from .models import EnvironmentBase
 from .models import HardwareInformation as HardwareInformationModel
+from .models import UserHardwareInformation as UserHardwareInformationModel
 from .models import HasArtifact
 from .models import HasVulnerability
 from .models import Identified
-from .models import InspectionBuildtimeEnvironmentInput
+from .models import InspectionBuildSoftwareEnvironmentInput
 from .models import InspectionRun
-from .models import InspectionRuntimeEnvironmentInput
+from .models import InspectionRunSoftwareEnvironmentInput
 from .models import InspectionSoftwareStack
 from .models import InspectionStackInput
 from .models import InstalledFrom
@@ -95,7 +96,8 @@ from .models import Requires
 from .models import Resolved
 from .models import RPMPackageVersion
 from .models import RPMRequirement
-from .models import RuntimeEnvironment as RuntimeEnvironmentModel
+from .models import RunSoftwareEnvironment as RunSoftwareEnvironmentModel
+from .models import UserRunSoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models import Solved
 from .models import SoftwareStackBase
 from .models import UsedIn
@@ -295,8 +297,13 @@ class GraphDatabase(StorageBase):
 
         return result["f"][0]
 
-    def runtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
-        """Get listing of runtime environments available."""
+    def run_software_environment_listing(
+        self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
+    ) -> list:
+        """Get listing of software environments available for run."""
+        run_software_environment = RunSoftwareEnvironmentModel.get_label()
+        if is_user_run:
+            run_software_environment = UserRunSoftwareEnvironmentModel.get_label()
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) {
@@ -304,15 +311,15 @@ class GraphDatabase(StorageBase):
             }
         }
         """ % (
-            RuntimeEnvironmentModel.get_label(),
+            run_software_environment,
             count,
             start_offset,
         )
         result = self._query_raw(query)
         return list(chain(item["e"] for item in result["f"]))
 
-    def buildtime_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
-        """Get listing of buildtime environments available."""
+    def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
+        """Get listing of software environments available for build."""
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) {
@@ -320,7 +327,7 @@ class GraphDatabase(StorageBase):
             }
         }
         """ % (
-            BuildtimeEnvironmentModel.get_label(),
+            BuildSoftwareEnvironmentModel.get_label(),
             count,
             start_offset,
         )
@@ -329,11 +336,9 @@ class GraphDatabase(StorageBase):
 
     @staticmethod
     def _postprocess_environment_analysis_listing(
-            query_result: dict,
-            environment_name: str,
-            convert_datetime: bool
+        query_result: dict, environment_name: str, convert_datetime: bool
     ) -> list:
-        """Post-process buildtime/runtime environment analysis listing query."""
+        """Post-process build/run software environment analysis listing query."""
         if query_result["f"][0]["count"] == 0:
             raise NotFoundError(f"No analyses found for environment {environment_name!r}")
         if convert_datetime:
@@ -342,10 +347,18 @@ class GraphDatabase(StorageBase):
 
         return [analysis for analysis in query_result["f"][0].get("analyzed_by", [])]
 
-    def runtime_environment_analyses_listing(
-        self, runtime_environment_name: str, start_offset: int = 0, count: int = 100, convert_datetime: bool = True
+    def run_software_environment_analyses_listing(
+        self,
+        run_software_environment_name: str,
+        start_offset: int = 0,
+        count: int = 100,
+        convert_datetime: bool = True,
+        is_user_run: bool = False,
     ) -> list:
-        """Get listing of analyses available for the given runtime environment."""
+        """Get listing of analyses available for the given software environment for run."""
+        run_software_environment = RunSoftwareEnvironmentModel.get_label()
+        if is_user_run:
+            run_software_environment = UserRunSoftwareEnvironmentModel.get_label()
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) @filter(eq(environment_name,"%s")){
@@ -359,18 +372,27 @@ class GraphDatabase(StorageBase):
             }
         }
         """ % (
-            RuntimeEnvironmentModel.get_label(),
+            run_software_environment,
             count,
             start_offset,
-            runtime_environment_name,
+            run_software_environment_name,
         )
         result = self._query_raw(query)
-        return self._postprocess_environment_analysis_listing(result, runtime_environment_name, convert_datetime)
+        if result["f"]:
+            return self._postprocess_environment_analysis_listing(
+                result, run_software_environment_name, convert_datetime
+            )
+        else:
+            return []
 
-    def buildtime_environment_analyses_listing(
-        self, runtime_environment_name: str, start_offset: int = 0, count: int = 100, convert_datetime: bool = True
+    def build_software_environment_analyses_listing(
+        self,
+        build_software_environment_name: str,
+        start_offset: int = 0,
+        count: int = 100,
+        convert_datetime: bool = True,
     ) -> list:
-        """Get listing of analyses available for the given buildtime environment."""
+        """Get listing of analyses available for the given software environment for build."""
         query = """
         {
             f(func: has(%s), first: %d, offset: %d) @filter(eq(environment_name,"%s")){
@@ -384,13 +406,18 @@ class GraphDatabase(StorageBase):
             }
         }
         """ % (
-            BuildtimeEnvironmentModel.get_label(),
+            BuildSoftwareEnvironmentModel.get_label(),
             count,
             start_offset,
-            runtime_environment_name,
+            build_software_environment_name,
         )
         result = self._query_raw(query)
-        return self._postprocess_environment_analysis_listing(result, runtime_environment_name, convert_datetime)
+        if result["f"]:
+            return self._postprocess_environment_analysis_listing(
+                result, build_software_environment_name, convert_datetime
+            )
+        else:
+            return []
 
     def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
         """Check if the given Python package version exists in the graph database."""
@@ -445,19 +472,19 @@ class GraphDatabase(StorageBase):
         return filter_query
 
     def compute_python_package_version_avg_performance(
-        self, packages: Set[tuple], *, runtime_environment: dict = None, hardware_specs: dict = None
+        self, packages: Set[tuple], *, run_software_environment: dict = None, hardware_specs: dict = None
     ) -> float:
-        """Get average performance of Python packages on the given runtime environment with hardware specs.
+        """Get average performance of Python packages on the given runtime environment.
 
         We derive this average performance based on software stacks we have
-        evaluated on the given runtime environment including the given
+        evaluated on the given software environment for run including the given
         package in specified version. There are also included stacks that
         failed for some reason that have negative performance impact on the overall value.
 
         There are considered software stacks that include packages listed,
         they can however include also other packages.
 
-        Optional parameters additionally slice results - e.g. if runtime_environment is set,
+        Optional parameters additionally slice results - e.g. if run_software_environment is set,
         it picks only results that match the given parameters criteria.
         """
         if not packages:
@@ -473,11 +500,11 @@ class GraphDatabase(StorageBase):
         queries = []
         for idx, package_tuple in enumerate(normalized_packages):
             package_name, package_version, index_url = package_tuple
-            runtime_env_filter = ""
-            if runtime_environment:
-                runtime_env_filter = "~inspection_runtime_environment_input @filter("
-                runtime_env_filter += self._construct_filter_eq_from_dict(runtime_environment)
-                runtime_env_filter += ") { uid }"
+            run_software_env_filter = ""
+            if run_software_environment:
+                run_software_env_filter = "~inspection_software_environment_input @filter("
+                run_software_env_filter += self._construct_filter_eq_from_dict(software_environment)
+                run_software_env_filter += ") { uid }"
 
             hw_filter = ""
             if hardware_specs:
@@ -505,7 +532,7 @@ class GraphDatabase(StorageBase):
                 package_version,
                 index_url,
                 hw_filter,
-                runtime_env_filter,
+                run_software_env_filter,
             )
             queries.append(query)
 
@@ -562,25 +589,25 @@ class GraphDatabase(StorageBase):
             return overall_score / count
 
     def has_python_solver_error(
-            self,
-            package_name: str,
-            package_version: str,
-            index_url: str,
-            *,
-            os_name: str,
-            os_version: str,
-            python_version: str
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: str,
+        os_version: str,
+        python_version: str,
     ) -> bool:
         """Retrieve information whether the given package has any solver error."""
-        runtime_env = ""
+        run_software_env = ""
         if os_name:
-            runtime_env = f' AND eq(os_name, "{os_name}")'
+            run_software_env = f' AND eq(os_name, "{os_name}")'
 
         if os_version:
-            runtime_env += f' AND eq(os_version, "{os_version}")'
+            run_software_env += f' AND eq(os_version, "{os_version}")'
 
         if python_version:
-            runtime_env += f' AND eq(python_version, "{python_version}")'
+            run_software_env += f' AND eq(python_version, "{python_version}")'
 
         query = """
         {
@@ -593,7 +620,7 @@ class GraphDatabase(StorageBase):
             package_name,
             package_version,
             index_url,
-            runtime_env,
+            run_software_env,
         )
         result = self._query_raw(query)
         if not result["f"]:
@@ -1078,18 +1105,18 @@ class GraphDatabase(StorageBase):
             index_url,
             os_name=os_name,
             os_version=os_version,
-            python_version=python_version
+            python_version=python_version,
         )
         result = self._get_python_package_tuples(_ids_map, result)
         return result
 
     def retrieve_transitive_dependencies_python_multi(
-            self,
-            package_tuples: Set[Tuple[str, str, str]],
-            *,
-            os_name: str = None,
-            os_version: str = None,
-            python_version: str = None,
+        self,
+        package_tuples: Set[Tuple[str, str, str]],
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
     ) -> dict:
         """Get all transitive dependencies for a given set of packages by traversing the dependency graph."""
         ids_map = {}
@@ -1468,7 +1495,7 @@ class GraphDatabase(StorageBase):
                 ProvidedBy.from_properties(source=entity, target=package_index).get_or_create(self.client)
 
     def create_python_packages_pipfile(
-        self, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None
+        self, pipfile_locked: dict, run_software_environment: UserRunSoftwareEnvironmentModel = None
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
         result = []
@@ -1480,9 +1507,9 @@ class GraphDatabase(StorageBase):
                 package_version=package.locked_version,
                 index_url=package.index.url if package.index else None,
                 extras=None,
-                os_name=runtime_environment.os_name if runtime_environment else None,
-                os_version=runtime_environment.os_version if runtime_environment else None,
-                python_version=runtime_environment.python_version if runtime_environment else None,
+                os_name=run_software_environment.os_name if run_software_environment else None,
+                os_version=run_software_environment.os_version if run_software_environment else None,
+                python_version=run_software_environment.python_version if run_software_environment else None,
                 # We assume these to be false as these are inputs or recommendation output.
                 solver_error=False,
                 solver_error_unparseable=False,
@@ -1494,10 +1521,13 @@ class GraphDatabase(StorageBase):
         return result
 
     def create_user_software_stack_pipfile(
-        self, adviser_document_id: str, pipfile_locked: dict, runtime_environment: RuntimeEnvironmentModel = None
+        self,
+        adviser_document_id: str,
+        pipfile_locked: dict,
+        run_software_environment: UserRunSoftwareEnvironmentModel = None,
     ) -> UserSoftwareStack:
         """Create a user software stack entry from Pipfile.lock."""
-        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, runtime_environment)
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, run_software_environment)
         software_stack = UserSoftwareStack.from_properties(document_id=adviser_document_id)
         software_stack.get_or_create(self.client)
         self._python_packages_create_stack(python_package_versions, software_stack)
@@ -1539,10 +1569,10 @@ class GraphDatabase(StorageBase):
         advised_stack_index: int,
         performance_score: float,
         overall_score: float,
-        runtime_environment: RuntimeEnvironmentModel,
+        run_software_environment: UserRunSoftwareEnvironmentModel,
     ) -> AdvisedSoftwareStack:
         """Create an advised software stack entry from Pipfile.lock."""
-        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, runtime_environment)
+        python_package_versions = self.create_python_packages_pipfile(pipfile_locked, run_software_environment)
         software_stack = AdvisedSoftwareStack.from_properties(
             adviser_document_id=adviser_document_id,
             advised_stack_index=advised_stack_index,
@@ -1604,29 +1634,33 @@ class GraphDatabase(StorageBase):
                 self.client
             )
 
-        # We query for an existing analysis of buildtime and runtime image, if it did not exist, we create
+        # We query for an existing analysis of image for build and run, if it did not exist, we create
         # a placeholder which will be used in package-extract sync.
-        buildtime_environment = BuildtimeEnvironmentModel.query_one(
+        build_software_environment = BuildSoftwareEnvironmentModel.query_one(
             self.client, environment_name=inspection_document_id
         )
-        if not buildtime_environment:
+        if not build_software_environment:
             # TODO: we will need to use fully-qualified images in inspection runs as base.
-            buildtime_environment = BuildtimeEnvironmentModel.from_properties(
+            build_software_environment = BuildSoftwareEnvironmentModel.from_properties(
                 environment_name=document["specification"]["base"]
             )
-            buildtime_environment.get_or_create(self.client)
+            build_software_environment.get_or_create(self.client)
 
-        InspectionBuildtimeEnvironmentInput.from_properties(
-            source=buildtime_environment, target=inspection_run
+        InspectionBuildSoftwareEnvironmentInput.from_properties(
+            source=build_software_environment, target=inspection_run
         ).get_or_create(self.client)
 
-        runtime_environment = RuntimeEnvironmentModel.query_one(self.client, environment_name=inspection_document_id)
-        if not runtime_environment:
-            runtime_environment = RuntimeEnvironmentModel.from_properties(environment_name=inspection_document_id)
-            runtime_environment.get_or_create(self.client)
+        run_software_environment = RunSoftwareEnvironmentModel.query_one(
+            self.client, environment_name=inspection_document_id
+        )
+        if not run_software_environment:
+            run_software_environment = RunSoftwareEnvironmentModel.from_properties(
+                environment_name=inspection_document_id
+            )
+            run_software_environment.get_or_create(self.client)
 
-        InspectionRuntimeEnvironmentInput.from_properties(
-            source=runtime_environment, target=inspection_run
+        InspectionRunSoftwareEnvironmentInput.from_properties(
+            source=run_software_environment, target=inspection_run
         ).get_or_create(self.client)
 
         hardware = HardwareInformationConfig.from_dict(
@@ -1862,9 +1896,9 @@ class GraphDatabase(StorageBase):
         }
 
         if environment_type == "runtime":
-            environment_class = RuntimeEnvironmentModel
+            environment_class = RunSoftwareEnvironmentModel
         elif environment_type == "buildtime":
-            environment_class = BuildtimeEnvironmentModel
+            environment_class = BuildSoftwareEnvironmentModel
         else:
             raise ValueError("Unknown environment type %r, should be 'buildtime' or 'runtime'" % environment_type)
 
@@ -2051,29 +2085,50 @@ class GraphDatabase(StorageBase):
 
     @staticmethod
     def _runtime_environment_conf2models(
-        runtime_properties: dict
-    ) -> Tuple[HardwareInformationModel, RuntimeEnvironmentModel]:
+        runtime_properties: dict, is_user_run: bool = False
+    ) -> Tuple[HardwareInformationModel, RunSoftwareEnvironmentModel]:
         """Convert runtime environment configuration into model representatives."""
         hardware_properties = runtime_properties.pop("hardware", {})
-        hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
 
-        runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
-        # We construct our own name as we do not trust user's name input (it can be basically anything).
-        runtime_environment_name = (
-            f"{runtime_environment_config.operating_system.name or 'unknown'}"
-            f":{runtime_environment_config.operating_system.version or 'unknown'}"
-        )
+        if is_user_run:
+            hardware_information = UserHardwareInformationModel.from_properties(**hardware_properties)
 
-        # TODO: assign image_name and image_sha once we will have this info present in Thoth's configuration file
-        runtime_environment = RuntimeEnvironmentModel.from_properties(
-            environment_name=runtime_environment_name,
-            python_version=runtime_environment_config.python_version,
-            os_name=runtime_environment_config.operating_system.name,
-            os_version=runtime_environment_config.operating_system.version,
-            cuda_version=runtime_environment_config.cuda_version,
-        )
+            runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
+            # We construct our own name as we do not trust user's name input (it can be basically anything).
+            run_software_environment_name = (
+                f"{runtime_environment_config.operating_system.name or 'unknown'}"
+                f":{runtime_environment_config.operating_system.version or 'unknown'}"
+            )
 
-        return hardware_information, runtime_environment
+            # TODO: assign image_name and image_sha once we will have this info present in Thoth's configuration file
+            run_software_environment = UserRunSoftwareEnvironmentModel.from_properties(
+                environment_name=run_software_environment_name,
+                python_version=runtime_environment_config.python_version,
+                os_name=runtime_environment_config.operating_system.name,
+                os_version=runtime_environment_config.operating_system.version,
+                cuda_version=runtime_environment_config.cuda_version,
+            )
+
+        else:
+            hardware_information = HardwareInformationModel.from_properties(**hardware_properties)
+
+            runtime_environment_config = RuntimeEnvironmentConfig.from_dict(runtime_properties)
+            # We construct our own name as we do not trust user's name input (it can be basically anything).
+            run_software_environment_name = (
+                f"{runtime_environment_config.operating_system.name or 'unknown'}"
+                f":{runtime_environment_config.operating_system.version or 'unknown'}"
+            )
+
+            # TODO: assign image_name and image_sha once we will have this info present in Thoth's configuration file
+            run_software_environment = RunSoftwareEnvironmentModel.from_properties(
+                environment_name=run_software_environment_name,
+                python_version=runtime_environment_config.python_version,
+                os_name=runtime_environment_config.operating_system.name,
+                os_version=runtime_environment_config.operating_system.version,
+                cuda_version=runtime_environment_config.cuda_version,
+            )
+
+        return hardware_information, run_software_environment
 
     @enable_vertex_cache
     def sync_adviser_result(self, document: dict) -> None:
@@ -2105,24 +2160,24 @@ class GraphDatabase(StorageBase):
         )
         adviser_run.get_or_create(self.client)
 
-        # Hardware information.
-        hardware_information, runtime_environment = self._runtime_environment_conf2models(
-            document["result"]["parameters"]["runtime_environment"]
+        # Runtime Environment Information (Hardware + Software information).
+        hardware_information, run_software_environment = self._runtime_environment_conf2models(
+            document["result"]["parameters"]["runtime_environment"], is_user_run=True
         )
         hardware_information.get_or_create(self.client)
-        runtime_environment.get_or_create(self.client)
+        run_software_environment.get_or_create(self.client)
 
         UsedIn.from_properties(source=hardware_information, target=adviser_run).get_or_create(self.client)
 
-        AdviserRuntimeEnvironmentInput.from_properties(source=runtime_environment, target=adviser_run).get_or_create(
-            self.client
-        )
+        AdviserRunSoftwareEnvironmentInput.from_properties(
+            source=run_software_environment, target=adviser_run
+        ).get_or_create(self.client)
 
         # Input stack.
         if document["result"]["input"]["requirements_locked"]:
             # User provided a Pipfile.lock, we can sync it.
             user_software_stack = self.create_user_software_stack_pipfile(
-                adviser_document_id, document["result"]["input"]["requirements_locked"], runtime_environment
+                adviser_document_id, document["result"]["input"]["requirements_locked"], run_software_environment
             )
             AdviserStackInput.from_properties(source=user_software_stack, target=adviser_run).get_or_create(self.client)
 
@@ -2167,7 +2222,7 @@ class GraphDatabase(StorageBase):
                     advised_stack_index=idx,
                     performance_score=performance_score,
                     overall_score=overall_score,
-                    runtime_environment=runtime_environment,
+                    run_software_environment=run_software_environment,
                 )
                 Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(
                     self.client
@@ -2238,15 +2293,15 @@ class GraphDatabase(StorageBase):
                 source=python_package_requirement, target=dependency_monkey_run
             ).get_or_create(self.client)
 
-        hardware_information, runtime_environment = self._runtime_environment_conf2models(
+        hardware_information, run_software_environment = self._runtime_environment_conf2models(
             document["result"]["parameters"]["runtime_environment"]
         )
 
         hardware_information.get_or_create(self.client)
-        runtime_environment.get_or_create(self.client)
+        run_software_environment.get_or_create(self.client)
 
-        DependencyMonkeyEnvironmentInput.from_properties(
-            source=runtime_environment, target=dependency_monkey_run
+        DependencyMonkeyRunSoftwareEnvironmentInput.from_properties(
+            source=software_environment, target=dependency_monkey_run
         ).get_or_create(self.client)
 
         UsedIn.from_properties(source=hardware_information, target=dependency_monkey_run).get_or_create(self.client)
@@ -2280,33 +2335,3 @@ class GraphDatabase(StorageBase):
             count = result["f"][0]["c"]
             tot_nodes_per_label[node_label] = count
         return tot_nodes_per_label
-
-    def get_python_artifact_vertex_instances_count(self) -> int:
-        """Retrieve total number of nodes per python_artifact in the graph database."""
-        query = (
-            """
-            {
-                f(func: has(%s)) {
-                    c:count(uid)
-                }
-            }
-            """
-            % PythonArtifact.get_label()
-        )
-        result = self._query_raw(query)
-        return result["f"][0]["c"]
-
-    def get_python_package_version_instances_count(self) -> int:
-        """Retrieve total number of nodes for PythonPackageVersion in the graph database."""
-        query = (
-            """
-            {
-                f(func: has(%s)) {
-                    c:count(uid)
-                }
-            }
-            """
-            % PythonPackageVersion.get_label()
-        )
-        result = self._query_raw(query)
-        return result["f"][0]["c"]

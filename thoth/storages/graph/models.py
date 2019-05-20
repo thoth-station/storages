@@ -115,8 +115,8 @@ class DependencyMonkeyRun(VertexBase):
 
 
 @attr.s(slots=True)
-class DependencyMonkeyEnvironmentInput(ReverseEdgeBase):
-    """A class representing runtime environment used during stack resolution on a dependency monkey run."""
+class DependencyMonkeyRunSoftwareEnvironmentInput(ReverseEdgeBase):
+    """A class representing software environment for run used during stack resolution on a dependency monkey run."""
 
 
 @attr.s(slots=True)
@@ -349,25 +349,33 @@ class EnvironmentBase(VertexBase):
 
 
 @attr.s(slots=True)
-class BuildtimeEnvironment(EnvironmentBase):
-    """Environment - container image which consists of various packages used during build."""
+class BuildSoftwareEnvironment(EnvironmentBase):
+    """Software Environment for build - container image which consists of various packages used during build."""
 
 
 @attr.s(slots=True)
-class InspectionBuildtimeEnvironmentInput(ReverseEdgeBase):
-    """Buildtime environment in inspections."""
+class InspectionBuildSoftwareEnvironmentInput(ReverseEdgeBase):
+    """Software environment for build in inspections."""
 
 
 @attr.s(slots=True)
-class RuntimeEnvironment(EnvironmentBase):
-    """Environment - container image which consists of various packages used in a deployment."""
+class RunSoftwareEnvironment(EnvironmentBase):
+    """Software Environment for run - container image which consists of various packages used in a deployment."""
 
     cuda_version = model_property(type=str, index="exact", default=None)
 
 
 @attr.s(slots=True)
-class InspectionRuntimeEnvironmentInput(ReverseEdgeBase):
-    """Runtime environment in inspections."""
+class UserRunSoftwareEnvironment(RunSoftwareEnvironment):
+    """Software Environment for run - container image which consists of various packages used in a deployment.
+
+    As used by a user (input for the recommendation engine).
+    """
+
+
+@attr.s(slots=True)
+class InspectionRunSoftwareEnvironmentInput(ReverseEdgeBase):
+    """Software environment for run in inspections."""
 
 
 @attr.s(slots=True)
@@ -390,8 +398,8 @@ class AdviserStackInput(ReverseEdgeBase):
 
 
 @attr.s(slots=True)
-class AdviserRuntimeEnvironmentInput(ReverseEdgeBase):
-    """A relation capturing runtime environment used in advises."""
+class AdviserRunSoftwareEnvironmentInput(ReverseEdgeBase):
+    """A relation capturing software environment for run used in advises."""
 
 
 @attr.s(slots=True)
@@ -442,6 +450,11 @@ class HardwareInformation(VertexBase):
     gpu_memory_size = model_property(type=float)
 
     ram_size = model_property(type=float)
+
+
+@attr.s(slots=True)
+class UserHardwareInformation(HardwareInformation):
+    """Hardware specification and properties as used by a user (input for the recommendation engine)."""
 
 
 @attr.s(slots=True)
@@ -510,7 +523,7 @@ class CVE(VertexBase):
     ELEMENT_NAME = "cve"
 
     advisory = model_property(type=str, index="exact")
-    cve_name = model_property(type=str, index="exact", default='-')
+    cve_name = model_property(type=str, index="exact", default="-")
     cve_id = model_property(type=str, index="exact")
     version_range = model_property(type=str, index="exact")
 
@@ -519,11 +532,11 @@ ALL_MODELS = frozenset(
     (
         AdviserRun,
         AdvisedSoftwareStack,
-        AdviserRuntimeEnvironmentInput,
+        AdviserRunSoftwareEnvironmentInput,
         AdviserStackInput,
         Advised,
         AnalyzedBy,
-        BuildtimeEnvironment,
+        BuildSoftwareEnvironment,
         CreatesStack,
         CVE,
         DebDepends,
@@ -531,16 +544,16 @@ ALL_MODELS = frozenset(
         DebPreDepends,
         DebReplaces,
         DependencyMonkeyRun,
-        DependencyMonkeyEnvironmentInput,
+        DependencyMonkeyRunSoftwareEnvironmentInput,
         DependsOn,
         EcosystemSolverRun,
         HardwareInformation,
         HasArtifact,
         HasVulnerability,
         Identified,
-        InspectionBuildtimeEnvironmentInput,
+        InspectionBuildSoftwareEnvironmentInput,
         InspectionRun,
-        InspectionRuntimeEnvironmentInput,
+        InspectionRunSoftwareEnvironmentInput,
         InspectionStackInput,
         InspectionSoftwareStack,
         ObservedPerformance,
@@ -559,12 +572,14 @@ ALL_MODELS = frozenset(
         Requires,
         RPMPackageVersion,
         RPMRequirement,
-        RuntimeEnvironment,
+        RunSoftwareEnvironment,
+        UserRunSoftwareEnvironment,
         Solved,
         InstalledFrom,
         UsedIn,
         UsedInBuild,
         UsedInJob,
         UserSoftwareStack,
+        UserHardwareInformation,
     )
 )

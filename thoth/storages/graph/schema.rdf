@@ -20,13 +20,13 @@ requirements_format: string @index(exact) .
 duration: int .
 advised_configuration_changes: bool .
 additional_stack_info: bool .
-adviser_runtime_environment_input_label: string @count @upsert @index(exact) .
-adviser_runtime_environment_input: uid @reverse @count .
+adviser_run_software_environment_input_label: string @count @upsert @index(exact) .
+adviser_run_software_environment_input: uid @reverse @count .
 adviser_stack_input_label: string @count @upsert @index(exact) .
 adviser_stack_input: uid @reverse @count .
 analyzed_by_label: string @count @upsert @index(exact) .
 analyzed_by: uid @reverse @count .
-buildtime_environment_label: string @count @upsert @index(exact) .
+build_software_environment_label: string @count @upsert @index(exact) .
 environment_name: string @index(exact) .
 python_version: string @index(exact) .
 image_name: string @index(exact) .
@@ -52,8 +52,6 @@ deb_pre_depends_label: string @count @upsert @index(exact) .
 deb_pre_depends: uid @reverse @count .
 deb_replaces_label: string @count @upsert @index(exact) .
 deb_replaces: uid @reverse @count .
-dependency_monkey_environment_input_label: string @count @upsert @index(exact) .
-dependency_monkey_environment_input: uid @reverse @count .
 dependency_monkey_run_label: string @count @upsert @index(exact) .
 dependency_monkey_document_id: string @index(exact) .
 dependency_monkey_datetime: dateTime @index(hour) .
@@ -62,6 +60,8 @@ dependency_monkey_version: string @index(exact) .
 seed: int .
 decision: string @index(exact) .
 dependency_monkey_error: bool .
+dependency_monkey_run_software_environment_input_label: string @count @upsert @index(exact) .
+dependency_monkey_run_software_environment_input: uid @reverse @count .
 depends_on_label: string @count @upsert @index(exact) .
 depends_on: uid @reverse @count .
 ecosystem_solver_run_label: string @count @upsert @index(exact) .
@@ -87,8 +87,8 @@ has_vulnerability_label: string @count @upsert @index(exact) .
 has_vulnerability: uid @reverse @count .
 identified_label: string @count @upsert @index(exact) .
 identified: uid @reverse @count .
-inspection_buildtime_environment_input_label: string @count @upsert @index(exact) .
-inspection_buildtime_environment_input: uid @reverse @count .
+inspection_build_software_environment_input_label: string @count @upsert @index(exact) .
+inspection_build_software_environment_input: uid @reverse @count .
 inspection_run_label: string @count @upsert @index(exact) .
 inspection_document_id: string @index(exact) .
 inspection_datetime: dateTime @index(hour) .
@@ -97,8 +97,8 @@ build_requests_cpu: float .
 build_requests_memory: float .
 run_requests_cpu: float .
 run_requests_memory: float .
-inspection_runtime_environment_input_label: string @count @upsert @index(exact) .
-inspection_runtime_environment_input: uid @reverse @count .
+inspection_run_software_environment_input_label: string @count @upsert @index(exact) .
+inspection_run_software_environment_input: uid @reverse @count .
 inspection_software_stack_label: string @count @upsert @index(exact) .
 inspection_stack_input_label: string @count @upsert @index(exact) .
 inspection_stack_input: uid @reverse @count .
@@ -122,6 +122,7 @@ provenance_checker_run_label: string @count @upsert @index(exact) .
 provenance_checker_document_id: string @index(exact) .
 provenance_checker_datetime: dateTime @index(hour) .
 provenance_checker_version: string @index(exact) .
+provenance_checker_name: string @index(exact) .
 provenance_checker_error: bool .
 provenance_checker_stack_input_label: string @count @upsert @index(exact) .
 provenance_checker_stack_input: uid @reverse @count .
@@ -156,7 +157,7 @@ requires_label: string @count @upsert @index(exact) .
 requires: uid @reverse @count .
 resolved_label: string @count @upsert @index(exact) .
 resolved: uid @reverse @count .
-runtime_environment_label: string @count @upsert @index(exact) .
+run_software_environment_label: string @count @upsert @index(exact) .
 cuda_version: string @index(exact) .
 solved_label: string @count @upsert @index(exact) .
 solved: uid @reverse @count .
@@ -166,5 +167,7 @@ used_in_build_label: string @count @upsert @index(exact) .
 used_in_build: uid @reverse @count .
 used_in_job_label: string @count @upsert @index(exact) .
 used_in_job: uid @reverse @count .
+user_hardware_information_label: string @count @upsert @index(exact) .
+user_run_software_environment_label: string @count @upsert @index(exact) .
 user_software_stack_label: string @count @upsert @index(exact) .
 document_id: string @index(exact) .
