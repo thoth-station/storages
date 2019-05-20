@@ -40,18 +40,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:10fd4bf8fe88f9bb449a538e639c1afb9762cb91693dea8c17282ba5c9d00b51",
-                "sha256:4d187262d30befec431b3b52ccce35e55c0062a86f19b9dd5328b18d6332c5aa"
+                "sha256:ad311139cc3ee4464e5f3b558805e684988e71f591dbed6dd19a28dd6854455f",
+                "sha256:bae8f2ab3732a7a51da34816f014c0dc98fc75de0bdb5ab19350b7964fba5763"
             ],
             "index": "pypi",
-            "version": "==1.9.151"
+            "version": "==1.9.152"
         },
         "botocore": {
             "hashes": [
-                "sha256:5e4774c106bb02f8e4639818c2f8157b8ec114a76e481e17cd3fe6955206e088",
-                "sha256:cfc667e7888aad09ead8f7e32129ea90aa5c7f602531094954bf6305db74aac4"
+                "sha256:19e54674913a7f697f11d7deb634353ceaf593e5486cab15664ea62a4a341dc9",
+                "sha256:79a463b96ed16f6c4b7f387cc086ef3323e88c2d153cea407e2c3981fa9849de"
             ],
-            "version": "==1.12.151"
+            "version": "==1.12.152"
         },
         "certifi": {
             "hashes": [
@@ -283,10 +283,10 @@
         },
         "rfc5424-logging-handler": {
             "hashes": [
-                "sha256:82cc162eeed5b80b8bc5223dcdb8278780b26c3ed354a06f07a15b79e1c43581",
-                "sha256:c7502c0db19bf89e4adc71bac37d0848ab5f5d1c807380d235c46adcb8efcfdb"
+                "sha256:9ae14073ef6d76d0c730ad6b6e3aeece841a6d413672d282876c0506dc097257",
+                "sha256:eaba528e47fba3e2845d52d559885cbc27a37db42a9d265ea539b3b4452d3057"
             ],
-            "version": "==1.4.2"
+            "version": "==1.4.3"
         },
         "s3transfer": {
             "hashes": [
@@ -359,6 +359,7 @@
                 "sha256:2393a695cd12afedd0dcb26fe5d50d0cf248e5a66f75dbd89a3d4eb333a61af4",
                 "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"
             ],
+            "markers": "python_version >= '3.4'",
             "version": "==1.24.3"
         },
         "voluptuous": {
@@ -461,18 +462,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:10fd4bf8fe88f9bb449a538e639c1afb9762cb91693dea8c17282ba5c9d00b51",
-                "sha256:4d187262d30befec431b3b52ccce35e55c0062a86f19b9dd5328b18d6332c5aa"
+                "sha256:ad311139cc3ee4464e5f3b558805e684988e71f591dbed6dd19a28dd6854455f",
+                "sha256:bae8f2ab3732a7a51da34816f014c0dc98fc75de0bdb5ab19350b7964fba5763"
             ],
             "index": "pypi",
-            "version": "==1.9.151"
+            "version": "==1.9.152"
         },
         "botocore": {
             "hashes": [
-                "sha256:5e4774c106bb02f8e4639818c2f8157b8ec114a76e481e17cd3fe6955206e088",
-                "sha256:cfc667e7888aad09ead8f7e32129ea90aa5c7f602531094954bf6305db74aac4"
+                "sha256:19e54674913a7f697f11d7deb634353ceaf593e5486cab15664ea62a4a341dc9",
+                "sha256:79a463b96ed16f6c4b7f387cc086ef3323e88c2d153cea407e2c3981fa9849de"
             ],
-            "version": "==1.12.151"
+            "version": "==1.12.152"
         },
         "certifi": {
             "hashes": [
@@ -672,17 +673,10 @@
         },
         "docker": {
             "hashes": [
-                "sha256:2b1f48041cfdcc9f6b5da0e04e0e326ded225e736762ade2060000e708f4c9b7",
-                "sha256:c456ded5420af5860441219ff8e51cdec531d65f4a9e948ccd4133e063b72f50"
+                "sha256:3db499d4d25847fed86acf8e100c989f7bc0f75a6fff6c52855726ada1d124f6",
+                "sha256:f61c37d721b489b7d55ef631b241be2d6a5884c3ffe63dc8f7dd9a3c3cd60489"
             ],
-            "version": "==3.7.2"
-        },
-        "docker-pycreds": {
-            "hashes": [
-                "sha256:6ce3270bcaf404cc4c3e27e4b6c70d3521deae82fb508767870fdbf772d584d4",
-                "sha256:7266112468627868005106ec19cd0d722702d2b7d5912a28e19b826c3d37af49"
-            ],
-            "version": "==0.4.0"
+            "version": "==4.0.1"
         },
         "docopt": {
             "hashes": [
@@ -1262,6 +1256,7 @@
                 "sha256:2393a695cd12afedd0dcb26fe5d50d0cf248e5a66f75dbd89a3d4eb333a61af4",
                 "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"
             ],
+            "markers": "python_version >= '3.4'",
             "version": "==1.24.3"
         },
         "vulture": {
