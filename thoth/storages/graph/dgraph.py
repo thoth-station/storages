@@ -220,7 +220,7 @@ class GraphDatabase(StorageBase):
         if solver_name.startswith("solver-"):
             solver_identifiers = solver_name[len("solver-"):]
         else:
-            raise ValueError("Solver name has to start with 'solver-' prefix")
+            raise ValueError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
 
         parts = solver_identifiers.split("-")
         if len(parts) != 3:
