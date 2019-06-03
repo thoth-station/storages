@@ -646,13 +646,13 @@ class GraphDatabase(StorageBase):
 
         q = ""
         if os_name:
-            q = q + " AND eq(os_name, %s)" % os_name
+            q = q + ' AND eq(os_name, "%s")' % os_name
 
         if os_version:
-            q = q + " AND eq(os_version, %s)" % os_version
+            q = q + ' AND eq(os_version, "%s")' % os_version
 
         if python_version:
-            q = q + " AND eq(python_version, %s)" % python_version
+            q = q + ' AND eq(python_version, "%s")' % python_version
 
         if without_error:
             q = q + " AND eq(solver_error, %s)" % False
