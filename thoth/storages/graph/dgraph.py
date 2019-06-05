@@ -419,28 +419,59 @@ class GraphDatabase(StorageBase):
         else:
             return []
 
-    def python_package_version_exists(self, package_name: str, package_version: str, index_url: str = None) -> bool:
-        """Check if the given Python package version exists in the graph database."""
+    def python_package_version_exists(
+            self,
+            package_name: str,
+            package_version: str,
+            index_url: str = None,
+            solver_name: str = None
+    ) -> bool:
+        """Check if the given Python package version exists in the graph database.
+
+        If optional solver_name parameter is set, the call answers if the given package was solved by
+        the given solver. Otherwise, any solver run is taken into account.
+        """
         package_name = self.normalize_python_package_name(package_name)
 
         q = ""
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
 
-        query = """{
-            f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(ecosystem, python)%s) {
-                count(uid)
+        if solver_name:
+            query = """
+            {
+                f(func: has(%s)) @filter(eq(solver_name, "%s")) @cascade @normalize {
+                    solved @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(ecosystem, python)%s) {
+                        count: count(~solved)
+                    }
+                }
             }
-        }
-        """ % (
-            PythonPackageVersionEntity.get_label(),
-            package_name,
-            package_version,
-            q,
-        )
-        result = self._query_raw(query)
+            """ % (
+                EcosystemSolverRun.get_label(),
+                solver_name,
+                package_name,
+                package_version,
+                q,
+            )
+        else:
+            query = """{
+                f(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s")
+                AND eq(ecosystem, python)%s) {
+                    count(uid)
+                }
+            }
+            """ % (
+                PythonPackageVersionEntity.get_label(),
+                package_name,
+                package_version,
+                q,
+            )
 
-        return result["f"][0]["count"] > 0
+        result = self._query_raw(query)
+        if not result["f"]:
+            return False
+
+        return result["f"][0].get("count", 0) > 0
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
