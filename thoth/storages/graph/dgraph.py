@@ -534,7 +534,7 @@ class GraphDatabase(StorageBase):
             run_software_env_filter = ""
             if run_software_environment:
                 run_software_env_filter = "~inspection_software_environment_input @filter("
-                run_software_env_filter += self._construct_filter_eq_from_dict(software_environment)
+                run_software_env_filter += self._construct_filter_eq_from_dict(run_software_environment)
                 run_software_env_filter += ") { uid }"
 
             hw_filter = ""
@@ -2332,7 +2332,7 @@ class GraphDatabase(StorageBase):
         run_software_environment.get_or_create(self.client)
 
         DependencyMonkeyRunSoftwareEnvironmentInput.from_properties(
-            source=software_environment, target=dependency_monkey_run
+            source=run_software_environment, target=dependency_monkey_run
         ).get_or_create(self.client)
 
         UsedIn.from_properties(source=hardware_information, target=dependency_monkey_run).get_or_create(self.client)
