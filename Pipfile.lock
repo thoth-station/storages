@@ -330,10 +330,10 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:91f43b48038d6d19dac8c60fb475306ebaeade7b73e9102314a00a1cb999561a"
+                "sha256:620c2fcb1199bc5945440fcfdfe7d577fbe20097e653eefd30a82357b35cd6d4"
             ],
             "index": "pypi",
-            "version": "==0.8.7"
+            "version": "==0.8.11"
         },
         "thoth-python": {
             "hashes": [
@@ -953,9 +953,9 @@
         },
         "nltk": {
             "hashes": [
-                "sha256:3a64b1cb685bbf344adec416871fee07996671c876ff313b3e504158fa1500e1"
+                "sha256:6ba7350f7588a239764f2d04e9b20bb2d34e0a45824035ada924ed33a6fe0d58"
             ],
-            "version": "==3.4.1"
+            "version": "==3.4.2"
         },
         "packaging": {
             "hashes": [
