@@ -2348,3 +2348,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create initial classes with interface
 * Add .travis.yml configuration file
 * Initial project import
+
+## Release 0.14.1 (2019-06-06T11:56:25)
+* :pushpin: Automatic update of dependency boto3 from 1.9.161 to 1.9.162
+* :pushpin: Automatic update of dependency pytest from 4.5.0 to 4.6.2
+* :pushpin: Automatic update of dependency boto3 from 1.9.159 to 1.9.161
+* Fix wrong variable reference
+* Check if the given package in the given version was solved by specific solver
+* Provide OS version and name as a string
+* :pushpin: Automatic update of dependency boto3 from 1.9.158 to 1.9.159
+* :pushpin: Automatic update of dependency boto3 from 1.9.157 to 1.9.158
