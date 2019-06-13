@@ -488,10 +488,14 @@ class ObservedPerformance(ReverseEdgeBase):
 class PerformanceIndicatorBase(VertexBase):
     """A base class for implementing performance indicators."""
 
+    # Name given to the performance indicator.
+    pi_name = model_property(type=str, index="exact")
+    # ML framework used for the performance indicator.
+    ml_framework = model_property(type=str, index="exact")
     # Origin from where the performance indicator was obtained. In case of Git repo,
     # it holds Git repo URL, in case of URL it holds URL to the script.
     origin = model_property(type=str, index="exact")
-    # Reference of the script, in case of Git repo it holds commit SHA, in case of URL it caries
+    # Reference of the script, in case of Git repo it holds commit SHA, in case of URL it carries
     # SHA256 of the script which was used to test the performance with (performance indicator script).
     reference = model_property(type=str, index="exact")
     # This one is used later on in queries in adviser, all the relevant performance indicators should

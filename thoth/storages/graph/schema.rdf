@@ -116,6 +116,8 @@ environment_type: string @index(exact) .
 package_extract_error: bool .
 image_tag: string @index(exact) .
 pi_matmul_label: string @count @upsert @index(exact) .
+pi_name: string @index(exact) .
+ml_framework: string @index(exact) .
 reference: string @index(exact) .
 matrix_size: int .
 provenance_checker_run_label: string @count @upsert @index(exact) .
