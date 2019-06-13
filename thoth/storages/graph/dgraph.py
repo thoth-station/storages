@@ -218,7 +218,7 @@ class GraphDatabase(StorageBase):
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
         if solver_name.startswith("solver-"):
-            solver_identifiers = solver_name[len("solver-"):]
+            solver_identifiers = solver_name[len("solver-") :]
         else:
             raise ValueError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
 
@@ -231,7 +231,7 @@ class GraphDatabase(StorageBase):
 
         python_version = parts[2]
         if python_version.startswith("py"):
-            python_version = python_version[len("py"):]
+            python_version = python_version[len("py") :]
         else:
             raise ValueError(
                 f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
@@ -420,11 +420,7 @@ class GraphDatabase(StorageBase):
             return []
 
     def python_package_version_exists(
-            self,
-            package_name: str,
-            package_version: str,
-            index_url: str = None,
-            solver_name: str = None
+        self, package_name: str, package_version: str, index_url: str = None, solver_name: str = None
     ) -> bool:
         """Check if the given Python package version exists in the graph database.
 
@@ -548,8 +544,7 @@ class GraphDatabase(StorageBase):
                 q(func: has(%s)) @cascade @normalize {
                     uid: uid
                     ~inspection_stack_input {
-                        ~creates_stack @filter(eq(package_name, "%s") """ \
-            """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+                        ~creates_stack @filter(eq(package_name, "%s") """ """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
                             package_name
                         }
                     }
@@ -710,6 +705,23 @@ class GraphDatabase(StorageBase):
 
         return [tuple(python_package.values()) for python_package in result["f"]]
 
+    @staticmethod
+    def _postprocess_retrieve_packages(result: dict) -> dict:
+        """Post-process retrieve packages query."""
+        pp_result = {}
+        for package in result["f"]:
+            if package["package_name"] in pp_result.keys():
+                if package["package_version"] in pp_result[package["package_name"]]:
+                    pass
+                else:
+                    pp_result[package["package_name"]] = pp_result[package["package_name"]] + [
+                        package["package_version"]
+                    ]
+            else:
+                pp_result[package["package_name"]] = [package["package_version"]]
+
+        return pp_result
+
     def retrieve_unsolved_pypi_packages(self, solver_name: str) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
 
@@ -717,8 +729,7 @@ class GraphDatabase(StorageBase):
         """
         solver_info = self.parse_python_solver_name(solver_name)
         query = """{
-           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s") """ \
-           """AND eq(python_version, "%s") AND NOT has(~%s)) {
+           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s") """ """AND eq(python_version, "%s") AND NOT has(~%s)) {
                    package_name:package_name
                    package_version:package_version
                 }
@@ -730,15 +741,8 @@ class GraphDatabase(StorageBase):
             Solved.get_name(),
         )
         result = self._query_raw(query)
-        # Post-Process result
-        pp_result = {}
-        for package in result["f"]:
-            if package["package_name"] in pp_result.keys():
-                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
-            else:
-                pp_result[package["package_name"]] = [package["package_version"]]
 
-        return pp_result
+        return self._postprocess_retrieve_packages(result)
 
     def retrieve_solved_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved."""
@@ -754,15 +758,8 @@ class GraphDatabase(StorageBase):
             Solved.get_name(),
         )
         result = self._query_raw(query)
-        # Post-Process result
-        pp_result = {}
-        for package in result["f"]:
-            if package["package_name"] in pp_result.keys():
-                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
-            else:
-                pp_result[package["package_name"]] = [package["package_version"]]
 
-        return pp_result
+        return self._postprocess_retrieve_packages(result)
 
     def retrieve_unsolvable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
@@ -778,16 +775,42 @@ class GraphDatabase(StorageBase):
             Solved.get_name(),
         )
         result = self._query_raw(query)
-        # Post-Process result
-        pp_result = {}
-        for package in result["f"]:
 
-            if package["package_name"] in pp_result.keys():
-                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
-            else:
-                pp_result[package["package_name"]] = [package["package_version"]]
+        return self._postprocess_retrieve_packages(result)
 
-        return pp_result
+    def retrieve_unsolvable_python_packages_per_run_software_environment(self, solver_name: str) -> dict:
+        """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable.
+        
+        The result is given for a specific run software environment (OS + python version)
+        """
+        solver_info = self.parse_python_solver_name(solver_name)
+        query = """{
+           f(func: has(%s)) @filter(eq(os_name, "%s") AND eq(os_version, "%s") """ """AND eq(python_version, "%s") AND eq(solver_error, true) AND eq(solver_error_unsolvable, true) AND has(~%s)) {
+                   package_name:package_name
+                   package_version:package_version
+                }
+            }""" % (
+            PythonPackageVersion.get_label(),
+            solver_info["os_name"],
+            solver_info["os_version"],
+            solver_info["python_version"],
+            Solved.get_name(),
+        )
+        result = self._query_raw(query)
+
+        return self._postprocess_retrieve_packages(result)
+
+    def retrieve_document_list_of_unsolvable_pypi_packages(self) -> list:
+        """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
+        query = """{
+            f(func: has(%s)) {
+                solver_document_id:solver_document_id
+                }
+            }""" % (
+            Solved.get_name(),
+        )
+        result = self._query_raw(query)
+        return [document_id["solver_document_id"] for document_id in result["f"]]
 
     def retrieve_unparseable_pypi_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
@@ -803,16 +826,8 @@ class GraphDatabase(StorageBase):
             Solved.get_name(),
         )
         result = self._query_raw(query)
-        # Post-Process result
-        pp_result = {}
-        for package in result["f"]:
 
-            if package["package_name"] in pp_result.keys():
-                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
-            else:
-                pp_result[package["package_name"]] = [package["package_version"]]
-
-        return pp_result
+        return self._postprocess_retrieve_packages(result)
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
@@ -927,16 +942,8 @@ class GraphDatabase(StorageBase):
             DependsOn.get_name(),
         )
         result = self._query_raw(query)
-        # Post-Process result
-        pp_result = {}
-        for package in result["f"]:
 
-            if package["package_name"] in pp_result.keys():
-                pp_result[package["package_name"]] = pp_result[package["package_name"]] + [package["package_version"]]
-            else:
-                pp_result[package["package_name"]] = [package["package_version"]]
-
-        return pp_result
+        return self._postprocess_retrieve_packages(result)
 
     async def get_python_package_tuple(self, python_package_node_id: int) -> Dict[int, tuple]:
         """Get Python's package name, package version, package index tuple for the given package id."""
@@ -1004,8 +1011,7 @@ class GraphDatabase(StorageBase):
 
         query = """
         {
-            q(func: has(%s)) @filter(eq(package_name, "%s") """ \
-        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(depth: %d, loop: false) {
+            q(func: has(%s)) @filter(eq(package_name, "%s") """ """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(depth: %d, loop: false) {
                 uid
                 package_name
                 package_version
@@ -1090,10 +1096,7 @@ class GraphDatabase(StorageBase):
                     unseen_ids.add(entry[idx])
 
         if len(unseen_ids) > 0:
-            _LOGGER.debug(
-                "Retrieving package tuples for transitive dependencies (count: %d)",
-                len(unseen_ids),
-            )
+            _LOGGER.debug("Retrieving package tuples for transitive dependencies (count: %d)", len(unseen_ids))
 
         package_tuples = self.get_python_package_tuples(unseen_ids)
         for python_package_id, package_tuple in package_tuples.items():
@@ -1171,8 +1174,7 @@ class GraphDatabase(StorageBase):
         solver_document_id = SolverResultsStore.get_document_id(solver_document)
         query = """
         {
-            f(func: has(%s)) @filter(eq(solver_datetime, "%s") """ \
-        """AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
+            f(func: has(%s)) @filter(eq(solver_datetime, "%s") """ """AND eq(solver_document_id, "%s") AND eq(solver_name, %s) AND eq(solver_version, %s)) {
                 count(uid)
             }
         }
@@ -1337,8 +1339,7 @@ class GraphDatabase(StorageBase):
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
         query = """{
-            f(func: has(%s)) @filter(eq(ecosystem, "python") """ \
-        """AND eq(package_name, "%s") AND eq(package_version, "%s")) {
+            f(func: has(%s)) @filter(eq(ecosystem, "python") """ """AND eq(package_name, "%s") AND eq(package_version, "%s")) {
                 v: has_vulnerability {
                     %s
                 }
@@ -1360,8 +1361,7 @@ class GraphDatabase(StorageBase):
         package_name = self.normalize_python_package_name(package_name)
         # TODO: we should consider os name, os version and other properties to have this matching for the given env
         query = """{
-            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") """ \
-        """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
+            f(func: has(%s)) @filter(eq(ecosystem, "python") AND eq(package_name, "%s") """ """AND eq(package_version, "%s") AND eq(index_url, "%s")) {
                 a: has_artifact {
                     artifact_hash_sha256
                 }
@@ -1717,20 +1717,33 @@ class GraphDatabase(StorageBase):
             if not overall_score:
                 _LOGGER.warning("No overall score found when syncing inspection document %r", inspection_document_id)
 
-            # We support only matmul here, we should re-think and re-design how we handle performance indicators here.
-            performance_indicator_matmul = PiMatmul.from_properties(
-                origin=document["specification"]["script"],
-                reference=document["job_log"]["script_sha256"],
-                matrix_size=None,  # TODO assign matrix size once we allow parameters on Amun.
-                overall_score=overall_score,
-            )
-            performance_indicator_matmul.get_or_create(self.client)
+            # PERFORMANCE INDICATORS
+            # We uniquely identify the performance indicators considering {ML_FRAMEWORK} and {ML_PRIMITIVE} or {DATASET}-{ALGORITHM}.
+            # MATMUL
+            if document["job_log"]["stdout"]["@parameters"].get("name") == "matmul":
+                performance_indicator_matmul = PiMatmul.from_properties(
+                    pi_name=document["job_log"]["stdout"]["@parameters"].get("name"),
+                    ml_framework=document["job_log"]["stdout"].get("framework"),
+                    origin=document["specification"]["script"],
+                    reference=document["job_log"]["script_sha256"],
+                    matrix_size=None,  # TODO assign matrix size once we allow parameters on Amun.
+                    overall_score=overall_score,
+                )
+                performance_indicator_matmul.get_or_create(self.client)
 
-            ObservedPerformance.from_properties(
-                source=inspection_run,
-                target=performance_indicator_matmul,
-                performance_indicator_index=0,  # We can now run only one performance indicator per inspection request.
-            ).get_or_create(self.client)
+                ObservedPerformance.from_properties(
+                    source=inspection_run,
+                    target=performance_indicator_matmul,
+                    performance_indicator_index=0,  # We can now run only one performance indicator per inspection request.
+                ).get_or_create(self.client)
+            else:
+                raise PythonIndexNotRegistered(
+                    "We don't have support for syncing this Performance Indicator called {} with origin {} and reference {}".format(
+                        document["job_log"]["stdout"]["@parameters"].get("name"),
+                        document["specification"]["script"],
+                        document["job_log"]["script_sha256"],
+                    )
+                )
 
     def create_python_cve_record(
         self,
@@ -2070,7 +2083,7 @@ class GraphDatabase(StorageBase):
 
             package_name = unsolvable["package_name"]
             index_url = unsolvable["index"]
-            package_version = unsolvable["version_spec"][len("=="):]
+            package_version = unsolvable["version_spec"][len("==") :]
 
             python_package_version = PythonPackageVersion.from_properties(
                 package_name=self.normalize_python_package_name(package_name),
@@ -2255,9 +2268,7 @@ class GraphDatabase(StorageBase):
                     overall_score=overall_score,
                     run_software_environment=run_software_environment,
                 )
-                Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(
-                    self.client
-                )
+                Advised.from_properties(source=adviser_run, target=advised_software_stack).get_or_create(self.client)
 
     @enable_vertex_cache
     def sync_provenance_checker_result(self, document: dict) -> None:
