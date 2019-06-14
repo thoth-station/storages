@@ -71,16 +71,16 @@ solver_name: string @index(exact) .
 solver_version: string @index(exact) .
 hardware_information_label: string @count @upsert @index(exact) .
 cpu_vendor: string @index(exact) .
-cpu_model: int .
-cpu_cores: int .
-cpu_model_name: string .
-cpu_family: int .
-cpu_physical_cpus: int .
+cpu_model: int @index(int) .
+cpu_cores: int @index(int) .
+cpu_model_name: string @index(exact) .
+cpu_family: int @index(int) .
+cpu_physical_cpus: int @index(int) .
 gpu_model_name: string @index(exact) .
-gpu_vendor: string .
-gpu_cores: int .
-gpu_memory_size: float .
-ram_size: float .
+gpu_vendor: string @index(exact) .
+gpu_cores: int @index(int) .
+gpu_memory_size: float @index(float) .
+ram_size: float @index(float) .
 has_artifact_label: string @count @upsert @index(exact) .
 has_artifact: uid @reverse @count .
 has_vulnerability_label: string @count @upsert @index(exact) .

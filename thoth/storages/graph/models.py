@@ -438,18 +438,18 @@ class HardwareInformation(VertexBase):
     """Hardware specification and properties."""
 
     cpu_vendor = model_property(type=str, index="exact")
-    cpu_model = model_property(type=int)
-    cpu_cores = model_property(type=int)
-    cpu_model_name = model_property(type=str)
-    cpu_family = model_property(type=int)
-    cpu_physical_cpus = model_property(type=int)
+    cpu_model = model_property(type=int, index="int")
+    cpu_cores = model_property(type=int, index="int")
+    cpu_model_name = model_property(type=str, index="exact")
+    cpu_family = model_property(type=int, index="int")
+    cpu_physical_cpus = model_property(type=int, index="int")
 
     gpu_model_name = model_property(type=str, index="exact")
-    gpu_vendor = model_property(type=str)
-    gpu_cores = model_property(type=int)
-    gpu_memory_size = model_property(type=float)
+    gpu_vendor = model_property(type=str, index="exact")
+    gpu_cores = model_property(type=int, index="int")
+    gpu_memory_size = model_property(type=float, index="float")
 
-    ram_size = model_property(type=float)
+    ram_size = model_property(type=float, index="float")
 
 
 @attr.s(slots=True)
