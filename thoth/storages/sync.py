@@ -251,7 +251,7 @@ def sync_inspection_documents(
     only_ceph_sync: bool = False,
     graph: GraphDatabase = None,
 ) -> tuple:
-    """Sync observations made on Amun into graph databaes."""
+    """Sync observations made on Amun into graph database."""
     if only_graph_sync and only_ceph_sync:
         raise ValueError("At least one of Ceph or Graph should be performed")
 
