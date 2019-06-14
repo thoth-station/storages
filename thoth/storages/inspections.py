@@ -18,13 +18,14 @@
 """Adapter for persisting Amun inspection results."""
 
 from .result_base import ResultStorageBase
+from .inspection_schema import INSPECTION_SCHEMA
 
 
 class InspectionResultsStore(ResultStorageBase):
     """Adapter for persisting Amun inspection results."""
 
     RESULT_TYPE = "inspection"
-    SCHEMA = None
+    SCHEMA = INSPECTION_SCHEMA
 
     @classmethod
     def get_document_id(cls, document: dict) -> str:
