@@ -237,11 +237,11 @@
         },
         "pydgraph": {
             "hashes": [
-                "sha256:28e4f19fa8906c918045de1c8928323465bd8599de9b5f3c74ca19ebe88c0b16",
-                "sha256:cab81957606482c8a486be41e347780ef2d2aadcf97f4a7f7fbe2ae4e55ab268"
+                "sha256:0763b2c1c7c9955ba06af195f3f193db0a33fa6575084b672a7515a1e0ba5650",
+                "sha256:c661a44716dd1e28d45ed606c0d72672b065e9a2d548fdd98d8c1292ff33e4c1"
             ],
             "index": "pypi",
-            "version": "==1.1.2"
+            "version": "==1.2.0"
         },
         "python-dateutil": {
             "hashes": [
