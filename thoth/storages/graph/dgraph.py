@@ -727,15 +727,15 @@ class GraphDatabase(StorageBase):
 
         return pp_result
 
-    def retrieve_unsolved_pypi_packages(self, solver_name: str) -> dict:
+    def retrieve_unsolved_python_packages(self, solver_name: str) -> dict:
         """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
         solver_info = self.parse_python_solver_name(solver_name)
         query = """{
-           f(func: has(%s))  @filter(eq(os_name, "%s") AND eq(os_version, "%s") """ \
-        """AND eq(python_version, "%s") AND NOT has(~%s)) {
+           f(func: has(%s)) @filter(NOT eq(os_name, "%s") AND NOT eq(os_version, "%s") """ \
+        """AND NOT eq(python_version, "%s")) {
                    package_name:package_name
                    package_version:package_version
                 }
@@ -744,13 +744,12 @@ class GraphDatabase(StorageBase):
             solver_info["os_name"],
             solver_info["os_version"],
             solver_info["python_version"],
-            Solved.get_name(),
         )
         result = self._query_raw(query)
 
         return self._postprocess_retrieve_packages(result)
 
-    def retrieve_solved_pypi_packages(self) -> dict:
+    def retrieve_solved_python_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved."""
         query = """{
            f(func: has(%s)) @normalize {
@@ -767,7 +766,7 @@ class GraphDatabase(StorageBase):
 
         return self._postprocess_retrieve_packages(result)
 
-    def retrieve_unsolvable_pypi_packages(self) -> dict:
+    def retrieve_unsolvable_python_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
         query = """{
            f(func: has(%s)) @normalize{
@@ -807,7 +806,7 @@ class GraphDatabase(StorageBase):
 
         return self._postprocess_retrieve_packages(result)
 
-    def retrieve_document_list_of_unsolvable_pypi_packages(self) -> list:
+    def retrieve_document_list_of_unsolvable_python_packages(self) -> list:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
         query = """{
             f(func: has(%s)) {
@@ -819,7 +818,7 @@ class GraphDatabase(StorageBase):
         result = self._query_raw(query)
         return [document_id["solver_document_id"] for document_id in result["f"]]
 
-    def retrieve_unparseable_pypi_packages(self) -> dict:
+    def retrieve_unparseable_python_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
         query = """{
            f(func: has(%s)) @normalize{
@@ -1634,7 +1633,7 @@ class GraphDatabase(StorageBase):
         hardware = specs.get("hardware") or {}
         ram_size = OpenShift.parse_memory_spec(specs["memory"]) if specs.get("memory") else None
         if ram_size is not None:
-            # Convert bytes to GiB, we need float number for Gremlin/JanusGraph serialization
+            # Convert bytes to GiB, we need float number for Dgraph serialization
             ram_size = ram_size / (1024 ** 3)
 
         return HardwareInformationModel.from_properties(
