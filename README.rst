@@ -54,3 +54,17 @@ based on changes in model.
   graph.connect()
   graph.initialize_schema()
 
+Running Dgraph locally
+======================
+
+You can use `docker-compose` present in this repository to run a local Dgraph instance. It does not use TLS certificates (so you must not to provide `GRAPH_TLS_PATH` environment variable).
+
+.. code-block:: console
+
+  $ docker-compose up
+
+After running the command above (make sure your big fat daemon is up using `systemctl start docker`), you should be able to access a local Dgraph instance at `localhost:9080`. This is also the default configuration for Dgraph's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly.
+
+The provided `docker-compose` has also Ratel enabled for to have an UI for graph database content. To access it visit `http://localhost:8000/ <http://localhost:8080>`_.
+
+The provided `docker-compose` uses volume mounted from `/tmp`. After you computer restart, the content will not be available anymore.
