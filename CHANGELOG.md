@@ -2358,3 +2358,29 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Provide OS version and name as a string
 * :pushpin: Automatic update of dependency boto3 from 1.9.158 to 1.9.159
 * :pushpin: Automatic update of dependency boto3 from 1.9.157 to 1.9.158
+
+## Release 0.14.2 (2019-06-24T11:46:23)
+* Modified logic of the query to retrieve unsolved python packages for a given solver
+* :pushpin: Automatic update of dependency boto3 from 1.9.173 to 1.9.174
+* :pushpin: Automatic update of dependency pydgraph from 1.1.2 to 1.2.0
+* :pushpin: Automatic update of dependency boto3 from 1.9.172 to 1.9.173
+* :pushpin: Automatic update of dependency thoth-common from 0.8.11 to 0.9.0
+* :pushpin: Automatic update of dependency boto3 from 1.9.171 to 1.9.172
+* :pushpin: Automatic update of dependency boto3 from 1.9.170 to 1.9.171
+* :pushpin: Automatic update of dependency boto3 from 1.9.169 to 1.9.170
+* :pushpin: Automatic update of dependency boto3 from 1.9.168 to 1.9.169
+* Use index for int values of performance indicators
+* New tests for inspection schema check before sync
+* :pushpin: Automatic update of dependency boto3 from 1.9.167 to 1.9.168
+* code-style and new functions
+* Update schema image for Thoth KG
+* New sync logic for PI
+* Update dgraph model schema for new parameters for PI
+* :pushpin: Automatic update of dependency boto3 from 1.9.166 to 1.9.167
+* :pushpin: Automatic update of dependency boto3 from 1.9.165 to 1.9.166
+* :pushpin: Automatic update of dependency pytest from 4.6.2 to 4.6.3
+* :pushpin: Automatic update of dependency boto3 from 1.9.164 to 1.9.165
+* :pushpin: Automatic update of dependency pydgraph from 1.1.1 to 1.1.2
+* :pushpin: Automatic update of dependency boto3 from 1.9.163 to 1.9.164
+* :pushpin: Automatic update of dependency boto3 from 1.9.162 to 1.9.163
+* :pushpin: Automatic update of dependency thoth-common from 0.8.7 to 0.8.11
