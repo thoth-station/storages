@@ -41,4 +41,4 @@ from .package_analyses import PackageAnalysisResultsStore
 
 
 __name__ = "thoth-storages"
-__version__ = "0.14.2"
+__version__ = "0.14.3"
