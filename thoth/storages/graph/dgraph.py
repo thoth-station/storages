@@ -749,10 +749,23 @@ class GraphDatabase(StorageBase):
 
         return self._postprocess_retrieve_packages(result)
 
-    def retrieve_solved_python_packages(self) -> dict:
-        """Retrieve a dictionary mapping package names to versions for dependencies that were already solved."""
+    def retrieve_solved_python_packages(self, count: int = 10, start_offset: int = 0, solver_name: str = None) -> dict:
+        """Retrieve a dictionary mapping package names to versions for dependencies that were already solved.
+
+        Using count and start_offset is possible to change pagination.
+        Using solver_name argument the query narrows down to packages that were resolved by the given solver.
+        """
+        q = ""
+        if solver_name:
+            solver_info = self.parse_python_solver_name(solver_name)
+            q += "@filter("
+            q = q + 'eq(os_name, "%s")' % solver_info["os_name"]
+            q = q + ' AND eq(os_version, "%s")' % solver_info["os_version"]
+            q = q + ' AND eq(python_version, "%s")' % solver_info["python_version"]
+            q += ")"
+
         query = """{
-           f(func: has(%s)) @normalize {
+           f(func: has(%s), first: %d, offset: %d) %s @normalize {
                %s {
                    package_name:package_name
                    package_version:package_version
@@ -760,6 +773,9 @@ class GraphDatabase(StorageBase):
                 }
             }""" % (
             Solved.get_name(),
+            count,
+            start_offset,
+            q,
             Solved.get_name(),
         )
         result = self._query_raw(query)
