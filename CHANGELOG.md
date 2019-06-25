@@ -2384,3 +2384,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.9.163 to 1.9.164
 * :pushpin: Automatic update of dependency boto3 from 1.9.162 to 1.9.163
 * :pushpin: Automatic update of dependency thoth-common from 0.8.7 to 0.8.11
+
+## Release 0.14.3 (2019-06-25T21:29:35)
+* PackageAnalysisResultsStore is added
+* Introduce pagination and solver_name filter
+* :pushpin: Automatic update of dependency boto3 from 1.9.174 to 1.9.175
+* Document local Dgraph instance setup
