@@ -23,6 +23,8 @@ from .analyses import AnalysisResultsStore
 from .analyses_by_digest import AnalysisByDigest
 from .analyses_cache import AnalysesCacheStore
 from .buildlogs import BuildLogsStore
+from .buildlogs_analyses import BuildLogsAnalysisResultsStore
+from .buildlogs_analyses_cache import BuildLogsAnalysesCacheStore
 from .ceph import CephStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
