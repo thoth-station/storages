@@ -53,6 +53,20 @@ class PackageExtractRun(VertexBase):
 
 
 @attr.s(slots=True)
+class PythonFileDigests(VertexBase):
+    """A class representing a single file digests."""
+
+    sha256 = model_property(type=str, index="exact")
+
+
+@attr.s(slots=True)
+class FileFound(ReverseEdgeBase):
+    """An edge representing a filepath to the python file found in an image."""
+
+    filepath = model_property(type=str, index="exact")
+
+
+@attr.s(slots=True)
 class Identified(ReverseEdgeBase):
     """An edge representing a package identified by a package-extract run."""
 
@@ -562,6 +576,8 @@ ALL_MODELS = frozenset(
         InspectionSoftwareStack,
         ObservedPerformance,
         PackageExtractRun,
+        PythonFileDigests,
+        FileFound,
         PiMatmul,
         ProvenanceCheckerRun,
         ProvenanceCheckerStackInput,

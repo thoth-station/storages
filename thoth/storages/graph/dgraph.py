@@ -82,6 +82,8 @@ from .models import InspectionStackInput
 from .models import InstalledFrom
 from .models import ObservedPerformance
 from .models import PackageExtractRun
+from .models import PythonFileDigests
+from .models import FileFound
 from .models import PiMatmul
 from .models import ProvenanceCheckerRun
 from .models import ProvenanceCheckerStackInput
@@ -1954,6 +1956,17 @@ class GraphDatabase(StorageBase):
                 self.client
             )
 
+    def _python_file_digests_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of Python files found in the given container image."""
+        for py_file in document["result"]["python"]:
+            python_file_digests = PythonFileDigests.from_properties(sha256=py_file["sha256"])
+            python_file_digests.get_or_create(self.client)
+            FileFound.from_properties(
+                source=package_extract_run,
+                target=python_file_digests,
+                filepath=py_file["filepath"]
+            ).get_or_create(self.client)
+
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
@@ -2014,6 +2027,7 @@ class GraphDatabase(StorageBase):
         self._rpm_sync_analysis_result(package_extract_run, document)
         self._deb_sync_analysis_result(package_extract_run, document)
         self._python_sync_analysis_result(package_extract_run, document, environment)
+        self._python_file_digests_sync_analysis_result(package_extract_run, document)
 
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
