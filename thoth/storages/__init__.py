@@ -18,14 +18,16 @@
 """Storage and database adapters for Thoth."""
 
 from .advisers import AdvisersResultsStore
-from .inspections import InspectionResultsStore
 from .advisers_cache import AdvisersCacheStore
 from .analyses import AnalysisResultsStore
+from .analyses_by_digest import AnalysisByDigest
 from .analyses_cache import AnalysesCacheStore
 from .buildlogs import BuildLogsStore
 from .ceph import CephStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
+from .inspections import InspectionResultsStore
+from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
@@ -36,8 +38,6 @@ from .sync import sync_solver_documents
 from .sync import sync_inspection_documents
 from .sync import sync_provenance_checker_documents
 from .sync import sync_dependency_monkey_documents
-from .analyses_by_digest import AnalysisByDigest
-from .package_analyses import PackageAnalysisResultsStore
 
 
 __name__ = "thoth-storages"
