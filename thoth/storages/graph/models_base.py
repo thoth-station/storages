@@ -37,6 +37,7 @@ import attr
 
 from ..exceptions import MultipleFoundError
 from ..exceptions import NotFoundError
+from ..exceptions import RetryTransaction
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -151,11 +152,10 @@ class Element:
                     transaction.discard()
             except AbortedError:
                 if retries_count > cls._UPSERT_RETRIES_COUNT:
-                    _LOGGER.exception(
+                    raise RetryTransaction(
                         f"Transaction has been aborted - concurrent upsert writes for {label!r} with"
                         f"hash {label_hash}; back-off retries count exceeded {retries_count - 1}"
                     )
-                    raise
 
                 retries_count += 1
                 sleep_time = random.uniform(0.2, 2.0)
