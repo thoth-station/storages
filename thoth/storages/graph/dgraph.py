@@ -693,6 +693,9 @@ class GraphDatabase(StorageBase):
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
 
+        # required fields
+        q += " AND has(index_url) AND has(package_name)"
+
         query = """
             {
                 f(func: has(%s)) @filter(eq(package_name, %s)%s) {
