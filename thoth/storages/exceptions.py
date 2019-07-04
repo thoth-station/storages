@@ -44,3 +44,7 @@ class MultipleFoundError(ThothStorageException):
 
 class PythonIndexNotRegistered(ThothStorageException):
     """Raised if an attempt to insert a Python package with an index not being registered to the system."""
+
+
+class RetryTransaction(ThothStorageException):
+    """Raised if number of retries when syncing data into Dgraph exceeded client should retry after some time."""
