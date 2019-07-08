@@ -1541,18 +1541,38 @@ class GraphDatabase(StorageBase):
         existed = python_package_version.get_or_create(self.client)
 
         if not existed:
-            entity = PythonPackageVersionEntity.from_properties(
-                ecosystem=python_package_version.ecosystem,
-                package_name=python_package_version.package_name,
-                package_version=python_package_version.package_version,
-                index_url=python_package_version.index_url,
+            entity, _ = self.create_python_package_version_entity(
+                python_package_version.package_name,
+                python_package_version.package_version,
+                python_package_version.index_url
             )
-            existed = entity.get_or_create(self.client)
 
             InstalledFrom.from_properties(source=entity, target=python_package_version).get_or_create(self.client)
 
             if package_index and not existed:
                 ProvidedBy.from_properties(source=entity, target=package_index).get_or_create(self.client)
+
+    def create_python_package_version_entity(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        only_if_package_seen: bool = False,
+    ) -> Optional[Tuple[PythonPackageVersionEntity, bool]]:
+        """Create a Python package version entity in the graph database."""
+        if only_if_package_seen and not self.python_package_exists(package_name):
+            return None
+
+        entity = PythonPackageVersionEntity.from_properties(
+            ecosystem="python",
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+        )
+        existed = entity.get_or_create(self.client)
+
+        return entity, existed
 
     def create_python_packages_pipfile(
         self, pipfile_locked: dict, run_software_environment: UserRunSoftwareEnvironmentModel = None
@@ -1796,11 +1816,7 @@ class GraphDatabase(StorageBase):
                 f"Cannot insert CVE record into database, no Python index with url {index_url} registered"
             )
 
-        entity = PythonPackageVersionEntity.from_properties(
-            ecosystem="python", package_name=package_name, package_version=package_version, index_url=index_url
-        )
-        entity.get_or_create(self.client)
-
+        entity, _ = self.create_python_package_version_entity(package_name, package_version, index_url)
         ProvidedBy.from_properties(source=entity, target=python_index).get_or_create(self.client)
 
         cve_record = CVE.from_properties(cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve)
