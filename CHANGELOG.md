@@ -2390,3 +2390,17 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Introduce pagination and solver_name filter
 * :pushpin: Automatic update of dependency boto3 from 1.9.174 to 1.9.175
 * Document local Dgraph instance setup
+
+## Release 0.14.4 (2019-07-08T13:28:06)
+* Introduce retry exception on concurrent upsert writes
+* :pushpin: Automatic update of dependency pytest from 5.0.0 to 5.0.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.182 to 1.9.183
+* :pushpin: Automatic update of dependency boto3 from 1.9.181 to 1.9.182
+* :pushpin: Automatic update of dependency boto3 from 1.9.180 to 1.9.181
+* :pushpin: Automatic update of dependency moto from 1.3.8 to 1.3.9
+* :pushpin: Automatic update of dependency pytest from 4.6.3 to 5.0.0
+* :pushpin: Automatic update of dependency boto3 from 1.9.179 to 1.9.180
+* :star: alphabetically order the files
+* :pushpin: Automatic update of dependency boto3 from 1.9.178 to 1.9.179
+* :pushpin: Automatic update of dependency boto3 from 1.9.176 to 1.9.178
+* :pushpin: Automatic update of dependency boto3 from 1.9.175 to 1.9.176
