@@ -2404,3 +2404,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.9.178 to 1.9.179
 * :pushpin: Automatic update of dependency boto3 from 1.9.176 to 1.9.178
 * :pushpin: Automatic update of dependency boto3 from 1.9.175 to 1.9.176
+
+## Release 0.14.5 (2019-07-08T18:46:09)
+* :dizzy: updated adapters for storing buillog analysis results and cache

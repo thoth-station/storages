@@ -43,4 +43,4 @@ from .sync import sync_dependency_monkey_documents
 
 
 __name__ = "thoth-storages"
-__version__ = "0.14.4"
+__version__ = "0.14.5"
