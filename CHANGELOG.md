@@ -2407,3 +2407,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.14.5 (2019-07-08T18:46:09)
 * :dizzy: updated adapters for storing buillog analysis results and cache
+
+## Release 0.14.6 (2019-07-08T20:48:45)
+* :pushpin: Automatic update of dependency boto3 from 1.9.183 to 1.9.184
+* Introduce method for creating Python package version entities
