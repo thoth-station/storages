@@ -667,6 +667,7 @@ class GraphDatabase(StorageBase):
         package_name: str,
         index_url: str = None,
         *,
+        only_known_index: bool = False,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -693,12 +694,9 @@ class GraphDatabase(StorageBase):
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
 
-        # required fields
-        q += " AND has(index_url) AND has(package_name)"
-
         query = """
             {
-                f(func: has(%s)) @filter(eq(package_name, %s)%s) {
+                f(func: has(%s)) @filter(eq(package_name, %s)%s) %s {
                     package_version
                     index_url
                 }
@@ -707,6 +705,7 @@ class GraphDatabase(StorageBase):
             PythonPackageVersion.get_label(),
             package_name,
             q,
+            "@cascade" if not only_known_index else ""
         )
 
         result = self._query_raw(query)
