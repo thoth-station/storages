@@ -705,7 +705,7 @@ class GraphDatabase(StorageBase):
             PythonPackageVersion.get_label(),
             package_name,
             q,
-            "@cascade" if not only_known_index else ""
+            "@cascade" if only_known_index else ""
         )
 
         result = self._query_raw(query)
