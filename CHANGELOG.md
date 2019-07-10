@@ -2411,3 +2411,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.14.6 (2019-07-08T20:48:45)
 * :pushpin: Automatic update of dependency boto3 from 1.9.183 to 1.9.184
 * Introduce method for creating Python package version entities
+
+## Release 0.14.7 (2019-07-10T21:18:59)
+* :pushpin: Automatic update of dependency boto3 from 1.9.185 to 1.9.186
+* :pushpin: Automatic update of dependency thoth-common from 0.9.1 to 0.9.2
+* Fix refactoring typo
+* Parametrize `@cascade` by `only_known_index` parameter
+* :pushpin: Automatic update of dependency boto3 from 1.9.184 to 1.9.185
+* Require non-null `index_url` and `package_name`
