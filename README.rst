@@ -68,3 +68,17 @@ After running the command above (make sure your big fat daemon is up using `syst
 The provided `docker-compose` has also Ratel enabled for to have an UI for graph database content. To access it visit `http://localhost:8000/ <http://localhost:8080>`_.
 
 The provided `docker-compose` uses volume mounted from `/tmp`. After you computer restart, the content will not be available anymore.
+
+If you would like to experiment with Dgraph programatically, you can use the following code snippet as a starting point:
+
+.. code-block:: python
+
+  from thoth.storages import GraphDatabase
+  
+  graph = GraphDatabase()
+  graph.connect()
+  # To clear database:
+  # graph.drop_all()
+  # To initialize schema in the graph database:
+  # graph.initialize_schema()
+
