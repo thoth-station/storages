@@ -784,11 +784,17 @@ class GraphDatabase(StorageBase):
 
         return self._postprocess_retrieve_packages(result)
 
-    def retrieve_unsolvable_python_packages(self) -> dict:
+    def retrieve_unsolvable_python_packages(self, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
+        if not solver_name:
+            filter_str = '@filter(eq(solver_error, true) AND eq(solver_error_unsolvable, true))'
+        else:
+            filter_str = '@filter(eq(solver_error, true) AND eq(solver_error_unsolvable, true) ' \
+                        f'AND eq(solver_name, "{solver_name}"))'
+
         query = """{
            f(func: has(%s)) @normalize{
-               %s @filter(eq(solver_error, true) AND eq(solver_error_unsolvable, true)) {
+               %s %s {
                    package_name:package_name
                    package_version:package_version
                     }
@@ -796,6 +802,7 @@ class GraphDatabase(StorageBase):
             }""" % (
             Solved.get_name(),
             Solved.get_name(),
+            filter_str,
         )
         result = self._query_raw(query)
 
