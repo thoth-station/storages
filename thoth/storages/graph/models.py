@@ -53,17 +53,17 @@ class PackageExtractRun(VertexBase):
 
 
 @attr.s(slots=True)
-class PythonFileDigests(VertexBase):
+class PythonFileDigest(VertexBase):
     """A class representing a single file digests."""
 
     sha256 = model_property(type=str, index="exact")
 
 
 @attr.s(slots=True)
-class FileFound(ReverseEdgeBase):
+class FoundFile(ReverseEdgeBase):
     """An edge representing a filepath to the python file found in an image."""
 
-    filepath = model_property(type=str, index="exact")
+    file_path = model_property(type=str, index="exact")
 
 
 @attr.s(slots=True)
@@ -576,8 +576,8 @@ ALL_MODELS = frozenset(
         InspectionSoftwareStack,
         ObservedPerformance,
         PackageExtractRun,
-        PythonFileDigests,
-        FileFound,
+        PythonFileDigest,
+        FoundFile,
         PiMatmul,
         ProvenanceCheckerRun,
         ProvenanceCheckerStackInput,
