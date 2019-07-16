@@ -82,3 +82,17 @@ If you would like to experiment with Dgraph programatically, you can use the fol
   # To initialize schema in the graph database:
   # graph.initialize_schema()
 
+Schema adjustment in deployment
+===============================
+
+It's possible to perform adjustments of schema in a deployemnt. It's important
+that there are no open transactions (simply retry schema creation until it
+succeeds). You can use relevant endpoint on Management API for this purpose.
+
+If there are changes in types, Dgraph tries to automatically perform conversion
+from an old type to the new one as described in the new schema (e.g. a float to
+string). Invalid schema changes (e.g. parsing string into a float, but the
+string cannot be parsed as a float) result in schema change errors. These errors
+need to be handled programatically by deployment administrator (ideally avoid
+such conversions).
+
