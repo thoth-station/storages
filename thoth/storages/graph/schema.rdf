@@ -69,9 +69,9 @@ solver_document_id: string @index(exact) .
 solver_datetime: dateTime @index(hour) .
 solver_name: string @index(exact) .
 solver_version: string @index(exact) .
-file_found_label: string @count @upsert @index(exact) .
-file_found: uid @reverse @count .
-filepath: string @index(exact) .
+found_file_label: string @count @upsert @index(exact) .
+found_file: uid @reverse @count .
+file_path: string @index(exact) .
 hardware_information_label: string @count @upsert @index(exact) .
 cpu_vendor: string @index(exact) .
 cpu_model: int @index(int) .
@@ -136,7 +136,7 @@ provided_by: uid @reverse @count .
 python_artifact_label: string @count @upsert @index(exact) .
 artifact_hash_sha256: string @index(exact) .
 artifact_name: string @index(exact) .
-python_file_digests_label: string @count @upsert @index(exact) .
+python_file_digest_label: string @count @upsert @index(exact) .
 sha256: string @index(exact) .
 python_package_index_label: string @count @upsert @index(exact) .
 url: string @index(exact) .
