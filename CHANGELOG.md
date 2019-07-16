@@ -2419,3 +2419,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Parametrize `@cascade` by `only_known_index` parameter
 * :pushpin: Automatic update of dependency boto3 from 1.9.184 to 1.9.185
 * Require non-null `index_url` and `package_name`
+
+## Release 0.14.8 (2019-07-16T12:49:49)
+* Document schema hadnling in a living deployment
+* Update dgraph.py
+* Update README to show how to connect to the graph database from code
+* Parametrize retrieval of unsolvable packages for the given solver
