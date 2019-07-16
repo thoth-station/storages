@@ -48,3 +48,7 @@ class PythonIndexNotRegistered(ThothStorageException):
 
 class RetryTransaction(ThothStorageException):
     """Raised if number of retries when syncing data into Dgraph exceeded client should retry after some time."""
+
+
+class UnboundModel(ThothStorageException):
+    """Raised if there are done operations on models which do not link to objects stored inside database."""
