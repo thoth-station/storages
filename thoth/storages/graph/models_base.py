@@ -37,6 +37,7 @@ import attr
 
 from ..exceptions import MultipleFoundError
 from ..exceptions import NotFoundError
+from ..exceptions import UnboundModel
 from ..exceptions import RetryTransaction
 
 
@@ -104,6 +105,19 @@ class Element:
     def get_or_create(self, client: DgraphClient) -> bool:
         """Get or create the given entity."""
         raise NotImplementedError
+
+    def delete(self, client: DgraphClient) -> None:
+        """Delete the given element from graph database."""
+        if self.uid is None:
+            raise UnboundModel(
+                "Cannot delete model which has no association with any object in the graph "
+                "database - either multiple deletions were performed or use query mechanism "
+                "to obtain bound model"
+            )
+
+        transaction = client.txn(read_only=False)
+        transaction.mutate(del_obj={"uid": self.uid}, commit_now=True)
+        self.uid = None
 
     @classmethod
     def get_properties(cls) -> dict:
