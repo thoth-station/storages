@@ -119,10 +119,20 @@ environment_type: string @index(exact) .
 package_extract_error: bool .
 image_tag: string @index(exact) .
 pi_matmul_label: string @count @upsert @index(exact) .
-pi_name: string @index(exact) .
-ml_framework: string @index(exact) .
-reference: string @index(exact) .
-matrix_size: int .
+framework: string @index(exact) .
+device: string @index(exact) .
+version: string @index(exact) .
+exit_code: int .
+cpu_utime: float .
+cpu_stime: float .
+cpu_cutime: float .
+cpu_cstime: float .
+cpu_total_time: float .
+matrix_size: int @index(int) .
+dtype: string @index(exact) .
+reps: int @index(int) .
+elapsed: float .
+rate: float .
 provenance_checker_run_label: string @count @upsert @index(exact) .
 provenance_checker_document_id: string @index(exact) .
 provenance_checker_datetime: dateTime @index(hour) .

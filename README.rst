@@ -96,3 +96,50 @@ string cannot be parsed as a float) result in schema change errors. These errors
 need to be handled programatically by deployment administrator (ideally avoid
 such conversions).
 
+Creating own performance indicators
+===================================
+
+You can create your own performance indicators. To create own performance
+indicator, create a script which tests desired functionality of a library. An
+example can be matrix multiplication script present in `performance
+<https://github.com/thoth-station/performance/blob/master/tensorflow/matmul.py>`_
+repository. This script can be supplied to Dependency Monkey to validate
+certain combination of libraries in desired runtime and buildtime environment
+or directly on Amun API which will run the given script using desired software
+and hardware configuration. Please follow instructions on how to create a
+performance script shown in the `README of performance repo
+<https://github.com/thoth-station/performance>`_.
+
+To create relevant models, adjust `thoth/storages/graph/performance.py` file
+and add your model. Describe parameters (reported in `@parameters` section of
+performance indicator result) and result (reported in `@result`). The name of
+class should match `name` which is reported by performance indicator run.
+
+.. code-block:: python
+
+  @attr.s(slots=True)
+  class PiMatmul(PerformanceIndicatorBase):
+      """A class for representing a matrix multiplication micro-performance test."""
+
+      SCHEMA_PARAMETERS = Schema({
+          Required("matrix_size"): int,
+          Required("dtype"): str,
+          Required("reps"): int,
+          Required("device"): str,
+      })
+
+      SCHEMA_RESULT = Schema({
+          Required("elapsed"): float,
+          Required("rate"): float,
+      })
+
+      # Device used during performance indicator run - CPU/GPU/TPU/...
+      device = model_property(type=str, index="exact")
+      matrix_size = model_property(type=int, index="int")
+      dtype = model_property(type=str, index="exact")
+      reps = model_property(type=int, index="int")
+      elapsed = model_property(type=float)
+      rate = model_property(type=float)
+
+
+After you have created relevant model, register your model to `ALL_PERFORMANCE_MODELS` and re-generate graph database schema (as discussed above).

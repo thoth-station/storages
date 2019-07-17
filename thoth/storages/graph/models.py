@@ -15,16 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Graph database schema."""
+"""Graph database schema.
+
+This module contains just "core" parts of the graph database schema. Other modules present in this package
+capture standalone parts - see for example performance indicators.
+"""
 
 
 from datetime import datetime
 
 import attr
 
-from .models_base import VertexBase
-from .models_base import ReverseEdgeBase
 from .models_base import model_property
+from .models_base import ReverseEdgeBase
+from .models_base import VertexBase
+from .performance import ALL_PERFORMANCE_MODELS
 
 
 ################################################################################
@@ -487,44 +492,6 @@ class UsedInJob(ReverseEdgeBase):
 
 
 ################################################################################
-#                             Performance indicators.
-################################################################################
-
-
-@attr.s(slots=True)
-class ObservedPerformance(ReverseEdgeBase):
-    """A class for representing connection to performance indicators."""
-
-    performance_indicator_index = model_property(type=int)
-
-
-@attr.s(slots=True)
-class PerformanceIndicatorBase(VertexBase):
-    """A base class for implementing performance indicators."""
-
-    # Name given to the performance indicator.
-    pi_name = model_property(type=str, index="exact")
-    # ML framework used for the performance indicator.
-    ml_framework = model_property(type=str, index="exact")
-    # Origin from where the performance indicator was obtained. In case of Git repo,
-    # it holds Git repo URL, in case of URL it holds URL to the script.
-    origin = model_property(type=str, index="exact")
-    # Reference of the script, in case of Git repo it holds commit SHA, in case of URL it carries
-    # SHA256 of the script which was used to test the performance with (performance indicator script).
-    reference = model_property(type=str, index="exact")
-    # This one is used later on in queries in adviser, all the relevant performance indicators should
-    # respect this property and place resutls in there.
-    overall_score = model_property(type=float)
-
-
-@attr.s(slots=True)
-class PiMatmul(PerformanceIndicatorBase):
-    """A class for representing a matrix multiplication micro-performance test."""
-
-    matrix_size = model_property(type=int)
-
-
-################################################################################
 #                           Security.
 ################################################################################
 
@@ -546,7 +513,7 @@ class CVE(VertexBase):
     version_range = model_property(type=str, index="exact")
 
 
-ALL_MODELS = frozenset(
+ALL_CORE_MODELS = frozenset(
     (
         AdviserRun,
         AdvisedSoftwareStack,
@@ -574,11 +541,9 @@ ALL_MODELS = frozenset(
         InspectionRunSoftwareEnvironmentInput,
         InspectionStackInput,
         InspectionSoftwareStack,
-        ObservedPerformance,
         PackageExtractRun,
         PythonFileDigest,
         FoundFile,
-        PiMatmul,
         ProvenanceCheckerRun,
         ProvenanceCheckerStackInput,
         ProvidedBy,
@@ -603,3 +568,6 @@ ALL_MODELS = frozenset(
         UserHardwareInformation,
     )
 )
+
+
+ALL_MODELS = ALL_CORE_MODELS | ALL_PERFORMANCE_MODELS

@@ -80,11 +80,9 @@ from .models import InspectionRunSoftwareEnvironmentInput
 from .models import InspectionSoftwareStack
 from .models import InspectionStackInput
 from .models import InstalledFrom
-from .models import ObservedPerformance
 from .models import PackageExtractRun
 from .models import PythonFileDigest
 from .models import FoundFile
-from .models import PiMatmul
 from .models import ProvenanceCheckerRun
 from .models import ProvenanceCheckerStackInput
 from .models import ProvidedBy
@@ -106,9 +104,12 @@ from .models import UsedIn
 from .models import UsedInBuild
 from .models import UsedInJob
 from .models import UserSoftwareStack
+from .performance import ObservedPerformance
+from .performance import PERFORMANCE_MODEL_BY_NAME
 
 from ..exceptions import NotFoundError
 from ..exceptions import PythonIndexNotRegistered
+from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import NotConnected
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
@@ -1695,7 +1696,18 @@ class GraphDatabase(StorageBase):
     @enable_vertex_cache
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
-        inspection_document_id = InspectionResultsStore.get_document_id(document)
+        # Check if we have such performance model before creating any other records.
+        performance_indicator = None
+        if document["specification"].get("script"):  # We have run an inspection job.
+            performance_indicator_name = document["job_log"]["stdout"].get("name")
+            performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
+            if not performance_model_class:
+                raise PerformanceIndicatorNotRegistered(
+                    f"No performance indicator registered for name {performance_indicator_name!r}"
+                )
+
+            performance_indicator = performance_model_class.create_from_report(document)
+            performance_indicator.get_or_create(self.client)
 
         build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
         build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
@@ -1706,6 +1718,7 @@ class GraphDatabase(StorageBase):
         run_memory = run_memory / (1024 ** 3)
         build_memory = build_memory / (1024 ** 3)
 
+        inspection_document_id = InspectionResultsStore.get_document_id(document)
         inspection_run = InspectionRun.from_properties(
             inspection_document_id=inspection_document_id,
             inspection_datetime=document.get("created"),
@@ -1769,44 +1782,11 @@ class GraphDatabase(StorageBase):
             hardware_information_job.get_or_create(self.client)
             UsedInJob.from_properties(source=hardware_information_job, target=inspection_run).get_or_create(self.client)
 
-            overall_score = document["job_log"]["stdout"].get("overall_score")
-            if document["job_log"].get("exit_code") != 0:
-                # We assign negative information here for now if the given performance indicator failed.
-                overall_score = -1.0
-
-            if not overall_score:
-                _LOGGER.warning("No overall score found when syncing inspection document %r", inspection_document_id)
-
-            # PERFORMANCE INDICATORS
-            # We uniquely identify the performance indicators considering:
-            # - {ML_FRAMEWORK}
-            # - {ML_PRIMITIVE} or {DATASET}-{ALGORITHM}.
-
-            # MATMUL
-            if document["job_log"]["stdout"].get("name") == "matmul":
-                performance_indicator_matmul = PiMatmul.from_properties(
-                    pi_name=document["job_log"]["stdout"].get("name"),
-                    ml_framework=document["job_log"].get("framework"),
-                    origin=document["specification"]["script"],
-                    reference=document["job_log"]["script_sha256"],
-                    matrix_size=None,  # TODO assign matrix size once we allow parameters on Amun.
-                    overall_score=overall_score,
-                )
-                performance_indicator_matmul.get_or_create(self.client)
-
-                ObservedPerformance.from_properties(
-                    source=inspection_run,
-                    target=performance_indicator_matmul,
-                    performance_indicator_index=0,  # We can now run only one pi per inspection request.
-                ).get_or_create(self.client)
-            else:
-                raise PythonIndexNotRegistered(
-                    "We don't have support for syncing this PI called {} with origin {} and reference {}".format(
-                        document["job_log"]["stdout"].get("name"),
-                        document["specification"]["script"],
-                        document["job_log"]["script_sha256"],
-                    )
-                )
+            ObservedPerformance.from_properties(
+                source=inspection_run,
+                target=performance_indicator,
+                performance_indicator_index=0,  # We can now run only one pi per inspection request.
+            ).get_or_create(self.client)
 
     def create_python_cve_record(
         self,
