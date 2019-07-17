@@ -52,3 +52,7 @@ class RetryTransaction(ThothStorageException):
 
 class UnboundModel(ThothStorageException):
     """Raised if there are done operations on models which do not link to objects stored inside database."""
+
+
+class PerformanceIndicatorNotRegistered(ThothStorageException):
+    """Raised if a performance indicator model which is about to be synced was not found."""
