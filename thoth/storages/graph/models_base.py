@@ -376,6 +376,10 @@ class VertexBase(Element):
             return True
 
         self.uid, existed = self._do_upsert(client, label, label_hash, data)
+
+        if self._CACHE is not None:
+            self._CACHE[label_hash] = self.uid
+
         return existed
 
 
