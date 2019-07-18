@@ -1974,6 +1974,10 @@ class GraphDatabase(StorageBase):
             package_extract_error=False,
             image_tag=image_tag,
             duration=None,  # TODO: assign duration
+            os_id=document["result"].get("operating-system", {}).get("id"),
+            os_name=document["result"].get("operating-system", {}).get("name"),
+            os_version_id=document["result"].get("operating-system", {}).get("version_id"),
+
         )
         package_extract_run.get_or_create(self.client)
 
@@ -1983,9 +1987,8 @@ class GraphDatabase(StorageBase):
             "python_version": None,
             "image_name": image_name,
             "image_sha": document["result"]["layers"][-1],
-            # TODO: assign OS name, OS version
-            "os_name": None,
-            "os_version": None,
+            "os_name": package_extract_run.os_name.lower() if package_extract_run.os_name else None,
+            "os_version": package_extract_run.os_version_id,
             # TODO: assign CUDA
         }
 
