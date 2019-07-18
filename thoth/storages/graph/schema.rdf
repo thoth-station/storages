@@ -118,16 +118,29 @@ package_extract_name: string @index(exact) .
 environment_type: string @index(exact) .
 package_extract_error: bool .
 image_tag: string @index(exact) .
+os_id: string @index(exact) .
+os_version_id: string @index(exact) .
 pi_matmul_label: string @count @upsert @index(exact) .
 framework: string @index(exact) .
-device: string @index(exact) .
 version: string @index(exact) .
 exit_code: int .
-cpu_utime: float .
-cpu_stime: float .
-cpu_cutime: float .
-cpu_cstime: float .
-cpu_total_time: float .
+ru_utime: float .
+ru_stime: float .
+ru_maxrss: int .
+ru_ixrss: int .
+ru_idrss: int .
+ru_isrss: int .
+ru_minflt: int .
+ru_majflt: int .
+ru_nswap: int .
+ru_inblock: int .
+ru_oublock: int .
+ru_msgsnd: int .
+ru_msgrcv: int .
+ru_nsignals: int .
+ru_nvcsw: int .
+ru_nivcsw: int .
+device: string @index(exact) .
 matrix_size: int @index(int) .
 dtype: string @index(exact) .
 reps: int @index(int) .
