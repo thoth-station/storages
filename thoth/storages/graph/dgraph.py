@@ -1987,9 +1987,8 @@ class GraphDatabase(StorageBase):
             "python_version": None,
             "image_name": image_name,
             "image_sha": document["result"]["layers"][-1],
-            # TODO: assign OS name, OS version
-            "os_name": None,
-            "os_version": None,
+            "os_name": package_extract_run.os_name.lower() if package_extract_run.os_name else None,
+            "os_version": package_extract_run.os_version_id,
             # TODO: assign CUDA
         }
 
