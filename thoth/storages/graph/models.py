@@ -55,6 +55,10 @@ class PackageExtractRun(VertexBase):
     image_tag = model_property(type=str, index="exact")
     # Duration in seconds.
     duration = model_property(type=int)
+    # Entries parsed from /etc/os-release
+    os_name = model_property(type=str, index="exact")
+    os_id = model_property(type=str, index="exact")
+    os_version_id = model_property(type=str, index="exact")
 
 
 @attr.s(slots=True)

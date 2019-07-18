@@ -1974,6 +1974,10 @@ class GraphDatabase(StorageBase):
             package_extract_error=False,
             image_tag=image_tag,
             duration=None,  # TODO: assign duration
+            os_id=document["result"].get("operating-system", {}).get("id"),
+            os_name=document["result"].get("operating-system", {}).get("name"),
+            os_version_id=document["result"].get("operating-system", {}).get("version_id"),
+
         )
         package_extract_run.get_or_create(self.client)
 
