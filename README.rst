@@ -143,3 +143,14 @@ class should match `name` which is reported by performance indicator run.
 
 
 After you have created relevant model, register your model to `ALL_PERFORMANCE_MODELS` and re-generate graph database schema (as discussed above).
+
+Online debugging of queries done to Dgraph
+==========================================
+
+You can print to logger all the queries that are performed to a Dgraph instance. To do so, set the following environment variables:
+
+.. code-block::
+
+  export THOTH_LOG_STORAGES=DEBUG
+  export THOTH_STORAGES_DEBUG_QUERIES=1
+
