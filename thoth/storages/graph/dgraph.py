@@ -1035,13 +1035,17 @@ class GraphDatabase(StorageBase):
         """Perform query for retrieving transitive dependencies, retrieve only uids."""
         query_filter = ""
         if os_name:
-            query_filter = f' AND eq(os_name, "{os_name}")'
+            query_filter = f'eq(os_name, "{os_name}")'
 
         if os_version:
-            query_filter += f' AND eq(os_version, "{os_version}")'
+            if query_filter:
+                query_filter += " AND "
+            query_filter += f'eq(os_version, "{os_version}")'
 
         if python_version:
-            query_filter += f' AND eq(python_version, "{python_version}")'
+            if query_filter:
+                query_filter += " AND "
+            query_filter += f'eq(python_version, "{python_version}")'
 
         query = """
         {
@@ -1059,7 +1063,7 @@ class GraphDatabase(StorageBase):
             package_name,
             package_version,
             index_url,
-            query_filter,
+            " AND " + query_filter if query_filter else "",
             self._TRANSITIVE_QUERY_DEPTH,
         )
         query_result = self._query_raw(query)["q"]
