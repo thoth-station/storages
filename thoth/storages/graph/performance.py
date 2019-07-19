@@ -160,10 +160,10 @@ class PiMatmul(PerformanceIndicatorBase):
     # Device used during performance indicator run - CPU/GPU/TPU/...
     device = model_property(type=str, index="exact")
 
-    # Size of the metrix tested.
+    # Size of the matrix tested.
     matrix_size = model_property(type=int, index="int")
 
-    # Type of item in the metrix.
+    # Type of item in the matrix.
     dtype = model_property(type=str, index="exact")
 
     # Number of repetitions of matrix multiplication performed.
