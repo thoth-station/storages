@@ -66,12 +66,24 @@ class PerformanceIndicatorBase(VertexBase):
     # The actual exit code of the performance indicator.
     exit_code = model_property(type=int)
 
-    # Time spent on CPU.
-    cpu_utime = model_property(type=float)
-    cpu_stime = model_property(type=float)
-    cpu_cutime = model_property(type=float)
-    cpu_cstime = model_property(type=float)
-    cpu_total_time = model_property(type=float)
+    # Process statistics:
+    #   https://docs.python.org/3/library/resource.html#resource.getrusage
+    ru_utime = model_property(type=float)
+    ru_stime = model_property(type=float)
+    ru_maxrss = model_property(type=int)
+    ru_ixrss = model_property(type=int)
+    ru_idrss = model_property(type=int)
+    ru_isrss = model_property(type=int)
+    ru_minflt = model_property(type=int)
+    ru_majflt = model_property(type=int)
+    ru_nswap = model_property(type=int)
+    ru_inblock = model_property(type=int)
+    ru_oublock = model_property(type=int)
+    ru_msgsnd = model_property(type=int)
+    ru_msgrcv = model_property(type=int)
+    ru_nsignals = model_property(type=int)
+    ru_nvcsw = model_property(type=int)
+    ru_nivcsw = model_property(type=int)
 
     @classmethod
     def create_from_report(cls, inspection_document: dict) -> "PerformanceIndicatorBase":
@@ -93,11 +105,22 @@ class PerformanceIndicatorBase(VertexBase):
             or inspection_document["job_log"]["script_sha256"],
             overall_score=overall_score,
             exit_code=inspection_document["job_log"].get("exit_code"),
-            cpu_utime=inspection_document["job_log"].get("utime"),
-            cpu_stime=inspection_document["job_log"].get("stime"),
-            cpu_cutime=inspection_document["job_log"].get("cutime"),
-            cpu_cstime=inspection_document["job_log"].get("cstime"),
-            cpu_total_time=inspection_document["job_log"].get("total_time"),
+            ru_utime=inspection_document["job_log"].get("usage").get("ru_utime"),
+            ru_stime=inspection_document["job_log"].get("usage").get("ru_stime"),
+            ru_maxrss=inspection_document["job_log"].get("usage").get("ru_maxrss"),
+            ru_ixrss=inspection_document["job_log"].get("usage").get("ru_ixrss"),
+            ru_idrss=inspection_document["job_log"].get("usage").get("ru_idrss"),
+            ru_isrss=inspection_document["job_log"].get("usage").get("ru_isrss"),
+            ru_minflt=inspection_document["job_log"].get("usage").get("ru_minflt"),
+            ru_majflt=inspection_document["job_log"].get("usage").get("ru_majflt"),
+            ru_nswap=inspection_document["job_log"].get("usage").get("ru_nswap"),
+            ru_inblock=inspection_document["job_log"].get("usage").get("ru_inblock"),
+            ru_oublock=inspection_document["job_log"].get("usage").get("ru_oublock"),
+            ru_msgsnd=inspection_document["job_log"].get("usage").get("ru_msgsnd"),
+            ru_msgrcv=inspection_document["job_log"].get("usage").get("ru_msgrcv"),
+            ru_nsignals=inspection_document["job_log"].get("usage").get("ru_nsignals"),
+            ru_nvcsw=inspection_document["job_log"].get("usage").get("ru_nvcsw"),
+            ru_nivcsw=inspection_document["job_log"].get("usage").get("ru_nivcsw"),
         )
 
         if cls.SCHEMA_PARAMETERS:
