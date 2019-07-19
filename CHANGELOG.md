@@ -2425,3 +2425,19 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Update dgraph.py
 * Update README to show how to connect to the graph database from code
 * Parametrize retrieval of unsolvable packages for the given solver
+
+## Release 0.15.0 (2019-07-19T13:28:41)
+* Fix typo in matrix
+* Update schema based on updates to performance indicators
+* Propagate OS information to runtime/buildtime environment nodes
+* Update schema to capture os-release information
+* Sync information about operating system captured in package-extract
+* Update schema image respecting recent changes in PiMatmul
+* Unify schema for creating performance indicators and their handling
+* Fix vertex cache handling
+* Add standard project template and code owners
+* Regenerate schema
+* Rename models and properties
+* Add PythonFileDigest to schema documentation
+* Introduce delete operation on top of models
+* sync_package_analysis_documents
