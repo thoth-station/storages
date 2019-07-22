@@ -248,7 +248,7 @@ class GraphDatabase(StorageBase):
         assert self._client is not None, "Adapter is not connected to any Dgraph instance."
         txn = self._client.txn(read_only=read_only)
 
-        if bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES"))):
+        if bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0))):
             _LOGGER.debug("Performing query with variables (read_only=%r): %r\n%s", read_only, variables, query)
 
         try:
