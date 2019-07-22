@@ -2441,3 +2441,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add PythonFileDigest to schema documentation
 * Introduce delete operation on top of models
 * sync_package_analysis_documents
+
+## Release 0.15.1 (2019-07-22T19:41:14)
+* Fix default value to environment variable
+* Fix handling of missing usage in the inspection documents when syncing
+* Add checks for inspection document syncing
+* State in the README file how to debug graph database queries
+* Enable logging of graph database queries for debugging
+* Fix handling of query filter
