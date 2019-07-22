@@ -1705,7 +1705,18 @@ class GraphDatabase(StorageBase):
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
         performance_indicator = None
+        inspection_document_id = InspectionResultsStore.get_document_id(document)
         if document["specification"].get("script"):  # We have run an inspection job.
+            if not isinstance(document["job_log"]["stdout"], dict):
+                raise ValueError(
+                    "Performance indicator did not produce a valid JSON output in %r: %s",
+                    inspection_document_id,
+                    document["job_log"]["stdout"],
+                )
+
+            if not document["job_log"]["stdout"]:
+                raise ValueError("No values provided for inspection output %r", inspection_document_id)
+
             performance_indicator_name = document["job_log"]["stdout"].get("name")
             performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
             if not performance_model_class:
@@ -1725,7 +1736,6 @@ class GraphDatabase(StorageBase):
         run_memory = run_memory / (1024 ** 3)
         build_memory = build_memory / (1024 ** 3)
 
-        inspection_document_id = InspectionResultsStore.get_document_id(document)
         inspection_run = InspectionRun.from_properties(
             inspection_document_id=inspection_document_id,
             inspection_datetime=document.get("created"),
