@@ -129,7 +129,7 @@ class GraphDatabase(StorageBase):
     DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or "localhost:9080"
 
     # Depth of traversal when transitive query is performed.
-    _TRANSITIVE_QUERY_DEPTH = 3
+    _TRANSITIVE_QUERY_DEPTH = 2
 
     def __init__(self, hosts: List[str] = None, tls_path: str = None):
         """Initialize Dgraph server database adapter."""
