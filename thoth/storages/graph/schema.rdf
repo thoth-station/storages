@@ -90,6 +90,9 @@ has_vulnerability_label: string @count @upsert @index(exact) .
 has_vulnerability: uid @reverse @count .
 identified_label: string @count @upsert @index(exact) .
 identified: uid @reverse @count .
+included_file_label: string @count @upsert @index(exact) .
+included_file: uid @reverse @count .
+package_analysis_document_id: string @index(exact) .
 inspection_build_software_environment_input_label: string @count @upsert @index(exact) .
 inspection_build_software_environment_input: uid @reverse @count .
 inspection_run_label: string @count @upsert @index(exact) .
@@ -107,9 +110,18 @@ inspection_stack_input_label: string @count @upsert @index(exact) .
 inspection_stack_input: uid @reverse @count .
 installed_from_label: string @count @upsert @index(exact) .
 installed_from: uid @reverse @count .
+investigated_label: string @count @upsert @index(exact) .
+investigated: uid @reverse @count .
 observed_performance_label: string @count @upsert @index(exact) .
 observed_performance: uid @reverse @count .
 performance_indicator_index: int .
+package_analyzer_input_label: string @count @upsert @index(exact) .
+package_analyzer_input: uid @reverse @count .
+package_analyzer_run_label: string @count @upsert @index(exact) .
+package_analysis_datetime: dateTime @index(hour) .
+package_analyzer_version: string @index(exact) .
+package_analyzer_name: string @index(exact) .
+package_analyzer_error: bool @index(bool) .
 package_extract_run_label: string @count @upsert @index(exact) .
 analysis_document_id: string @index(exact) .
 analysis_datetime: dateTime @index(hour) .

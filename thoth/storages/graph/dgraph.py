@@ -72,6 +72,7 @@ from .models import EnvironmentBase
 from .models import HardwareInformation as HardwareInformationModel
 from .models import UserHardwareInformation as UserHardwareInformationModel
 from .models import HasArtifact
+from .models import Investigated
 from .models import HasVulnerability
 from .models import Identified
 from .models import InspectionBuildSoftwareEnvironmentInput
@@ -81,8 +82,11 @@ from .models import InspectionSoftwareStack
 from .models import InspectionStackInput
 from .models import InstalledFrom
 from .models import PackageExtractRun
+from .models import PackageAnalyzerRun
 from .models import PythonFileDigest
 from .models import FoundFile
+from .models import PackageAnalyzerInput
+from .models import IncludedFile
 from .models import ProvenanceCheckerRun
 from .models import ProvenanceCheckerStackInput
 from .models import ProvidedBy
@@ -113,6 +117,7 @@ from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import NotConnected
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
+from ..package_analyses import PackageAnalysisResultsStore
 from ..inspections import InspectionResultsStore
 from ..provenance import ProvenanceResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -1341,6 +1346,26 @@ class GraphDatabase(StorageBase):
 
         return result["f"][0]["count"] > 0
 
+    def package_analysis_document_id_exist(self, package_analysis_document_id: str) -> bool:
+        """Check if there is a package analysis document record with the given id."""
+        query = """{
+            f(func: has(%s)) @filter(eq(package_analysis_document_id, "%s")) {
+                count(uid)
+            }
+        }
+        """ % (
+            PackageAnalyzerRun.get_label(),
+            package_analysis_document_id,
+        )
+        result = self._query_raw(query)
+        if result["f"][0]["count"] > 1:
+            _LOGGER.error(
+                f"Integrity error - multiple package-analyzer runs found for the "
+                f"same package analysis document id: {package_analysis_document_id}"
+            )
+
+        return result["f"][0]["count"] > 0
+
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
         query = """{
@@ -1956,12 +1981,14 @@ class GraphDatabase(StorageBase):
     def _python_file_digests_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
         """Sync results of Python files found in the given container image."""
         for py_file in document["result"]["python"]:
-            python_file_digests = PythonFileDigest.from_properties(sha256=py_file["sha256"])
-            python_file_digests.get_or_create(self.client)
+            python_file_digests = PythonFileDigest.from_properties(
+                sha256=py_file["sha256"],
+            ).get_or_create(self.client)
+
             FoundFile.from_properties(
                 source=package_extract_run,
                 target=python_file_digests,
-                file_path=py_file["filepath"]
+                file_path=py_file["filepath"],
             ).get_or_create(self.client)
 
     @enable_vertex_cache
@@ -2028,6 +2055,75 @@ class GraphDatabase(StorageBase):
         self._deb_sync_analysis_result(package_extract_run, document)
         self._python_sync_analysis_result(package_extract_run, document, environment)
         self._python_file_digests_sync_analysis_result(package_extract_run, document)
+
+    @enable_vertex_cache
+    def sync_package_analysis_result(self, document: dict) -> None:
+        """Sync the given package analysis result to the graph database."""
+        package_analysis_document_id = PackageAnalysisResultsStore.get_document_id(document)
+        package_name = document["metadata"]["arguments"]["python"]["package_name"]
+        package_version = document["metadata"]["arguments"]["python"]["package_version"]
+        index_url = document["metadata"]["arguments"]["python"]["index_url"]
+
+        # TODO: capture errors on package analysis? result of package-analyzer should be a JSON with error flag
+        package_analyzer_run = PackageAnalyzerRun.from_properties(
+            package_analysis_document_id=package_analysis_document_id,
+            package_analysis_datetime=document["metadata"]["datetime"],
+            package_analyzer_version=document["metadata"]["analyzer_version"],
+            package_analyzer_name=document["metadata"]["analyzer"],
+            debug=document["metadata"]["arguments"]["thoth-package-analyzer"]["verbose"],
+            package_analyzer_error=False,
+            duration=None,  # TODO: assign duration
+        ).get_or_create(self.client)
+
+        package_index = PythonPackageIndex.query_one(self.client, url=index_url)
+        if not package_index:
+            raise PythonIndexNotRegistered(
+                f"Cannot insert PythonPackageVersionEntity record into database, "
+                f"no Python index with url {index_url} registered"
+            )
+
+        entity, _ = self.create_python_package_version_entity(package_name, package_version, index_url)
+        ProvidedBy.from_properties(
+            source=entity,
+            target=python_index,
+        ).get_or_create(self.client)
+
+        PackageAnalyzerInput.from_properties(
+            source=entity,
+            target=package_analyzer_run,
+        ).get_or_create(self.client)
+
+        for artifact in document["result"][index_url]["artifacts"]:
+            python_artifact = PythonArtifact.from_properties(
+                artifact_hash_sha256=artifact["sha256"],
+                artifact_name=artifact["name"],
+            ).get_or_create(self.client)
+
+            Investigated.from_properties(
+                source=package_analyzer_run,
+                target=python_artifact,
+            ).get_or_create(self.client)
+
+            for digest in artifact["digests"]:
+                filepath = digest["filepath"]
+                if filepath.endswith(".py"):
+                    python_file_digests = PythonFileDigest.from_properties(
+                        sha256=digest["sha256"],
+                    ).get_or_create(self.client)
+
+                    FoundFile.from_properties(
+                        source=package_analyzer_run,
+                        target=python_file_digests,
+                        file_path=filepath,
+                    ).get_or_create(self.client)
+
+                    IncludedFile.from_properties(
+                        source=python_artifact,
+                        target=python_file_digests,
+                        package_analysis_document_id=package_analysis_document_id,
+                    ).get_or_create(self.client)
+                else:
+                    _LOGGER.warning("File %r found inside artifact not synced", filepath)
 
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:

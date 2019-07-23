@@ -28,6 +28,7 @@ from amun import has_inspection_job
 
 from .solvers import SolverResultsStore
 from .analyses import AnalysisResultsStore
+from .package_analyses import PackageAnalysisResultsStore
 from .advisers import AdvisersResultsStore
 from .inspections import InspectionResultsStore
 from .provenance import ProvenanceResultsStore
@@ -154,6 +155,47 @@ def sync_analysis_documents(
                 failed += 1
         else:
             _LOGGER.info(f"Sync of analysis document with id {document_id!r} skipped - already synced")
+            skipped += 1
+
+    return processed, synced, skipped, failed
+
+
+def sync_package_analysis_documents(
+        document_ids: list = None,
+        force: bool = False,
+        graceful: bool = False,
+        graph: GraphDatabase = None,
+) -> tuple:
+    """Sync package analysis documents into graph."""
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
+
+    package_analysis_store = PackageAnalysisResultsStore()
+    package_analysis_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for document_id in document_ids or package_analysis_store.get_document_listing():
+        processed += 1
+
+        if force or not graph.package_analysis_document_id_exist(document_id):
+            _LOGGER.info(
+                f"Syncing package analysis document from {package_analysis_store.ceph.host} "
+                f"with id {document_id!r} to graph {graph.hosts}"
+            )
+
+            try:
+                document = package_analysis_store.retrieve_document(document_id)
+                graph.sync_package_analysis_result(document)
+                synced += 1
+            except Exception:
+                if not graceful:
+                    raise
+
+                _LOGGER.exception("Failed to sync package analysis result with document id %r", document_id)
+                failed += 1
+        else:
+            _LOGGER.info(f"Sync of package analysis document with id {document_id!r} skipped - already synced")
             skipped += 1
 
     return processed, synced, skipped, failed
