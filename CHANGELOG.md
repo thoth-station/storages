@@ -2449,3 +2449,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * State in the README file how to debug graph database queries
 * Enable logging of graph database queries for debugging
 * Fix handling of query filter
+
+## Release 0.15.2 (2019-07-23T13:18:20)
+* Queries are concurrent, not parallel
+* Decrease transitive query depth to address serialization issues
+* Inspection specification is a dictionary
