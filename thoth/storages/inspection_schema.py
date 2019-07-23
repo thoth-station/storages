@@ -25,7 +25,7 @@ from .result_schema import Datetime
 # Metadata about specifications produced by inspections.
 INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
-        Required("specification"): list,
+        Required("specification"): dict,
     }
 )
 
