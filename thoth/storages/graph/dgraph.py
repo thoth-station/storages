@@ -264,8 +264,8 @@ class GraphDatabase(StorageBase):
         """An async wrapper for a query call."""
         return self._query_raw(query)
 
-    def _query_raw_parallel(self, queries: List[str]) -> List[dict]:
-        """Execute multiple queries in parallel."""
+    def _query_raw_concurrent(self, queries: List[str]) -> List[dict]:
+        """Execute multiple queries in concurrent mode."""
         if len(queries) == 0:
             return []
 
@@ -573,7 +573,7 @@ class GraphDatabase(StorageBase):
             )
             queries.append(query)
 
-        results = self._query_raw_parallel(queries)
+        results = self._query_raw_concurrent(queries)
 
         all_uids = []
         for idx, item in enumerate(results):
@@ -611,7 +611,7 @@ class GraphDatabase(StorageBase):
             )
             queries.append(query)
 
-        results = self._query_raw_parallel(queries)
+        results = self._query_raw_concurrent(queries)
         overall_score = 0.0
         count = 0
         for result in results:
