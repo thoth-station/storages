@@ -33,7 +33,7 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
 # Metadata about created produced by inspections.
 INSPECTION_CREATED_SCHEMA = Schema(
     {
-        Required("created"): Datetime(),
+        Required("created"): str,
     }
 )
 
@@ -49,7 +49,7 @@ INSPECTION_BUILD_LOG_SCHEMA = Schema(
 # Metadata about job_log produced by inspections.
 INSPECTION_JOB_LOG_SCHEMA = Schema(
     {
-        Required("job_log"): list,
+        Required("job_log"): dict,
     }
 )
 
@@ -65,7 +65,7 @@ INSPECTION_INSPECTION_ID_SCHEMA = Schema(
 # Metadata about status produced by inspections.
 INSPECTION_STATUS_SCHEMA = Schema(
     {
-        Required("status"): list,
+        Required("status"): dict,
     }
 )
 
