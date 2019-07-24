@@ -176,7 +176,67 @@ class PiMatmul(PerformanceIndicatorBase):
     rate = model_property(type=float)
 
 
-ALL_PERFORMANCE_MODELS = frozenset((ObservedPerformance, PiMatmul))
+@attr.s(slots=True)
+class PiConv(PerformanceIndicatorBase):
+    """A class for representing a conv2D micro-performance test."""
+
+    SCHEMA_PARAMETERS = Schema(
+        {
+            Required("dtype"): str,
+            Required("reps"): int,
+            Required("device"): str,
+            Required("data_format"): str,
+            Required("batch"): int,
+            Required("input_height"): int,
+            Required("input_width"): int,
+            Required("input_channels"): int,
+            Required("filter_height"): int,
+            Required("filter_width"): int,
+            Required("output_channels"): int,
+            Required("strides"): int,
+            Required("padding"): int,
+        }
+    )
+
+    SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
+
+    # Device used during performance indicator run - CPU/GPU/TPU/...
+    device = model_property(type=str, index="exact")
+
+    # Type of item in the tensor.
+    dtype = model_property(type=str, index="exact")
+
+    # Number of repetitions of conv2d performed.
+    reps = model_property(type=int, index="int")
+
+    # Data format NHWC Channel_last or NCHW Channel_first
+    data_format = model_property(type=str, index="exact")
+
+    # INPUT TENSOR
+    batch = model_property(type=int, index="int")
+    input_height = model_property(type=int, index="int")
+    input_width = model_property(type=int, index="int")
+    input_channels = model_property(type=int, index="int")
+
+    # FILTER
+    filter_height = model_property(type=int, index="int")
+    filter_width = model_property(type=int, index="int")
+    output_channels = model_property(type=int, index="int")
+
+    # Stride, the speed by which the filter moves across the image
+    strides = model_property(type=int, index="int")
+
+    # Padding
+    padding = model_property(type=int, index="int")
+
+    # Elapsed seconds.
+    elapsed = model_property(type=float)
+
+    # Final rate gflops/s.
+    rate = model_property(type=float)
+
+
+ALL_PERFORMANCE_MODELS = frozenset((ObservedPerformance, PiMatmul, PiConv))
 
 
 PERFORMANCE_MODEL_BY_NAME = {model_class.__name__: model_class for model_class in ALL_PERFORMANCE_MODELS}
