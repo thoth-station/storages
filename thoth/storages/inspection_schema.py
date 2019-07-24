@@ -25,23 +25,13 @@ from .result_schema import Datetime
 # Metadata about specifications produced by inspections.
 INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
-        Required("specification"): dict,
-    }
-)
-
-
-# Metadata about created produced by inspections.
-INSPECTION_CREATED_SCHEMA = Schema(
-    {
-        Required("created"): str,
-    }
-)
-
-
-# Metadata about build_log produced by inspections.
-INSPECTION_BUILD_LOG_SCHEMA = Schema(
-    {
-        Required("build_log"): str,
+        Required("base"): str,
+        Required("build"): dict,
+        Required("files"): list,
+        Required("packages"): list,
+        Required("python"): dict,
+        Required("run"): dict,
+        Required("script"): str,
     }
 )
 
@@ -49,15 +39,11 @@ INSPECTION_BUILD_LOG_SCHEMA = Schema(
 # Metadata about job_log produced by inspections.
 INSPECTION_JOB_LOG_SCHEMA = Schema(
     {
-        Required("job_log"): dict,
-    }
-)
-
-
-# Metadata about inspection_id produced by inspections.
-INSPECTION_INSPECTION_ID_SCHEMA = Schema(
-    {
-        Required("inspection_id"): str,
+        Required("exit_code"): int,
+        Required("hwinfo"): dict,
+        Required("script_sha256"): str,
+        Required("stderr"): str,
+        Required("stdout"): dict,
     }
 )
 
@@ -65,7 +51,8 @@ INSPECTION_INSPECTION_ID_SCHEMA = Schema(
 # Metadata about status produced by inspections.
 INSPECTION_STATUS_SCHEMA = Schema(
     {
-        Required("status"): dict,
+        Required("build"): dict,
+        Required("job"): dict,
     }
 )
 
@@ -74,10 +61,10 @@ INSPECTION_STATUS_SCHEMA = Schema(
 INSPECTION_SCHEMA = Schema(
     {
         Required("specification"): INSPECTION_SPECIFICATION_SCHEMA,
-        Required("created"): INSPECTION_CREATED_SCHEMA,
-        Required("build_log"): INSPECTION_BUILD_LOG_SCHEMA,
+        Required("created"): str,
+        Required("build_log"): str,
         Required("job_log"): INSPECTION_JOB_LOG_SCHEMA,
-        Required("inspection_id"): INSPECTION_INSPECTION_ID_SCHEMA,
+        Required("inspection_id"): str,
         Required("status"): INSPECTION_STATUS_SCHEMA,
     }
 )
