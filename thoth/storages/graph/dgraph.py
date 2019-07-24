@@ -1072,8 +1072,8 @@ class GraphDatabase(StorageBase):
         query_result = self._query_raw(query)["q"]
         if not query_result:
             raise NotFoundError(
-                f"No packages found for package {package_name} in version {package_version} from {index_url}, "
-                f"operating system is {os_name}:{os_version}, python version: {python_version}"
+                f"No packages found for package {package_name!r} in version {package_version!r} from {index_url!r}, "
+                f"operating system is '{os_name}:{os_version}', python version: {python_version!r}"
             )
 
         #
