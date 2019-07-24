@@ -1010,7 +1010,7 @@ class GraphDatabase(StorageBase):
             python_package_node_id: (result[0]["package_name"], result[0]["package_version"], result[0]["index_url"])
         }
 
-    def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, tuple]:
+    def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, Tuple[str, str, str]]:
         """Get package name, package version and index URL for each python package node.
 
         This query is good to be used in conjunction with query retrieving
@@ -1040,9 +1040,8 @@ class GraphDatabase(StorageBase):
         os_version: str = None,
         python_version: str = None,
         _dependencies_map: dict = None,
-    ) -> list:
+    ) -> List[Tuple[int, int]]:
         """Perform query for retrieving transitive dependencies, retrieve only uids."""
-        to_expand_from_cache = []
         query_filter = ""
         if os_name:
             query_filter = f'eq(os_name, "{os_name}")'
@@ -1060,7 +1059,7 @@ class GraphDatabase(StorageBase):
         query = """
         {
             q(func: has(%s)) @filter(eq(package_name, "%s") """ \
-        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) @recurse(depth: %d, loop: false) {
+        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) {
                 uid
                 package_name
                 package_version
@@ -1074,7 +1073,6 @@ class GraphDatabase(StorageBase):
             package_version,
             index_url,
             " AND " + query_filter if query_filter else "",
-            self._TRANSITIVE_QUERY_DEPTH,
         )
         query_result = self._query_raw(query)["q"]
         if not query_result:
@@ -1082,8 +1080,6 @@ class GraphDatabase(StorageBase):
                 f"No packages found for package {package_name!r} in version {package_version!r} from {index_url!r}, "
                 f"operating system is '{os_name}:{os_version}', python version: {python_version!r}"
             )
-
-        direct_dependency_uid = query_result[0]["uid"]
 
         #
         # Post-process if we need perform more search in-depth not to reach serialization issues.
@@ -1093,69 +1089,60 @@ class GraphDatabase(StorageBase):
         if query_filter:
             query_filter = f" @filter({query_filter})"
 
-        stack = deque((1, item, set()) for item in query_result)
-        while stack:
-            depth, item, packages_seen = stack.pop()
-
-            if depth == self._TRANSITIVE_QUERY_DEPTH and item["uid"] not in packages_seen:
-                # Check if we have already queried for the given package - check its presents
-                # in "dependencies_map" cache and expand it.
-                if item["uid"] in _dependencies_map:
-                    to_expand_from_cache.append(item)
-                    continue
-
-                assert "depends_on" not in item
-                query = """
-                    {
-                        q(func: uid(%s)) %s @recurse(depth: %d, loop: false) {
-                            uid
-                            depends_on
-                    }
-                }
-                """ % (
-                    item["uid"],
-                    query_filter,
-                    self._TRANSITIVE_QUERY_DEPTH,
-                )
-                subquery_result = self._query_raw(query)
-                assert subquery_result["q"][0]["uid"] == item["uid"]
-                # We always have one element in the query result - the uid itself.
-                if "depends_on" in subquery_result["q"][0]:
-                    item["depends_on"] = subquery_result["q"][0]["depends_on"]
-                    stack.append((1, subquery_result["q"][0], packages_seen | {item["uid"]}))
-                _dependencies_map[item["uid"]] = subquery_result["q"][0].get("depends_on", [])
-            else:
-                depth += 1
-                for entry in item.get("depends_on", []):
-                    new_packages_seen = packages_seen | {item["uid"]}
-                    stack.append((depth, entry, new_packages_seen))
-
-                # TODO: for different size of _TRANSITIVE_QUERY_DEPTH
-                _dependencies_map[item["uid"]] = item.get("depends_on", [])
-
-        for item in to_expand_from_cache:
-            item["depends_on"] = _dependencies_map[item["uid"]]
-
-        stack = deque((qr, direct_dependency_uid) for qr in query_result)
+        stack = deque(item["uid"] for item in query_result)
         result = []
         while stack:
-            item, source = stack.pop()
-            for target in item.get("depends_on", []):
-                result.append((source, target["uid"]))
-                stack.append((target, target["uid"]))
+            queried_uid = stack.pop()
+
+            # Check if we have already queried for the given package - check its presents
+            # in "dependencies_map" cache and expand it.
+            if queried_uid in _dependencies_map:
+                # Pick from cache, already seen package.
+                for dependency_uid in _dependencies_map[queried_uid]:
+                    result.append((queried_uid, dependency_uid))
+                continue
+
+            query = """
+                {
+                    q(func: uid(%s)) %s {
+                        uid
+                        depends_on {
+                            uid
+                        }
+                }
+            }
+            """ % (
+                queried_uid,
+                query_filter,
+            )
+            subquery_result = self._query_raw(query)
+            _LOGGER.debug(subquery_result)
+
+            # We always have one element in the query result - the uid itself.
+            subquery_result = subquery_result["q"][0]
+            assert subquery_result["uid"] == queried_uid
+
+            _dependencies_map[queried_uid] = []
+            for entry in subquery_result.get("depends_on", []):
+                dependency_uid = entry["uid"]
+                result.append((queried_uid, dependency_uid))
+                _dependencies_map[queried_uid].append(dependency_uid)
+                stack.append(dependency_uid)
 
         return result
 
     def _get_python_package_tuples(
-        self, ids_map: Dict[int, tuple], transitive_dependencies: List
-    ) -> List[List[Tuple[str, str, str]]]:
+        self,
+        ids_map: Dict[int, tuple],
+        transitive_dependencies: List[Tuple[int, int]]
+    ) -> List[tuple]:
         """Retrieve tuples representing package name, package version and index url for the given set of ids."""
         seen_ids = ids_map.keys()
         unseen_ids = set()
         for entry in transitive_dependencies:
-            for idx in range(len(entry)):
-                if entry[idx] not in seen_ids:
-                    unseen_ids.add(entry[idx])
+            for uid in entry:
+                if uid not in seen_ids:
+                    unseen_ids.add(uid)
 
         if len(unseen_ids) > 0:
             _LOGGER.debug(
@@ -1172,7 +1159,7 @@ class GraphDatabase(StorageBase):
             new_entries = []
             for idx, entry in enumerate(entries):
                 new_entries.append(ids_map[entry])
-            result.append(new_entries)
+            result.append(tuple(new_entries))
 
         return result
 
@@ -1214,8 +1201,7 @@ class GraphDatabase(StorageBase):
 
     def retrieve_transitive_dependencies_python_multi(
         self,
-        package_tuples: Set[Tuple[str, str, str]],
-        *,
+        *package_tuples,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
