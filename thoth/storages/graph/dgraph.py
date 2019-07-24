@@ -1083,6 +1083,8 @@ class GraphDatabase(StorageBase):
                 f"operating system is '{os_name}:{os_version}', python version: {python_version!r}"
             )
 
+        direct_dependency_uid = query_result[0]["uid"]
+
         #
         # Post-process if we need perform more search in-depth not to reach serialization issues.
         #
@@ -1128,21 +1130,19 @@ class GraphDatabase(StorageBase):
                     new_packages_seen = packages_seen | {item["uid"]}
                     stack.append((depth, entry, new_packages_seen))
 
+                # TODO: for different size of _TRANSITIVE_QUERY_DEPTH
                 _dependencies_map[item["uid"]] = item.get("depends_on", [])
 
         for item in to_expand_from_cache:
             item["depends_on"] = _dependencies_map[item["uid"]]
 
-        stack = deque((qr, []) for qr in query_result)
+        stack = deque((qr, direct_dependency_uid) for qr in query_result)
         result = []
         while stack:
-            item, path = stack.pop()
-            if not item.get("depends_on"):
-                result.append(path + [item["uid"]])
-                continue
-
-            for dep in item.get("depends_on", []):
-                stack.append((dep, path + [item["uid"]]))
+            item, source = stack.pop()
+            for target in item.get("depends_on", []):
+                result.append((source, target["uid"]))
+                stack.append((target, target["uid"]))
 
         return result
 

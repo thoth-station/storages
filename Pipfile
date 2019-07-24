@@ -19,6 +19,8 @@ pytest-cov = "*"
 coala-bears = "*"
 flexmock = "*"
 moto = "*"
+memory-profiler = "*"
+matplotlib = "*"
 
 [requires]
 python_version = "3.6"
