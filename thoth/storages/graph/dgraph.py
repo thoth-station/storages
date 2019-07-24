@@ -677,7 +677,7 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_error: bool = False,
+        without_error: bool = True,
     ) -> List[Tuple[str, str]]:
         """Get all versions available for a Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -693,9 +693,9 @@ class GraphDatabase(StorageBase):
             q = q + ' AND eq(python_version, "%s")' % python_version
 
         if without_error:
-            q = q + " AND eq(solver_error, %s)" % False
+            q = q + " AND eq(solver_error, false)"
         else:
-            q = q + " AND eq(solver_error, %s)" % True
+            q = q + " AND eq(solver_error, true)"
 
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
