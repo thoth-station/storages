@@ -1106,7 +1106,7 @@ class GraphDatabase(StorageBase):
                 # We always have one element in the query result - the uid itself.
                 if "depends_on" in subquery_result["q"][0]:
                     item["depends_on"] = subquery_result["q"][0]["depends_on"]
-                    stack.append((1, subquery_result, packages_seen | {item["uid"]}))
+                    stack.append((1, subquery_result["q"][0], packages_seen | {item["uid"]}))
             else:
                 depth += 1
                 for entry in item.get("depends_on", []):
