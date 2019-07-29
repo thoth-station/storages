@@ -2454,3 +2454,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Queries are concurrent, not parallel
 * Decrease transitive query depth to address serialization issues
 * Inspection specification is a dictionary
+
+## Release 0.16.0 (2019-07-25T11:29:31)
+* Corrected voluptuous requirements for inspection schema:
+* Modified Inspection schema
+* Updated schema for PIConv
+* Quote user input parts of the query in error message produced
+* Query for package versions without error by default
