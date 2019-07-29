@@ -62,6 +62,19 @@ class PackageExtractRun(VertexBase):
 
 
 @attr.s(slots=True)
+class PackageAnalyzerRun(VertexBase):
+    """A class representing a single package-analyzer (package analysis) run."""
+
+    package_analysis_document_id = model_property(type=str, index="exact")
+    package_analysis_datetime = model_property(type=datetime, index="hour")
+    package_analyzer_version = model_property(type=str, index="exact")
+    package_analyzer_name = model_property(type=str, index="exact")
+    debug = model_property(type=bool)
+    package_analyzer_error = model_property(type=bool, index="bool")
+    duration = model_property(type=int)
+
+
+@attr.s(slots=True)
 class PythonFileDigest(VertexBase):
     """A class representing a single file digests."""
 
@@ -73,6 +86,18 @@ class FoundFile(ReverseEdgeBase):
     """An edge representing a filepath to the python file found in an image."""
 
     file_path = model_property(type=str, index="exact")
+
+
+@attr.s(slots=True)
+class PackageAnalyzerInput(ReverseEdgeBase):
+    """An input python-package-version entity for a package analyzer run."""
+
+
+@attr.s(slots=True)
+class IncludedFile(ReverseEdgeBase):
+    """An edge representing file found in the given artifact."""
+
+    package_analysis_document_id = model_property(type=str, index="exact")
 
 
 @attr.s(slots=True)
@@ -322,6 +347,11 @@ class HasArtifact(ReverseEdgeBase):
 
 
 @attr.s(slots=True)
+class Investigated(ReverseEdgeBase):
+    """The given artifact is investigated by the package analyzer."""
+
+
+@attr.s(slots=True)
 class PythonArtifact(VertexBase):
     """An artifact for a python package in a specific version."""
 
@@ -538,6 +568,7 @@ ALL_CORE_MODELS = frozenset(
         EcosystemSolverRun,
         HardwareInformation,
         HasArtifact,
+        Investigated,
         HasVulnerability,
         Identified,
         InspectionBuildSoftwareEnvironmentInput,
@@ -546,8 +577,11 @@ ALL_CORE_MODELS = frozenset(
         InspectionStackInput,
         InspectionSoftwareStack,
         PackageExtractRun,
+        PackageAnalyzerRun,
         PythonFileDigest,
         FoundFile,
+        PackageAnalyzerInput,
+        IncludedFile,
         ProvenanceCheckerRun,
         ProvenanceCheckerStackInput,
         ProvidedBy,
