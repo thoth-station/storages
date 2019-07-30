@@ -132,7 +132,7 @@ package_extract_error: bool .
 image_tag: string @index(exact) .
 os_id: string @index(exact) .
 os_version_id: string @index(exact) .
-pi_conv_label: string @count @upsert @index(exact) .
+pi_conv1_d_label: string @count @upsert @index(exact) .
 framework: string @index(exact) .
 version: string @index(exact) .
 exit_code: int .
@@ -157,16 +157,17 @@ dtype: string @index(exact) .
 reps: int @index(int) .
 data_format: string @index(exact) .
 batch: int @index(int) .
-input_height: int @index(int) .
 input_width: int @index(int) .
 input_channels: int @index(int) .
-filter_height: int @index(int) .
 filter_width: int @index(int) .
 output_channels: int @index(int) .
 strides: int @index(int) .
 padding: int @index(int) .
 elapsed: float .
 rate: float .
+pi_conv2_d_label: string @count @upsert @index(exact) .
+input_height: int @index(int) .
+filter_height: int @index(int) .
 pi_matmul_label: string @count @upsert @index(exact) .
 matrix_size: int @index(int) .
 provenance_checker_run_label: string @count @upsert @index(exact) .
