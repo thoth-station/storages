@@ -108,8 +108,8 @@ from .models import UsedIn
 from .models import UsedInBuild
 from .models import UsedInJob
 from .models import UserSoftwareStack
-from .performance import ObservedPerformance
-from .performance import PERFORMANCE_MODEL_BY_NAME
+from .performance import ObservedPerformance, PerformanceIndicatorBase
+from .performance import PERFORMANCE_MODEL_BY_NAME, ALL_PERFORMANCE_MODELS
 
 from ..exceptions import NotFoundError
 from ..exceptions import PythonIndexNotRegistered
@@ -2552,3 +2552,25 @@ class GraphDatabase(StorageBase):
             count = result["f"][0]["c"]
             tot_nodes_per_label[node_label] = count
         return tot_nodes_per_label
+
+    def get_all_pi_per_framework_count(self, framework: str) -> dict:
+        """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
+        pi_labels = [
+            model.get_label() for model in ALL_PERFORMANCE_MODELS if issubclass(model, PerformanceIndicatorBase)
+        ]
+        tot_pi_per_type = {}
+        for pi_label in pi_labels:
+            query = """
+            {
+                f(func: has(%s)) @filter(eq(framework, "%s")){
+                    c: count(uid)
+                }
+            }
+            """ % (
+                pi_label,
+                framework,
+            )
+            result = self._query_raw(query)
+            count = result["f"][0]["c"]
+            tot_pi_per_type[pi_label] = count
+        return tot_pi_per_type
