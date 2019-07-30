@@ -14,7 +14,7 @@ services:
   alpha:
     image: dgraph/dgraph:latest
     volumes:
-     - /tmp/data:/dgraph:z
+      - /tmp/data:/dgraph:z
     ports:
       - 8080:8080
       - 9080:9080
