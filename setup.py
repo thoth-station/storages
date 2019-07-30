@@ -30,13 +30,17 @@ def get_version():
 
 
 class Test(TestCommand):
+    """Introduce test command to run testsuite using pytest."""
+
+    _IMPLICIT_PYTEST_ARGS = ['tests/', '--timeout=2', '--cov=./thoth', '--capture=no', '--verbose', '-l', '-s', '-vv']
+
     user_options = [
         ('pytest-args=', 'a', "Arguments to pass into py.test")
     ]
 
     def initialize_options(self):
         super().initialize_options()
-        self.pytest_args = ['--timeout=2', '--cov=./thoth', '--capture=no', '--verbose']
+        self.pytest_args = None
 
     def finalize_options(self):
         super().finalize_options()
@@ -45,7 +49,14 @@ class Test(TestCommand):
 
     def run_tests(self):
         import pytest
-        sys.exit(pytest.main(self.pytest_args))
+        passed_args = list(self._IMPLICIT_PYTEST_ARGS)
+
+        if self.pytest_args:
+            self.pytest_args = [arg for arg in self.pytest_args.split() if arg]
+            passed_args.extend(self.pytest_args)
+
+        sys.exit(pytest.main(passed_args))
+
 
 VERSION = get_version()
 setup(
