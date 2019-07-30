@@ -2461,3 +2461,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Updated schema for PIConv
 * Quote user input parts of the query in error message produced
 * Query for package versions without error by default
+
+## Release 0.17.0 (2019-07-30T09:08:20)
+* Remove old test
+* Fix handling of pytest arguments in setup.py
+* Revert changes in docker-compose
+* Remove unused dependencies
+* Rewrite querying logic for transitive dependencies retrieval
+* Avoid copies when retrieving transitive dependencies
+* Optimize retrieval of transitive queries
