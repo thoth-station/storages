@@ -192,7 +192,7 @@ class PiConv1D(PerformanceIndicatorBase):
             Required("filter_width"): int,
             Required("output_channels"): int,
             Required("strides"): int,
-            Required("padding"): int,
+            Required("padding"): str,
         }
     )
 
@@ -223,7 +223,7 @@ class PiConv1D(PerformanceIndicatorBase):
     strides = model_property(type=int, index="int")
 
     # Padding
-    padding = model_property(type=int, index="int")
+    padding = model_property(type=str, index="exact")
 
     # Elapsed seconds.
     elapsed = model_property(type=float)
@@ -250,7 +250,7 @@ class PiConv2D(PerformanceIndicatorBase):
             Required("filter_width"): int,
             Required("output_channels"): int,
             Required("strides"): int,
-            Required("padding"): int,
+            Required("padding"): str,
         }
     )
 
@@ -283,7 +283,7 @@ class PiConv2D(PerformanceIndicatorBase):
     strides = model_property(type=int, index="int")
 
     # Padding
-    padding = model_property(type=int, index="int")
+    padding = model_property(type=str, index="exact")
 
     # Elapsed seconds.
     elapsed = model_property(type=float)
