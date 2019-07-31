@@ -2470,3 +2470,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Rewrite querying logic for transitive dependencies retrieval
 * Avoid copies when retrieving transitive dependencies
 * Optimize retrieval of transitive queries
+
+## Release 0.18.0 (2019-07-31T09:58:23)
+* New Dgraph function for PI
+* Add PI for Conv1D and Conv2D for tensorflow
