@@ -29,6 +29,8 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
         Required("build"): dict,
         Required("files"): list,
         Required("packages"): list,
+        Required("python_packages"): list,
+        Required("identifier"): str,
         Required("python"): dict,
         Required("run"): dict,
         Required("script"): str,
@@ -44,6 +46,7 @@ INSPECTION_JOB_LOG_SCHEMA = Schema(
         Required("script_sha256"): str,
         Required("stderr"): str,
         Required("stdout"): dict,
+        Required("usage"): dict,
     }
 )
 
