@@ -332,27 +332,47 @@ def sync_inspection_documents(
                         "status": status,
                     }
 
-                    # First we store results into graph database and then onto
-                    # Ceph. This way in the next run we can sync documents that
-                    # failed to sync to graph - see if statement that is asking
-                    # for Ceph document presents first.
-                    if not only_ceph_sync:
+                except Exception as exc:
+                    _LOGGER.exception(f"Failed to obtain results from Amun API %r: %s", inspection_id, str(exc))
+                    failed += 1
+                _LOGGER.info("Start syncyng for inspection %r", inspection_id)
+
+                # First we store results into graph database and then onto
+                # Ceph. This way in the next run we can sync documents that
+                # failed to sync to graph - see if statement that is asking
+                # for Ceph document presents first.
+                # However, if the sync in graph database fails for some reason,
+                # we simply store results in Ceph.
+                if not only_ceph_sync:
+                    failed += 0.5
+                    try:
                         _LOGGER.info(f"Syncing inspection {inspection_id!r} to {graph.hosts}")
                         graph.sync_inspection_result(document)
+                        _LOGGER.info(f"Succesfully synced {inspection_id!r} to {graph.hosts}")
+                        synced += 0.5
+                        failed -= 0.5
+                    except Exception as exc:
+                        _LOGGER.warning(f"Failed to sync inspection %r in Graph Database: %s", inspection_id, str(exc))
 
-                    if not only_graph_sync:
+                if not only_graph_sync:
+                    failed += 0.5
+                    try:
                         _LOGGER.info(f"Syncing inspection {inspection_id!r} to {inspection_store.ceph.host}")
                         inspection_store.store_document(document)
+                        _LOGGER.info(f"Succesfully synced inspection {inspection_id!r} to {inspection_store.ceph.host}")
+                        synced += 0.5
+                        failed -= 0.5
+                    except Exception as exc:
+                        _LOGGER.warning(f"Failed to sync inspection %r in Ceph: %s", inspection_id, str(exc))
 
-                    synced += 1
-                except Exception as exc:
-                    if not graceful:
-                        raise
+                if failed == 0.5:
+                    _LOGGER.exception(f"Partially failed to sync inspection %r: %s", inspection_id, str(exc))
 
+                if failed == 1:
                     _LOGGER.exception(f"Failed to sync inspection %r: %s", inspection_id, str(exc))
-                    failed += 1
+
             else:
-                _LOGGER.info(f"Skipping inspection {inspection_id!r} - not finised yet")
+                _LOGGER.info(f"Skipping inspection {inspection_id!r} - not finished yet")
                 skipped += 1
         else:
             _LOGGER.info(f"Skipping inspection {inspection_id!r} - the given inspection is already synced")
