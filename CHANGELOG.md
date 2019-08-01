@@ -2474,3 +2474,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.18.0 (2019-07-31T09:58:23)
 * New Dgraph function for PI
 * Add PI for Conv1D and Conv2D for tensorflow
+
+## Release 0.18.1 (2019-08-01T14:23:46)
+* Solved conflict pinning to older version
+* Corrected datatype-error for syncing
