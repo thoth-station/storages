@@ -2478,3 +2478,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.18.1 (2019-08-01T14:23:46)
 * Solved conflict pinning to older version
 * Corrected datatype-error for syncing
+
+## Release 0.18.2 (2019-08-01T17:03:19)
+* Added missing inspection schema checks for voluptuous
