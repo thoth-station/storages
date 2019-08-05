@@ -1986,7 +1986,7 @@ class GraphDatabase(StorageBase):
 
     def _python_file_digests_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
         """Sync results of Python files found in the given container image."""
-        for py_file in document["result"]["python"]:
+        for py_file in document["result"]["python-files"]:
             python_file_digests = PythonFileDigest.from_properties(
                 sha256=py_file["sha256"],
             ).get_or_create(self.client)
