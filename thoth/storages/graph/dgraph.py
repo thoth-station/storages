@@ -2080,10 +2080,11 @@ class GraphDatabase(StorageBase):
             debug=document["metadata"]["arguments"]["thoth-package-analyzer"]["verbose"],
             package_analyzer_error=False,
             duration=None,  # TODO: assign duration
-        ).get_or_create(self.client)
+        )
+        package_analyzer_run.get_or_create(self.client)
 
-        package_index = PythonPackageIndex.query_one(self.client, url=index_url)
-        if not package_index:
+        python_index = PythonPackageIndex.query_one(self.client, url=index_url)
+        if not python_index:
             raise PythonIndexNotRegistered(
                 f"Cannot insert PythonPackageVersionEntity record into database, "
                 f"no Python index with url {index_url} registered"
@@ -2104,7 +2105,8 @@ class GraphDatabase(StorageBase):
             python_artifact = PythonArtifact.from_properties(
                 artifact_hash_sha256=artifact["sha256"],
                 artifact_name=artifact["name"],
-            ).get_or_create(self.client)
+            )
+            python_artifact.get_or_create(self.client)
 
             Investigated.from_properties(
                 source=package_analyzer_run,
@@ -2116,7 +2118,8 @@ class GraphDatabase(StorageBase):
                 if filepath.endswith(".py"):
                     python_file_digests = PythonFileDigest.from_properties(
                         sha256=digest["sha256"],
-                    ).get_or_create(self.client)
+                    )
+                    python_file_digests.get_or_create(self.client)
 
                     FoundFile.from_properties(
                         source=package_analyzer_run,
