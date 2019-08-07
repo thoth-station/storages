@@ -1989,7 +1989,8 @@ class GraphDatabase(StorageBase):
         for py_file in document["result"]["python-files"]:
             python_file_digests = PythonFileDigest.from_properties(
                 sha256=py_file["sha256"],
-            ).get_or_create(self.client)
+            )
+            python_file_digests.get_or_create(self.client)
 
             FoundFile.from_properties(
                 source=package_extract_run,
