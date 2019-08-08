@@ -3314,3 +3314,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create initial classes with interface
 * Add .travis.yml configuration file
 * Initial project import
+
+## Release 0.18.4 (2019-08-08T16:50:38)
+* :pushpin: Automatic update of dependency thoth-common from 0.9.5 to 0.9.6
+* :pushpin: Automatic update of dependency boto3 from 1.9.202 to 1.9.203
+* Fix Package Analyzer results syncing
+* Fixes Syncing of Package Extract results
+* :pushpin: Automatic update of dependency boto3 from 1.9.201 to 1.9.202
+* :pushpin: Automatic update of dependency boto3 from 1.9.200 to 1.9.201
+* Fix key error 'python'
+* :pushpin: Automatic update of dependency boto3 from 1.9.199 to 1.9.200
