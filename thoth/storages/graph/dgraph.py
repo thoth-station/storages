@@ -683,6 +683,7 @@ class GraphDatabase(StorageBase):
         os_version: str = None,
         python_version: str = None,
         without_error: bool = True,
+        only_solved: bool = False,
     ) -> List[Tuple[str, str]]:
         """Get all versions available for a Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -704,6 +705,9 @@ class GraphDatabase(StorageBase):
 
         if index_url:
             q = q + ' AND eq(index_url, "%s")' % index_url
+
+        if only_solved:
+            q = q + " AND has(~solved)"
 
         query = """
             {
