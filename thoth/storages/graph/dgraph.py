@@ -19,7 +19,6 @@
 
 import logging
 import os
-import re
 import json
 from typing import List
 from typing import Set
@@ -45,6 +44,7 @@ from thoth.common import RuntimeEnvironment as RuntimeEnvironmentConfig
 from thoth.common import HardwareInformation as HardwareInformationConfig
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
+from thoth.python import PackageVersion
 
 from ..base import StorageBase
 from .models_base import enable_vertex_cache
@@ -217,10 +217,7 @@ class GraphDatabase(StorageBase):
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
-        # Make sure we have normalized names in the graph database according to PEP:
-        #   https://www.python.org/dev/peps/pep-0503/#normalized-names
-        # TODO: use compiled re
-        return re.sub(r"[-_.]+", "-", package_name).lower()
+        return PackageVersion.normalize_python_package_name(package_name)
 
     @staticmethod
     def parse_python_solver_name(solver_name: str) -> dict:
