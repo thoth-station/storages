@@ -3324,3 +3324,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.9.200 to 1.9.201
 * Fix key error 'python'
 * :pushpin: Automatic update of dependency boto3 from 1.9.199 to 1.9.200
+
+## Release 0.18.5 (2019-08-12T12:12:57)
+* Introduce a flag to retrieve only solved packages
+* Use Python package name normalization from thoth-python module
+* :pushpin: Automatic update of dependency boto3 from 1.9.204 to 1.9.205
+* :pushpin: Automatic update of dependency boto3 from 1.9.203 to 1.9.204
