@@ -263,7 +263,7 @@ class GraphDatabase(StorageBase):
         return json.loads(result.json)
 
     async def _query_raw_async(self, query) -> dict:
-        """An async wrapper for a query call."""
+        """Async wrapper for a query call."""
         return self._query_raw(query)
 
     def _query_raw_concurrent(self, queries: List[str]) -> List[dict]:
