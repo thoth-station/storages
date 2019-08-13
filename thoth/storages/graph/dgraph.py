@@ -763,6 +763,22 @@ class GraphDatabase(StorageBase):
 
         return self._postprocess_retrieve_packages(result)
 
+    def retrieve_not_analyzed_python_package_version_entities(self) -> List[dict]:
+        """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
+        query = """{
+            f(func: has(%s), first: 10) @filter(NOT has(%s)) {
+                package_name:package_name
+                package_version:package_version
+                index_url:index_url
+            }
+        }""" % (
+            PythonPackageVersionEntity.get_label(),
+            PackageAnalyzerInput.get_name(),
+        )
+        result = self._query_raw(query)
+
+        return result["f"]
+
     def retrieve_solved_python_packages(self, count: int = 10, start_offset: int = 0, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved.
 
