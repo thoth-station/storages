@@ -747,14 +747,20 @@ class GraphDatabase(StorageBase):
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
         solver_info = self.parse_python_solver_name(solver_name)
-        query = """{
-           f(func: has(%s)) @filter(NOT eq(os_name, "%s") AND NOT eq(os_version, "%s") """ \
-        """AND NOT eq(python_version, "%s")) {
-                   package_name:package_name
-                   package_version:package_version
-                }
-            }""" % (
-            PythonPackageVersion.get_label(),
+        query = """
+        {
+          pve as var(func: has(%s)) {
+            cnt as count(installed_from @filter(eq(os_name, "%s") """\
+                """AND eq(os_version, "%s") AND eq(python_version, "%s")))
+          }
+
+          f(func: uid(pve)) @filter(eq(val(cnt), 0)) {
+            package_name
+            package_version
+          }
+        }
+        """ % (
+            PythonPackageVersionEntity.get_label(),
             solver_info["os_name"],
             solver_info["os_version"],
             solver_info["python_version"],
