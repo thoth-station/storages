@@ -2007,23 +2007,22 @@ class GraphDatabase(StorageBase):
         for lib, syms in document["result"]["system-symbols"]:
             for sym in syms:
                 match = re.search(r"\w_\d", sym)
-                    if match is None:
-                        sym_vertex = VersionedSymbol.from_properties(
-                            library_name=library,
-                            symbol=sym,
-                            version="N/A"
-                        ).get_or_create(self.client)
-                    else:
-                        sym_vertex = VersionedSymbol.from_properties(
-                            library_name=library,
-                            symbol=sym[:split_index+1],
-                            version=sym[split_index+2:],
-                        ).get_or_create(self.client)
-
-                    HasSymbol.from_properties(
-                        source=package_extract_run,
-                        target=sym_vertex,
-                    )
+                if match is None:
+                    sym_vertex = VersionedSymbol.from_properties(
+                        library_name=library,
+                        symbol=sym,
+                        version="N/A"
+                    ).get_or_create(self.client)
+                else:
+                    sym_vertex = VersionedSymbol.from_properties(
+                        library_name=library,
+                        symbol=sym[:split_index+1],
+                        version=sym[split_index+2:],
+                    ).get_or_create(self.client)
+                HasSymbol.from_properties(
+                    source=package_extract_run,
+                    target=sym_vertex,
+                )
 
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
@@ -2178,12 +2177,11 @@ class GraphDatabase(StorageBase):
                             symbol=symbol[:split_index+1],
                             version=symbol[split_index+2:],
                         ).get_or_create(self.client)
-                    
+
                     RequiresSymbol.from_properties(
                         source=python_artifact,
                         target=sym_vertex,
                     )
-
 
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:
