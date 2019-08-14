@@ -3330,3 +3330,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Use Python package name normalization from thoth-python module
 * :pushpin: Automatic update of dependency boto3 from 1.9.204 to 1.9.205
 * :pushpin: Automatic update of dependency boto3 from 1.9.203 to 1.9.204
+
+## Release 0.18.6 (2019-08-14T14:06:19)
+* Provide method for counting number of unsolved Python packages
+* Fix query for retrieving unsolved Python packages
+* :pushpin: Automatic update of dependency boto3 from 1.9.206 to 1.9.207
+* Minor changes to the function which returns unanalyzed packages
+* Retrieve packages that are not analyzed by Package-Analyzer
+* :pushpin: Automatic update of dependency thoth-common from 0.9.6 to 0.9.7
+* :pushpin: Automatic update of dependency voluptuous from 0.11.5 to 0.11.7
+* :pushpin: Automatic update of dependency boto3 from 1.9.205 to 1.9.206
+* :pushpin: Automatic update of dependency thoth-python from 0.6.0 to 0.6.1
