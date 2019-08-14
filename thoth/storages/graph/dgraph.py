@@ -34,6 +34,7 @@ from collections import deque
 from collections import ChainMap
 import asyncio
 from math import nan
+import re
 
 import pkg_resources
 import grpc
@@ -73,6 +74,7 @@ from .models import HardwareInformation as HardwareInformationModel
 from .models import UserHardwareInformation as UserHardwareInformationModel
 from .models import HasArtifact
 from .models import Investigated
+from .models import HasSymbol
 from .models import HasVulnerability
 from .models import Identified
 from .models import InspectionBuildSoftwareEnvironmentInput
@@ -97,6 +99,7 @@ from .models import PythonPackageVersion
 from .models import PythonPackageVersionEntity
 from .models import RequirementsInput
 from .models import Requires
+from .models import RequiresSymbol
 from .models import Resolved
 from .models import RPMPackageVersion
 from .models import RPMRequirement
@@ -108,6 +111,7 @@ from .models import UsedIn
 from .models import UsedInBuild
 from .models import UsedInJob
 from .models import UserSoftwareStack
+from .models import VersionedSymbol
 from .performance import ObservedPerformance, PerformanceIndicatorBase
 from .performance import PERFORMANCE_MODEL_BY_NAME, ALL_PERFORMANCE_MODELS
 
@@ -1999,6 +2003,28 @@ class GraphDatabase(StorageBase):
                 file_path=py_file["filepath"],
             ).get_or_create(self.client)
 
+    def _system_symbols_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        for lib, syms in document["result"]["system-symbols"]:
+            for sym in syms:
+                match = re.search(r"\w_\d", sym)
+                    if match is None:
+                        sym_vertex = VersionedSymbol.from_properties(
+                            library_name=library,
+                            symbol=sym,
+                            version="N/A"
+                        ).get_or_create(self.client)
+                    else:
+                        sym_vertex = VersionedSymbol.from_properties(
+                            library_name=library,
+                            symbol=sym[:split_index+1],
+                            version=sym[split_index+2:],
+                        ).get_or_create(self.client)
+
+                    HasSymbol.from_properties(
+                        source=package_extract_run,
+                        target=sym_vertex,
+                    )
+
     @enable_vertex_cache
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
@@ -2063,6 +2089,7 @@ class GraphDatabase(StorageBase):
         self._deb_sync_analysis_result(package_extract_run, document)
         self._python_sync_analysis_result(package_extract_run, document, environment)
         self._python_file_digests_sync_analysis_result(package_extract_run, document)
+        self._system_symbols_analysis_result(package_extract_run, document)
 
     @enable_vertex_cache
     def sync_package_analysis_result(self, document: dict) -> None:
@@ -2135,6 +2162,28 @@ class GraphDatabase(StorageBase):
                     ).get_or_create(self.client)
                 else:
                     _LOGGER.warning("File %r found inside artifact not synced", filepath)
+
+            for library, symbols in artifact["symbols"]:
+                for symbol in symbols:
+                    match = re.search(r"\w_\d", symbol)
+                    if match is None:
+                        sym_vertex = VersionedSymbol.from_properties(
+                            library_name=library,
+                            symbol=symbol,
+                            version="N/A"
+                        ).get_or_create(self.client)
+                    else:
+                        sym_vertex = VersionedSymbol.from_properties(
+                            library_name=library,
+                            symbol=symbol[:split_index+1],
+                            version=symbol[split_index+2:],
+                        ).get_or_create(self.client)
+                    
+                    RequiresSymbol.from_properties(
+                        source=python_artifact,
+                        target=sym_vertex,
+                    )
+
 
     @enable_vertex_cache
     def sync_solver_result(self, document: dict) -> None:

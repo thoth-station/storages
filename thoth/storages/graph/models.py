@@ -82,7 +82,7 @@ class PythonFileDigest(VertexBase):
 
 
 @attr.s(slots=True)
-class VersionedSymbols(VertexBase):
+class VersionedSymbol(VertexBase):
     """A class representing versioned symbols including associated library."""
 
     library_name = model_property(type=str, index="exact")
@@ -622,7 +622,7 @@ ALL_CORE_MODELS = frozenset(
         UsedInJob,
         UserSoftwareStack,
         UserHardwareInformation,
-        VersionedSymbols,
+        VersionedSymbol,
     )
 )
 
