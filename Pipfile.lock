@@ -55,18 +55,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:7b527dd1acc127822a4b5ff7565e031e095ce1a7e1560ca88d1e4548c4b78388",
-                "sha256:82e8c5ab549205843b0a25204aff11b01d80e814656938446ab651573dfd83e1"
+                "sha256:663d5bb17cfdf706a0c157f6eeb01f5c22a29c7528b49f9f4deb73af27301b19",
+                "sha256:b8796d48f06e8701bd26671bee9936cf6403042ab8e79d6561b1e8496a31d19b"
             ],
             "index": "pypi",
-            "version": "==1.9.208"
+            "version": "==1.9.209"
         },
         "botocore": {
             "hashes": [
-                "sha256:1a9b246b40a7694c6c1707c386e6dc00cd473647efd92aa8b5b812c8a223ff4d",
-                "sha256:7fa1ea16e11d8537dab675577e609b95d3cea6f5db005f3adc934afdae6b72bc"
+                "sha256:8be475b83c3b654a78c2aa195dc4c82852a31c2e72b32b73f570260ae6451eba",
+                "sha256:bf2dcd604a83b045df0870486c3252785734b1cbe167752b8f777d8174218e64"
             ],
-            "version": "==1.12.208"
+            "version": "==1.12.209"
         },
         "cachetools": {
             "hashes": [
@@ -187,11 +187,11 @@
         },
         "docutils": {
             "hashes": [
-                "sha256:02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6",
-                "sha256:51e64ef2ebfb29cae1faa133b3710143496eca21c530f3f71424d77687764274",
-                "sha256:7a4bd47eaf6596e1295ecb11361139febe29b084a87bf005bf899f9a42edc3c6"
+                "sha256:6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0",
+                "sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827",
+                "sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"
             ],
-            "version": "==0.14"
+            "version": "==0.15.2"
         },
         "google-auth": {
             "hashes": [
@@ -485,10 +485,10 @@
         },
         "ruamel.yaml": {
             "hashes": [
-                "sha256:547aeab5c51c93bc750ed2a320c1559b605bde3aa569216aa75fd91d8a1c4623",
-                "sha256:c5e239b6a4f26baabb2e22b145582a7d99ae9d4ebb8902291365a61ed38faa7f"
+                "sha256:7c58dd06488cdb0bf95cc089aac84318a11f170272581351dda93f2a507c7419",
+                "sha256:f43388cfbfe650035204a831f57ff0acacf61bbe10406971d21d7d0ee0faa56b"
             ],
-            "version": "==0.16.1"
+            "version": "==0.16.3"
         },
         "ruamel.yaml.clib": {
             "hashes": [
@@ -663,9 +663,9 @@
         },
         "aws-sam-translator": {
             "hashes": [
-                "sha256:9b7b40ba50a2befe255e48549d8a4bb6c63490cf4c0b1f3f2e6a6f25b5723483"
+                "sha256:b38639c2b7527f664da4e18e09d67a691e8e3877ae0ca1196a0d129a020a3676"
             ],
-            "version": "==1.13.1"
+            "version": "==1.13.2"
         },
         "aws-xray-sdk": {
             "hashes": [
@@ -697,18 +697,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:7b527dd1acc127822a4b5ff7565e031e095ce1a7e1560ca88d1e4548c4b78388",
-                "sha256:82e8c5ab549205843b0a25204aff11b01d80e814656938446ab651573dfd83e1"
+                "sha256:663d5bb17cfdf706a0c157f6eeb01f5c22a29c7528b49f9f4deb73af27301b19",
+                "sha256:b8796d48f06e8701bd26671bee9936cf6403042ab8e79d6561b1e8496a31d19b"
             ],
             "index": "pypi",
-            "version": "==1.9.208"
+            "version": "==1.9.209"
         },
         "botocore": {
             "hashes": [
-                "sha256:1a9b246b40a7694c6c1707c386e6dc00cd473647efd92aa8b5b812c8a223ff4d",
-                "sha256:7fa1ea16e11d8537dab675577e609b95d3cea6f5db005f3adc934afdae6b72bc"
+                "sha256:8be475b83c3b654a78c2aa195dc4c82852a31c2e72b32b73f570260ae6451eba",
+                "sha256:bf2dcd604a83b045df0870486c3252785734b1cbe167752b8f777d8174218e64"
             ],
-            "version": "==1.12.208"
+            "version": "==1.12.209"
         },
         "certifi": {
             "hashes": [
@@ -927,11 +927,11 @@
         },
         "docutils": {
             "hashes": [
-                "sha256:02aec4bd92ab067f6ff27a38a38a41173bf01bed8f89157768c1573f53e474a6",
-                "sha256:51e64ef2ebfb29cae1faa133b3710143496eca21c530f3f71424d77687764274",
-                "sha256:7a4bd47eaf6596e1295ecb11361139febe29b084a87bf005bf899f9a42edc3c6"
+                "sha256:6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0",
+                "sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827",
+                "sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"
             ],
-            "version": "==0.14"
+            "version": "==0.15.2"
         },
         "ecdsa": {
             "hashes": [
@@ -959,12 +959,6 @@
             ],
             "version": "==0.17.1"
         },
-        "gitdb": {
-            "hashes": [
-                "sha256:a3ebbc27be035a2e874ed904df516e35f4a29a778a764385de09de9e0f139658"
-            ],
-            "version": "==0.6.4"
-        },
         "gitdb2": {
             "hashes": [
                 "sha256:83361131a1836661a155172932a13c08bda2db3674e4caa32368aa6eb02f38c2",
@@ -974,10 +968,10 @@
         },
         "gitpython": {
             "hashes": [
-                "sha256:556b64796c5e268b35e3b431a429e813ad54aa178e1baaec2a9ba82e8575a89e",
-                "sha256:629867ebf609cef21bb9d849039e281e25963fb7d714a2f6bacc1ecce4800293"
+                "sha256:259a8b6d6a4a118738c4a65fa990f8c8c91525bb43970aed2868952ebb86ceb8",
+                "sha256:73aa7b59e58dd3435121421c33c284e5ef51bc7b2f4373e1a1e4cc06e9c928ec"
             ],
-            "version": "==3.0.0"
+            "version": "==3.0.1"
         },
         "guess-language-spirit": {
             "hashes": [
@@ -1457,12 +1451,6 @@
                 "sha256:d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73"
             ],
             "version": "==1.12.0"
-        },
-        "smmap": {
-            "hashes": [
-                "sha256:0e2b62b497bd5f0afebc002eda4d90df9d209c30ef257e8673c90a6b5c119d62"
-            ],
-            "version": "==0.9.0"
         },
         "smmap2": {
             "hashes": [
