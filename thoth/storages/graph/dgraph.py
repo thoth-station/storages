@@ -1643,7 +1643,8 @@ class GraphDatabase(StorageBase):
             entity, _ = self.create_python_package_version_entity(
                 python_package_version.package_name,
                 python_package_version.package_version,
-                python_package_version.index_url
+                python_package_version.index_url,
+                not python_package_version.solver_error_unsolvable
             )
 
             InstalledFrom.from_properties(source=entity, target=python_package_version).get_or_create(self.client)
@@ -1656,6 +1657,7 @@ class GraphDatabase(StorageBase):
         package_name: str,
         package_version: str,
         index_url: str,
+        is_present_on_index: bool,
         *,
         only_if_package_seen: bool = False,
     ) -> Optional[Tuple[PythonPackageVersionEntity, bool]]:
@@ -1668,6 +1670,7 @@ class GraphDatabase(StorageBase):
             package_name=package_name,
             package_version=package_version,
             index_url=index_url,
+            is_present_on_index=is_present_on_index
         )
         existed = entity.get_or_create(self.client)
 

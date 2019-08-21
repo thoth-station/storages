@@ -297,6 +297,7 @@ class PythonPackageVersionEntity(VertexBase):
     package_name = model_property(type=str, index="exact")
     package_version = model_property(type=str, index="exact")
     index_url = model_property(type=str, index="exact")
+    is_present_on_index = model_property(type=bool, index="exact")
 
 
 @attr.s(slots=True)
