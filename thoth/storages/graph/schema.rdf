@@ -198,6 +198,7 @@ python_package_version_label: string @count @upsert @index(exact) .
 solver_error: bool @index(bool) .
 solver_error_unparseable: bool @index(bool) .
 solver_error_unsolvable: bool @index(bool) .
+is_provided: bool @index(bool) .
 python_package_version_entity_label: string @count @upsert @index(exact) .
 rpm_package_version_label: string @count @upsert @index(exact) .
 release: string @index(exact) .
