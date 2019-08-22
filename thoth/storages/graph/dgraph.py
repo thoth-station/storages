@@ -2127,7 +2127,7 @@ class GraphDatabase(StorageBase):
             package_analyzer_version=document["metadata"]["analyzer_version"],
             package_analyzer_name=document["metadata"]["analyzer"],
             debug=document["metadata"]["arguments"]["thoth-package-analyzer"]["verbose"],
-            package_analyzer_error=False,
+            package_analyzer_error=document["result"]["error"],
             duration=None,  # TODO: assign duration
         )
         package_analyzer_run.get_or_create(self.client)
