@@ -314,6 +314,7 @@ class PythonPackageVersion(VertexBase):
     solver_error = model_property(type=bool, index="bool")
     solver_error_unparseable = model_property(type=bool, index="bool")
     solver_error_unsolvable = model_property(type=bool, index="bool")
+    is_provided = model_property(type=bool, index="bool")
 
 
 @attr.s(slots=True)
