@@ -2150,7 +2150,7 @@ class GraphDatabase(StorageBase):
             target=package_analyzer_run,
         ).get_or_create(self.client)
 
-        for artifact in document["result"][index_url]["artifacts"]:
+        for artifact in document["result"]["artifacts"]:
             python_artifact = PythonArtifact.from_properties(
                 artifact_hash_sha256=artifact["sha256"],
                 artifact_name=artifact["name"],
