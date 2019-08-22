@@ -2290,6 +2290,7 @@ class GraphDatabase(StorageBase):
                 solver_error=True,
                 solver_error_unparseable=False,
                 solver_error_unsolvable=False,
+                is_provided=error_info.get("is_provided"),
             )
             self._create_python_package_record(python_package_version, verify_index=True)
             Solved.from_properties(source=ecosystem_solver_run, target=python_package_version).get_or_create(
