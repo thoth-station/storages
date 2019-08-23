@@ -2248,29 +2248,17 @@ class GraphDatabase(StorageBase):
             # TODO: detect and store markers
             for dependency in python_package_info["dependencies"]:
                 for index_entry in dependency["resolved_versions"]:
-                    dependency_index_url = index_entry["index"]
-                    package_name = dependency["package_name"]
-
                     for dependency_version in index_entry["versions"]:
-                        python_package_dependency = PythonPackageVersion.from_properties(
+                        dependency_entity = PythonPackageVersionEntity.from_properties(
                             ecosystem="python",
-                            package_name=self.normalize_python_package_name(package_name),
+                            package_name=self.normalize_python_package_name(dependency["package_name"]),
                             package_version=dependency_version,
-                            index_url=dependency_index_url,
-                            os_name=ecosystem_solver_run.os_name,
-                            os_version=ecosystem_solver_run.os_version,
-                            python_version=ecosystem_solver_run.python_version,
-                            solver_error=False,
-                            solver_error_unparseable=False,
-                            solver_error_unsolvable=False,
                         )
-                        self._create_python_package_record(python_package_dependency, verify_index=True)
-                        Solved.from_properties(
-                            source=ecosystem_solver_run, target=python_package_dependency
-                        ).get_or_create(self.client)
+                        dependency_entity.get_or_create(self.client)
+
                         DependsOn.from_properties(
                             source=python_package_version,
-                            target=python_package_dependency,
+                            target=dependency_entity,
                             version_range=dependency.get("required_version") or "*",
                         ).get_or_create(self.client)
 
