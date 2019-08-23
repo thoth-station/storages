@@ -115,6 +115,7 @@ from ..exceptions import NotFoundError
 from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import NotConnected
+from ..exceptions import NotFullyResolved
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
 from ..package_analyses import PackageAnalysisResultsStore
@@ -1136,7 +1137,7 @@ class GraphDatabase(StorageBase):
 
         # Adjust to add additional filter for uid based queries.
         if query_filter:
-            query_filter = f" @filter({query_filter})"
+            query_filter_full = f" @filter({query_filter})"
 
         stack = deque(item["uid"] for item in query_result)
         result = []
@@ -1156,13 +1157,14 @@ class GraphDatabase(StorageBase):
                     q(func: uid(%s)) %s {
                         uid
                         depends_on {
-                            uid
+                            package_name
+                            package_version
                         }
                 }
             }
             """ % (
                 queried_uid,
-                query_filter,
+                query_filter_full,
             )
             subquery_result = self._query_raw(query)
             _LOGGER.debug(subquery_result)
@@ -1173,10 +1175,36 @@ class GraphDatabase(StorageBase):
 
             _dependencies_map[queried_uid] = []
             for entry in subquery_result.get("depends_on", []):
-                dependency_uid = entry["uid"]
-                result.append((queried_uid, dependency_uid))
-                _dependencies_map[queried_uid].append(dependency_uid)
-                stack.append(dependency_uid)
+                query = """
+                {
+                    q(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s")%s) {
+                        uid
+                    }
+                }
+                """ % (
+                    PythonPackageVersion.get_label(),
+                    entry["package_name"],
+                    entry["package_version"],
+                    " AND " + query_filter if query_filter else "",
+                )
+                subquery_result = self._query_raw(query)
+
+                if len(subquery_result["q"]) == 0:
+                    # TODO: we could construct graphs even with partially resolved dependencies
+                    raise NotFullyResolved(
+                        "Dependency %r in version %r is not resolved, cannot construct dependency "
+                        "graph with %r in version %r",
+                        entry["package_name"],
+                        entry["package_version"],
+                        package_name,
+                        package_version,
+                    )
+
+                for dep in subquery_result["q"]:
+                    dependency_uid = dep["uid"]
+                    result.append((queried_uid, dependency_uid))
+                    _dependencies_map[queried_uid].append(dependency_uid)
+                    stack.append(dependency_uid)
 
         return result
 
