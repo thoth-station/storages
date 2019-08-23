@@ -80,6 +80,9 @@ setup(
     install_requires=get_install_requires(),
     tests_require=get_test_requires(),
     cmdclass={'test': Test},
+    entry_points={
+        'console_scripts': ['thoth-storages=thoth.storages.cli:cli']
+    },
     command_options={
         'build_sphinx': {
             'version': ('setup.py', VERSION),

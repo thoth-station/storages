@@ -35,7 +35,7 @@ from collections import ChainMap
 import asyncio
 from math import nan
 
-import pkg_resources
+import attr
 import grpc
 import pydgraph
 
@@ -47,6 +47,7 @@ from thoth.python import PipfileLock
 from thoth.python import PackageVersion
 
 from ..base import StorageBase
+from .cache import GraphCache
 from .models_base import enable_vertex_cache
 from .models_base import VertexBase
 from .models import ALL_MODELS
@@ -115,7 +116,6 @@ from ..exceptions import NotFoundError
 from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import NotConnected
-from ..exceptions import NotFullyResolved
 from ..advisers import AdvisersResultsStore
 from ..analyses import AnalysisResultsStore
 from ..package_analyses import PackageAnalysisResultsStore
@@ -127,22 +127,20 @@ from ..solvers import SolverResultsStore
 _LOGGER = logging.getLogger(__name__)
 
 
+@attr.s(slots=True)
 class GraphDatabase(StorageBase):
     """A dgraph server adapter communicating via gRPC."""
 
     TLS_PATH = os.getenv("GRAPH_TLS_PATH")
     ENVVAR_HOST_NAME = "GRAPH_SERVICE_HOST"
-    DEFAULT_HOST = os.getenv(ENVVAR_HOST_NAME) or "localhost:9080"
+    DEFAULT_HOSTS = list((os.getenv(ENVVAR_HOST_NAME) or "localhost:9080").split(","))
 
-    # Depth of traversal when transitive query is performed.
-    _TRANSITIVE_QUERY_DEPTH = 2
+    tls_path = attr.ib(type=str, default=TLS_PATH, kw_only=True)
+    hosts = attr.ib(type=list, default=DEFAULT_HOSTS, kw_only=True)
+    cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load), kw_only=True)
 
-    def __init__(self, hosts: List[str] = None, tls_path: str = None):
-        """Initialize Dgraph server database adapter."""
-        self._hosts = hosts or [self.DEFAULT_HOST]
-        self._tls_path = tls_path or self.TLS_PATH
-        self._client = None
-        self._stubs = []
+    _client = attr.ib(type=pydgraph.DgraphClient, default=None, kw_only=True)
+    _stubs = attr.ib(type=list, default=attr.Factory(list), kw_only=True)
 
     @property
     def client(self) -> pydgraph.DgraphClient:
@@ -151,11 +149,6 @@ class GraphDatabase(StorageBase):
             raise NotConnected("No client established to talk to a Draph instance")
 
         return self._client
-
-    @property
-    def hosts(self) -> List[str]:
-        """Get hosts configured for this adapter."""
-        return self._hosts
 
     def __del__(self) -> None:
         """Disconnect properly on object destruction."""
@@ -174,16 +167,16 @@ class GraphDatabase(StorageBase):
     def connect(self):
         """Connect to a Dgraph via gRPC."""
         credentials = None
-        if self._tls_path:
-            root_ca_cert = (Path(self._tls_path) / "./ca.crt").read_bytes()
-            client_cert_key = (Path(self._tls_path) / "./client.user.key").read_bytes()
-            client_cert = (Path(self._tls_path) / "./client.user.crt").read_bytes()
+        if self.tls_path:
+            root_ca_cert = (Path(self.tls_path) / "./ca.crt").read_bytes()
+            client_cert_key = (Path(self.tls_path) / "./client.user.key").read_bytes()
+            client_cert = (Path(self.tls_path) / "./client.user.crt").read_bytes()
 
             credentials = grpc.ssl_channel_credentials(
                 root_certificates=root_ca_cert, private_key=client_cert_key, certificate_chain=client_cert
             )
 
-        for address in self._hosts:
+        for address in self.hosts:
             self._stubs.append(pydgraph.DgraphClientStub(address, credentials=credentials))
 
         self._client = pydgraph.DgraphClient(*self._stubs)
@@ -1065,7 +1058,8 @@ class GraphDatabase(StorageBase):
 
         This query is good to be used in conjunction with query retrieving
         transitive dependencies. The main benefit of this function is that it
-        performs all the queries in an event loop per each package.
+        performs all the queries in an event loop per each package. The cache
+        is not taken into account.
         """
         if len(python_package_node_ids) == 0:
             return {}
@@ -1089,7 +1083,6 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        _dependencies_map: dict = None,
     ) -> List[Tuple[int, int]]:
         """Perform query for retrieving transitive dependencies, retrieve only uids."""
         query_filter = ""
@@ -1136,19 +1129,22 @@ class GraphDatabase(StorageBase):
         #
 
         # Adjust to add additional filter for uid based queries.
+        query_filter_full = ""
         if query_filter:
             query_filter_full = f" @filter({query_filter})"
 
         stack = deque(item["uid"] for item in query_result)
         result = []
+        not_resolved_yet = set()
         while stack:
             queried_uid = stack.pop()
 
             # Check if we have already queried for the given package - check its presents
             # in "dependencies_map" cache and expand it.
-            if queried_uid in _dependencies_map:
+            dependency_uids = self.cache.get_dependencies(queried_uid)
+            if dependency_uids is not None:
                 # Pick from cache, already seen package.
-                for dependency_uid in _dependencies_map[queried_uid]:
+                for dependency_uid in dependency_uids:
                     result.append((queried_uid, dependency_uid))
                 continue
 
@@ -1173,7 +1169,6 @@ class GraphDatabase(StorageBase):
             subquery_result = subquery_result["q"][0]
             assert subquery_result["uid"] == queried_uid
 
-            _dependencies_map[queried_uid] = []
             for entry in subquery_result.get("depends_on", []):
                 query = """
                 {
@@ -1190,35 +1185,41 @@ class GraphDatabase(StorageBase):
                 subquery_result = self._query_raw(query)
 
                 if len(subquery_result["q"]) == 0:
-                    # TODO: we could construct graphs even with partially resolved dependencies
-                    raise NotFullyResolved(
-                        "Dependency %r in version %r is not resolved, cannot construct dependency "
+                    _LOGGER.debug(
+                        "Dependency %r in version %r is not resolved, cannot fully construct dependency "
                         "graph with %r in version %r",
                         entry["package_name"],
                         entry["package_version"],
                         package_name,
                         package_version,
                     )
+                    # We do not store this in cache as this might change over time - especially not good
+                    # keeping this in cache for automatically generated cache. In other words, we put only
+                    # items which cannot change over time.
+                    result.append((queried_uid, None))
+                    not_resolved_yet.add(queried_uid)
+                    continue
 
                 for dep in subquery_result["q"]:
                     dependency_uid = dep["uid"]
                     result.append((queried_uid, dependency_uid))
-                    _dependencies_map[queried_uid].append(dependency_uid)
-                    stack.append(dependency_uid)
+                    self.cache.add_dependencies(queried_uid, dependency_uid)
+                    if dependency_uid not in not_resolved_yet \
+                            and dependency_uid not in self.cache.get_all_stored_uids():
+                        stack.append(dependency_uid)
 
         return result
 
     def _get_python_package_tuples(
         self,
-        ids_map: Dict[int, tuple],
         transitive_dependencies: List[Tuple[int, int]]
-    ) -> List[tuple]:
+    ) -> List[Tuple[Tuple[str, str, str], Tuple[str, str, str]]]:
         """Retrieve tuples representing package name, package version and index url for the given set of ids."""
-        seen_ids = ids_map.keys()
+        seen_ids = self.cache.get_all_stored_uids()
         unseen_ids = set()
         for entry in transitive_dependencies:
             for uid in entry:
-                if uid not in seen_ids:
+                if uid is not None and uid not in seen_ids:
                     unseen_ids.add(uid)
 
         if len(unseen_ids) > 0:
@@ -1229,14 +1230,14 @@ class GraphDatabase(StorageBase):
 
         package_tuples = self.get_python_package_tuples(unseen_ids)
         for python_package_id, package_tuple in package_tuples.items():
-            ids_map[python_package_id] = package_tuple
+            self.cache.add_uid_record(python_package_id, package_tuple)
 
         result = []
         for entries in transitive_dependencies:
-            new_entries = []
-            for idx, entry in enumerate(entries):
-                new_entries.append(ids_map[entry])
-            result.append(tuple(new_entries))
+            result.append((
+                self.cache.get_uid_record(entries[0]),
+                self.cache.get_uid_record(entries[1]) if entries[1] is not None else None
+            ))
 
         return result
 
@@ -1249,8 +1250,6 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        _ids_map: dict = None,
-        _dependencies_map: dict = None,
     ) -> list:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
@@ -1261,8 +1260,6 @@ class GraphDatabase(StorageBase):
         The ids map represents a map to optimize number of retrievals - not to perform duplicate
         queries into graph instance.
         """
-        _ids_map = _ids_map if _ids_map is not None else {}
-        _dependencies_map = _dependencies_map if _dependencies_map is not None else {}
         package_name = self.normalize_python_package_name(package_name)
         result = self._do_retrieve_transitive_dependencies_python_uid(
             package_name,
@@ -1271,9 +1268,8 @@ class GraphDatabase(StorageBase):
             os_name=os_name,
             os_version=os_version,
             python_version=python_version,
-            _dependencies_map=_dependencies_map,
         )
-        result = self._get_python_package_tuples(_ids_map, result)
+        result = self._get_python_package_tuples(result)
         return result
 
     def retrieve_transitive_dependencies_python_multi(
@@ -1284,8 +1280,6 @@ class GraphDatabase(StorageBase):
         python_version: str = None,
     ) -> dict:
         """Get all transitive dependencies for a given set of packages by traversing the dependency graph."""
-        ids_map = {}
-        dependencies_map = {}
         result = {}
         for package_tuple in package_tuples:
             paths = self.retrieve_transitive_dependencies_python(
@@ -1295,8 +1289,6 @@ class GraphDatabase(StorageBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                _ids_map=ids_map,
-                _dependencies_map=dependencies_map,
             )
             result[package_tuple] = paths
 

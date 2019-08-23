@@ -56,10 +56,3 @@ class UnboundModel(ThothStorageException):
 
 class PerformanceIndicatorNotRegistered(ThothStorageException):
     """Raised if a performance indicator model which is about to be synced was not found."""
-
-
-class NotFullyResolved(ThothStorageException):
-    """Raised if the transitive query cannot traverse whole dependency graph.
-
-    This means we have not enough dependency related data in the graph database - solvers need to provide them.
-    """

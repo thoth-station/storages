@@ -154,3 +154,49 @@ You can print to logger all the queries that are performed to a Dgraph instance.
   export THOTH_LOG_STORAGES=DEBUG
   export THOTH_STORAGES_DEBUG_QUERIES=1
 
+Graph database cache
+====================
+
+The implementation of this library also provides a cache to speed up queries to
+graph database. This cache is especially suitable for prod systems not to query
+for popular packages multiple times.
+
+The cache can be created with shipped CLI tool:
+
+.. code-block:: console
+
+  # When using version from this Git repository:
+  PYTHONPATH=. pipenv run ./thoth-storages graph-cache cache.pickle -d ../adviser/cache_conf.yaml
+
+  # When using a version installed from PyPI:
+  thoth-storages graph-cache cache.pickle -d ../adviser/cache_conf.yaml
+
+The command above creates a memory dump (a pickle file) which can be then
+loaded in the system. The path can be supplied using environment variable
+``THOTH_STORAGES_GRAPH_CACHE_PATH``. If loading of cache is not successful, an
+empty cache is used by default. If the given graph cache is already present on
+the system, it will be loaded and new enties automatically synced into the old
+cache.
+
+By default, the implementation looks for cache in
+``/opt/app-root/src/graph_cache.pickle`` which is suitable to be used in
+OpenShift's s2i process.
+
+Take a look at adviser repo, at ``cache_conf.yaml`` file specifically, to
+see how ``cache_conf.yaml`` file should be structured. An example could be:
+
+.. code-block:: yaml
+
+  python-packages:
+   - thoth-storages
+   - tensorflow
+
+With the configuration above, the cache will be created. This cache will hold a
+serialized dependency graph of TensorFlow and thoth-storages packages, together
+with node information to effectivelly construct TensorFlow's dependency graph
+for transitive queries.
+
+Note only information which should not change over time is captured in the
+cache; for example, packages which were not yet resolved during cache creation
+are not added to cache so system explicitly asks for resolution results next
+time (they might be resolved meanwhile).

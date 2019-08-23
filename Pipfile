@@ -11,6 +11,8 @@ amun = "*"
 pydgraph = "*"
 python-dateutil = "*"
 thoth-python = "*"
+click = "*"
+pyyaml = "*"
 
 [dev-packages]
 pytest = "*"
