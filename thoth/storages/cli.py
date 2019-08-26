@@ -72,23 +72,23 @@ def cli(ctx=None, verbose: bool = False):
 
 @cli.command("graph-cache")
 @click.argument(
-    "cache_path",
+    "cache_file",
     type=str,
     required=True,
     envvar=GraphCache.ENV_CACHE_PATH,
     default=GraphCache.DEFAULT_CACHE_PATH,
-    metavar="THOTH_STORAGES_CACHE_PATH",
+    metavar="CACHE_FILE",
 )
 @click.option(
     "--cache-config",
     "-c",
     type=str,
     required=True,
-    envvar="THOTH_STORAGES_CACHE_CONFIG",
+    envvar="THOTH_STORAGES_GRAPH_CACHE_CONFIG",
     metavar="CACHE_CONFIG.yaml",
     help="A path to cache configuration file.",
 )
-def cache(cache_path: str, cache_config: str):
+def cache(cache_file: str, cache_config: str):
     """Interact with thoth-storages' GraphCache to cache results."""
     packages = []
     try:
@@ -105,7 +105,7 @@ def cache(cache_path: str, cache_config: str):
         )
         sys.exit(1)
 
-    graph = GraphDatabase(cache=GraphCache.load(cache_path))
+    graph = GraphDatabase(cache=GraphCache.load(cache_file))
     graph.connect()
 
     # Fill in the cache:
@@ -124,15 +124,18 @@ def cache(cache_path: str, cache_config: str):
             _LOGGER.info("Adding record for %r in version %r from %r", package_name, package_version, index_url)
             graph.retrieve_transitive_dependencies_python(package_name, package_version, index_url)
 
-    cache_path = graph.cache.dump(cache_path)
+    report = {
+        "cache_file": cache_file,
+        "cache_file_size": None,
+        "cache_stats": graph.cache.stats(),
+    }
+    try:
+        cache_file_size = os.path.getsize(cache_file)
+        report["cache_file_size"] = cache_file_size
+    except Exception as exc:
+        _LOGGER.error("Failed to obtain cache size: %s", str(exc))
 
-    click.echo(json.dumps(
-        {
-            "cache_path": cache_path,
-            "cache_size": os.path.getsize(cache_path),
-        },
-        indent=2)
-    )
+    click.echo(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":

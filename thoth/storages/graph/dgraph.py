@@ -20,18 +20,20 @@
 import logging
 import os
 import json
+import pkg_resources
+import functools
 from typing import List
 from typing import Set
 from typing import Tuple
 from typing import Optional
 from typing import Dict
 from typing import Iterable
+from typing import Union
 from pathlib import Path
 from dateutil import parser
 from datetime import timezone
 from itertools import chain
 from collections import deque
-from collections import ChainMap
 import asyncio
 from math import nan
 
@@ -253,7 +255,9 @@ class GraphDatabase(StorageBase):
             # Safe after commit based on docs.
             txn.discard()
 
-        _LOGGER.debug("Query statistics:\n%s", result.latency)
+        if bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0))):
+            _LOGGER.debug("Query statistics:\n%s", result.latency)
+
         return json.loads(result.json)
 
     async def _query_raw_async(self, query) -> dict:
@@ -787,6 +791,30 @@ class GraphDatabase(StorageBase):
 
         return len(result["f"])
 
+    def retrieve_solved_python_packages_count(self, solver_name: str) -> int:
+        """Retrieve number of solved Python packages for the given solver."""
+        solver_info = self.parse_python_solver_name(solver_name)
+        query = """
+        {
+          pve as var(func: has(%s)) {
+            cnt as count(installed_from @filter(eq(os_name, "%s") """\
+                """AND eq(os_version, "%s") AND eq(python_version, "%s")))
+          }
+
+          f(func: uid(pve)) @filter(gt(val(cnt), 0)) {
+            uid
+          }
+        }
+        """ % (
+            PythonPackageVersionEntity.get_label(),
+            solver_info["os_name"],
+            solver_info["os_version"],
+            solver_info["python_version"],
+        )
+        result = self._query_raw(query)
+
+        return len(result["f"])
+
     def retrieve_unanalyzed_python_package_versions(self, start_offset: int = 0, count: int = 100) -> List[dict]:
         """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
         query = """{
@@ -1053,28 +1081,77 @@ class GraphDatabase(StorageBase):
             python_package_node_id: (result[0]["package_name"], result[0]["package_version"], result[0]["index_url"])
         }
 
-    def get_python_package_tuples(self, python_package_node_ids: Set[int]) -> Dict[int, Tuple[str, str, str]]:
-        """Get package name, package version and index URL for each python package node.
+    def _get_python_package_version_by_uid(self, uid: int, *, without_cache: bool = False) -> Optional[dict]:
+        """Get Python package version information for the given uid."""
+        if not without_cache:
+            record = self.cache.get_python_package_version_uid_record(uid)
+            if record:
+                return record
 
-        This query is good to be used in conjunction with query retrieving
-        transitive dependencies. The main benefit of this function is that it
-        performs all the queries in an event loop per each package. The cache
-        is not taken into account.
-        """
-        if len(python_package_node_ids) == 0:
-            return {}
+        query = """
+        {
+            q(func: uid(%s)) {
+                package_name
+                package_version
+                index_url
+                os_name
+                os_version
+                python_version
+            }
+        }
+        """ % (uid,)
+        query_result = self._query_raw(query)["q"]
 
-        tasks = []
-        for python_package_node_id in python_package_node_ids:
-            task = asyncio.ensure_future(self.get_python_package_tuple(python_package_node_id))
-            tasks.append(task)
+        if not query_result:
+            raise ValueError("No records were found for PythonPackageVersion with uid %r", uid)
 
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(asyncio.gather(*tasks))
-        results_dict = list(chain(results))
-        return dict(ChainMap(*results_dict))
+        result = dict(
+            package_name=query_result["package_name"],
+            package_version=query_result["package_version"],
+            index_url=query_result["index_url"],
+            os_name=query_result.get("os_name"),
+            os_version=query_result.get("os_version"),
+        )
+        if not without_cache:
+            self.cache.add_python_package_version_uid_record(**result, uid=uid)
 
-    def _do_retrieve_transitive_dependencies_python_uid(
+        return result
+
+    def _get_python_package_version_entity_by_uid(
+        self,
+        uid: int,
+        *,
+        without_cache: bool = False
+    ) -> Optional[Tuple[str, str]]:
+        """Get Python package version entity information for the given uid."""
+        if not without_cache:
+            record = self.cache.get_python_package_version_entity_uid_record(uid)
+            if record:
+                return record
+
+        query = """
+        {
+            q(func: uid(%s)) {
+                package_name
+                package_version
+            }
+        }
+        """ % (uid,)
+        query_result = self._query_raw(query)["q"]
+        if not query_result:
+            raise ValueError("No records were found for PythonPackageVersionEntity with uid %r", uid)
+
+        result = (query_result[0]["package_name"], query_result[0]["package_version"])
+        if not without_cache:
+            self.cache.add_python_package_version_entity_uid_record(
+                package_name=result[0],
+                package_version=result[1],
+                uid=uid
+            )
+
+        return result
+
+    def get_depends_on(
         self,
         package_name: str,
         package_version: str,
@@ -1083,8 +1160,141 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-    ) -> List[Tuple[int, int]]:
-        """Perform query for retrieving transitive dependencies, retrieve only uids."""
+        without_cache: bool = False,
+    ) -> Set[Tuple[str, str]]:
+        """Get dependencies for the given Python package respecting environment.
+
+        If no environment is provided, dependencies are returned for all environments as stored in the database.
+        """
+        record = locals()
+        record.pop("without_cache")
+        record.pop("self")
+
+        if not without_cache:
+            result = self.cache.get_depends_on(**record)
+            if result:
+                return result
+
+        query_filter = self._get_query_filter(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+        )
+        query = """
+            {
+                q(func: has(%s)) \
+                @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s") %s) {
+                    uid
+                    depends_on {
+                        uid
+                    }
+            }
+        }
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            index_url,
+            "AND " + query_filter if query_filter else '',
+        )
+        # We always have one element in the query result - the uid itself.
+        query_result = self._query_raw(query)["q"]
+        query_result = query_result[0]
+
+        result = set()
+        for entry in query_result.get("depends_on", []):
+            dependency_name, dependency_version = self._get_python_package_version_entity_by_uid(
+                entry["uid"],
+                without_cache=without_cache,
+            )
+            result.add((dependency_name, dependency_version))
+
+            if not without_cache:
+                self.cache.add_depends_on(
+                    **record,
+                    dependency_name=dependency_name,
+                    dependency_version=dependency_version
+                )
+
+        return result
+
+    def get_python_package_version_records(
+        self,
+        package_name: str,
+        package_version: str,
+        *,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
+        without_cache: bool = False,
+    ) -> Optional[List[dict]]:
+        """Get records for the given package regardless of index_url."""
+        if not without_cache:
+            result = self.cache.get_python_package_version_records(
+                package_name=package_name,
+                package_version=package_version,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+            )
+            if result:
+                return result
+
+        query_filter = self._get_query_filter(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+        )
+        query = """
+        {
+            q(func: has(%s)) @filter(eq(package_name, "%s") \
+            AND eq(package_version, "%s") AND has(index_url) AND has(os_name) \
+            AND has(os_version) and has(python_version)%s) {
+                uid
+                package_name
+                package_version
+                index_url
+                os_name
+                os_version
+                python_version
+            }
+        }
+        """ % (
+            PythonPackageVersion.get_label(),
+            package_name,
+            package_version,
+            " AND " + query_filter if query_filter else "",
+        )
+        query_result = self._query_raw(query)["q"]
+
+        result = []
+        for item in query_result:
+            entry = dict(
+                package_name=item["package_name"],
+                package_version=item["package_version"],
+                index_url=item["index_url"],
+                os_name=item["os_name"],
+                os_version=item["os_version"],
+                python_version=item["python_version"],
+            )
+            result.append(entry)
+
+            if not without_cache:
+                self.cache.add_python_package_version_uid_record(
+                    **entry,
+                    uid=item["uid"],
+                )
+
+        return result or None
+
+    @staticmethod
+    @functools.lru_cache(maxsize=10)
+    def _get_query_filter(
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+    ) -> str:
+        """Get a query filter to filter out records based on environment."""
         query_filter = ""
         if os_name:
             query_filter = f'eq(os_name, "{os_name}")'
@@ -1099,147 +1309,7 @@ class GraphDatabase(StorageBase):
                 query_filter += " AND "
             query_filter += f'eq(python_version, "{python_version}")'
 
-        query = """
-        {
-            q(func: has(%s)) @filter(eq(package_name, "%s") """ \
-        """AND eq(package_version, "%s") AND eq(index_url, "%s")%s) {
-                uid
-                package_name
-                package_version
-                index_url
-                depends_on
-            }
-        }
-        """ % (
-            PythonPackageVersion.get_label(),
-            package_name,
-            package_version,
-            index_url,
-            " AND " + query_filter if query_filter else "",
-        )
-        query_result = self._query_raw(query)["q"]
-        if not query_result:
-            raise NotFoundError(
-                f"No packages found for package {package_name!r} in version {package_version!r} from {index_url!r}, "
-                f"operating system is '{os_name}:{os_version}', python version: {python_version!r}"
-            )
-
-        #
-        # Post-process if we need perform more search in-depth not to reach serialization issues.
-        #
-
-        # Adjust to add additional filter for uid based queries.
-        query_filter_full = ""
-        if query_filter:
-            query_filter_full = f" @filter({query_filter})"
-
-        stack = deque(item["uid"] for item in query_result)
-        result = []
-        not_resolved_yet = set()
-        while stack:
-            queried_uid = stack.pop()
-
-            # Check if we have already queried for the given package - check its presents
-            # in "dependencies_map" cache and expand it.
-            dependency_uids = self.cache.get_dependencies(queried_uid)
-            if dependency_uids is not None:
-                # Pick from cache, already seen package.
-                for dependency_uid in dependency_uids:
-                    result.append((queried_uid, dependency_uid))
-                continue
-
-            query = """
-                {
-                    q(func: uid(%s)) %s {
-                        uid
-                        depends_on {
-                            package_name
-                            package_version
-                        }
-                }
-            }
-            """ % (
-                queried_uid,
-                query_filter_full,
-            )
-            subquery_result = self._query_raw(query)
-            _LOGGER.debug(subquery_result)
-
-            # We always have one element in the query result - the uid itself.
-            subquery_result = subquery_result["q"][0]
-            assert subquery_result["uid"] == queried_uid
-
-            for entry in subquery_result.get("depends_on", []):
-                query = """
-                {
-                    q(func: has(%s)) @filter(eq(package_name, "%s") AND eq(package_version, "%s")%s) {
-                        uid
-                    }
-                }
-                """ % (
-                    PythonPackageVersion.get_label(),
-                    entry["package_name"],
-                    entry["package_version"],
-                    " AND " + query_filter if query_filter else "",
-                )
-                subquery_result = self._query_raw(query)
-
-                if len(subquery_result["q"]) == 0:
-                    _LOGGER.debug(
-                        "Dependency %r in version %r is not resolved, cannot fully construct dependency "
-                        "graph with %r in version %r",
-                        entry["package_name"],
-                        entry["package_version"],
-                        package_name,
-                        package_version,
-                    )
-                    # We do not store this in cache as this might change over time - especially not good
-                    # keeping this in cache for automatically generated cache. In other words, we put only
-                    # items which cannot change over time.
-                    result.append((queried_uid, None))
-                    not_resolved_yet.add(queried_uid)
-                    continue
-
-                for dep in subquery_result["q"]:
-                    dependency_uid = dep["uid"]
-                    result.append((queried_uid, dependency_uid))
-                    self.cache.add_dependencies(queried_uid, dependency_uid)
-                    if dependency_uid not in not_resolved_yet \
-                            and dependency_uid not in self.cache.get_all_stored_uids():
-                        stack.append(dependency_uid)
-
-        return result
-
-    def _get_python_package_tuples(
-        self,
-        transitive_dependencies: List[Tuple[int, int]]
-    ) -> List[Tuple[Tuple[str, str, str], Tuple[str, str, str]]]:
-        """Retrieve tuples representing package name, package version and index url for the given set of ids."""
-        seen_ids = self.cache.get_all_stored_uids()
-        unseen_ids = set()
-        for entry in transitive_dependencies:
-            for uid in entry:
-                if uid is not None and uid not in seen_ids:
-                    unseen_ids.add(uid)
-
-        if len(unseen_ids) > 0:
-            _LOGGER.debug(
-                "Retrieving package tuples for transitive dependencies (count: %d)",
-                len(unseen_ids),
-            )
-
-        package_tuples = self.get_python_package_tuples(unseen_ids)
-        for python_package_id, package_tuple in package_tuples.items():
-            self.cache.add_uid_record(python_package_id, package_tuple)
-
-        result = []
-        for entries in transitive_dependencies:
-            result.append((
-                self.cache.get_uid_record(entries[0]),
-                self.cache.get_uid_record(entries[1]) if entries[1] is not None else None
-            ))
-
-        return result
+        return query_filter
 
     def retrieve_transitive_dependencies_python(
         self,
@@ -1250,7 +1320,8 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-    ) -> list:
+        without_cache: bool = False,
+    ) -> Set[Tuple[Tuple[str, str, str], Union[Tuple[str, str, str], None]]]:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
         It's much faster to retrieve just dependency ids for the transitive
@@ -1261,15 +1332,50 @@ class GraphDatabase(StorageBase):
         queries into graph instance.
         """
         package_name = self.normalize_python_package_name(package_name)
-        result = self._do_retrieve_transitive_dependencies_python_uid(
-            package_name,
-            package_version,
-            index_url,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version,
-        )
-        result = self._get_python_package_tuples(result)
+        result = set()
+        package_tuple = (package_name, package_version, index_url)
+        stack = deque((package_tuple,))
+        seen_tuples = {package_tuple}
+        while stack:
+            package_tuple = stack.pop()
+
+            dependencies = self.get_depends_on(
+                package_name=package_tuple[0],
+                package_version=package_tuple[1],
+                index_url=package_tuple[2],
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                without_cache=without_cache,
+            )
+
+            for dependency_name, dependency_version in dependencies:
+                records = self.get_python_package_version_records(
+                    package_name=dependency_name,
+                    package_version=dependency_version,
+                    os_name=os_name,
+                    os_version=os_version,
+                    python_version=python_version,
+                    without_cache=without_cache,
+                )
+
+                if records is None:
+                    # Not resolved yet.
+                    result.add((
+                        package_tuple,
+                        (dependency_name, dependency_version, None),
+                    ))
+                else:
+                    for record in records:
+                        dependency_tuple = (record["package_name"], record["package_version"], record["index_url"])
+                        result.add((package_tuple, dependency_tuple))
+
+                        if dependency_tuple in seen_tuples:
+                            continue
+
+                        stack.append(dependency_tuple)
+                        seen_tuples.add(dependency_tuple)
+
         return result
 
     def retrieve_transitive_dependencies_python_multi(
@@ -1278,7 +1384,7 @@ class GraphDatabase(StorageBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-    ) -> dict:
+    ) -> Dict[Tuple[str, str, str], Set[Tuple[Tuple[str, str, str], Tuple[str, str, str]]]]:
         """Get all transitive dependencies for a given set of packages by traversing the dependency graph."""
         result = {}
         for package_tuple in package_tuples:

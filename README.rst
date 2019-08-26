@@ -166,21 +166,19 @@ The cache can be created with shipped CLI tool:
 .. code-block:: console
 
   # When using version from this Git repository:
-  PYTHONPATH=. pipenv run ./thoth-storages graph-cache cache.pickle -d ../adviser/cache_conf.yaml
+  PYTHONPATH=. pipenv run ./thoth-storages graph-cache cache.pickle -c ../adviser/cache_conf.yaml
 
   # When using a version installed from PyPI:
-  thoth-storages graph-cache cache.pickle -d ../adviser/cache_conf.yaml
+  thoth-storages graph-cache cache.pickle -c ../adviser/cache_conf.yaml
 
-The command above creates a memory dump (a pickle file) which can be then
-loaded in the system. The path can be supplied using environment variable
-``THOTH_STORAGES_GRAPH_CACHE_PATH``. If loading of cache is not successful, an
-empty cache is used by default. If the given graph cache is already present on
-the system, it will be loaded and new enties automatically synced into the old
-cache.
-
-By default, the implementation looks for cache in
-``/opt/app-root/src/graph_cache.pickle`` which is suitable to be used in
-OpenShift's s2i process.
+The command above creates a SQLite3 database which carries some of the data
+loaded from the graph database.  The path to cache can be supplied using
+environment variable ``THOTH_STORAGES_GRAPH_CACHE``. By default, the module
+will create an in-memory SQLite3 database and will not persist it onto disk. If
+the configuration points to non-existing file, an SQLite3 database will be
+created and persisted onto disk with data which were added into it based on
+runtime usage. This naturally re-uses graph cache multiple times across runs
+(filled with the data needed) as expected.
 
 Take a look at adviser repo, at ``cache_conf.yaml`` file specifically, to
 see how ``cache_conf.yaml`` file should be structured. An example could be:
@@ -193,10 +191,13 @@ see how ``cache_conf.yaml`` file should be structured. An example could be:
 
 With the configuration above, the cache will be created. This cache will hold a
 serialized dependency graph of TensorFlow and thoth-storages packages, together
-with node information to effectivelly construct TensorFlow's dependency graph
+with node information to effectively construct TensorFlow's dependency graph
 for transitive queries.
 
-Note only information which should not change over time is captured in the
+Note only information which should not change over time are captured in the
 cache; for example, packages which were not yet resolved during cache creation
 are not added to cache so system explicitly asks for resolution results next
 time (they might be resolved meanwhile).
+
+To disable graph cache completely, set ``THOTH_STORAGES_GRAPH_CACHE_DISABLED``
+environment variable to ``1`` (the default value of ``0`` enables it).

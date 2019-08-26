@@ -15,107 +15,404 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""A cache for Dgraph.
+"""A graph database cache implementation to speed up queries."""
 
-This cache is pre-computed dump of memory to speed up resolutions of popular packages.
-
-There are two main purposes of using this cache:
-
-1. One is reducing number of queries to the graph database for packages which
-share dependency sub-graphs.
-
-2. Use this cache to reduce number queries to graph database of "popular" or
-"monitored" packages - the cache will be pre-initialized in a form of memory
-dump on disk in that cases and loaded in the GraphDatabase adapter on inital
-instantiation.
-"""
-
-import logging
 import os
-import pickle
+import logging
+import sqlite3
+import functools
 from typing import Set
 from typing import Tuple
+from typing import List
 from typing import Optional
+from typing import Union
 
 import attr
 
 _LOGGER = logging.getLogger(__name__)
 
 
+def _only_if_enabled(func):
+    """A decorator to make sure the graph database cache is used only if enabled."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not args[0].is_enabled():
+            return None
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @attr.s(slots=True)
 class GraphCache:
     """A Dgraph database cache to speed up resolution of popular packages and packages with overlapping dependencies."""
 
-    # This is a default graph cache - the location is primarily picked for OpenShift's s2i process.
-    DEFAULT_CACHE_PATH = "/opt/app-root/src/graph_cache.pickle"
-    ENV_CACHE_PATH = "THOTH_STORAGES_GRAPH_CACHE_PATH"
+    # This is a default graph cache - using in-memory. In a deployment we point to a path on disk.
+    DEFAULT_CACHE_PATH = ":memory:"
+    ENV_CACHE_PATH = "THOTH_STORAGES_GRAPH_CACHE"
 
-    _uid_map = attr.ib(type=dict, default=attr.Factory(dict))
-    _dependencies_map = attr.ib(type=dict, default=attr.Factory(dict))
+    _CREATE_DEPENDS_ON_DATABASE = """CREATE TABLE depends_on ( \
+ package_name TEXT NOT NULL, \
+ package_version TEXT NOT NULL, \
+ index_url TEXT NOT NULL, \
+ os_name TEXT, \
+ os_version TEXT, \
+ python_version TEXT, \
+ dependency_name TEXT, \
+ dependency_version TEXT, \
+ UNIQUE( \
+  package_name, \
+  package_version, \
+  index_url, \
+  os_name, \
+  os_version, \
+  python_version, \
+  dependency_name, \
+  dependency_version \
+ )
+)"""
 
-    def add_uid_record(self, uid: int, package_tuple: Tuple[str, str, str]) -> bool:
-        """Add a uid record to the graph cache."""
-        recorded_item = self._uid_map.get(uid)
-        if recorded_item is not None and package_tuple != recorded_item:
-            raise ValueError(
-                f"Cache already keeps record for {uid!r} but for different "
-                f"item; present {recorded_item}, to insert {package_tuple}"
-            )
+    _CREATE_PYTHON_PACKAGE_VERSION_UID_DATABASE = """CREATE TABLE python_package_version_uid ( \
+ package_name TEXT NOT NULL, \
+ package_version TEXT NOT NULL, \
+ index_url TEXT NOT NULL, \
+ os_name TEXT, \
+ os_version TEXT, \
+ python_version TEXT, \
+ uid TEXT PRIMARY KEY, \
+ UNIQUE(
+  package_name, \
+  package_version, \
+  index_url, \
+  os_name, \
+  os_version, \
+  python_version \
+ )
+)"""
 
-        if recorded_item:
-            return True
+    _CREATE_PYTHON_PACKAGE_VERSION_ENTITY_UID_DATABASE = """CREATE TABLE python_package_version_entity_uid ( \
+ package_name TEXT NOT NULL, \
+ package_version TEXT NOT NULL, \
+ uid TEXT PRIMARY KEY, \
+ UNIQUE(
+  package_name, \
+  package_version \
+ )
+)"""
 
-        self._uid_map[uid] = package_tuple
-        return False
+    _SELECT_DEPENDS_ON_BASE = """SELECT dependency_name, dependency_version FROM depends_on WHERE \
+ package_name=:package_name AND \
+ package_version=:package_version AND \
+ index_url=:index_url \
+"""
 
-    def get_all_stored_uids(self) -> Set[int]:
-        """Retrieve all uids stored in the cache."""
-        return set(self._uid_map.keys())
+    _SELECT_PYTHON_PACKAGE_VERSIONS_BASE = """SELECT \
+ package_name, \
+ package_version, \
+ index_url, \
+ os_name, \
+ os_version, \
+ python_version FROM python_package_version_uid WHERE package_name=:package_name AND package_version=:package_version
+"""
 
-    def add_dependencies(self, package_uid: int, *dependency: int) -> bool:
-        """Add a dependency information record."""
-        dependencies_set: Set[Tuple[str, str, str]] = self._dependencies_map.get(package_uid)
-        if dependencies_set and dependency in dependencies_set:
-            return True
+    _SELECT_PYTHON_PACKAGE_VERSION_UID = """SELECT \
+ package_name, \
+ package_version, \
+ index_url, \
+ os_name, \
+ os_version, \
+ python_version FROM python_package_version_uid WHERE uid=:uid
+"""
 
-        if dependencies_set is None:
-            self._dependencies_map[package_uid] = set()
+    _SELECT_PYTHON_PACKAGE_VERSION_ENTITY_UID = """SELECT \
+ package_name, \
+ package_version FROM python_package_version_entity_uid WHERE uid=:uid
+"""
 
-        self._dependencies_map[package_uid].update(dependency)
-        return False
+    _QUERY_TABLE_EXISTS = """SELECT CASE WHEN name = :table THEN 1 ELSE 0 END FROM sqlite_master WHERE \
+  name = :table AND type = 'table'
+"""
 
-    def get_uid_record(self, uid: int) -> Optional[Tuple[str, str, str]]:
-        """Retrieve package tuple for the given uid of package tuple."""
-        result = self._uid_map.get(uid)
-        _LOGGER.debug("Cache hit/miss for uid: %r -> %r", uid, result)
-        return result
+    _TABLES = {
+        "depends_on": _CREATE_DEPENDS_ON_DATABASE,
+        "python_package_version_uid": _CREATE_PYTHON_PACKAGE_VERSION_UID_DATABASE,
+        "python_package_version_entity_uid": _CREATE_PYTHON_PACKAGE_VERSION_ENTITY_UID_DATABASE,
+    }
 
-    def get_dependencies(self, package_uid: int) -> Optional[Set[int]]:
-        """Get dependencies for the given uid from cache."""
-        result = self._dependencies_map.get(package_uid)
-        _LOGGER.debug("Cache hit/miss for package uid dependency: %r -> %r", package_uid, result)
-        return result
+    sqlite_connection = attr.ib(type=sqlite3.Connection)
 
     @classmethod
-    def load(cls, cache_path: str = None) -> "GraphCache":
-        """Load graph database if present on filesystem."""
-        if not cache_path:
-            cache_path = os.getenv(cls.ENV_CACHE_PATH, cls.DEFAULT_CACHE_PATH)
+    def load(cls, db_file: str = None) -> "GraphCache":
+        """Prepare graph cache by loading an already existing one or a new one."""
+        if not db_file:
+            db_file = os.getenv(cls.ENV_CACHE_PATH, cls.DEFAULT_CACHE_PATH)
 
+        _LOGGER.info("Using graph database cache from %r", db_file)
+        instance = cls(sqlite_connection=sqlite3.connect(db_file))
+        instance.initialize()
+        return instance
+
+    @staticmethod
+    def is_enabled():
+        """Check if this cache is enabled."""
+        return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_DISABLED", 0)))
+
+    @_only_if_enabled
+    def initialize(self):
+        """Initialize database if not already initialized."""
+        cursor = self.sqlite_connection.cursor()
+
+        for table_name, create_query in self._TABLES.items():
+            cursor.execute(self._QUERY_TABLE_EXISTS, {"table": table_name})
+            if not cursor.fetchone():
+                _LOGGER.debug("Creating database %r", table_name)
+                cursor.execute(create_query)
+            else:
+                _LOGGER.debug("Database %r is already present", table_name)
+
+        self.sqlite_connection.commit()
+
+    @staticmethod
+    def _get_params_ext(
+        package_name: str,
+        package_version: str,
+        index_url: str = None,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+    ) -> Tuple[str, dict]:
+        """Get parameters and extension to query."""
+        query_ext = ""
+        query_params = {"package_name": package_name, "package_version": package_version}
+
+        if index_url:
+            query_params["index_url"] = index_url
+
+        if os_name:
+            query_ext += " AND os_name=:os_name "
+            query_params["os_name"] = os_name
+
+        if os_version:
+            query_ext += " AND os_version=:os_version "
+            query_params["os_version"] = os_version
+
+        if python_version:
+            query_ext += " AND python_version=:python_version "
+            query_params["python_version"] = python_version
+
+        return query_ext, query_params
+
+    @_only_if_enabled
+    def get_depends_on(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+    ) -> Optional[Set[Tuple[str, str]]]:
+        """Retrieve dependencies for the given packages."""
+        params = locals()
+        params.pop("self")
+        query_ext, query_params = self._get_params_ext(**params)
+        query = self._SELECT_DEPENDS_ON_BASE + query_ext
+
+        cursor = self.sqlite_connection.cursor()
         try:
-            with open(cache_path, "rb") as cache_file:
-                return pickle.load(cache_file)
-        except Exception as exc:
-            _LOGGER.warning("Creating empty cache, failed to load cache from %r: %s", cache_path, str(exc))
-            return cls()
+            cursor.execute(query, query_params)
+            query_result = cursor.fetchall()
+            if not query_result:
+                # No records in the database.
+                return None
 
-    def dump(self, cache_path: str = None) -> str:
-        """Dump the current state of cache to a pickle specified by path."""
-        if not cache_path:
-            cache_path = os.getenv(self.ENV_CACHE_PATH, self.DEFAULT_CACHE_PATH)
+            result = set()
+            for item in query_result:
+                package_name, package_version = item[0], item[1]
+                if package_name is None and package_version is None:
+                    # If we have a record that any of the given do not
+                    # match criteria, we return any result computed so far.
+                    continue
 
-        _LOGGER.debug("Dumping graph cache to %r", cache_path)
-        with open(cache_path, "wb") as cache_file:
-            pickle.dump(self, cache_file)
+                result.add((package_name, package_version))
 
-        return cache_path
+            return result
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def get_python_package_version_records(
+        self,
+        package_name: str,
+        package_version: str,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
+    ) -> Optional[List[dict]]:
+        """Get records for Python packages matching the given criteria for environment."""
+        query_ext, query_params = self._get_params_ext(
+            package_name=package_name,
+            package_version=package_version,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+        )
+
+        query = self._SELECT_PYTHON_PACKAGE_VERSIONS_BASE + query_ext
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute(query, query_params)
+            result = cursor.fetchall()
+
+            if not result:
+                return None
+
+            return [
+                dict(
+                    package_name=item[0],
+                    package_version=item[1],
+                    index_url=item[2],
+                    os_name=item[3],
+                    os_version=item[4],
+                    python_version=item[5],
+                )
+                for item in result
+            ]
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def get_python_package_version_uid_record(self, uid: int) -> Optional[dict]:
+        """Get uid for the give Python package version."""
+        params = locals()
+        params.pop("self")
+
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute(self._SELECT_PYTHON_PACKAGE_VERSION_UID, dict(uid=uid))
+            result = cursor.fetchone()
+            if not result:
+                return None
+
+            return dict(
+                package_name=result[0],
+                package_version=result[1],
+                index_url=result[2],
+                os_name=result[3],
+                os_version=result[4],
+                python_version=result[5],
+            )
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def get_python_package_version_entity_uid_record(self, uid: int) -> Optional[Tuple[str, str]]:
+        """Get uid for the give Python package version entity."""
+        params = locals()
+        params.pop("self")
+
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute(self._SELECT_PYTHON_PACKAGE_VERSION_ENTITY_UID, dict(uid=uid))
+            result = cursor.fetchone()
+            if not result:
+                return None
+
+            return result[0], result[1]
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def add_depends_on(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
+        dependency_name: str,
+        dependency_version: str,
+    ) -> None:
+        """Add a new entry of depends on for a Python package."""
+        if (
+            dependency_name is None
+            and dependency_version is not None
+            or dependency_name is not None
+            and dependency_version is None
+        ):
+            raise ValueError(f"Integrity error - cannot insert {dependency_name} in version {dependency_version}")
+
+        values = (
+            package_name,
+            package_version,
+            index_url,
+            os_name,
+            os_version,
+            python_version,
+            dependency_name,
+            dependency_version,
+        )
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute("INSERT INTO depends_on VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values)
+            self.sqlite_connection.commit()
+        except sqlite3.IntegrityError as exc:
+            _LOGGER.debug("Cannot insert depends_on entry %r: %s", values, str(exc))
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def add_python_package_version_uid_record(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
+        uid: int,
+    ) -> None:
+        """Add a new record to Python package version uid database."""
+        values = (package_name, package_version, index_url, os_name, os_version, python_version, uid)
+
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute("INSERT INTO python_package_version_uid VALUES (?, ?, ?, ?, ?, ?, ?)", values)
+            self.sqlite_connection.commit()
+        except sqlite3.IntegrityError as exc:
+            _LOGGER.debug("Cannot insert python_package_version_uid entry %r: %s", values, str(exc))
+        finally:
+            cursor.close()
+
+    @_only_if_enabled
+    def add_python_package_version_entity_uid_record(self, package_name: str, package_version: str, uid: int) -> None:
+        """Add a new record to Python package version entity uid database."""
+        values = (package_name, package_version, uid)
+
+        cursor = self.sqlite_connection.cursor()
+        try:
+            cursor.execute("INSERT INTO python_package_version_entity_uid VALUES (?, ?, ?)", values)
+            self.sqlite_connection.commit()
+            cursor.close()
+        except sqlite3.IntegrityError as exc:
+            _LOGGER.debug("Cannot insert python_package_version_entity_uid entry %r: %s", values, str(exc))
+
+    def stats(self) -> dict:
+        """Get statistics for the graph cache."""
+        result = {}
+        cursor = self.sqlite_connection.cursor()
+        for table_name in self._TABLES:
+            cursor.execute(f"SELECT COUNT() FROM {table_name!r}")
+            result[table_name] = cursor.fetchone()[0]
+
+        return result
+
+    def __del__(self):
+        """Make sure the sqlite database gets written to disk."""
+        self.sqlite_connection.close()
