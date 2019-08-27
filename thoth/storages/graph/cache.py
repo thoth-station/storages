@@ -21,6 +21,7 @@ import os
 import logging
 import sqlite3
 import functools
+from itertools import combinations
 from typing import Set
 from typing import Tuple
 from typing import List
@@ -44,6 +45,18 @@ def _only_if_enabled(func):
     return wrapper
 
 
+def _only_if_inserts_enabled(func):
+    """Decorator to make sure inserts are noop on production systems to reduce cache building overhead."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not args[0].is_insert_enabled():
+            return None
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @attr.s(slots=True)
 class GraphCache:
     """A Dgraph database cache to speed up resolution of popular packages and packages with overlapping dependencies."""
@@ -56,9 +69,9 @@ class GraphCache:
  package_name TEXT NOT NULL, \
  package_version TEXT NOT NULL, \
  index_url TEXT NOT NULL, \
- os_name TEXT, \
- os_version TEXT, \
- python_version TEXT, \
+ os_name TEXT NOT NULL, \
+ os_version TEXT NOT NULL, \
+ python_version TEXT NOT NULL, \
  dependency_name TEXT, \
  dependency_version TEXT, \
  UNIQUE( \
@@ -77,10 +90,10 @@ class GraphCache:
  package_name TEXT NOT NULL, \
  package_version TEXT NOT NULL, \
  index_url TEXT NOT NULL, \
- os_name TEXT, \
- os_version TEXT, \
- python_version TEXT, \
- uid TEXT PRIMARY KEY, \
+ os_name TEXT NOT NULL, \
+ os_version TEXT NOT NULL, \
+ python_version TEXT NOT NULL, \
+ uid int PRIMARY KEY, \
  UNIQUE(
   package_name, \
   package_version, \
@@ -94,7 +107,7 @@ class GraphCache:
     _CREATE_PYTHON_PACKAGE_VERSION_ENTITY_UID_DATABASE = """CREATE TABLE python_package_version_entity_uid ( \
  package_name TEXT NOT NULL, \
  package_version TEXT NOT NULL, \
- uid TEXT PRIMARY KEY, \
+ uid int PRIMARY KEY, \
  UNIQUE(
   package_name, \
   package_version \
@@ -148,7 +161,11 @@ class GraphCache:
         if not db_file:
             db_file = os.getenv(cls.ENV_CACHE_PATH, cls.DEFAULT_CACHE_PATH)
 
-        _LOGGER.info("Using graph database cache from %r", db_file)
+        if db_file == ":memory:":
+            _LOGGER.info("Using in-memory graph database cache")
+        else:
+            _LOGGER.info("Using graph database cache from %r", db_file)
+
         instance = cls(sqlite_connection=sqlite3.connect(db_file))
         instance.initialize()
         return instance
@@ -157,6 +174,52 @@ class GraphCache:
     def is_enabled():
         """Check if this cache is enabled."""
         return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_DISABLED", 0)))
+
+    @staticmethod
+    def is_insert_enabled():
+        """Check if inserts to this cache are enabled."""
+        return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED", 0)))
+
+    @_only_if_enabled
+    def _create_indexes_depends_on(self):
+        """Create indexes for depends_on table to optimize look-ups."""
+        cursor = self.sqlite_connection.cursor()
+
+        _LOGGER.debug("Creating index depends_on_all")
+        cursor.execute(
+            """CREATE INDEX IF NOT EXISTS depends_on_all ON depends_on \
+ (package_name, package_version, index_url, os_name, os_version, python_version)
+"""
+        )
+
+        _LOGGER.debug("Creating index python_package_version_uid_all")
+        cursor.execute(
+            """CREATE UNIQUE INDEX IF NOT EXISTS python_package_version_uid_all ON python_package_version_uid \
+ (package_name, package_version, index_url, os_name, os_version, python_version)
+"""
+        )
+
+        columns_to_variate = ("index_url", "os_name", "os_version", "python_version")
+        for i in range(1, len(columns_to_variate)):
+            for j, variation in enumerate(combinations(columns_to_variate, i)):
+                _LOGGER.debug("Creating index depends_on_%d%d: %s", i, j, variation)
+                cursor.execute(
+                    """CREATE INDEX IF NOT EXISTS depends_on_%d%d ON depends_on \
+     (package_name, package_version, index_url, %s)
+    """
+                    % (i, j, ",".join(variation))
+                )
+
+                _LOGGER.debug("Creating index python_package_version_uid_%d%d: %s", i, j, variation)
+                cursor.execute(
+                    """CREATE INDEX IF NOT EXISTS python_package_version_uid_%d%d ON depends_on \
+     (package_name, package_version, index_url, %s)
+    """
+                    % (i, j, ",".join(variation))
+                )
+
+        self.sqlite_connection.commit()
+        cursor.close()
 
     @_only_if_enabled
     def initialize(self):
@@ -171,7 +234,9 @@ class GraphCache:
             else:
                 _LOGGER.debug("Database %r is already present", table_name)
 
+        cursor.close()
         self.sqlite_connection.commit()
+        self._create_indexes_depends_on()
 
     @staticmethod
     def _get_params_ext(
@@ -216,80 +281,95 @@ class GraphCache:
         python_version: str = None,
     ) -> Optional[Set[Tuple[str, str]]]:
         """Retrieve dependencies for the given packages."""
-        params = locals()
-        params.pop("self")
-        query_ext, query_params = self._get_params_ext(**params)
-        query = self._SELECT_DEPENDS_ON_BASE + query_ext
 
-        cursor = self.sqlite_connection.cursor()
+        @functools.lru_cache(maxsize=2048)
+        def _do_get_depends_on(pn, pv, i, on, ov, p):
+            query_ext, query_params = self._get_params_ext(
+                package_name=pn, package_version=pv, index_url=i, os_name=on, os_version=ov, python_version=p
+            )
+            query = self._SELECT_DEPENDS_ON_BASE + query_ext
+
+            cursor = self.sqlite_connection.cursor()
+            try:
+                cursor.execute(query, query_params)
+                query_result = cursor.fetchall()
+                if not query_result:
+                    # No records in the database.
+                    raise StopIteration
+
+                result = set()
+                for item in query_result:
+                    dependency_name, dependency_version = item[0], item[1]
+                    if dependency_name is None and dependency_version is None:
+                        # If we have a record that any of the given do not
+                        # match criteria, we return any result computed so far.
+                        # An example could be flask==1.0.0 depending only on werkzeug on fedora:31, but no
+                        # dependency for flask==1.0.0 on fedora:30 (assuming no operating system was
+                        # specified). Then we return werkzeug as we do "generic"/platform independent resolution.
+                        continue
+
+                    result.add((dependency_name, dependency_version))
+
+                return result
+            finally:
+                cursor.close()
+
         try:
-            cursor.execute(query, query_params)
-            query_result = cursor.fetchall()
-            if not query_result:
-                # No records in the database.
-                return None
-
-            result = set()
-            for item in query_result:
-                package_name, package_version = item[0], item[1]
-                if package_name is None and package_version is None:
-                    # If we have a record that any of the given do not
-                    # match criteria, we return any result computed so far.
-                    continue
-
-                result.add((package_name, package_version))
-
-            return result
-        finally:
-            cursor.close()
+            return _do_get_depends_on(package_name, package_version, index_url, os_name, os_version, python_version)
+        except StopIteration:
+            return None
 
     @_only_if_enabled
     def get_python_package_version_records(
         self,
         package_name: str,
         package_version: str,
+        index_url: Union[str, None],
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
     ) -> Optional[List[dict]]:
         """Get records for Python packages matching the given criteria for environment."""
-        query_ext, query_params = self._get_params_ext(
-            package_name=package_name,
-            package_version=package_version,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version,
-        )
 
-        query = self._SELECT_PYTHON_PACKAGE_VERSIONS_BASE + query_ext
-        cursor = self.sqlite_connection.cursor()
+        @functools.lru_cache(maxsize=2048)
+        def _do_get_python_package_version_records(pn, pv, i, on, ov, p):
+            query_ext, query_params = self._get_params_ext(
+                package_name=pn, package_version=pv, index_url=i, os_name=on, os_version=ov, python_version=p
+            )
+
+            query = self._SELECT_PYTHON_PACKAGE_VERSIONS_BASE + query_ext
+            cursor = self.sqlite_connection.cursor()
+            try:
+                cursor.execute(query, query_params)
+                result = cursor.fetchall()
+
+                if not result:
+                    raise StopIteration
+
+                return [
+                    dict(
+                        package_name=item[0],
+                        package_version=item[1],
+                        index_url=item[2],
+                        os_name=item[3],
+                        os_version=item[4],
+                        python_version=item[5],
+                    )
+                    for item in result
+                ]
+            finally:
+                cursor.close()
+
         try:
-            cursor.execute(query, query_params)
-            result = cursor.fetchall()
-
-            if not result:
-                return None
-
-            return [
-                dict(
-                    package_name=item[0],
-                    package_version=item[1],
-                    index_url=item[2],
-                    os_name=item[3],
-                    os_version=item[4],
-                    python_version=item[5],
-                )
-                for item in result
-            ]
-        finally:
-            cursor.close()
+            return _do_get_python_package_version_records(
+                package_name, package_version, index_url, os_name, os_version, python_version
+            )
+        except StopIteration:
+            return None
 
     @_only_if_enabled
     def get_python_package_version_uid_record(self, uid: int) -> Optional[dict]:
         """Get uid for the give Python package version."""
-        params = locals()
-        params.pop("self")
-
         cursor = self.sqlite_connection.cursor()
         try:
             cursor.execute(self._SELECT_PYTHON_PACKAGE_VERSION_UID, dict(uid=uid))
@@ -326,15 +406,16 @@ class GraphCache:
             cursor.close()
 
     @_only_if_enabled
+    @_only_if_inserts_enabled
     def add_depends_on(
         self,
         package_name: str,
         package_version: str,
         index_url: str,
         *,
-        os_name: Union[str, None],
-        os_version: Union[str, None],
-        python_version: Union[str, None],
+        os_name: str,
+        os_version: str,
+        python_version: str,
         dependency_name: str,
         dependency_version: str,
     ) -> None:
@@ -367,6 +448,7 @@ class GraphCache:
             cursor.close()
 
     @_only_if_enabled
+    @_only_if_inserts_enabled
     def add_python_package_version_uid_record(
         self,
         package_name: str,
@@ -391,6 +473,7 @@ class GraphCache:
             cursor.close()
 
     @_only_if_enabled
+    @_only_if_inserts_enabled
     def add_python_package_version_entity_uid_record(self, package_name: str, package_version: str, uid: int) -> None:
         """Add a new record to Python package version entity uid database."""
         values = (package_name, package_version, uid)
@@ -399,17 +482,21 @@ class GraphCache:
         try:
             cursor.execute("INSERT INTO python_package_version_entity_uid VALUES (?, ?, ?)", values)
             self.sqlite_connection.commit()
-            cursor.close()
         except sqlite3.IntegrityError as exc:
             _LOGGER.debug("Cannot insert python_package_version_entity_uid entry %r: %s", values, str(exc))
+        finally:
+            cursor.close()
 
     def stats(self) -> dict:
         """Get statistics for the graph cache."""
         result = {}
         cursor = self.sqlite_connection.cursor()
-        for table_name in self._TABLES:
-            cursor.execute(f"SELECT COUNT() FROM {table_name!r}")
-            result[table_name] = cursor.fetchone()[0]
+        try:
+            for table_name in self._TABLES:
+                cursor.execute(f"SELECT COUNT() FROM {table_name!r}")
+                result[table_name] = cursor.fetchone()[0]
+        finally:
+            cursor.close()
 
         return result
 

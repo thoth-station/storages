@@ -199,5 +199,11 @@ cache; for example, packages which were not yet resolved during cache creation
 are not added to cache so system explicitly asks for resolution results next
 time (they might be resolved meanwhile).
 
+To disable inserts into graph cache, set
+``THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED`` to ``1`` (the default value of
+``0`` enables is). Disabling inserts might be benefitial in deployments where
+you want to avoid building cache (overhead needed to insert data into graph
+cache, checks of uniqueness of entries and cache index creation).
+
 To disable graph cache completely, set ``THOTH_STORAGES_GRAPH_CACHE_DISABLED``
 environment variable to ``1`` (the default value of ``0`` enables it).

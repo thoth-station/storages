@@ -584,7 +584,7 @@ class GraphDatabase(StorageBase):
 
             uids = []
             for uid in item["q"]:
-                uids.append(uid["uid"])
+                uids.append(int(uid["uid"], 16))
 
             all_uids.append(set(uids))
 
@@ -1111,6 +1111,7 @@ class GraphDatabase(StorageBase):
             index_url=query_result["index_url"],
             os_name=query_result.get("os_name"),
             os_version=query_result.get("os_version"),
+            python_version=query_result.get("python_version"),
         )
         if not without_cache:
             self.cache.add_python_package_version_uid_record(**result, uid=uid)
@@ -1172,7 +1173,7 @@ class GraphDatabase(StorageBase):
 
         if not without_cache:
             result = self.cache.get_depends_on(**record)
-            if result:
+            if result is not None:
                 return result
 
         query_filter = self._get_query_filter(
@@ -1183,7 +1184,7 @@ class GraphDatabase(StorageBase):
         query = """
             {
                 q(func: has(%s)) \
-                @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s") %s) {
+                @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")%s) {
                     uid
                     depends_on {
                         uid
@@ -1195,16 +1196,32 @@ class GraphDatabase(StorageBase):
             package_name,
             package_version,
             index_url,
-            "AND " + query_filter if query_filter else '',
+            " AND " + query_filter if query_filter else '',
         )
         # We always have one element in the query result - the uid itself.
         query_result = self._query_raw(query)["q"]
-        query_result = query_result[0]
+
+        if not query_result:
+            raise ValueError("No records for depends_on were found which would match %r", record)
 
         result = set()
+
+        query_result = query_result[0]
+        if not query_result.get("depends_on"):
+            if not without_cache:
+                # A special value (None, None) signalizes no dependencies for the given record.
+                self.cache.add_depends_on(
+                    **record,
+                    dependency_name=None,
+                    dependency_version=None,
+                )
+
+            # Empty set.
+            return result
+
         for entry in query_result.get("depends_on", []):
             dependency_name, dependency_version = self._get_python_package_version_entity_by_uid(
-                entry["uid"],
+                int(entry["uid"], 16),
                 without_cache=without_cache,
             )
             result.add((dependency_name, dependency_version))
@@ -1222,6 +1239,7 @@ class GraphDatabase(StorageBase):
         self,
         package_name: str,
         package_version: str,
+        index_url: Union[str, None],
         *,
         os_name: Union[str, None],
         os_version: Union[str, None],
@@ -1233,6 +1251,7 @@ class GraphDatabase(StorageBase):
             result = self.cache.get_python_package_version_records(
                 package_name=package_name,
                 package_version=package_version,
+                index_url=index_url,
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
@@ -1249,7 +1268,7 @@ class GraphDatabase(StorageBase):
         {
             q(func: has(%s)) @filter(eq(package_name, "%s") \
             AND eq(package_version, "%s") AND has(index_url) AND has(os_name) \
-            AND has(os_version) and has(python_version)%s) {
+            AND has(os_version) and has(python_version)%s%s) {
                 uid
                 package_name
                 package_version
@@ -1264,6 +1283,7 @@ class GraphDatabase(StorageBase):
             package_name,
             package_version,
             " AND " + query_filter if query_filter else "",
+            f' AND eq(index_url, "{index_url}")' if index_url else "",
         )
         query_result = self._query_raw(query)["q"]
 
@@ -1282,13 +1302,13 @@ class GraphDatabase(StorageBase):
             if not without_cache:
                 self.cache.add_python_package_version_uid_record(
                     **entry,
-                    uid=item["uid"],
+                    uid=int(item["uid"], 16),
                 )
 
         return result or None
 
     @staticmethod
-    @functools.lru_cache(maxsize=10)
+    @functools.lru_cache(maxsize=32)
     def _get_query_filter(
         os_name: str = None,
         os_version: str = None,
@@ -1321,7 +1341,12 @@ class GraphDatabase(StorageBase):
         os_version: str = None,
         python_version: str = None,
         without_cache: bool = False,
-    ) -> Set[Tuple[Tuple[str, str, str], Union[Tuple[str, str, str], None]]]:
+    ) -> Set[
+        Tuple[
+            Tuple[str, str, str], Tuple[str, str, str], Tuple[str, str, str],
+            Tuple[str, str, str], Union[Tuple[str, str, str], None], Union[Tuple[str, str, str], None]
+        ]
+    ]:
         """Get all transitive dependencies for the given package by traversing dependency graph.
 
         It's much faster to retrieve just dependency ids for the transitive
@@ -1339,42 +1364,52 @@ class GraphDatabase(StorageBase):
         while stack:
             package_tuple = stack.pop()
 
-            dependencies = self.get_depends_on(
+            configurations = self.get_python_package_version_records(
                 package_name=package_tuple[0],
                 package_version=package_tuple[1],
                 index_url=package_tuple[2],
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                without_cache=without_cache,
+                without_cache=without_cache
             )
 
-            for dependency_name, dependency_version in dependencies:
-                records = self.get_python_package_version_records(
-                    package_name=dependency_name,
-                    package_version=dependency_version,
-                    os_name=os_name,
-                    os_version=os_version,
-                    python_version=python_version,
+            for configuration in configurations:
+                dependencies = self.get_depends_on(
+                    package_name=configuration["package_name"],
+                    package_version=configuration["package_version"],
+                    index_url=configuration["index_url"],
+                    os_name=configuration["os_name"],
+                    os_version=configuration["os_version"],
+                    python_version=configuration["python_version"],
                     without_cache=without_cache,
                 )
 
-                if records is None:
-                    # Not resolved yet.
-                    result.add((
-                        package_tuple,
-                        (dependency_name, dependency_version, None),
-                    ))
-                else:
-                    for record in records:
-                        dependency_tuple = (record["package_name"], record["package_version"], record["index_url"])
-                        result.add((package_tuple, dependency_tuple))
+                for dependency_name, dependency_version in dependencies:
+                    records = self.get_python_package_version_records(
+                        package_name=dependency_name,
+                        package_version=dependency_version,
+                        index_url=None,  # Do cross-index resolution...
+                        os_name=configuration["os_name"],
+                        os_version=configuration["os_version"],
+                        python_version=configuration["python_version"],
+                        without_cache=without_cache,
+                    )
 
-                        if dependency_tuple in seen_tuples:
-                            continue
+                    if records is None:
+                        # Not resolved yet.
+                        result.add((
+                            package_tuple,
+                            (dependency_name, dependency_version, None),
+                        ))
+                    else:
+                        for record in records:
+                            dependency_tuple = (record["package_name"], record["package_version"], record["index_url"])
+                            result.add((package_tuple, dependency_tuple))
 
-                        stack.append(dependency_tuple)
-                        seen_tuples.add(dependency_tuple)
+                            if dependency_tuple not in seen_tuples:
+                                stack.append(dependency_tuple)
+                                seen_tuples.add(dependency_tuple)
 
         return result
 
