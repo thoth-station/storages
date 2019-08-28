@@ -513,6 +513,16 @@ class GraphCache:
 
         return result
 
+    def clear_in_memory_cache(self) -> None:
+        """Clear in-memory cache."""
+        for method in (
+            self.get_python_package_version_records,
+            self.get_depends_on,
+            self.get_python_package_version_uid_record,
+            self.get_python_package_version_entity_uid_record,
+        ):
+            method.cache_clear()
+
     def __del__(self):
         """Make sure the sqlite database gets written to disk."""
         self.sqlite_connection.close()
