@@ -1186,6 +1186,7 @@ class GraphDatabase(StorageBase):
                 q(func: has(%s)) \
                 @filter(eq(package_name, "%s") AND eq(package_version, "%s") AND eq(index_url, "%s")%s) {
                     uid
+                    solver_error
                     depends_on {
                         uid
                     }
@@ -1199,49 +1200,38 @@ class GraphDatabase(StorageBase):
             " AND " + query_filter if query_filter else '',
         )
         # We always have one element in the query result - the uid itself.
-        query_result = self._query_raw(query)["q"]
+        query_results = self._query_raw(query)["q"]
 
-        if not query_result:
+        if not query_results:
             raise ValueError("No records for depends_on were found which would match %r", record)
 
         result = set()
+        for query_result in query_results:
+            if not query_result.get("depends_on"):
+                if not query_result["solver_error"] and not without_cache:
+                    # A special value (None, None) signalizes no dependencies for the given record.
+                    self.cache.add_depends_on(
+                        **record,
+                        dependency_name=None,
+                        dependency_version=None,
+                    )
 
-        query_result = query_result[0]
-        if not query_result.get("depends_on"):
-            # Perform one more query - we need to make sure we do not insert entry into cache
-            # which might change over time - e.g. solver failures because of not existing yet packages:
-            query = """{
-                q(func: uid(%s)) {
-                    solver_error
-                }
-            }""" % (query_result["uid"],)
-            # We always have one element in the query result - the uid itself.
-            query_result = self._query_raw(query)["q"]
+                # Empty set.
+                return result
 
-            if not query_result[0]["solver_error"] and not without_cache:
-                # A special value (None, None) signalizes no dependencies for the given record.
-                self.cache.add_depends_on(
-                    **record,
-                    dependency_name=None,
-                    dependency_version=None,
+            for entry in query_result.get("depends_on", []):
+                dependency_name, dependency_version = self._get_python_package_version_entity_by_uid(
+                    int(entry["uid"], 16),
+                    without_cache=without_cache,
                 )
+                result.add((dependency_name, dependency_version))
 
-            # Empty set.
-            return result
-
-        for entry in query_result.get("depends_on", []):
-            dependency_name, dependency_version = self._get_python_package_version_entity_by_uid(
-                int(entry["uid"], 16),
-                without_cache=without_cache,
-            )
-            result.add((dependency_name, dependency_version))
-
-            if not without_cache:
-                self.cache.add_depends_on(
-                    **record,
-                    dependency_name=dependency_name,
-                    dependency_version=dependency_version
-                )
+                if not without_cache:
+                    self.cache.add_depends_on(
+                        **record,
+                        dependency_name=dependency_name,
+                        dependency_version=dependency_version
+                    )
 
         return result
 
