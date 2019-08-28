@@ -62,7 +62,7 @@ def _only_if_inserts_enabled(func):
     return wrapper
 
 
-@attr.s(slots=True)
+@attr.s()
 class GraphCache:
     """A Dgraph database cache to speed up resolution of popular packages and packages with overlapping dependencies."""
 
