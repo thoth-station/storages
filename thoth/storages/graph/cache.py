@@ -21,6 +21,7 @@ import os
 import logging
 import sqlite3
 import functools
+from methodtools import lru_cache
 from itertools import combinations
 from typing import Set
 from typing import Tuple
@@ -269,6 +270,7 @@ class GraphCache:
 
         return query_ext, query_params
 
+    @lru_cache(maxsize=2048)
     @_only_if_enabled
     def get_depends_on(
         self,
@@ -281,44 +283,42 @@ class GraphCache:
         python_version: str = None,
     ) -> Optional[Set[Tuple[str, str]]]:
         """Retrieve dependencies for the given packages."""
+        query_ext, query_params = self._get_params_ext(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+        )
+        query = self._SELECT_DEPENDS_ON_BASE + query_ext
 
-        @functools.lru_cache(maxsize=2048)
-        def _do_get_depends_on(pn, pv, i, on, ov, p):
-            query_ext, query_params = self._get_params_ext(
-                package_name=pn, package_version=pv, index_url=i, os_name=on, os_version=ov, python_version=p
-            )
-            query = self._SELECT_DEPENDS_ON_BASE + query_ext
-
-            cursor = self.sqlite_connection.cursor()
-            try:
-                cursor.execute(query, query_params)
-                query_result = cursor.fetchall()
-                if not query_result:
-                    # No records in the database.
-                    raise StopIteration
-
-                result = set()
-                for item in query_result:
-                    dependency_name, dependency_version = item[0], item[1]
-                    if dependency_name is None and dependency_version is None:
-                        # If we have a record that any of the given do not
-                        # match criteria, we return any result computed so far.
-                        # An example could be flask==1.0.0 depending only on werkzeug on fedora:31, but no
-                        # dependency for flask==1.0.0 on fedora:30 (assuming no operating system was
-                        # specified). Then we return werkzeug as we do "generic"/platform independent resolution.
-                        continue
-
-                    result.add((dependency_name, dependency_version))
-
-                return result
-            finally:
-                cursor.close()
-
+        cursor = self.sqlite_connection.cursor()
         try:
-            return _do_get_depends_on(package_name, package_version, index_url, os_name, os_version, python_version)
-        except StopIteration:
-            return None
+            cursor.execute(query, query_params)
+            query_result = cursor.fetchall()
+            if not query_result:
+                # No records in the database.
+                return None
 
+            result = set()
+            for item in query_result:
+                dependency_name, dependency_version = item[0], item[1]
+                if dependency_name is None and dependency_version is None:
+                    # If we have a record that any of the given do not
+                    # match criteria, we return any result computed so far.
+                    # An example could be flask==1.0.0 depending only on werkzeug on fedora:31, but no
+                    # dependency for flask==1.0.0 on fedora:30 (assuming no operating system was
+                    # specified). Then we return werkzeug as we do "generic"/platform independent resolution.
+                    continue
+
+                result.add((dependency_name, dependency_version))
+
+            return result
+        finally:
+            cursor.close()
+
+    @lru_cache(maxsize=2048)
     @_only_if_enabled
     def get_python_package_version_records(
         self,
@@ -330,43 +330,39 @@ class GraphCache:
         python_version: Union[str, None],
     ) -> Optional[List[dict]]:
         """Get records for Python packages matching the given criteria for environment."""
+        query_ext, query_params = self._get_params_ext(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+        )
 
-        @functools.lru_cache(maxsize=2048)
-        def _do_get_python_package_version_records(pn, pv, i, on, ov, p):
-            query_ext, query_params = self._get_params_ext(
-                package_name=pn, package_version=pv, index_url=i, os_name=on, os_version=ov, python_version=p
-            )
-
-            query = self._SELECT_PYTHON_PACKAGE_VERSIONS_BASE + query_ext
-            cursor = self.sqlite_connection.cursor()
-            try:
-                cursor.execute(query, query_params)
-                result = cursor.fetchall()
-
-                if not result:
-                    raise StopIteration
-
-                return [
-                    dict(
-                        package_name=item[0],
-                        package_version=item[1],
-                        index_url=item[2],
-                        os_name=item[3],
-                        os_version=item[4],
-                        python_version=item[5],
-                    )
-                    for item in result
-                ]
-            finally:
-                cursor.close()
-
+        query = self._SELECT_PYTHON_PACKAGE_VERSIONS_BASE + query_ext
+        cursor = self.sqlite_connection.cursor()
         try:
-            return _do_get_python_package_version_records(
-                package_name, package_version, index_url, os_name, os_version, python_version
-            )
-        except StopIteration:
-            return None
+            cursor.execute(query, query_params)
+            result = cursor.fetchall()
 
+            if not result:
+                return None
+
+            return [
+                dict(
+                    package_name=item[0],
+                    package_version=item[1],
+                    index_url=item[2],
+                    os_name=item[3],
+                    os_version=item[4],
+                    python_version=item[5],
+                )
+                for item in result
+            ]
+        finally:
+            cursor.close()
+
+    @lru_cache(maxsize=256)
     @_only_if_enabled
     def get_python_package_version_uid_record(self, uid: int) -> Optional[dict]:
         """Get uid for the give Python package version."""
@@ -388,6 +384,7 @@ class GraphCache:
         finally:
             cursor.close()
 
+    @lru_cache(maxsize=256)
     @_only_if_enabled
     def get_python_package_version_entity_uid_record(self, uid: int) -> Optional[Tuple[str, str]]:
         """Get uid for the give Python package version entity."""
