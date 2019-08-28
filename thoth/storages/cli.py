@@ -28,6 +28,7 @@ import yaml
 
 from thoth.storages.graph import GraphCache
 from thoth.storages.graph import GraphDatabase
+from thoth.storages import GraphCacheStore
 from thoth.storages import __version__ as thoth_storages_version
 
 daiquiri.setup(level=logging.INFO)
@@ -70,7 +71,7 @@ def cli(ctx=None, verbose: bool = False):
         _LOGGER.debug("Debug mode is on")
 
 
-@cli.command("graph-cache")
+@cli.command("create-cache")
 @click.argument(
     "cache_file",
     type=str,
@@ -88,7 +89,7 @@ def cli(ctx=None, verbose: bool = False):
     metavar="CACHE_CONFIG.yaml",
     help="A path to cache configuration file.",
 )
-def cache(cache_file: str, cache_config: str):
+def create_graph_cache(cache_file: str, cache_config: str):
     """Interact with thoth-storages' GraphCache to cache results."""
     packages = []
     try:
@@ -136,6 +137,38 @@ def cache(cache_file: str, cache_config: str):
         _LOGGER.error("Failed to obtain cache size: %s", str(exc))
 
     click.echo(json.dumps(report, indent=2))
+
+
+@cli.command("store-cache")
+@click.argument(
+    "cache_file",
+    type=str,
+    required=True,
+    envvar=GraphCache.ENV_CACHE_PATH,
+    default=GraphCache.DEFAULT_CACHE_PATH,
+    metavar="CACHE_FILE",
+)
+def store_cache(cache_file: str):
+    """Store the given graph cache onto Ceph."""
+    graph_cache_store = GraphCacheStore()
+    graph_cache_store.connect()
+    graph_cache_store.store(cache_file)
+
+
+@cli.command("restore-cache")
+@click.argument(
+    "cache_file",
+    type=str,
+    required=True,
+    envvar=GraphCache.ENV_CACHE_PATH,
+    default=GraphCache.DEFAULT_CACHE_PATH,
+    metavar="CACHE_FILE",
+)
+def store_cache(cache_file: str):
+    """Store the given graph cache onto Ceph."""
+    graph_cache_store = GraphCacheStore()
+    graph_cache_store.connect()
+    graph_cache_store.retrieve(cache_file)
 
 
 if __name__ == "__main__":
