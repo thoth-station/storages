@@ -15,7 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""A graph database cache implementation to speed up queries."""
+"""A graph database cache implementation to speed up queries.
+
+The implementation uses actually two caches - one in-memory for LRU based on
+method calls and another one which is build on top of SQLite3.
+"""
 
 import os
 import logging
@@ -486,14 +490,26 @@ class GraphCache:
 
     def stats(self) -> dict:
         """Get statistics for the graph cache."""
-        result = {}
+        result = {
+            "table_size": {},
+            "cache_info": {},
+        }
         cursor = self.sqlite_connection.cursor()
         try:
             for table_name in self._TABLES:
                 cursor.execute(f"SELECT COUNT() FROM {table_name!r}")
-                result[table_name] = cursor.fetchone()[0]
+                result["table_size"][table_name] = cursor.fetchone()[0]
         finally:
             cursor.close()
+
+        # We need to provide name explicitly as wrappers do not handle it correctly.
+        for method, method_name in (
+            (self.get_python_package_version_records, "get_python_package_version_records"),
+            (self.get_depends_on, "get_depends_on"),
+            (self.get_python_package_version_uid_record, "get_python_package_version_uid_record"),
+            (self.get_python_package_version_entity_uid_record, "get_python_package_version_entity_uid_record"),
+        ):
+            result["cache_info"][method_name] = dict(method.cache_info()._asdict())
 
         return result
 
