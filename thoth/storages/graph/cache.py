@@ -159,6 +159,7 @@ class GraphCache:
     }
 
     sqlite_connection = attr.ib(type=sqlite3.Connection)
+    sqlite_cache_stats = attr.ib(type=dict)
 
     @classmethod
     def load(cls, db_file: str = None) -> "GraphCache":
@@ -174,6 +175,15 @@ class GraphCache:
         instance = cls(sqlite_connection=sqlite3.connect(db_file))
         instance.initialize()
         return instance
+
+    @sqlite_cache_stats.default
+    def _sqlite_cache_stats_default(self):
+        return {
+            "get_python_package_version_records": dict.fromkeys(("misses", "hits"), 0),
+            "get_depends_on": dict.fromkeys(("misses", "hits"), 0),
+            "get_python_package_version_uid_record": dict.fromkeys(("misses", "hits"), 0),
+            "get_python_package_version_entity_uid_record": dict.fromkeys(("misses", "hits"), 0),
+        }
 
     @staticmethod
     def is_enabled():
@@ -303,7 +313,10 @@ class GraphCache:
             query_result = cursor.fetchall()
             if not query_result:
                 # No records in the database.
+                self.sqlite_cache_stats["get_depends_on"]["misses"] += 1
                 return None
+
+            self.sqlite_cache_stats["get_depends_on"]["hits"] += 1
 
             result = set()
             for item in query_result:
@@ -350,8 +363,10 @@ class GraphCache:
             result = cursor.fetchall()
 
             if not result:
+                self.sqlite_cache_stats["get_python_package_version_records"]["misses"] += 1
                 return None
 
+            self.sqlite_cache_stats["get_python_package_version_records"]["hits"] += 1
             return [
                 dict(
                     package_name=item[0],
@@ -375,8 +390,10 @@ class GraphCache:
             cursor.execute(self._SELECT_PYTHON_PACKAGE_VERSION_UID, dict(uid=uid))
             result = cursor.fetchone()
             if not result:
+                self.sqlite_cache_stats["get_python_package_version_records"]["misses"] += 1
                 return None
 
+            self.sqlite_cache_stats["get_python_package_version_uid_record"]["hits"] += 1
             return dict(
                 package_name=result[0],
                 package_version=result[1],
@@ -400,8 +417,10 @@ class GraphCache:
             cursor.execute(self._SELECT_PYTHON_PACKAGE_VERSION_ENTITY_UID, dict(uid=uid))
             result = cursor.fetchone()
             if not result:
+                self.sqlite_cache_stats["get_python_package_version_entity_uid_record"]["misses"] += 1
                 return None
 
+            self.sqlite_cache_stats["get_python_package_version_entity_uid_record"]["hits"] += 1
             return result[0], result[1]
         finally:
             cursor.close()
@@ -492,8 +511,12 @@ class GraphCache:
         """Get statistics for the graph cache."""
         result = {
             "table_size": {},
-            "cache_info": {},
+            "memory_cache_info": {},
         }
+
+        if not self.is_enabled():
+            return result
+
         cursor = self.sqlite_connection.cursor()
         try:
             for table_name in self._TABLES:
@@ -509,8 +532,9 @@ class GraphCache:
             (self.get_python_package_version_uid_record, "get_python_package_version_uid_record"),
             (self.get_python_package_version_entity_uid_record, "get_python_package_version_entity_uid_record"),
         ):
-            result["cache_info"][method_name] = dict(method.cache_info()._asdict())
+            result["memory_cache_info"][method_name] = dict(method.cache_info()._asdict())
 
+        result["sqlite_cache_info"] = self.sqlite_cache_stats
         return result
 
     def clear_in_memory_cache(self) -> None:
