@@ -1208,7 +1208,17 @@ class GraphDatabase(StorageBase):
 
         query_result = query_result[0]
         if not query_result.get("depends_on"):
-            if not without_cache:
+            # Perform one more query - we need to make sure we do not insert entry into cache
+            # which might change over time - e.g. solver failures because of not existing yet packages:
+            query = """{
+                q(func: uid(%s)) {
+                    solver_error
+                }
+            }""" % (query_result["uid"],)
+            # We always have one element in the query result - the uid itself.
+            query_result = self._query_raw(query)["q"]
+
+            if not query_result[0]["solver_error"] and not without_cache:
                 # A special value (None, None) signalizes no dependencies for the given record.
                 self.cache.add_depends_on(
                     **record,
