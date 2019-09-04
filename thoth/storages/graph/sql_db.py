@@ -19,108 +19,21 @@
 
 import logging
 import os
-import json
-import pkg_resources
-import functools
 from typing import List
 from typing import Set
 from typing import Tuple
 from typing import Optional
 from typing import Dict
-from typing import Iterable
 from typing import Union
-from contextlib import contextmanager
-from pathlib import Path
-from dateutil import parser
-from datetime import timezone
-from itertools import chain
 from collections import deque
-import asyncio
-from math import nan
 
 import attr
 from methodtools import lru_cache
-# import grpc
-# import pydgraph
 
-from thoth.common import OpenShift
-from thoth.common import RuntimeEnvironment as RuntimeEnvironmentConfig
-from thoth.common import HardwareInformation as HardwareInformationConfig
-from thoth.python import Pipfile
-from thoth.python import PipfileLock
 from thoth.python import PackageVersion
 
-from ..base import StorageBase
-# from .cache import GraphCache
-# from .models_base import enable_vertex_cache
-# from .models_base import VertexBase
-# from .models import ALL_MODELS
-# from .models import AdviserRun
-# from .models import AdvisedSoftwareStack
-# from .models import AdviserRunSoftwareEnvironmentInput
-# from .models import AdviserStackInput
-# from .models import Advised
-# from .models import AnalyzedBy
-# from .models import BuildSoftwareEnvironment as BuildSoftwareEnvironmentModel
-# from .models import CreatesStack
-# from .models import CVE
-# from .models import DebDepends
-# from .models import DebDependency
-# from .models import DebPackageVersion
-# from .models import DebPreDepends
-# from .models import DebReplaces
-# from .models import DependencyMonkeyRun
-# from .models import DependencyMonkeyRunSoftwareEnvironmentInput
-# from .models import DependsOn
-# from .models import EcosystemSolverRun
-# from .models import EnvironmentBase
-# from .models import HardwareInformation as HardwareInformationModel
-# from .models import UserHardwareInformation as UserHardwareInformationModel
-# from .models import HasArtifact
-# from .models import Investigated
-# from .models import HasVulnerability
-# from .models import Identified
-# from .models import InspectionBuildSoftwareEnvironmentInput
-# from .models import InspectionRun
-# from .models import InspectionRunSoftwareEnvironmentInput
-# from .models import InspectionSoftwareStack
-# from .models import InspectionStackInput
-# from .models import InstalledFrom
-# from .models import PackageExtractRun
-# from .models import PackageAnalyzerRun
-# from .models import PythonFileDigest
-# from .models import FoundFile
-# from .models import PackageAnalyzerInput
-# from .models import IncludedFile
-# from .models import ProvenanceCheckerRun
-# from .models import ProvenanceCheckerStackInput
-# from .models import ProvidedBy
-# from .models import PythonArtifact
-# from .models import PythonPackageIndex
-# from .models import PythonPackageRequirement
-# from .models import PythonPackageVersion
-# from .models import PythonPackageVersionEntity
-# from .models import RequirementsInput
-# from .models import Requires
-# from .models import Resolved
-# from .models import RPMPackageVersion
-# from .models import RPMRequirement
-# from .models import RunSoftwareEnvironment as RunSoftwareEnvironmentModel
-# from .models import UserRunSoftwareEnvironment as UserRunSoftwareEnvironmentModel
-# from .models import Solved
-# from .models import SoftwareStackBase
-# from .models import UsedIn
-# from .models import UsedInBuild
-# from .models import UsedInJob
-# from .models import UserSoftwareStack
-# from .performance import ObservedPerformance, PerformanceIndicatorBase
-# from .performance import PERFORMANCE_MODEL_BY_NAME, ALL_PERFORMANCE_MODELS
-
 from sqlalchemy import create_engine
-from sqlalchemy_utils.functions import create_database
-from sqlalchemy_utils.functions import database_exists
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import Session
 
 from .sql_cache import GraphCache
 
@@ -134,24 +47,14 @@ from .sql_models import EcosystemSolver
 from .sql_models import PythonPackageRequirement
 from .sql_models import CVE
 from .sql_models import UserRunSoftwareEnvironmentModel
-from .sql_models import SoftwareStackBase
 from .sql_models import InspectionSoftwareStack
 from .sql_models import UserSoftwareStack
 from .sql_base import SQLBase
 from .models_base import get_python_package_version_filter_kwargs
 from .sql_cache import CacheMiss
 
-from ..exceptions import NotFoundError
-from ..exceptions import PythonIndexNotRegistered
-from ..exceptions import PerformanceIndicatorNotRegistered
-from ..exceptions import NotConnected
-from ..advisers import AdvisersResultsStore
-from ..analyses import AnalysisResultsStore
-from ..package_analyses import PackageAnalysisResultsStore
-from ..inspections import InspectionResultsStore
-from ..provenance import ProvenanceResultsStore
-from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..solvers import SolverResultsStore
+from .dgraph import GraphDatabase as DgraphDatabase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -161,6 +64,7 @@ class GraphDatabase(SQLBase):
     """A SQL datatabase adapter providing graph-like operations on top of SQL queires."""
 
     _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
+    _dgraph = attr.ib(type=DgraphDatabase, default=None)
 
     _DECLARATIVE_BASE = Base
 
@@ -179,6 +83,7 @@ class GraphDatabase(SQLBase):
 
     @property
     def cache(self) -> GraphCache:
+        """Get cache for this instance."""
         return self._cache
 
     def connect(self):
@@ -189,6 +94,8 @@ class GraphDatabase(SQLBase):
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", False)))
         self._engine = create_engine(self.construct_connection_string(), echo=echo)
         self._session = sessionmaker(bind=self._engine)()
+        self._dgraph = DgraphDatabase()
+        self._dgraph.connect()
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
@@ -221,18 +128,23 @@ class GraphDatabase(SQLBase):
         python_version = ".".join(list(python_version))
         return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
 
-    # --------------------------------- >% --------------------------------------
-
     def get_analysis_metadata(self, analysis_document_id: str) -> dict:
         """Get metadata stored for the given analysis document."""
+        return self._dgraph.get_analysis_metadata(analysis_document_id)
 
     def run_software_environment_listing(
         self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
+        return self._dgraph.run_software_environment_listing(
+            start_offset=start_offset,
+            count=count,
+            is_user_run=is_user_run
+        )
 
     def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of software environments available for build."""
+        return self._dgraph.build_software_environment_listing(start_offset=start_offset, count=count)
 
     def run_software_environment_analyses_listing(
         self,
@@ -243,6 +155,13 @@ class GraphDatabase(SQLBase):
         is_user_run: bool = False,
     ) -> list:
         """Get listing of analyses available for the given software environment for run."""
+        return self._dgraph.run_software_environment_analyses_listing(
+            run_software_environment_name=run_software_environment_name,
+            start_offset=start_offset,
+            count=count,
+            convert_datetime=convert_datetime,
+            is_user_run=is_user_run,
+        )
 
     def build_software_environment_analyses_listing(
         self,
@@ -252,6 +171,12 @@ class GraphDatabase(SQLBase):
         convert_datetime: bool = True,
     ) -> list:
         """Get listing of analyses available for the given software environment for build."""
+        return self._dgraph.build_software_environment_analyses_listing(
+            build_software_environment_name=build_software_environment_name,
+            start_offset=start_offset,
+            count=count,
+            convert_datetime=convert_datetime,
+        )
 
     def python_package_version_exists(
             self,
@@ -265,6 +190,12 @@ class GraphDatabase(SQLBase):
         If optional solver_name parameter is set, the call answers if the given package was solved by
         the given solver. Otherwise, any solver run is taken into account.
         """
+        return self._dgraph.python_package_version_exists(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            solver_name=solver_name,
+        )
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
@@ -285,6 +216,11 @@ class GraphDatabase(SQLBase):
         # Optional parameters additionally slice results - e.g. if run_software_environment is set,
         # it picks only results that match the given parameters criteria.
         # """
+        return self._dgraph.compute_python_package_version_avg_performance(
+            packages=packages,
+            run_software_environment=run_software_environment,
+            hardware_specs=hardware_specs,
+        )
 
     def has_python_solver_error(
         self,
@@ -297,6 +233,14 @@ class GraphDatabase(SQLBase):
         python_version: str,
     ) -> bool:
         """Retrieve information whether the given package has any solver error."""
+        return self._dgraph.has_python_solver_error(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+        )
 
     def get_all_versions_python_package(
         self,
@@ -337,15 +281,27 @@ class GraphDatabase(SQLBase):
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
+        return self._dgraph.retrieve_unsolved_python_packages(
+            solver_name=solver_name,
+        )
 
     def retrieve_unsolved_python_packages_count(self, solver_name: str) -> int:
         """Retrieve number of unsolved Python packages for the given solver."""
+        return self._dgraph.retrieve_unsolved_python_packages_count(
+            solver_name=solver_name,
+        )
 
     def retrieve_solved_python_packages_count(self, solver_name: str) -> int:
         """Retrieve number of solved Python packages for the given solver."""
+        return self._dgraph.retrieve_solved_python_packages_count(
+            solver_name=solver_name,
+        )
 
     def retrieve_unanalyzed_python_package_versions(self, start_offset: int = 0, count: int = 100) -> List[dict]:
         """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
+        return self._dgraph.retrieve_unanalyzed_python_package_versions(
+            start_offset=start_offset, count=count
+        )
 
     def retrieve_solved_python_packages(self, count: int = 10, start_offset: int = 0, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved.
@@ -353,42 +309,52 @@ class GraphDatabase(SQLBase):
         Using count and start_offset is possible to change pagination.
         Using solver_name argument the query narrows down to packages that were resolved by the given solver.
         """
+        return self._dgraph.retrieve_solved_python_packages(
+            count=count,
+            start_offset=start_offset,
+            solver_name=solver_name,
+        )
 
     def retrieve_unsolvable_python_packages(self, solver_name: str = None) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
+        return self._dgraph.retrieve_unsolvable_python_packages(solver_name=solver_name)
 
     def retrieve_unsolvable_python_packages_per_run_software_environment(self, solver_name: str) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable.
 
         The result is given for a specific run software environment (OS + python version)
         """
+        return self._dgraph.retrieve_unsolvable_python_packages_per_run_software_environment(
+            solver_name=solver_name
+        )
 
     def retrieve_document_list_of_unsolvable_python_packages(self) -> list:
         """Retrieve a dictionary mapping package names to versions of packages that were marked as unsolvable."""
+        return self._dgraph.retrieve_document_list_of_unsolvable_python_packages()
 
     def retrieve_unparseable_python_packages(self) -> dict:
         """Retrieve a dictionary mapping package names to versions of packages that couldn't be parsed by solver."""
+        return self._dgraph.retrieve_unparseable_python_packages()
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
         """Retrieve number of Python packages stored in the graph database."""
+        return self._dgraph.get_all_python_packages_count(without_error=without_error)
 
     def get_error_python_packages_count(self, *, unsolvable: bool = False, unparseable: bool = False) -> int:
         """Retrieve number of Python packages stored in the graph database with error flag."""
+        return self._dgraph.get_error_python_packages_count(unsolvable=unsolvable, unparseable=unparseable)
 
     def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
+        return self._dgraph.get_solver_documents_count()
 
     def get_analyzer_documents_count(self) -> int:
         """Get number of image analysis documents synced into graph."""
+        return self._dgraph.get_analyzer_documents_count()
 
     def retrieve_dependent_packages(self, package_name: str) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
-
-    async def get_python_package_tuple(self, python_package_node_id: int) -> Dict[int, tuple]:
-        """Get Python's package name, package version, package index tuple for the given package id."""
-
-    def _get_python_package_version_by_uid(self, uid: int, *, without_cache: bool = False) -> Optional[dict]:
-        """Get Python package version information for the given uid."""
+        return self._dgraph.retrieve_dependent_packages(package_name=package_name)
 
     @lru_cache(maxsize=16384)
     def get_python_package_version_records(
@@ -638,69 +604,73 @@ class GraphDatabase(SQLBase):
 
     def solver_records_exist(self, solver_document: dict) -> bool:
         """Check if the given solver document record exists."""
+        return self._dgraph.solver_records_exist(solver_document=solver_document)
 
     def solver_document_id_exist(self, solver_document_id: str) -> bool:
         """Check if there is a solver document record with the given id."""
+        return self._dgraph.solver_document_id_exist(solver_document_id)
 
     def dependency_monkey_document_id_exist(self, dependency_monkey_document_id: str) -> bool:
         """Check if the given dependency monkey report record exists in the graph database."""
+        return self._dgraph.dependency_monkey_document_id_exist(dependency_monkey_document_id)
 
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
+        return self._dgraph.adviser_document_id_exist(adviser_document_id)
 
     def analysis_records_exist(self, analysis_document: dict) -> bool:
         """Check whether the given analysis document records exist in the graph database."""
+        return self._dgraph.analysis_records_exist(analysis_document)
 
     def analysis_document_id_exist(self, analysis_document_id: str) -> bool:
         """Check if there is an analysis document record with the given id."""
+        return self._dgraph.analysis_document_id_exist(analysis_document_id)
 
     def package_analysis_document_id_exist(self, package_analysis_document_id: str) -> bool:
         """Check if there is a package analysis document record with the given id."""
+        return self._dgraph.package_analysis_document_id_exist(package_analysis_document_id)
 
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
+        return self._dgraph.inspection_document_id_exist(inspection_document_id)
 
     def provenance_checker_document_id_exist(self, provenance_checker_document_id: str) -> bool:
         """Check if there is a provenance-checker document record with the given id."""
+        return self._dgraph.provenance_checker_document_id_exist(provenance_checker_document_id)
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
+        return self._dgraph.get_python_cve_records(package_name, package_version)
 
     def get_python_package_version_hashes_sha256(
         self, package_name: str, package_version: str, index_url: str
     ) -> List[str]:
         """Get hashes for a Python package in specified version."""
+        return self._dgraph.get_python_package_version_hashes_sha256(package_name, package_version, index_url)
 
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> list:
         """Get hashes for a Python package per index."""
+        return self._dgraph.get_all_python_package_version_hashes_sha256(package_name, package_version)
 
     def register_python_package_index(self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True) -> bool:
         """Register the given Python package index in the graph database."""
+        return self._dgraph.register_python_package_index(url, warehouse_api_url, verify_ssl)
 
     def python_package_index_listing(self) -> list:
         """Get listing of Python package indexes registered in the graph database database."""
+        return self._dgraph.python_package_index_listing()
 
     def get_python_package_index_urls(self) -> set:
         """Retrieve all the URLs of registered Python package indexes."""
+        return self._dgraph.get_python_package_index_urls()
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
+        return self._dgraph.get_python_packages_for_index(index_url)
 
     def get_python_packages(self) -> Set[str]:
         """Retrieve listing of all Python packages known to graph database instance."""
-
-    def _python_packages_create_stack(
-        self, python_package_versions: Iterable[PythonPackageVersion], software_stack: SoftwareStackBase
-    ) -> None:
-        """Assign the given set of packages to the stack."""
-
-    def _create_python_package_record(
-        self, python_package_version: PythonPackageVersion, verify_index: bool = True
-    ) -> None:
-        """Create a record for the given Python package.
-
-        @raises PythonIndexNotRegistered: if there is no index registered from which the Python version came.
-        """
+        return self._dgraph.get_python_packages()
 
     def create_python_package_version_entity(
         self,
@@ -711,11 +681,17 @@ class GraphDatabase(SQLBase):
         only_if_package_seen: bool = False,
     ) -> Optional[Tuple[PythonPackageVersionEntity, bool]]:
         """Create a Python package version entity in the graph database."""
+        kwargs = locals()
+        kwargs.pop("self")
+        return self._dgraph.create_python_package_version_entity(**kwargs)
 
     def create_python_packages_pipfile(
         self, pipfile_locked: dict, run_software_environment: UserRunSoftwareEnvironmentModel = None
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
+        kwargs = locals()
+        kwargs.pop("self")
+        return self._dgraph.create_python_packages_pipfile(**kwargs)
 
     def create_user_software_stack_pipfile(
         self,
@@ -724,14 +700,19 @@ class GraphDatabase(SQLBase):
         run_software_environment: UserRunSoftwareEnvironmentModel = None,
     ) -> UserSoftwareStack:
         """Create a user software stack entry from Pipfile.lock."""
+        kwargs = locals()
+        kwargs.pop("self")
+        return self._dgraph.create_user_software_stack_pipfile(**kwargs)
 
     def create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
+        return self._dgraph.create_python_package_requirement(requirements)
 
     def create_inspection_software_stack_pipfile(
         self, document_id: str, pipfile_locked: dict
     ) -> InspectionSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
+        return self._dgraph.create_inspection_software_stack_pipfile(document_id, pipfile_locked)
 
     def create_advised_software_stack_pipfile(
         self,
@@ -744,9 +725,13 @@ class GraphDatabase(SQLBase):
         run_software_environment: UserRunSoftwareEnvironmentModel,
     ) -> AdvisedSoftwareStack:
         """Create an advised software stack entry from Pipfile.lock."""
+        kwargs = locals()
+        kwargs.pop("self")
+        return self._dgraph.create_advised_software_stack_pipfile(**kwargs)
 
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
+        return self._dgraph.sync_inspection_result(document)
 
     def create_python_cve_record(
         self,
@@ -760,12 +745,17 @@ class GraphDatabase(SQLBase):
         cve: str = None,
     ) -> Tuple[CVE, bool]:
         """Store information about a CVE in the graph database for the given Python package."""
+        kwargs = locals()
+        kwargs.pop("self")
+        return self._dgraph.create_python_cve_record(**kwargs)
 
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
+        return self._dgraph.sync_analysis_result(document)
 
     def sync_package_analysis_result(self, document: dict) -> None:
         """Sync the given package analysis result to the graph database."""
+        return self._dgraph.sync_package_analysis_result(document)
 
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
@@ -937,20 +927,27 @@ class GraphDatabase(SQLBase):
         else:
             self._session.commit()
 
+        self._dgraph.sync_solver_result(document)  # XXX
+
     def sync_adviser_result(self, document: dict) -> None:
         """Sync adviser result into graph database."""
+        return self._dgraph.sync_adviser_result(document)
 
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
+        return self._dgraph.sync_provenance_checker_result(document)
 
     def sync_dependency_monkey_result(self, document: dict) -> None:
         """Sync reports of dependency monkey runs."""
+        return self.sync_dependency_monkey_result(document)
 
     def get_number_of_each_vertex_in_graph(self) -> dict:
         """Retrieve dictionary with number of vertices per vertex label in the graph database."""
+        return self._dgraph.get_number_of_each_vertex_in_graph()
 
     def get_all_pi_per_framework_count(self, framework: str) -> dict:
         """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
+        return self._dgraph.get_all_pi_per_framework_count(framework)
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
