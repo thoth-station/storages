@@ -54,7 +54,7 @@ class BaseExtension:
                 return instance, True
             except IntegrityError:
                 session.rollback()
-                _LOGGER.exception("Integrity error")
+                _LOGGER.exception("Integrity error for %r", kwargs)
                 return session.query(cls).filter_by(**kwargs).first(), False
 
     @classmethod

@@ -102,6 +102,13 @@ class GraphDatabase(SQLBase):
         """Normalize Python package name based on PEP-0503."""
         return PackageVersion.normalize_python_package_name(package_name)
 
+    def initialize_schema(self) -> None:
+        """Initialize schema for PostgreSQL and Dgraph."""
+        _LOGGER.info("Initializing PostgreSQL database")
+        super().initialize_schema()
+        _LOGGER.info("Initializing Dgraph database")
+        self._dgraph.initialize_schema()
+
     @staticmethod
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
