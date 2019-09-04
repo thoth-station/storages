@@ -49,9 +49,8 @@ from thoth.python import PipfileLock
 from thoth.python import PackageVersion
 
 from ..base import StorageBase
-from .cache import GraphCache
-from .models_base import enable_vertex_cache
-from .models_base import VertexBase
+from .models_base_dgraph import enable_vertex_cache
+from .models_base_dgraph import VertexBase
 from .models import ALL_MODELS
 from .models import AdviserRun
 from .models import AdvisedSoftwareStack
@@ -139,7 +138,6 @@ class GraphDatabase(StorageBase):
 
     tls_path = attr.ib(type=str, default=TLS_PATH, kw_only=True)
     hosts = attr.ib(type=list, default=DEFAULT_HOSTS, kw_only=True)
-    cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load), kw_only=True)
 
     _client = attr.ib(type=pydgraph.DgraphClient, default=None, kw_only=True)
     _stubs = attr.ib(type=list, default=attr.Factory(list), kw_only=True)
@@ -1083,11 +1081,6 @@ class GraphDatabase(StorageBase):
 
     def _get_python_package_version_by_uid(self, uid: int, *, without_cache: bool = False) -> Optional[dict]:
         """Get Python package version information for the given uid."""
-        if not without_cache:
-            record = self.cache.get_python_package_version_uid_record(uid)
-            if record:
-                return record
-
         query = """
         {
             q(func: uid(%s)) {
@@ -1113,8 +1106,6 @@ class GraphDatabase(StorageBase):
             os_version=query_result.get("os_version"),
             python_version=query_result.get("python_version"),
         )
-        if not without_cache:
-            self.cache.add_python_package_version_uid_record(**result, uid=uid)
 
         return result
 
@@ -1125,11 +1116,6 @@ class GraphDatabase(StorageBase):
         without_cache: bool = False
     ) -> Optional[Tuple[str, str]]:
         """Get Python package version entity information for the given uid."""
-        if not without_cache:
-            record = self.cache.get_python_package_version_entity_uid_record(uid)
-            if record:
-                return record
-
         query = """
         {
             q(func: uid(%s)) {
@@ -1143,12 +1129,6 @@ class GraphDatabase(StorageBase):
             raise ValueError("No records were found for PythonPackageVersionEntity with uid %r", uid)
 
         result = (query_result[0]["package_name"], query_result[0]["package_version"])
-        if not without_cache:
-            self.cache.add_python_package_version_entity_uid_record(
-                package_name=result[0],
-                package_version=result[1],
-                uid=uid
-            )
 
         return result
 
@@ -1170,11 +1150,6 @@ class GraphDatabase(StorageBase):
         record = locals()
         record.pop("without_cache")
         record.pop("self")
-
-        if not without_cache:
-            result = self.cache.get_depends_on(**record)
-            if result is not None:
-                return result
 
         query_filter = self._get_query_filter(
             os_name=os_name,
@@ -1208,14 +1183,6 @@ class GraphDatabase(StorageBase):
         result = set()
         for query_result in query_results:
             if not query_result.get("depends_on"):
-                if not query_result["solver_error"] and not without_cache:
-                    # A special value (None, None) signalizes no dependencies for the given record.
-                    self.cache.add_depends_on(
-                        **record,
-                        dependency_name=None,
-                        dependency_version=None,
-                    )
-
                 # Empty set.
                 return result
 
@@ -1225,13 +1192,6 @@ class GraphDatabase(StorageBase):
                     without_cache=without_cache,
                 )
                 result.add((dependency_name, dependency_version))
-
-                if not without_cache:
-                    self.cache.add_depends_on(
-                        **record,
-                        dependency_name=dependency_name,
-                        dependency_version=dependency_version
-                    )
 
         return result
 
@@ -1247,18 +1207,6 @@ class GraphDatabase(StorageBase):
         without_cache: bool = False,
     ) -> Optional[List[dict]]:
         """Get records for the given package regardless of index_url."""
-        if not without_cache:
-            result = self.cache.get_python_package_version_records(
-                package_name=package_name,
-                package_version=package_version,
-                index_url=index_url,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-            )
-            if result:
-                return result
-
         query_filter = self._get_query_filter(
             os_name=os_name,
             os_version=os_version,
@@ -1298,12 +1246,6 @@ class GraphDatabase(StorageBase):
                 python_version=item["python_version"],
             )
             result.append(entry)
-
-            if not without_cache:
-                self.cache.add_python_package_version_uid_record(
-                    **entry,
-                    uid=int(item["uid"], 16),
-                )
 
         return result or None
 
