@@ -147,11 +147,10 @@ After you have created relevant model, register your model to `ALL_PERFORMANCE_M
 Online debugging of queries done to Dgraph
 ==========================================
 
-You can print to logger all the queries that are performed to a Dgraph instance. To do so, set the following environment variables:
+You can print to logger all the queries that are performed to a Dgraph instance. To do so, set the following environment variable:
 
 .. code-block::
 
-  export THOTH_LOG_STORAGES=DEBUG
   export THOTH_STORAGES_DEBUG_QUERIES=1
 
 Graph database cache

@@ -24,9 +24,9 @@ from pathlib import Path
 import click
 
 from thoth.storages.graph.models import ALL_MODELS
-from thoth.storages.graph.models_base import ReverseEdgeBase
-from thoth.storages.graph.models_base import EdgeBase
-from thoth.storages.graph.models_base import VertexBase
+from thoth.storages.graph.models_base_dgraph import ReverseEdgeBase
+from thoth.storages.graph.models_base_dgraph import EdgeBase
+from thoth.storages.graph.models_base_dgraph import VertexBase
 
 
 _DGRAPH_TYPES_NAME_MAP = {

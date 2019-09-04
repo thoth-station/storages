@@ -26,9 +26,9 @@ from datetime import datetime
 
 import attr
 
-from .models_base import model_property
-from .models_base import ReverseEdgeBase
-from .models_base import VertexBase
+from .models_base_dgraph import model_property
+from .models_base_dgraph import ReverseEdgeBase
+from .models_base_dgraph import VertexBase
 from .performance import ALL_PERFORMANCE_MODELS
 
 

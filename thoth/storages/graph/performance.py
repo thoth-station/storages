@@ -25,9 +25,9 @@ import attr
 from voluptuous import Required
 from voluptuous import Schema
 
-from .models_base import VertexBase
-from .models_base import ReverseEdgeBase
-from .models_base import model_property
+from .models_base_dgraph import VertexBase
+from .models_base_dgraph import ReverseEdgeBase
+from .models_base_dgraph import model_property
 
 
 _LOGGER = logging.getLogger(__name__)

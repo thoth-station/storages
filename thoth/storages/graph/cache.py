@@ -295,7 +295,7 @@ class GraphCache:
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-    ) -> Optional[Set[Tuple[str, str]]]:
+    ) -> Optional[List[Tuple[str, str]]]:
         """Retrieve dependencies for the given packages."""
         query_ext, query_params = self._get_params_ext(
             package_name=package_name,
@@ -318,7 +318,7 @@ class GraphCache:
 
             self.sqlite_cache_stats["get_depends_on"]["hits"] += 1
 
-            result = set()
+            result = []
             for item in query_result:
                 dependency_name, dependency_version = item[0], item[1]
                 if dependency_name is None and dependency_version is None:
@@ -329,7 +329,7 @@ class GraphCache:
                     # specified). Then we return werkzeug as we do "generic"/platform independent resolution.
                     continue
 
-                result.add((dependency_name, dependency_version))
+                result.append((dependency_name, dependency_version))
 
             return result
         finally:
@@ -436,8 +436,8 @@ class GraphCache:
         os_name: str,
         os_version: str,
         python_version: str,
-        dependency_name: str,
-        dependency_version: str,
+        dependency_name: Union[str, None],
+        dependency_version: Union[str, None],
     ) -> None:
         """Add a new entry of depends on for a Python package."""
         if (

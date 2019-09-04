@@ -123,12 +123,16 @@ def create_graph_cache(cache_file: str, cache_config: str):
 
         for package_version, index_url in versions:
             _LOGGER.info("Adding record for %r in version %r from %r", package_name, package_version, index_url)
-            graph.retrieve_transitive_dependencies_python(package_name, package_version, index_url)
+            graph.retrieve_transitive_dependencies_python(
+                package_name,
+                package_version,
+                index_url,
+            )
 
     report = {
         "cache_file": cache_file,
         "cache_file_size": None,
-        "cache_stats": graph.cache.stats(),
+        "cache_stats": graph.stats(),
     }
     try:
         cache_file_size = os.path.getsize(cache_file)
