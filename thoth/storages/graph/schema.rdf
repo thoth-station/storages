@@ -122,6 +122,7 @@ package_analysis_datetime: dateTime @index(hour) .
 package_analyzer_version: string @index(exact) .
 package_analyzer_name: string @index(exact) .
 package_analyzer_error: bool @index(bool) .
+package_analyzer_error_message: string @index(exact) .
 package_extract_run_label: string @count @upsert @index(exact) .
 analysis_document_id: string @index(exact) .
 analysis_datetime: dateTime @index(hour) .
