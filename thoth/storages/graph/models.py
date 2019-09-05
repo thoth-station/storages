@@ -71,6 +71,7 @@ class PackageAnalyzerRun(VertexBase):
     package_analyzer_name = model_property(type=str, index="exact")
     debug = model_property(type=bool)
     package_analyzer_error = model_property(type=bool, index="bool")
+    package_analyzer_error_message = model_property(type=str, index="exact")
     duration = model_property(type=int)
 
 
