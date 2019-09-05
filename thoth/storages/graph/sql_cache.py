@@ -48,10 +48,6 @@ from .models_base import get_python_package_version_filter_kwargs
 _LOGGER = logging.getLogger(__name__)
 
 
-class CacheMiss(Exception):
-    pass
-
-
 def _only_if_enabled(func):
     """A decorator to make sure the graph database cache is used only if enabled."""
     @functools.wraps(func)
@@ -68,7 +64,7 @@ def _only_if_inserts_enabled(func):
     """Decorator to make sure inserts are noop on production systems to reduce cache building overhead."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        if not args[0].is_insert_enabled():
+        if not args[0].is_inserts_enabled():
             return None
 
         return func(*args, **kwargs)
@@ -101,7 +97,7 @@ class GraphCache(SQLBase):
         return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_DISABLED", 0)))
 
     @staticmethod
-    def is_insert_enabled():
+    def is_inserts_enabled():
         """Check if inserts to this cache are enabled."""
         return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED", 0)))
 
@@ -112,15 +108,28 @@ class GraphCache(SQLBase):
             cache = os.getenv(cls.ENV_CACHE_PATH, cls.DEFAULT_CACHE_PATH)
 
         if cache == ":memory:":
-            _LOGGER.info("Using in-memory graph database cache")
             cache = "sqlite://"
         else:
             cache = f"sqlite:///{cache if cache.startswith('/') else os.path.join(os.getcwd(), cache)}"
-            _LOGGER.info("Using graph database cache from %r", cache)
 
         instance = cls(cache=cache)
         instance.connect()
-        instance.initialize_schema()
+
+        if instance.is_enabled():
+            instance.initialize_schema()
+
+            if cache != "sqlite://":
+                _LOGGER.info("Using database cache from %r", cache)
+            else:
+                _LOGGER.info("Using in-memory database cache")
+        else:
+            _LOGGER.info("Database cache is disabled")
+
+        if not instance.is_inserts_enabled():
+            _LOGGER.info(
+                "Inserts into database cache are disabled, cache will be used only for reading pre-cached data"
+            )
+
         return instance
 
     def connect(self):
@@ -163,7 +172,7 @@ class GraphCache(SQLBase):
         if not dependencies:
             # No record in the cache - for packages which do not depend on anything, we have (None, None) record.
             self.sqlite_cache_stats["get_depends_on"]["misses"] += 1
-            raise CacheMiss
+            return None
 
         result = []
         for dependency_name, dependency_version in dependencies:
@@ -216,7 +225,7 @@ class GraphCache(SQLBase):
             ]
 
         self.sqlite_cache_stats["get_python_package_version_records"]["misses"] += 1
-        raise CacheMiss
+        return None
 
     @_only_if_enabled
     @_only_if_inserts_enabled
@@ -272,7 +281,6 @@ class GraphCache(SQLBase):
         """Get statistics for the graph cache."""
         result = {
             "table_size": {},
-            "memory_cache_info": {},
         }
 
         if not self.is_enabled():

@@ -51,7 +51,6 @@ from .sql_models import InspectionSoftwareStack
 from .sql_models import UserSoftwareStack
 from .sql_base import SQLBase
 from .models_base import get_python_package_version_filter_kwargs
-from .sql_cache import CacheMiss
 
 from ..solvers import SolverResultsStore
 from .dgraph import GraphDatabase as DgraphDatabase
@@ -377,17 +376,16 @@ class GraphDatabase(SQLBase):
     ) -> List[dict]:
         """Get records for the given package regardless of index_url."""
         if not without_cache:
-            try:
-                return self._cache.get_python_package_version_records(
-                    package_name=package_name,
-                    package_version=package_version,
-                    index_url=index_url,
-                    os_name=os_name,
-                    os_version=os_version,
-                    python_version=python_version,
-                )
-            except CacheMiss:
-                pass
+            result = self._cache.get_python_package_version_records(
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+            )
+            if result is not None:
+                return result
 
         filter_kwargs = get_python_package_version_filter_kwargs(
             package_name=package_name,
@@ -528,17 +526,17 @@ class GraphDatabase(SQLBase):
         )
 
         if not without_cache:
-            try:
-                return self._cache.get_depends_on(
-                    package_name=package_name,
-                    package_version=package_version,
-                    index_url=index_url,
-                    os_name=os_name,
-                    os_version=os_version,
-                    python_version=python_version,
-                )
-            except CacheMiss:
-                pass
+            result = self._cache.get_depends_on(
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+            )
+
+            if result is not None:
+                return result
 
         dependencies = self._session.query(
             PythonPackageVersionEntity.package_name,
