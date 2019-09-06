@@ -30,10 +30,10 @@ from sqlalchemy import Index
 from .models_base import BaseExtension
 from .models_base import get_python_package_version_index_combinations
 
-Base = declarative_base()
+CacheBase = declarative_base()
 
 
-class PythonPackageVersion(Base, BaseExtension):
+class PythonPackageVersion(CacheBase, BaseExtension):
     """A Python package version in the given environment."""
 
     __tablename__ = "python_package_version"
@@ -49,26 +49,15 @@ class PythonPackageVersion(Base, BaseExtension):
     entities = relationship("DependsOn", back_populates="version")
 
     __table_args__ = tuple(
-        get_python_package_version_index_combinations() + [
-            UniqueConstraint(
-                "package_name",
-                "package_version",
-                "index_url",
-                "os_name",
-                "os_version",
-                "python_version",
-            ),
-            Index(
-                "python_package_version_idx",
-                "package_name",
-                "package_version",
-                "index_url",
-            )
-        ],
+        get_python_package_version_index_combinations()
+        + [
+            UniqueConstraint("package_name", "package_version", "index_url", "os_name", "os_version", "python_version"),
+            Index("python_package_version_idx", "package_name", "package_version", "index_url"),
+        ]
     )
 
 
-class PythonPackageVersionEntity(Base, BaseExtension):
+class PythonPackageVersionEntity(CacheBase, BaseExtension):
     """A Python package version entity."""
 
     __tablename__ = "python_package_version_entity"
@@ -80,40 +69,24 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     versions = relationship("DependsOn", back_populates="entity")
 
     __table_args__ = (
-        UniqueConstraint(
-            "package_name",
-            "package_version",
-        ),
-        Index(
-            "python_package_version_entity_idx",
-            "package_name",
-            "package_version",
-            unique=True,
-        ),
+        UniqueConstraint("package_name", "package_version"),
+        Index("python_package_version_entity_idx", "package_name", "package_version", unique=True),
     )
 
 
-class DependsOn(Base, BaseExtension):
+class DependsOn(CacheBase, BaseExtension):
     """Dependency relationship capturing."""
 
-    __tablename__ = 'depends_on'
+    __tablename__ = "depends_on"
 
-    entity_id = Column(Integer, ForeignKey('python_package_version_entity.id'), primary_key=True)
-    version_id = Column(Integer, ForeignKey('python_package_version.id'), primary_key=True)
+    entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), primary_key=True)
+    version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
     version_range = Column(String(128))
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="entities")
 
     __table_args__ = (
-        UniqueConstraint(
-            "entity_id",
-            "version_id",
-        ),
-        Index(
-            "depends_on_idx",
-            "entity_id",
-            "version_id",
-            unique=True,
-        ),
+        UniqueConstraint("entity_id", "version_id"),
+        Index("depends_on_idx", "entity_id", "version_id", unique=True),
     )

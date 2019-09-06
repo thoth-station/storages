@@ -20,70 +20,63 @@
 from functools import partial
 import logging
 
-import attr
-
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
+from sqlalchemy import Float
+from sqlalchemy.orm import relationship
 from voluptuous import Required
 from voluptuous import Schema
 
-from .models_base_dgraph import VertexBase
-from .models_base_dgraph import ReverseEdgeBase
-from .models_base_dgraph import model_property
-
+from thoth.storages.graph.models_base import BaseExtension
+from thoth.storages.graph.models_base import Base
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@attr.s(slots=True)
-class ObservedPerformance(ReverseEdgeBase):
-    """A class for representing connection to performance indicators."""
-
-    # We can have multiple performance indicators, index them.
-    performance_indicator_index = model_property(type=int)
-
-
-@attr.s(slots=True)
-class PerformanceIndicatorBase(VertexBase):
+class PerformanceIndicatorBase:
     """A base class for implementing performance indicators."""
 
     SCHEMA_PARAMETERS = None
     SCHEMA_RESULT = None
 
     # ML framework used for the performance indicator.
-    framework = model_property(type=str, index="exact")
+    framework = Column(String(256), nullable=True)
 
     # Origin from where the performance indicator was obtained. In case of Git repo,
     # it holds Git repo URL, in case of URL it holds URL to the script.
-    origin = model_property(type=str, index="exact")
+    origin = Column(String(256), nullable=True)
 
     # Reference of the script, in case of Git repo it holds commit SHA, in case of URL it carries
     # SHA256 of the script which was used to test the performance with (performance indicator script).
-    version = model_property(type=str, index="exact")
+    version = Column(String(256), nullable=False)
 
     # This one is used later on in queries in adviser, all the relevant performance indicators should
     # respect this property and place results in there.
-    overall_score = model_property(type=float)
+    overall_score = Column(Float, nullable=True)
 
     # The actual exit code of the performance indicator.
-    exit_code = model_property(type=int)
+    exit_code = Column(Integer, nullable=False)
 
     # Process statistics:
     #   https://docs.python.org/3/library/resource.html#resource.getrusage
-    ru_utime = model_property(type=float)
-    ru_stime = model_property(type=float)
-    ru_maxrss = model_property(type=int)
-    ru_ixrss = model_property(type=int)
-    ru_idrss = model_property(type=int)
-    ru_isrss = model_property(type=int)
-    ru_minflt = model_property(type=int)
-    ru_majflt = model_property(type=int)
-    ru_nswap = model_property(type=int)
-    ru_inblock = model_property(type=int)
-    ru_oublock = model_property(type=int)
-    ru_msgsnd = model_property(type=int)
-    ru_msgrcv = model_property(type=int)
-    ru_nsignals = model_property(type=int)
-    ru_nvcsw = model_property(type=int)
-    ru_nivcsw = model_property(type=int)
+    ru_utime = Column(Float, nullable=False)
+    ru_stime = Column(Float, nullable=False)
+    ru_maxrss = Column(Integer, nullable=False)
+    ru_ixrss = Column(Integer, nullable=False)
+    ru_idrss = Column(Integer, nullable=False)
+    ru_isrss = Column(Integer, nullable=False)
+    ru_minflt = Column(Integer, nullable=False)
+    ru_majflt = Column(Integer, nullable=False)
+    ru_nswap = Column(Integer, nullable=False)
+    ru_inblock = Column(Integer, nullable=False)
+    ru_oublock = Column(Integer, nullable=False)
+    ru_msgsnd = Column(Integer, nullable=False)
+    ru_msgrcv = Column(Integer, nullable=False)
+    ru_nsignals = Column(Integer, nullable=False)
+    ru_nvcsw = Column(Integer, nullable=False)
+    ru_nivcsw = Column(Integer, nullable=False)
 
     @classmethod
     def create_from_report(cls, inspection_document: dict) -> "PerformanceIndicatorBase":
@@ -147,9 +140,10 @@ class PerformanceIndicatorBase(VertexBase):
         return partial_model(**kwargs)
 
 
-@attr.s(slots=True)
-class PiMatmul(PerformanceIndicatorBase):
+class PiMatmul(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a matrix multiplication micro-performance test."""
+
+    __tablename__ = "pi_matmul"
 
     SCHEMA_PARAMETERS = Schema(
         {Required("matrix_size"): int, Required("dtype"): str, Required("reps"): int, Required("device"): str}
@@ -157,28 +151,34 @@ class PiMatmul(PerformanceIndicatorBase):
 
     SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_run_id = Column(Integer, ForeignKey("inspection_run.id"), nullable=False)
+    inspection_run = relationship("InspectionRun", back_populates="matmul_perf_indicators")
+
     # Device used during performance indicator run - CPU/GPU/TPU/...
-    device = model_property(type=str, index="exact")
+    device = Column(String(256), nullable=False)
 
     # Size of the matrix tested.
-    matrix_size = model_property(type=int, index="int")
+    matrix_size = Column(Integer, nullable=False)
 
     # Type of item in the matrix.
-    dtype = model_property(type=str, index="exact")
+    dtype = Column(String(256), nullable=False)
 
     # Number of repetitions of matrix multiplication performed.
-    reps = model_property(type=int, index="int")
+    reps = Column(Integer, nullable=False)
 
     # Elapsed seconds.
-    elapsed = model_property(type=float)
+    elapsed = Column(Float, nullable=False)
 
     # Final rate gflops/s.
-    rate = model_property(type=float)
+    rate = Column(Float, nullable=False)
 
 
-@attr.s(slots=True)
-class PiConv1D(PerformanceIndicatorBase):
+class PiConv1D(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a conv1D micro-performance test."""
+
+    __tablename__ = "pi_conv1d"
 
     SCHEMA_PARAMETERS = Schema(
         {
@@ -198,43 +198,49 @@ class PiConv1D(PerformanceIndicatorBase):
 
     SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_run_id = Column(Integer, ForeignKey("inspection_run.id"), nullable=False)
+    inspection_run = relationship("InspectionRun", back_populates="conv1d_perf_indicators")
+
     # Device used during performance indicator run - CPU/GPU/TPU/...
-    device = model_property(type=str, index="exact")
+    device = Column(String(256), nullable=False)
 
     # Type of item in the tensor.
-    dtype = model_property(type=str, index="exact")
+    dtype = Column(String(256), nullable=False)
 
     # Number of repetitions of conv2d performed.
-    reps = model_property(type=int, index="int")
+    reps = Column(Integer, nullable=False)
 
     # Data format NHWC Channel_last or NCHW Channel_first
-    data_format = model_property(type=str, index="exact")
+    data_format = Column(String(256), nullable=False)
 
     # INPUT TENSOR
-    batch = model_property(type=int, index="int")
-    input_width = model_property(type=int, index="int")
-    input_channels = model_property(type=int, index="int")
+    batch = Column(Integer, nullable=False)
+    input_width = Column(Integer, nullable=False)
+    input_channels = Column(Integer, nullable=False)
 
     # FILTER
-    filter_width = model_property(type=int, index="int")
-    output_channels = model_property(type=int, index="int")
+    filter_width = Column(Integer, nullable=False)
+    output_channels = Column(Integer, nullable=False)
 
     # Stride, the speed by which the filter moves across the image
-    strides = model_property(type=int, index="int")
+    strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = model_property(type=str, index="exact")
+    padding = Column(String(256), nullable=False)
 
     # Elapsed seconds.
-    elapsed = model_property(type=float)
+    elapsed = Column(Float, nullable=False)
 
     # Final rate gflops/s.
-    rate = model_property(type=float)
+    rate = Column(Float, nullable=False)
 
 
-@attr.s(slots=True)
-class PiConv2D(PerformanceIndicatorBase):
+class PiConv2D(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a conv2D micro-performance test."""
+
+    __tablename__ = "pi_conv2d"
 
     SCHEMA_PARAMETERS = Schema(
         {
@@ -256,43 +262,49 @@ class PiConv2D(PerformanceIndicatorBase):
 
     SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_run_id = Column(Integer, ForeignKey("inspection_run.id"), nullable=False)
+    inspection_run = relationship("InspectionRun", back_populates="conv2d_perf_indicators")
+
     # Device used during performance indicator run - CPU/GPU/TPU/...
-    device = model_property(type=str, index="exact")
+    device = Column(String(256), nullable=False)
 
     # Type of item in the tensor.
-    dtype = model_property(type=str, index="exact")
+    dtype = Column(String(256), nullable=False)
 
     # Number of repetitions of conv2d performed.
-    reps = model_property(type=int, index="int")
+    reps = Column(Integer, nullable=False)
 
     # Data format NHWC Channel_last or NCHW Channel_first
-    data_format = model_property(type=str, index="exact")
+    data_format = Column(String(256), nullable=False)
 
     # INPUT TENSOR
-    batch = model_property(type=int, index="int")
-    input_height = model_property(type=int, index="int")
-    input_width = model_property(type=int, index="int")
-    input_channels = model_property(type=int, index="int")
+    batch = Column(Integer, nullable=False)
+    input_height = Column(Integer, nullable=False)
+    input_width = Column(Integer, nullable=False)
+    input_channels = Column(Integer, nullable=False)
 
     # FILTER
-    filter_height = model_property(type=int, index="int")
-    filter_width = model_property(type=int, index="int")
-    output_channels = model_property(type=int, index="int")
+    filter_height = Column(Integer, nullable=False)
+    filter_width = Column(Integer, nullable=False)
+    output_channels = Column(Integer, nullable=False)
 
     # Stride, the speed by which the filter moves across the image
-    strides = model_property(type=int, index="int")
+    strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = model_property(type=str, index="exact")
+    padding = Column(String(256), nullable=False)
 
     # Elapsed seconds.
-    elapsed = model_property(type=float)
+    elapsed = Column(Float, nullable=False)
 
     # Final rate gflops/s.
-    rate = model_property(type=float)
+    rate = Column(Float, nullable=False)
 
 
-ALL_PERFORMANCE_MODELS = frozenset((ObservedPerformance, PiMatmul, PiConv1D, PiConv2D))
+# ALL_PERFORMANCE_MODELS = frozenset((ObservedPerformance, PiMatmul, PiConv1D, PiConv2D))
+ALL_PERFORMANCE_MODELS = frozenset((PiMatmul, PiConv1D, PiConv2D))
 
 
 PERFORMANCE_MODEL_BY_NAME = {model_class.__name__: model_class for model_class in ALL_PERFORMANCE_MODELS}

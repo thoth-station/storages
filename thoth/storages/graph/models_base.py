@@ -22,12 +22,11 @@ from typing import Union
 from itertools import combinations
 from typing import List
 
+from sqlalchemy import Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.orm import ColumnProperty
 from sqlalchemy.exc import IntegrityError
-
-from sqlalchemy import Index
 
 
 Base = declarative_base()
@@ -44,18 +43,18 @@ class BaseExtension:
         """Query for the given entity, create if it does not exist yet."""
         instance = session.query(cls).filter_by(**kwargs).first()
         if instance:
-            return instance, False
+            return instance, True
         else:
             try:
                 session.begin_nested()
                 instance = cls(**kwargs)
                 session.add(instance)
                 session.commit()
-                return instance, True
+                return instance, False
             except IntegrityError:
                 session.rollback()
                 _LOGGER.exception("Integrity error for %r", kwargs)
-                return session.query(cls).filter_by(**kwargs).first(), False
+                return session.query(cls).filter_by(**kwargs).one(), True
 
     @classmethod
     def attribute_names(cls):
@@ -74,19 +73,26 @@ class BaseExtension:
         return result
 
 
-def get_python_package_version_index_combinations() -> List[Index]:
+def get_python_package_version_index_combinations(*, index_as_property: bool = True) -> List[Index]:
     """Create index for all possible combinations which we can query."""
     result = []
-    _columns_to_variate = ("index_url", "os_name", "os_version", "python_version")
+    _columns_to_variate = (
+        "index_url" if index_as_property else "python_package_index_id",
+        "os_name",
+        "os_version",
+        "python_version",
+    )
     for i in range(1, len(_columns_to_variate)):
         for j, variation in enumerate(combinations(_columns_to_variate, i)):
-            result.append(Index(
-                f"python_package_version_index_idx_{i}{j}",
-                "package_name",
-                "package_version",
-                "index_url",
-                *variation,
-            ))
+            result.append(
+                Index(
+                    f"python_package_version_index_idx_{i}{j}",
+                    "package_name",
+                    "package_version",
+                    "index_url" if index_as_property else "python_package_index_id",
+                    *variation,
+                )
+            )
 
     return result
 
@@ -101,9 +107,7 @@ def get_python_package_version_filter_kwargs(
     python_version: Union[str, None],
 ) -> dict:
     """Get filter kwargs to query PythonPackageVersion records."""
-    filter_kwargs = {
-        "package_name": package_name,
-    }
+    filter_kwargs = {"package_name": package_name}
     if package_version is not None:
         filter_kwargs["package_version"] = package_version
     if index_url is not None:

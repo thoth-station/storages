@@ -113,8 +113,8 @@ def create_graph_cache(cache_file: str, cache_config: str):
     for package_name in packages:
         versions = graph.get_all_versions_python_package(
             package_name=package_name,
-            only_known_index=True,
-            only_solved=True
+            # only_known_index=True, # TODO
+            # only_solved=True # TODO
         )
 
         if not versions:
@@ -173,6 +173,61 @@ def store_cache(cache_file: str):
     graph_cache_store = GraphCacheStore()
     graph_cache_store.connect()
     graph_cache_store.retrieve(cache_file)
+
+
+@cli.command("generate-schema")
+@click.argument(
+    "schema_file",
+    type=str,
+    required=False,
+    default="schema.png",
+    metavar="schema.png",
+)
+@click.argument(
+    "schema_cache_file",
+    type=str,
+    required=False,
+    default="schema_cache.png",
+    metavar="schema_cache.png",
+)
+def generate_schema(schema_file: str, schema_cache_file):
+    """Generate an image out of the current schema."""
+    try:
+        import sadisplay
+        import pydot
+    except ImportError:
+        _LOGGER.error("Failed to import required libraries to perform schema generation")
+        raise
+
+    import thoth.storages.graph.models_cache as cache_models
+    import thoth.storages.graph.models as models
+    import thoth.storages.graph.models_performance as performance_models
+
+    desc = sadisplay.describe(
+        list(vars(models).values()) + list(vars(performance_models).values()),
+        show_methods=True,
+        show_properties = True,
+        show_indexes=False,
+        show_simple_indexes=False,
+        show_columns_of_indexes=False,
+    )
+    dot_data = sadisplay.dot(desc)
+    graph, = pydot.graph_from_dot_data(dot_data)
+    _LOGGER.info("Writing schema to %r...", schema_file)
+    graph.write_png(schema_file)
+
+    desc = sadisplay.describe(
+        vars(cache_models).values(),
+        show_methods=True,
+        show_properties = True,
+        show_indexes=False,
+        show_simple_indexes=False,
+        show_columns_of_indexes=False,
+    )
+    dot_data = sadisplay.dot(desc)
+    graph, = pydot.graph_from_dot_data(dot_data)
+    _LOGGER.info("Writing schema to %r...", schema_cache_file)
+    graph.write_png(schema_cache_file)
 
 
 if __name__ == "__main__":

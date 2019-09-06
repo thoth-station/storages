@@ -1,27 +1,26 @@
-# Adopted from:
-#   https://github.com/dgraph-io/dgraph/blob/master/contrib/config/docker/docker-compose.yml
-version: "3.2"
+version: '3'
 services:
-  zero:
-    image: dgraph/dgraph:latest
-    volumes:
-      - /tmp/data:/dgraph:z
-    ports:
-      - 5080:5080
-      - 6080:6080
+  postgres:
+    image: postgres:9.5
+    container_name: postgres
+    network_mode: bridge
     restart: on-failure
-    command: dgraph zero --my=zero:5080
-  alpha:
-    image: dgraph/dgraph:latest
-    volumes:
-      - /tmp/data:/dgraph:z
     ports:
-      - 8080:8080
-      - 9080:9080
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  pgweb:
+    image: sosedoff/pgweb
+    container_name: pgweb
+    network_mode: bridge
     restart: on-failure
-    command: dgraph alpha --my=alpha:7080 --lru_mb=2048 --zero=zero:5080
-  ratel:
-    image: dgraph/dgraph:latest
+    links:
+      - postgres
     ports:
-      - 8000:8000
-    command: dgraph-ratel
+      - 8081:8081
+    environment:
+      # sslmode=disable because: https://github.com/sosedoff/pgweb/issues/23#issuecomment-60840307
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
+

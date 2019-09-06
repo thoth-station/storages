@@ -21,7 +21,6 @@ import attr
 import abc
 
 from sqlalchemy.engine import Engine
-
 from sqlalchemy_utils.functions import create_database
 from sqlalchemy_utils.functions import database_exists
 

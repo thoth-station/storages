@@ -4,7 +4,7 @@ Thoth Storages
 This library provides a library called `thoth-storages
 <https://pypi.org/project/thoth-storages>`_ used in project `Thoth
 <https://thoth-station.ninja>`_.  The library exposes core queries and methods
-for Dgraph database as well as adapters for manipulating with Ceph via its
+for PostgreSQL database as well as adapters for manipulating with Ceph via its
 S3 compatible API.
 
 Installation and Usage
@@ -30,46 +30,22 @@ You can run prepared testsuite via the following command:
   # To generate docs:
   pipenv run python3 setup.py build_sphinx
 
-Automatically generate schema for Graph database
-================================================
+Running PostgreSQL locally
+==========================
 
-To automatically generate schema for the graph database from models defined in
-this module, run:
-
-.. code-block:: console
-
-   PYTHONPATH=. pipenv run python3 ./create_schema.py --output thoth/storages/graph/schema.rdf
-
-
-After running this command, the RDF file describing schema will be updated
-based on changes in model.
-
-
-.. code-block:: python3
-
-  from thoth.storages import GraphDatabase
-
-  # Also provide configuration if needed.
-  graph = GraphDatabase()
-  graph.connect()
-  graph.initialize_schema()
-
-Running Dgraph locally
-======================
-
-You can use `docker-compose` present in this repository to run a local Dgraph instance. It does not use TLS certificates (so you must not to provide `GRAPH_TLS_PATH` environment variable).
+You can use `docker-compose` present in this repository to run a local PostgreSQL instance:
 
 .. code-block:: console
 
   $ docker-compose up
 
-After running the command above (make sure your big fat daemon is up using `systemctl start docker`), you should be able to access a local Dgraph instance at `localhost:9080`. This is also the default configuration for Dgraph's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly.
+After running the command above (make sure your big fat daemon is up using `systemctl start docker`), you should be able to access a local PostgreSQL instance at `localhost:5432`. This is also the default configuration for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly. The default configuration uses database named `thoth` which can be accessed using `postgres` user and `postgres` password (SSL is disabled).
 
-The provided `docker-compose` has also Ratel enabled for to have an UI for graph database content. To access it visit `http://localhost:8000/ <http://localhost:8080>`_.
+The provided `docker-compose` has also PGweb enabled for to have an UI for the database content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
 
-The provided `docker-compose` uses volume mounted from `/tmp`. After you computer restart, the content will not be available anymore.
+The provided `docker-compose` does not use any volume. After you containers restart, the content will not be available anymore.
 
-If you would like to experiment with Dgraph programatically, you can use the following code snippet as a starting point:
+If you would like to experiment with PostgreSQL programatically, you can use the following code snippet as a starting point:
 
 .. code-block:: python
 
@@ -85,16 +61,7 @@ If you would like to experiment with Dgraph programatically, you can use the fol
 Schema adjustment in deployment
 ===============================
 
-It's possible to perform adjustments of schema in a deployemnt. It's important
-that there are no open transactions (simply retry schema creation until it
-succeeds). You can use relevant endpoint on Management API for this purpose.
-
-If there are changes in types, Dgraph tries to automatically perform conversion
-from an old type to the new one as described in the new schema (e.g. a float to
-string). Invalid schema changes (e.g. parsing string into a float, but the
-string cannot be parsed as a float) result in schema change errors. These errors
-need to be handled programatically by deployment administrator (ideally avoid
-such conversions).
+TBD.
 
 Creating own performance indicators
 ===================================
@@ -134,20 +101,19 @@ class should match `name` which is reported by performance indicator run.
       })
 
       # Device used during performance indicator run - CPU/GPU/TPU/...
-      device = model_property(type=str, index="exact")
-      matrix_size = model_property(type=int, index="int")
-      dtype = model_property(type=str, index="exact")
-      reps = model_property(type=int, index="int")
-      elapsed = model_property(type=float)
-      rate = model_property(type=float)
+      device = Column(String(128), nullable=False)
+      matrix_size = Column(Integer, nullable=False)
+      dtype = Column(String(128), nullable=False)
+      reps = Column(Integer, nullable=False)
+      elapsed = Column(Float, nullable=False)
+      rate = Column(Float, nullable=False)
 
+All the models use `SQLAchemy <https://www.sqlalchemy.org/>`_. See `docs <https://docs.sqlalchemy.org/>`_ for more info.
 
-After you have created relevant model, register your model to `ALL_PERFORMANCE_MODELS` and re-generate graph database schema (as discussed above).
+Online debugging of queries
+===========================
 
-Online debugging of queries done to Dgraph
-==========================================
-
-You can print to logger all the queries that are performed to a Dgraph instance. To do so, set the following environment variable:
+You can print to logger all the queries that are performed to a PostgreSQL instance. To do so, set the following environment variable:
 
 .. code-block::
 
@@ -165,19 +131,20 @@ The cache can be created with shipped CLI tool:
 .. code-block:: console
 
   # When using version from this Git repository:
-  PYTHONPATH=. pipenv run ./thoth-storages graph-cache cache.pickle -c ../adviser/cache_conf.yaml
+  PYTHONPATH=. THOTH_STORAGES_GRAPH_CACHE="cache.sqlite3" pipenv run ./thoth-storages graph-cache -c ../adviser/cache_conf.yaml
 
   # When using a version installed from PyPI:
-  thoth-storages graph-cache cache.pickle -c ../adviser/cache_conf.yaml
+  THOTH_STORAGES_GRAPH_CACHE="cache.sqlite3" thoth-storages graph-cache -c ../adviser/cache_conf.yaml
 
 The command above creates a SQLite3 database which carries some of the data
-loaded from the graph database.  The path to cache can be supplied using
-environment variable ``THOTH_STORAGES_GRAPH_CACHE``. By default, the module
-will create an in-memory SQLite3 database and will not persist it onto disk. If
-the configuration points to non-existing file, an SQLite3 database will be
-created and persisted onto disk with data which were added into it based on
-runtime usage. This naturally re-uses graph cache multiple times across runs
-(filled with the data needed) as expected.
+loaded from the PostgreSQL database which help resolver resolve software stacks
+faster.  The path to cache can be supplied using environment variable
+``THOTH_STORAGES_GRAPH_CACHE``. By default, the module will create an in-memory
+SQLite3 database and will not persist it onto disk. If the configuration points
+to non-existing file, an SQLite3 database will be created and persisted onto
+disk with data which were added into it based on runtime usage. This naturally
+re-uses graph cache multiple times across runs (filled with the data needed) as
+expected.
 
 Take a look at adviser repo, at ``cache_conf.yaml`` file specifically, to
 see how ``cache_conf.yaml`` file should be structured. An example could be:
