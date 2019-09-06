@@ -403,11 +403,11 @@
         },
         "pydgraph": {
             "hashes": [
-                "sha256:0763b2c1c7c9955ba06af195f3f193db0a33fa6575084b672a7515a1e0ba5650",
-                "sha256:c661a44716dd1e28d45ed606c0d72672b065e9a2d548fdd98d8c1292ff33e4c1"
+                "sha256:2d8543c6f1f64dc4aa24b27898954e7a7a2b88ef50d3f1dd9670b2cff1430df8",
+                "sha256:2ee8ffb4df371b0b1098d0779ff8de13a5a8db74b0875951cfa94268ddcc88da"
             ],
             "index": "pypi",
-            "version": "==1.2.0"
+            "version": "==2.0.1"
         },
         "pyjwt": {
             "hashes": [
@@ -523,10 +523,10 @@
         },
         "semantic-version": {
             "hashes": [
-                "sha256:192d4c0fce55643e05af0e49ca47d06608acf2dac2145bb26339fce16abfd6d2",
-                "sha256:9b38513ddc319aea9720bf6262f96e8cbf074c9f7150e13cc97fd71909abd750"
+                "sha256:695d5a06a86439d2dd0e5eaf3e46c5e6090bb5e72ba88377680a0acb483a3b44",
+                "sha256:71c716e99086c44d068262b86e4775aa6db7fabee0743e4e33b00fbf6f672585"
             ],
-            "version": "==2.8.1"
+            "version": "==2.8.2"
         },
         "sentry-sdk": {
             "hashes": [
