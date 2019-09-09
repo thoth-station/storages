@@ -898,6 +898,10 @@ class GraphDatabase(SQLBase):
         # TODO: remove  this from sources and substitute it
         return self.get_python_package_version_hashes_sha256(package_name, package_version, None)
 
+    def is_python_package_index_enabled(self, url: str) -> bool:
+        """Check if the given Python package index is enabled."""
+        return self._session.query(PythonPackageIndex.enabled).filter_by(url=url).one()[0]
+
     def register_python_package_index(
         self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True, enabled: bool = False
     ) -> bool:
