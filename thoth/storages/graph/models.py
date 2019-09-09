@@ -45,9 +45,9 @@ class PythonPackageVersion(Base, BaseExtension):
     package_name = Column(String(256), nullable=False)
     package_version = Column(String(256), nullable=False)
     # Nullable if we have unparseable entries.
-    os_name = Column(String(256), nullable=False)
-    os_version = Column(String(256), nullable=False)
-    python_version = Column(String(256), nullable=False)
+    os_name = Column(String(256), nullable=True)
+    os_version = Column(String(256), nullable=True)
+    python_version = Column(String(256), nullable=True)
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), nullable=False)
     # Null if cannot parse.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
@@ -124,7 +124,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     package_version = Column(String(256), nullable=True)
     # Nullable if coming from user or cross-index resolution.
 
-    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), primary_key=True, nullable=True)
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
 
     versions = relationship("DependsOn", back_populates="entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
@@ -287,8 +287,9 @@ class PythonPackageRequirement(Base, BaseExtension):
     name = Column(String(256), nullable=False)
     version_range = Column(String(256), nullable=False)
     develop = Column(Boolean, nullable=False)
-    index = Column(String(256))
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
 
+    index = relationship("PythonPackageIndex", back_populates="python_package_requirements")
     python_software_stacks = relationship("PythonRequirements", back_populates="python_package_requirement")
 
 
@@ -550,7 +551,7 @@ class HardwareInformation(Base, BaseExtension):
 class ProvenanceCheckerRun(Base, BaseExtension):
     """A class representing a single provenance-checker run."""
 
-    __tablename__ = "provenance_checker"
+    __tablename__ = "provenance_checker_run"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -581,6 +582,7 @@ class PythonPackageIndex(Base, BaseExtension):
     enabled = Column(Boolean, default=False)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="index")
+    python_package_requirements = relationship("PythonPackageRequirement", back_populates="index")
     python_package_version_entities = relationship("PythonPackageVersionEntity", back_populates="index")
 
     __table_args__ = (UniqueConstraint("url"), Index("url_idx", "url", unique=True))
