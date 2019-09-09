@@ -887,7 +887,7 @@ class GraphDatabase(SQLBase):
             query.filter(PythonPackageVersion.package_name == package_name)
             .filter(PythonPackageVersion.package_version == package_version)
             .join((HasArtifact, PythonPackageVersion.python_artifacts))
-            .join((PythonArtifact, HasArtifact.python_artifacts))
+            .join((PythonArtifact, HasArtifact.python_artifact))
             .with_entities(PythonArtifact.artifact_hash_sha256)
             .distinct()
         )
