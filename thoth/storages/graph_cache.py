@@ -32,6 +32,7 @@ class GraphCacheStore:
     _OBJECT_NAME = "graph_cache.sqlite3"
 
     def __init__(self, prefix: str = None):
+        """Initialize graph cache store."""
         self.prefix = prefix or "{}/{}/{}".format(
             os.environ["THOTH_CEPH_BUCKET_PREFIX"], os.environ["THOTH_DEPLOYMENT_NAME"], "graph-cache"
         )

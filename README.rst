@@ -63,6 +63,22 @@ Schema adjustment in deployment
 
 TBD.
 
+Generate schema images
+======================
+
+You can use shipped CLI ``thoth-storages`` to automatically generate schema images out of the current models:
+
+.. code-block:: console
+
+  # First, make sure you have dev packages installed:
+  pipenv install --dev
+  PYTHONPATH=. pipenv run python3 ./thoth-storages generate-schema
+
+The command above will produce 2 images named ``schema.png`` and
+``schema_cache.png``. The first PNG file shows schema for the main PostgreSQL
+instance and the latter one, as the name suggests, shows how cache schema looks
+like.
+
 Creating own performance indicators
 ===================================
 
