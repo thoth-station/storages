@@ -48,7 +48,6 @@ _LOGGER = logging.getLogger(__name__)
 
 def _only_if_enabled(func):
     """A decorator to make sure the graph database cache is used only if enabled."""
-
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not args[0].is_enabled():
@@ -61,7 +60,6 @@ def _only_if_enabled(func):
 
 def _only_if_inserts_enabled(func):
     """Decorator to make sure inserts are noop on production systems to reduce cache building overhead."""
-
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         if not args[0].is_inserts_enabled():

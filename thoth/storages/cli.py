@@ -47,11 +47,7 @@ def _print_version(ctx, _, value):
 @click.group()
 @click.pass_context
 @click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    envvar="THOTH_STORAGES_VERBOSE",
-    help="Be verbose about what's going on.",
+    "-v", "--verbose", is_flag=True, envvar="THOTH_STORAGES_VERBOSE", help="Be verbose about what's going on."
 )
 @click.option(
     "--version",
@@ -102,7 +98,7 @@ def create_graph_cache(cache_file: str, cache_config: str):
         _LOGGER.exception(
             "Failed to load cache configuration file %r with packages to have in the cache dump: %s",
             cache_config,
-            str(exc)
+            str(exc),
         )
         sys.exit(1)
 
@@ -123,17 +119,9 @@ def create_graph_cache(cache_file: str, cache_config: str):
 
         for package_version, index_url in versions:
             _LOGGER.info("Adding record for %r in version %r from %r", package_name, package_version, index_url)
-            graph.retrieve_transitive_dependencies_python(
-                package_name,
-                package_version,
-                index_url,
-            )
+            graph.retrieve_transitive_dependencies_python(package_name, package_version, index_url)
 
-    report = {
-        "cache_file": cache_file,
-        "cache_file_size": None,
-        "cache_stats": graph.stats(),
-    }
+    report = {"cache_file": cache_file, "cache_file_size": None, "cache_stats": graph.stats()}
     try:
         cache_file_size = os.path.getsize(cache_file)
         report["cache_file_size"] = cache_file_size
@@ -176,20 +164,8 @@ def store_cache(cache_file: str):
 
 
 @cli.command("generate-schema")
-@click.argument(
-    "schema_file",
-    type=str,
-    required=False,
-    default="schema.png",
-    metavar="schema.png",
-)
-@click.argument(
-    "schema_cache_file",
-    type=str,
-    required=False,
-    default="schema_cache.png",
-    metavar="schema_cache.png",
-)
+@click.argument("schema_file", type=str, required=False, default="schema.png", metavar="schema.png")
+@click.argument("schema_cache_file", type=str, required=False, default="schema_cache.png", metavar="schema_cache.png")
 def generate_schema(schema_file: str, schema_cache_file):
     """Generate an image out of the current schema."""
     try:
@@ -206,7 +182,7 @@ def generate_schema(schema_file: str, schema_cache_file):
     desc = sadisplay.describe(
         list(vars(models).values()) + list(vars(performance_models).values()),
         show_methods=True,
-        show_properties = True,
+        show_properties=True,
         show_indexes=False,
         show_simple_indexes=False,
         show_columns_of_indexes=False,
@@ -219,7 +195,7 @@ def generate_schema(schema_file: str, schema_cache_file):
     desc = sadisplay.describe(
         vars(cache_models).values(),
         show_methods=True,
-        show_properties = True,
+        show_properties=True,
         show_indexes=False,
         show_simple_indexes=False,
         show_columns_of_indexes=False,

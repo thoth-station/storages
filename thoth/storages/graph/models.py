@@ -36,6 +36,7 @@ from .models_base import get_python_package_version_index_combinations
 
 
 class PythonPackageVersion(Base, BaseExtension):
+    """Representation of a Python package version running on a specific software environment."""
 
     __tablename__ = "python_package_version"
 
@@ -112,6 +113,7 @@ class Solved(Base, BaseExtension):
 
 
 class PythonPackageVersionEntity(Base, BaseExtension):
+    """Representation of a Python package not running in any environment."""
 
     __tablename__ = "python_package_version_entity"
 
@@ -146,6 +148,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
 
 
 class DependsOn(Base, BaseExtension):
+    """Dependency of a Python package version."""
 
     __tablename__ = "depends_on"
 
@@ -167,6 +170,7 @@ class DependsOn(Base, BaseExtension):
 
 
 class EcosystemSolver(Base, BaseExtension):
+    """Record for an ecosystem solver."""
 
     __tablename__ = "ecosystem_solver"
 
@@ -230,6 +234,7 @@ class PackageExtractRun(Base, BaseExtension):
 
 
 class FoundPythonFile(Base, BaseExtension):
+    """State a package extract run found a Python file."""
 
     __tablename__ = "found_python_file"
 
@@ -245,6 +250,7 @@ class FoundPythonFile(Base, BaseExtension):
 
 
 class FoundRPM(Base, BaseExtension):
+    """State a package extract run found an RPM package."""
 
     __tablename__ = "found_rpm"
 
@@ -258,6 +264,7 @@ class FoundRPM(Base, BaseExtension):
 
 
 class FoundDeb(Base, BaseExtension):
+    """State a package extract run found a Debian package."""
 
     __tablename__ = "found_deb"
 
@@ -271,6 +278,7 @@ class FoundDeb(Base, BaseExtension):
 
 
 class PythonPackageRequirement(Base, BaseExtension):
+    """A requirement as stated by a software stack."""
 
     __tablename__ = "python_package_requirement"
 

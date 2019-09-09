@@ -121,7 +121,7 @@ class GraphDatabase(SQLBase):
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
         if solver_name.startswith("solver-"):
-            solver_identifiers = solver_name[len("solver-") :]
+            solver_identifiers = solver_name[len("solver-"):]
         else:
             raise ValueError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
 
@@ -134,7 +134,7 @@ class GraphDatabase(SQLBase):
 
         python_version = parts[2]
         if python_version.startswith("py"):
-            python_version = python_version[len("py") :]
+            python_version = python_version[len("py"):]
         else:
             raise ValueError(
                 f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
@@ -237,17 +237,17 @@ class GraphDatabase(SQLBase):
     ) -> float:
         """Get average performance of Python packages on the given runtime environment.
 
-        # We derive this average performance based on software stacks we have
-        # evaluated on the given software environment for run including the given
-        # package in specified version. There are also included stacks that
-        # failed for some reason that have negative performance impact on the overall value.
+        We derive this average performance based on software stacks we have
+        evaluated on the given software environment for run including the given
+        package in specified version. There are also included stacks that
+        failed for some reason that have negative performance impact on the overall value.
 
-        # There are considered software stacks that include packages listed,
-        # they can however include also other packages.
+        There are considered software stacks that include packages listed,
+        they can however include also other packages.
 
-        # Optional parameters additionally slice results - e.g. if run_software_environment is set,
-        # it picks only results that match the given parameters criteria.
-        # """
+        Optional parameters additionally slice results - e.g. if run_software_environment is set,
+        it picks only results that match the given parameters criteria.
+        """
         raise NotImplementedError
 
     def has_python_solver_error(
@@ -1223,7 +1223,7 @@ class GraphDatabase(SQLBase):
 
                 package_name = unsolvable["package_name"]
                 index_url = unsolvable["index"]
-                package_version = unsolvable["version_spec"][len("==") :]
+                package_version = unsolvable["version_spec"][len("=="):]
 
                 python_package_index = self._get_or_create_python_package_index(index_url)
 
