@@ -1012,7 +1012,7 @@ class GraphDatabase(SQLBase):
         kwargs.pop("self")
         raise NotImplementedError
 
-    def create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
+    def _create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
         result = []
         pipfile = Pipfile.from_dict(requirements)
@@ -1032,7 +1032,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def create_python_packages_pipfile(
+    def _create_python_packages_pipfile(
         self, pipfile_locked: dict, software_environment: SoftwareEnvironment = None,
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
@@ -1151,7 +1151,7 @@ class GraphDatabase(SQLBase):
         )
 
         if requirements is not None:
-            python_package_requirements = self.create_python_package_requirement(requirements)
+            python_package_requirements = self._create_python_package_requirement(requirements)
             for python_package_requirement in python_package_requirements:
                 PythonRequirements.get_or_create(
                     self._session,
@@ -1160,7 +1160,7 @@ class GraphDatabase(SQLBase):
                 )
 
         if requirements_lock is not None:
-            python_package_versions = self.create_python_packages_pipfile(
+            python_package_versions = self._create_python_packages_pipfile(
                 requirements_lock,
                 software_environment=software_environment,
             )
@@ -1785,7 +1785,7 @@ class GraphDatabase(SQLBase):
                     run_hardware_information_id=run_hardware_information.id,
                 )
 
-                python_package_requirements = self.create_python_package_requirement(
+                python_package_requirements = self._create_python_package_requirement(
                     document["result"]["parameters"]["requirements"]
                 )
                 for python_package_requirement in python_package_requirements:
