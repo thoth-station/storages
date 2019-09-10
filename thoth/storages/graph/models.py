@@ -83,6 +83,20 @@ class PythonFileDigest(VertexBase):
 
 
 @attr.s(slots=True)
+class VersionedSymbol(VertexBase):
+    """A class representing versioned symbols including associated library."""
+
+    library_name = model_property(type=str, index="exact")
+    symbol = model_property(type=str, index="exact")
+    version = model_property(type=str, index="exact")
+
+
+@attr.s(slots=True)
+class HasSymbol(ReverseEdgeBase):
+    """An edge representing a symbol found in an image."""
+
+
+@attr.s(slots=True)
 class FoundFile(ReverseEdgeBase):
     """An edge representing a filepath to the python file found in an image."""
 
@@ -386,6 +400,10 @@ class PythonPackageIndex(VertexBase):
     verify_ssl = model_property(type=bool)
 
 
+@attr.s(slots=True)
+class RequiresSymbol(ReverseEdgeBase):
+    """An edge representing a symbol required by python package."""
+
 ################################################################################
 #                          Environments and hardware.
 ################################################################################
@@ -606,6 +624,7 @@ ALL_CORE_MODELS = frozenset(
         UsedInJob,
         UserSoftwareStack,
         UserHardwareInformation,
+        VersionedSymbol,
     )
 )
 
