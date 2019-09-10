@@ -211,7 +211,7 @@ class PackageExtractRun(Base, BaseExtension):
     package_extract_version = Column(String(256), nullable=False)
     analysis_document_id = Column(String(256), nullable=False)
     datetime = Column(DateTime, nullable=False)
-    environment_type = Column(ENUM("runtime", "buildtime", name="environment_type", create_type=True), nullable=False)
+    environment_type = Column(ENUM("RUNTIME", "BUILDTIME", name="environment_type", create_type=True), nullable=False)
     origin = Column(String(256), nullable=True)
     debug = Column(Boolean, nullable=False, default=False)
     package_extract_error = Column(Boolean, nullable=False, default=False)
@@ -451,9 +451,9 @@ class AdviserRun(Base, BaseExtension):
     limit_latest_versions = Column(Integer, nullable=False)
     adviser_error = Column(Boolean, nullable=False, default=False)
     recommendation_type = Column(
-        ENUM("stable", "testing", "latest", name="recommendation_type", create_type=True), nullable=False
+        ENUM("STABLE", "TESTING", "LATEST", name="recommendation_type", create_type=True), nullable=False
     )
-    requirements_format = Column(ENUM("pipenv", name="requirements_format", create_type=True), nullable=False)
+    requirements_format = Column(ENUM("PIPENV", name="requirements_format", create_type=True), nullable=False)
 
     # Duration in seconds.
     duration = Column(Integer, nullable=True)  # XXX: nullable for now.
@@ -468,7 +468,7 @@ class AdviserRun(Base, BaseExtension):
         "PythonSoftwareStack", back_populates="adviser_runs", foreign_keys=[user_software_stack_id]
     )
 
-    advised_software_stacks = relationship("PythonSoftwareStack", back_populates="adviser_runs")
+    advised_software_stacks = relationship("Advised", back_populates="adviser_run")
     user_run_software_environment = relationship(
         "SoftwareEnvironment", back_populates="adviser_inputs_run", foreign_keys=[user_run_software_environment_id]
     )
@@ -478,6 +478,20 @@ class AdviserRun(Base, BaseExtension):
 
     hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
     hardware_information = relationship("HardwareInformation", back_populates="adviser_runs")
+
+
+class Advised(Base, BaseExtension):
+    """A relation stating advised software stack."""
+
+    __tablename__ = "advised"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id"))
+    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
+
+    adviser_run = relationship("AdviserRun", back_populates="advised_software_stacks")
+    python_software_stack = relationship("PythonSoftwareStack", back_populates="advised_by")
 
 
 class DependencyMonkeyRun(Base, BaseExtension):
@@ -640,15 +654,15 @@ class SoftwareEnvironment(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    environment_name = Column(String(256), nullable=False)
+    environment_name = Column(String(256), nullable=True)
     python_version = Column(String(256), nullable=True)
     image_name = Column(String(256), nullable=True)
-    image_sha = Column(String(256), nullable=False)
-    os_name = Column(String(256), nullable=False)
-    os_version = Column(String(256), nullable=False)
+    image_sha = Column(String(256), nullable=True)
+    os_name = Column(String(256), nullable=True)
+    os_version = Column(String(256), nullable=True)
     cuda_version = Column(String(256), nullable=True)
     software_environment_type = Column(
-        ENUM("buildtime", "runtime", name="software_environment_type", create_type=True), nullable=False
+        ENUM("BUILD", "RUN", name="software_environment_type", create_type=True), nullable=False
     )
     is_user = Column(Boolean, default=False, nullable=False)
 
@@ -752,8 +766,9 @@ class PythonSoftwareStack(Base, BaseExtension):
 
     inspection_runs = relationship("InspectionRun", back_populates="inspection_software_stack")
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
+    advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
-    software_stack_type = Column(ENUM("user", "inspection", "advised", name="software_stack_type", create_type=True))
+    software_stack_type = Column(ENUM("USER", "INSPECTION", "ADVISED", name="software_stack_type", create_type=True))
 
     performance_score = Column(Float, nullable=True)
     overall_score = Column(Float, nullable=True)
