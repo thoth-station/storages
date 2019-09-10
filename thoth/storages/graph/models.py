@@ -292,7 +292,9 @@ class PythonPackageRequirement(Base, BaseExtension):
 
     index = relationship("PythonPackageIndex", back_populates="python_package_requirements")
     python_software_stacks = relationship("PythonRequirements", back_populates="python_package_requirement")
-    dependency_monkey_runs = relationship("PythonDependencyMonkeyRequirements", back_populates="python_package_requirement")
+    dependency_monkey_runs = relationship(
+        "PythonDependencyMonkeyRequirements", back_populates="python_package_requirement"
+    )
 
 
 class CVE(Base, BaseExtension):
@@ -430,9 +432,7 @@ class InspectionRun(Base, BaseExtension):
         "SoftwareEnvironment", back_populates="inspection_runs_run", foreign_keys=[run_software_environment_id]
     )
 
-    dependency_monkey_run = relationship(
-        "DependencyMonkeyRun", back_populates="inspection_runs"
-    )
+    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="inspection_runs")
 
     inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
     inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
@@ -528,7 +528,9 @@ class DependencyMonkeyRun(Base, BaseExtension):
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
 
     inspection_runs = relationship("InspectionRun", back_populates="dependency_monkey_run")
-    python_package_requirements = relationship("PythonDependencyMonkeyRequirements", back_populates="dependency_monkey_run")
+    python_package_requirements = relationship(
+        "PythonDependencyMonkeyRequirements", back_populates="dependency_monkey_run"
+    )
     run_software_environment = relationship(
         "SoftwareEnvironment", back_populates="dependency_monkey_runs_run", foreign_keys=[run_software_environment_id]
     )
@@ -538,9 +540,7 @@ class DependencyMonkeyRun(Base, BaseExtension):
         foreign_keys=[build_software_environment_id],
     )
     run_hardware_information = relationship(
-        "HardwareInformation",
-        back_populates="dependency_monkey_runs_run",
-        foreign_keys=[run_hardware_information_id]
+        "HardwareInformation", back_populates="dependency_monkey_runs_run", foreign_keys=[run_hardware_information_id]
     )
     build_hardware_information = relationship(
         "HardwareInformation",
