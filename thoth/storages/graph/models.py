@@ -684,7 +684,7 @@ class SoftwareEnvironment(Base, BaseExtension):
 
 
 class IncludedFile(Base, BaseExtension):
-    """An relation representing file found in the given artifact."""
+    """A relation representing file found in the given artifact."""
 
     __tablename__ = "included_file"
 
@@ -839,7 +839,7 @@ class DebPreDepends(Base, BaseExtension):
 
 
 class DebReplaces(Base, BaseExtension):
-    """An relation of a deb package capturing package replacement.."""
+    """A relation of a deb package capturing package replacement.."""
 
     __tablename__ = "deb_replaces"
 
