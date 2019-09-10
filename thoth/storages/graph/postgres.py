@@ -89,6 +89,7 @@ from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
+from ..exceptions import NotFoundError
 from thoth.storages.exceptions import PythonIndexNotRegistered
 
 _LOGGER = logging.getLogger(__name__)
@@ -178,7 +179,11 @@ class GraphDatabase(SQLBase):
                 PackageExtractRun.package_extract_version
             )
         )
-        query_result = query.one()
+        query_result = query.fetch()
+
+        if query_result is None:
+            raise NotFoundError(f"No records found for analysis with id {analysis_document_id!r}")
+
         return {
             "analysis_datetime": query_result[0],
             "analysis_document_id": query_result[1],
