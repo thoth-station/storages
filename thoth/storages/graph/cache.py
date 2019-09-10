@@ -41,8 +41,6 @@ from .models_cache import DependsOn
 from .models_cache import PythonPackageVersion
 from .models_cache import PythonPackageVersionEntity
 
-from .models_base import get_python_package_version_filter_kwargs
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -68,6 +66,31 @@ def _only_if_inserts_enabled(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def _get_python_package_version_filter_kwargs(
+    package_name: str,
+    package_version: Union[str, None],
+    index_url: Union[str, None],
+    *,
+    os_name: Union[str, None],
+    os_version: Union[str, None],
+    python_version: Union[str, None],
+) -> dict:
+    """Get filter kwargs to query PythonPackageVersion records."""
+    filter_kwargs = {"package_name": package_name}
+    if package_version is not None:
+        filter_kwargs["package_version"] = package_version
+    if index_url is not None:
+        filter_kwargs["index_url"] = index_url
+    if os_name is not None:
+        filter_kwargs["os_name"] = os_name
+    if os_version is not None:
+        filter_kwargs["os_version"] = os_version
+    if python_version is not None:
+        filter_kwargs["python_version"] = python_version
+
+    return filter_kwargs
 
 
 @attr.s()  # Do not use slots here as methodtools will fail.
@@ -152,7 +175,7 @@ class GraphCache(SQLBase):
         python_version: str = None,
     ) -> Optional[List[Tuple[str, str]]]:
         """Retrieve dependencies for the given packages."""
-        filter_kwargs = get_python_package_version_filter_kwargs(
+        filter_kwargs = _get_python_package_version_filter_kwargs(
             package_name=package_name,
             package_version=package_version,
             index_url=index_url,
@@ -194,7 +217,7 @@ class GraphCache(SQLBase):
         python_version: Union[str, None],
     ) -> Optional[List[dict]]:
         """Get records for Python packages matching the given criteria for environment."""
-        filter_kwargs = get_python_package_version_filter_kwargs(
+        filter_kwargs = _get_python_package_version_filter_kwargs(
             package_name=package_name,
             package_version=package_version,
             index_url=index_url,
