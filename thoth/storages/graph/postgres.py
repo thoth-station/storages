@@ -177,7 +177,7 @@ class GraphDatabase(SQLBase):
         query = (
             self._session.query(SoftwareEnvironment.environment_name)
             .filter(SoftwareEnvironment.is_user == is_user_run)
-            .filter(SoftwareEnvironment.software_environment_type == environment_type)
+            .filter(SoftwareEnvironment.environment_type == environment_type)
             .offset(start_offset)
             .limit(count)
         )
@@ -188,12 +188,12 @@ class GraphDatabase(SQLBase):
         self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
-        return self._do_software_environment_listing(start_offset, count, is_user_run, "RUN")
+        return self._do_software_environment_listing(start_offset, count, is_user_run, "RUNTIME")
 
     def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of software environments available for build."""
         # We do not have user software environment which is build environment yet.
-        return self._do_software_environment_listing(start_offset, count, False, "BUILD")
+        return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
 
     def run_software_environment_analyses_listing(
         self,
@@ -1057,7 +1057,7 @@ class GraphDatabase(SQLBase):
     def _runtime_environment_conf2models(
         self,
         runtime_environment: dict,
-        software_environment_type: str,
+        environment_type: str,
         is_user: bool,
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
@@ -1087,7 +1087,7 @@ class GraphDatabase(SQLBase):
             os_name=runtime_environment.get("os_name"),
             os_version=runtime_environment.get("os_version"),
             cuda_version=runtime_environment.get("cuda_version"),
-            software_environment_type=software_environment_type,
+            environment_type=environment_type,
             is_user=is_user,
         )
 
@@ -1363,6 +1363,7 @@ class GraphDatabase(SQLBase):
         """Sync the given analysis result to the graph database."""
         analysis_document_id = AnalysisResultsStore.get_document_id(document)
         environment_type = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["environment_type"]
+        environment_type = environment_type.upper()
         origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
         os_name = document["result"]["operating-system"]["name"]
@@ -1387,7 +1388,7 @@ class GraphDatabase(SQLBase):
                     os_name=os_name,
                     os_version=os_version,
                     cuda_version=None,  # TODO: find CUDA version
-                    software_environment_type=environment_type,
+                    environment_type=environment_type,
                     is_user=False,
                 )
                 package_extract_run, _ = PackageExtractRun.get_or_create(
@@ -1634,7 +1635,7 @@ class GraphDatabase(SQLBase):
             with self._session.begin(subtransactions=True):
                 hardware_information, user_run_software_environment = self._runtime_environment_conf2models(
                     runtime_environment=runtime_environment,
-                    software_environment_type="RUN",
+                    environment_type="RUNTIME",
                     is_user=True,
                 )
 
@@ -1758,12 +1759,12 @@ class GraphDatabase(SQLBase):
             with self._session.begin(subtransactions=True):
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
-                    software_environment_type="RUN",
+                    environment_type="RUNTIME",
                     is_user=False,
                 )
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
-                    software_environment_type="BUILD",
+                    environment_type="BUILDTIME",
                     is_user=False,
                 )
                 dependency_monkey_run, _ = DependencyMonkeyRun.get_or_create(
