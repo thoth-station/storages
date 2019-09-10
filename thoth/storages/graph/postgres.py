@@ -55,6 +55,19 @@ from .models import ProvenanceCheckerRun
 from .models import InspectionRun
 from .models import EcosystemSolver
 from .models import PythonPackageRequirement
+from .models import RPMRequirement
+from .models import RPMPackageVersion
+from .models import DebReplaces
+from .models import DebPackageVersion
+from .models import FoundDeb
+from .models import DebDependency
+from .models import DebDepends
+from .models import DebPreDepends
+from .models import RPMRequires
+from .models import Identified
+from .models import PythonFileDigest
+from .models import FoundPythonFile
+from .models import FoundRPM
 from .models import CVE
 from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
@@ -1059,9 +1072,203 @@ class GraphDatabase(SQLBase):
 
         return cve, existed
 
+    def _rpm_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of RPMs found in the given container image."""
+        for rpm_package_info in document["result"]["rpm-dependencies"]:
+            rpm_package_version, _ = RPMPackageVersion.get_or_create(
+                self._session,
+                package_name=rpm_package_info["name"],
+                package_version=rpm_package_info["version"],
+                release=rpm_package_info.get("release"),
+                epoch=rpm_package_info.get("epoch"),
+                arch=rpm_package_info.get("arch"),
+                src=rpm_package_info.get("src", False),
+                package_identifier=rpm_package_info.get("package_identifier", rpm_package_info["name"]),
+            )
+            FoundRPM.get_or_create(
+                self._session,
+                package_extract_run_id=package_extract_run.id,
+                rpm_package_version_id=rpm_package_version.id,
+
+            )
+            for dependency in rpm_package_info["dependencies"]:
+                rpm_requirement, _ = RPMRequirement.get_or_create(
+                    self._session,
+                    rpm_requirement_name=dependency
+                )
+                RPMRequires.get_or_create(
+                    self._session,
+                    rpm_package_version_id=rpm_package_version.id,
+                    rpm_requirement_id=rpm_requirement.id,
+                )
+
+    def _deb_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of deb packages found in the given container image."""
+        for deb_package_info in document["result"]["deb-dependencies"]:
+            deb_package_version, _ = DebPackageVersion.get_or_create(
+                self._session,
+                package_name=deb_package_info["name"],
+                package_version=deb_package_info["version"],
+                epoch=deb_package_info.get("epoch"),
+                arch=deb_package_info["arch"],
+            )
+            FoundDeb.get_or_create(
+                self._session,
+                deb_package_version_id=deb_package_version.id,
+                package_extract_run_id=package_extract_run.id,
+            )
+
+            # These three can be grouped with a zip, but that is not that readable...
+            for pre_depends in deb_package_info.get("pre-depends") or []:
+                deb_dependency, _ = DebDependency.get_or_create(self._session, package_name=pre_depends["name"])
+                DebPreDepends.get_or_create(
+                    self._session,
+                    deb_package_version_id=deb_package_version.id,
+                    deb_dependency_id=deb_dependency.id,
+                    version_range=pre_depends.get("version")
+                )
+
+            for depends in deb_package_info.get("depends") or []:
+                deb_dependency, _ = DebDependency.get_or_create(self._session, package_name=depends["name"])
+                DebDepends.get_or_create(
+                    self._session,
+                    deb_package_version_id=deb_package_version.id,
+                    deb_dependency_id=deb_dependency.id,
+                    version_range=depends.get("version"),
+                )
+
+            for replaces in deb_package_info.get("replaces") or []:
+                deb_dependency, _ = DebDependency.get_or_create(self._session, package_name=replaces["name"])
+                DebReplaces.from_properties(
+                    deb_package_version_id=deb_package_version.id,
+                    deb_dependency_id=deb_dependency.id,
+                    version_range=replaces.get("version")
+                )
+
+    def _python_sync_analysis_result(
+        self, package_extract_run: PackageExtractRun, document: dict, software_environment: SoftwareEnvironment,
+    ) -> None:
+        """Sync results of Python packages found in the given container image."""
+        for python_package_info in document["result"]["mercator"] or []:
+            if python_package_info["ecosystem"] == "Python-RequirementsTXT":
+                # We don't want to sync found requirement.txt artifacts as
+                # they do not carry any valuable information for us.
+                continue
+
+            if "result" not in python_package_info or "error" in python_package_info["result"]:
+                # Mercator was unable to process this - e.g. there was a
+                # setup.py that is not distutils setup.py
+                _LOGGER.info("Skipping error entry - %r", python_package_info)
+                continue
+
+            if not python_package_info["result"].get("name"):
+                analysis_document_id = AnalysisResultsStore.get_document_id(document)
+                _LOGGER.warning(
+                    "No package name found in entry %r when syncing document %r",
+                    python_package_info,
+                    analysis_document_id,
+                )
+                continue
+
+            package_name = self.normalize_python_package_name(python_package_info["result"]["name"])
+            package_version = python_package_info["result"]["version"]
+
+            python_entity, _ = PythonPackageVersionEntity.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=None
+            )
+
+            python_package_version, _ = PythonPackageVersion.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                os_name=software_environment.os_name,
+                os_version=software_environment.os_version,
+                python_version=software_environment.python_version,
+                python_package_index_id=None,
+                entity_id=python_entity.id,
+            )
+
+            Identified.get_or_create(
+                self._session,
+                package_extract_run_id=package_extract_run.id,
+                python_package_version_id=python_package_version.id,
+            )
+
+    def _python_file_digests_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
+        """Sync results of Python files found in the given container image."""
+        for py_file in document["result"]["python-files"]:
+            python_file_digest, _ = PythonFileDigest.get_or_create(
+                self._session,
+                sha256=py_file["sha256"],
+            )
+
+            FoundPythonFile.get_or_create(
+                self._session,
+                package_extract_run_id=package_extract_run.id,
+                python_file_digest_id=python_file_digest.id,
+                file=py_file["filepath"],
+            )
+
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
-        raise NotImplementedError
+        analysis_document_id = AnalysisResultsStore.get_document_id(document)
+        environment_type = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["environment_type"]
+        origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
+        environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
+        os_name = document["result"]["operating-system"]["name"]
+        os_version = document["result"]["operating-system"]["version_id"]
+
+        image_tag = "latest"
+        image_name = environment_name
+        parts = environment_name.rsplit(":", maxsplit=1)
+        if len(parts) == 2:
+            image_name = parts[0]
+            image_tag = parts[1]
+
+        # TODO: capture errors on image analysis? result of package-extract should be a JSON with error flag
+        try:
+            with self._session.begin(subtransactions=True):
+                software_environment, _ = SoftwareEnvironment.get_or_create(
+                    self._session,
+                    environment_name=environment_name,
+                    python_version=None,  # TODO: find Python version which would be used by default
+                    image_name=image_name,
+                    image_sha=document["result"]["layers"][-1],
+                    os_name=os_name,
+                    os_version=os_version,
+                    cuda_version=None,  # TODO: find CUDA version
+                    software_environment_type=environment_type,
+                    is_user=False,
+                )
+                package_extract_run, _ = PackageExtractRun.get_or_create(
+                    self._session,
+                    analysis_document_id=analysis_document_id,
+                    datetime=document["metadata"]["datetime"],
+                    package_extract_version=document["metadata"]["analyzer_version"],
+                    package_extract_name=document["metadata"]["analyzer"],
+                    environment_type=environment_type,
+                    origin=origin,
+                    debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
+                    package_extract_error=False,
+                    image_tag=image_tag,
+                    duration=None,  # TODO: assign duration
+                    os_id=document["result"].get("operating-system", {}).get("id"),
+                    os_name=os_name,
+                    os_version_id=os_version,
+                    software_environment_id=software_environment.id,
+                )
+                self._rpm_sync_analysis_result(package_extract_run, document)
+                self._deb_sync_analysis_result(package_extract_run, document)
+                self._python_sync_analysis_result(package_extract_run, document, software_environment)
+                self._python_file_digests_sync_analysis_result(package_extract_run, document)
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def sync_package_analysis_result(self, document: dict) -> None:
         """Sync the given package analysis result to the graph database."""
