@@ -77,7 +77,9 @@ class PerformanceIndicatorBase:
     ru_nivcsw = Column(Integer, nullable=False)
 
     @classmethod
-    def create_from_report(cls, session: Session, inspection_document: dict, inspection_run_id: str) -> "PerformanceIndicatorBase":
+    def create_from_report(
+        cls, session: Session, inspection_document: dict, inspection_run_id: int
+    ) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
         framework = inspection_document["job_log"]["stdout"].get("framework")

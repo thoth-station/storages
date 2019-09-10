@@ -89,7 +89,7 @@ from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
 from .models_performance import PiConv2D
 from .models_performance import PiMatmul
-from .models_performance import ALL_PERFORMANCE_MODELS
+from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
 from sqlalchemy import func
 
@@ -1272,12 +1272,12 @@ class GraphDatabase(SQLBase):
                 build_memory = build_memory / (1024 ** 3)
 
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                    document["specification"]["run"].get("requests", {}), software_environment_type="RUN", is_user=False
+                    document["specification"]["run"].get("requests", {}), environment_type="RUNTIME", is_user=False
                 )
 
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                     document["specification"]["build"].get("requests", {}),
-                    software_environment_type="BUILD",
+                    environment_type="BUILDTIME",
                     is_user=False,
                 )
 
@@ -1360,10 +1360,6 @@ class GraphDatabase(SQLBase):
                         document,
                         inspection_run_id=inspection_run.id
                         )
-
-                    pi, _ = performance_model_class.get_or_create(
-                        performance_indicator
-                    )
 
         except Exception:
             self._session.rollback()
