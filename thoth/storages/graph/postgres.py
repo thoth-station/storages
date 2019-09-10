@@ -1844,8 +1844,16 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_all_pi_per_framework_count(self) -> dict:
+    def get_all_pi_per_framework_count(self, framework: str) -> dict:
         """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
+        result = {}
+        for pi_model in ALL_PERFORMANCE_MODELS:
+            result[pi_model.__tablename__] = self._session.query(pi_model).filter_by(framework=framework).count()
+
+        return result
+
+    def get_all_pi_count(self) -> dict:
+        """Retrieve dictionary mapping framework to performance indicator count (regardless of pi type)."""
         counter = Counter()
         for pi_model in ALL_PERFORMANCE_MODELS:
             query_result = (
