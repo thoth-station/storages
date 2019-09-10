@@ -26,6 +26,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import String
 from sqlalchemy import Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Session
 from voluptuous import Required
 from voluptuous import Schema
 
@@ -79,7 +80,7 @@ class PerformanceIndicatorBase:
     ru_nivcsw = Column(Integer, nullable=False)
 
     @classmethod
-    def create_from_report(cls, inspection_document: dict) -> "PerformanceIndicatorBase":
+    def create_from_report(cls, session: Session, inspection_document: dict) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
         framework = inspection_document["job_log"]["stdout"].get("framework")
@@ -91,7 +92,8 @@ class PerformanceIndicatorBase:
             _LOGGER.warning("No overall score detected in performance indicator %r", overall_score)
 
         partial_model = partial(
-            cls.from_properties,
+            cls.get_or_create,
+            session,
             framework=framework,
             origin=inspection_document["specification"]["script"],
             version=inspection_document["job_log"]["stdout"].get("version")
