@@ -288,8 +288,9 @@ class PythonPackageRequirement(Base, BaseExtension):
     name = Column(String(256), nullable=False)
     version_range = Column(String(256), nullable=False)
     develop = Column(Boolean, nullable=False)
-    index = Column(String(256))
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
 
+    index = relationship("PythonPackageIndex", back_populates="python_package_requirements")
     python_software_stacks = relationship("PythonRequirements", back_populates="python_package_requirement")
 
 
@@ -551,7 +552,7 @@ class HardwareInformation(Base, BaseExtension):
 class ProvenanceCheckerRun(Base, BaseExtension):
     """A class representing a single provenance-checker run."""
 
-    __tablename__ = "provenance_checker"
+    __tablename__ = "provenance_checker_run"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -582,6 +583,7 @@ class PythonPackageIndex(Base, BaseExtension):
     enabled = Column(Boolean, default=False)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="index")
+    python_package_requirements = relationship("PythonPackageRequirement", back_populates="index")
     python_package_version_entities = relationship("PythonPackageVersionEntity", back_populates="index")
 
     __table_args__ = (UniqueConstraint("url"), Index("url_idx", "url", unique=True))

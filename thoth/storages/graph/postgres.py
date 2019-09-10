@@ -35,6 +35,8 @@ from sqlalchemy import tuple_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from thoth.python import PackageVersion
+from thoth.python import Pipfile
+from thoth.python import PipfileLock
 
 from .cache import GraphCache
 from .models import PythonPackageVersion
@@ -46,6 +48,8 @@ from .models import AdviserRun
 from .models import HasArtifact
 from .models import Solved
 from .models import PythonSoftwareStack
+from .models import PythonRequirements
+from .models import PythonRequirementsLock
 from .models import DependsOn
 from .models import PythonPackageVersionEntity
 from .models import HasVulnerability
@@ -78,6 +82,7 @@ from .sql_base import SQLBase
 from .models_base import Base
 
 from ..analyses import AnalysisResultsStore
+from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from thoth.storages.exceptions import PythonIndexNotRegistered
 
@@ -991,14 +996,6 @@ class GraphDatabase(SQLBase):
         kwargs.pop("self")
         raise NotImplementedError
 
-    def create_python_packages_pipfile(
-        self, pipfile_locked: dict, run_software_environment: UserRunSoftwareEnvironmentModel = None
-    ) -> List[PythonPackageVersion]:
-        """Create Python packages from Pipfile.lock entries and return them."""
-        kwargs = locals()
-        kwargs.pop("self")
-        raise NotImplementedError
-
     def create_user_software_stack_pipfile(
         self,
         adviser_document_id: str,
@@ -1012,7 +1009,63 @@ class GraphDatabase(SQLBase):
 
     def create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
-        raise NotImplementedError
+        result = []
+        pipfile = Pipfile.from_dict(requirements)
+        for requirement in pipfile.packages.packages.values():
+            index = None
+            if requirement.index is not None:
+                index = self._get_or_create_python_package_index(requirement.index.url, only_if_enabled=False)
+
+            python_package_requirement, _ = PythonPackageRequirement.get_or_create(
+                self._session,
+                name=self.normalize_python_package_name(requirement.name),
+                version_range=requirement.version,
+                python_package_index_id=index.id if index else None,
+                develop=requirement.develop,
+            )
+            result.append(python_package_requirement)
+
+        return result
+
+    def create_python_packages_pipfile(
+        self, pipfile_locked: dict, software_environment: SoftwareEnvironment = None,
+    ) -> List[PythonPackageVersion]:
+        """Create Python packages from Pipfile.lock entries and return them."""
+        result = []
+        pipfile_locked = PipfileLock.from_dict(pipfile_locked, pipfile=None)
+        os_name = software_environment.os_name if software_environment else None
+        os_version = software_environment.os_version if software_environment else None
+        python_version = software_environment.python_version if software_environment else None
+
+        for package in pipfile_locked.packages.packages.values():
+            index = None
+            if package.index is not None:
+                index = self._get_or_create_python_package_index(package.index.url, only_if_enabled=False)
+
+            package_name = self.normalize_python_package_name(package.name)
+            package_version = package.locked_version
+
+            entity, _ = PythonPackageVersionEntity.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id if index else None,
+            )
+
+            python_package_version, _ = PythonPackageVersion.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id if index else None,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                entity_id=entity.id,
+            )
+
+            result.append(python_package_version)
+
+        return result
 
     def create_inspection_software_stack_pipfile(self, document_id: str, pipfile_locked: dict) -> PythonSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
@@ -1286,7 +1339,7 @@ class GraphDatabase(SQLBase):
             if only_if_enabled:
                 raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not know to system")
 
-            python_package_index = PythonPackageIndex.get_or_create(self._session, index_url=index_url)
+            python_package_index, _ = PythonPackageIndex.get_or_create(self._session, url=index_url)
         elif not python_package_index.enabled and only_if_enabled:
             raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not enabled")
 
@@ -1333,7 +1386,7 @@ class GraphDatabase(SQLBase):
                         self._session,
                         package_name=self.normalize_python_package_name(package_name),
                         package_version=package_version,
-                        index=python_package_index,
+                        python_package_index_id=python_package_index.id,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -1520,7 +1573,57 @@ class GraphDatabase(SQLBase):
 
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
-        raise NotImplementedError
+        provenance_checker_document_id = ProvenanceResultsStore.get_document_id(document)
+        origin = (document["metadata"]["arguments"]["thoth-adviser"].get("metadata") or {}).get("origin")
+
+        if not origin:
+            _LOGGER.warning("No origin stated in the provenance-checker result %r", provenance_checker_document_id)
+
+        try:
+            with self._session.begin(subtransactions=True):
+                software_stack, _ = PythonSoftwareStack.get_or_create(
+                    self._session,
+                    performance_score=None,
+                    overall_score=None,
+                    software_stack_type="user",
+                )
+
+                provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
+                    self._session,
+                    provenance_checker_document_id=provenance_checker_document_id,
+                    datetime=document["metadata"]["datetime"],
+                    provenance_checker_version=document["metadata"]["analyzer_version"],
+                    provenance_checker_name=document["metadata"]["analyzer"],
+                    origin=origin,
+                    debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
+                    provenance_checker_error=document["result"]["error"],
+                    duration=None,  # TODO: assign duration
+                    user_software_stack_id=software_stack.id,
+                )
+
+                user_input = document["result"]["input"]
+                if user_input.get("requirements"):
+                    python_package_requirements = self.create_python_package_requirement(user_input["requirements"])
+                    for python_package_requirement in python_package_requirements:
+                        PythonRequirements.get_or_create(
+                            self._session,
+                            python_software_stack_id=software_stack.id,
+                            python_package_requirement_id=python_package_requirement.id,
+                        )
+
+                if user_input.get("requirements_locked"):
+                    python_package_versions = self.create_python_packages_pipfile(user_input["requirements_locked"])
+                    for python_package_version in python_package_versions:
+                        PythonRequirementsLock.get_or_create(
+                            self._session,
+                            python_software_stack_id=software_stack.id,
+                            python_package_version_id=python_package_version.id,
+                        )
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def sync_dependency_monkey_result(self, document: dict) -> None:
         """Sync reports of dependency monkey runs."""
