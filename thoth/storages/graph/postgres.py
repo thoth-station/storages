@@ -1766,14 +1766,14 @@ class GraphDatabase(SQLBase):
                     software_environment_type="BUILD",
                     is_user=False,
                 )
-                dependency_monkey_run = DependencyMonkeyRun.get_or_create(
+                dependency_monkey_run, _ = DependencyMonkeyRun.get_or_create(
                     self._session,
                     dependency_monkey_document_id=DependencyMonkeyReportsStore.get_document_id(document),
-                    dependency_monkey_datetime=document["metadata"]["datetime"],
+                    datetime=document["metadata"]["datetime"],
                     dependency_monkey_name=document["metadata"]["analyzer"],
                     dependency_monkey_version=document["metadata"]["analyzer_version"],
                     seed=document["result"]["parameters"].get("seed"),
-                    decision=document["result"]["parameters"].get("decision"),
+                    decision=document["result"]["parameters"].get("decision_type"),
                     count=document["result"]["parameters"].get("count"),
                     limit_latest_versions=document["result"]["parameters"].get("limit_latest_versions"),
                     debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
