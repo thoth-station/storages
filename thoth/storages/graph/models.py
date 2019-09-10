@@ -44,7 +44,8 @@ class PythonPackageVersion(Base, BaseExtension):
 
     package_name = Column(String(256), nullable=False)
     package_version = Column(String(256), nullable=False)
-    # Nullable if we have unparseable entries.
+    # Nullable if we have unparseable entries or entries comming from package-extract where we
+    # were unable to detect these entries.
     os_name = Column(String(256), nullable=True)
     os_version = Column(String(256), nullable=True)
     python_version = Column(String(256), nullable=True)
@@ -53,6 +54,7 @@ class PythonPackageVersion(Base, BaseExtension):
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
 
     dependencies = relationship("DependsOn", back_populates="version")
+    package_extract_runs = relationship("Identified", back_populates="python_package_version")
     solvers = relationship("Solved", back_populates="version")
     python_artifacts = relationship("HasArtifact", back_populates="python_package_version")
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
@@ -128,7 +130,6 @@ class PythonPackageVersionEntity(Base, BaseExtension):
 
     versions = relationship("DependsOn", back_populates="entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
-    package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
     # inspection_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
     # user_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
@@ -217,9 +218,9 @@ class PackageExtractRun(Base, BaseExtension):
     # An image tag which was used during image analysis. As this tag can change (e.g. latest is always changing
     # on new builds), it's part of this class instead of Runtime/Buildtime environment to keep correct
     # linkage for same container images.
-    image_tag = Column(Boolean, nullable=False)
+    image_tag = Column(String(256), nullable=False)
     # Duration in seconds.
-    duration = Column(Integer, nullable=False)
+    duration = Column(Integer, nullable=True)
     # Entries parsed from /etc/os-release
     os_name = Column(String(256), nullable=False)
     os_id = Column(String(256), nullable=False)
@@ -647,7 +648,7 @@ class SoftwareEnvironment(Base, BaseExtension):
     os_version = Column(String(256), nullable=False)
     cuda_version = Column(String(256), nullable=True)
     software_environment_type = Column(
-        ENUM("build", "run", name="software_environment_type", create_type=True), nullable=False
+        ENUM("buildtime", "runtime", name="software_environment_type", create_type=True), nullable=False
     )
     is_user = Column(Boolean, default=False, nullable=False)
 
@@ -685,7 +686,7 @@ class SoftwareEnvironment(Base, BaseExtension):
 
 
 class IncludedFile(Base, BaseExtension):
-    """An edge representing file found in the given artifact."""
+    """A relation representing file found in the given artifact."""
 
     __tablename__ = "included_file"
 
@@ -701,17 +702,17 @@ class IncludedFile(Base, BaseExtension):
 
 
 class Identified(Base, BaseExtension):
-    """An edge representing a package identified by a package-extract run."""
+    """A relation representing a Python package version identified by a package-extract run."""
 
     __tablename__ = "identified"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
-    python_package_version_entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), primary_key=True)
+    python_package_version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
 
     package_extract_run = relationship("PackageExtractRun", back_populates="python_package_version_entities")
-    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="package_extract_runs")
+    python_package_version = relationship("PythonPackageVersion", back_populates="package_extract_runs")
 
 
 class HasVulnerability(Base, BaseExtension):
@@ -809,7 +810,7 @@ class DebPackageVersion(Base, BaseExtension):
 
 
 class DebDepends(Base, BaseExtension):
-    """Depending edge of a deb package."""
+    """Depending relation of a deb package."""
 
     __tablename__ = "deb_depends"
 
@@ -825,7 +826,7 @@ class DebDepends(Base, BaseExtension):
 
 
 class DebPreDepends(Base, BaseExtension):
-    """Pre-depending edge of a deb package."""
+    """Pre-depending relation of a deb package."""
 
     __tablename__ = "deb_pre_depends"
 
@@ -834,13 +835,13 @@ class DebPreDepends(Base, BaseExtension):
     deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id"), primary_key=True)
     deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id"), primary_key=True)
 
-    version_range = Column(String(256), nullable=False)
+    version_range = Column(String(256), nullable=True)
     deb_package_version = relationship("DebPackageVersion", back_populates="pre_depends")
     deb_dependency = relationship("DebDependency", back_populates="deb_package_versions_pre_depends")
 
 
 class DebReplaces(Base, BaseExtension):
-    """An edge of a deb package capturing package replacement.."""
+    """A relation of a deb package capturing package replacement.."""
 
     __tablename__ = "deb_replaces"
 
