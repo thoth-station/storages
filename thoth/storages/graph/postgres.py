@@ -1041,34 +1041,55 @@ class GraphDatabase(SQLBase):
         python_version = software_environment.python_version if software_environment else None
 
         for package in pipfile_locked.packages.packages.values():
-            index = None
-            if package.index is not None:
-                index = self._get_or_create_python_package_index(package.index.url, only_if_enabled=False)
-
-            package_name = self.normalize_python_package_name(package.name)
-            package_version = package.locked_version
-
-            entity, _ = PythonPackageVersionEntity.get_or_create(
-                self._session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=index.id if index else None,
-            )
-
-            python_package_version, _ = PythonPackageVersion.get_or_create(
-                self._session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=index.id if index else None,
+            result.append(self._create_python_package_version(
+                package_name=package.name,
+                package_version=package.locked_version,
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                entity_id=entity.id,
-            )
-
-            result.append(python_package_version)
+                index_url=package.index.url if package.index else None,
+            ))
 
         return result
+
+    def _create_python_package_version(
+        self,
+        package_name: str,
+        package_version: str,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
+        index_url: Union[str, None],
+    ) -> PythonPackageVersion:
+        """Create a Python package version.
+
+        Make sure it is properly mirrored with a Python package entity and connected to a Python package index.
+        """
+        index = None
+        if index_url is not None:
+            index = self._get_or_create_python_package_index(index_url, only_if_enabled=False)
+
+        package_name = self.normalize_python_package_name(package_name)
+
+        entity, _ = PythonPackageVersionEntity.get_or_create(
+            self._session,
+            package_name=package_name,
+            package_version=package_version,
+            python_package_index_id=index.id if index else None,
+        )
+
+        python_package_version, _ = PythonPackageVersion.get_or_create(
+            self._session,
+            package_name=package_name,
+            package_version=package_version,
+            python_package_index_id=index.id if index else None,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+            entity_id=entity.id,
+        )
+
+        return python_package_version
 
     def create_inspection_software_stack_pipfile(self, document_id: str, pipfile_locked: dict) -> PythonSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
@@ -1226,25 +1247,13 @@ class GraphDatabase(SQLBase):
                 )
                 continue
 
-            package_name = self.normalize_python_package_name(python_package_info["result"]["name"])
-            package_version = python_package_info["result"]["version"]
-
-            python_entity, _ = PythonPackageVersionEntity.get_or_create(
-                self._session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=None
-            )
-
-            python_package_version, _ = PythonPackageVersion.get_or_create(
-                self._session,
-                package_name=package_name,
-                package_version=package_version,
+            python_package_version = self._create_python_package_version(
+                package_name=python_package_info["result"]["name"],
+                package_version=python_package_info["result"]["version"],
                 os_name=software_environment.os_name,
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
-                python_package_index_id=None,
-                entity_id=python_entity.id,
+                index_url=None,
             )
 
             Identified.get_or_create(
@@ -1376,24 +1385,13 @@ class GraphDatabase(SQLBase):
                     package_version = python_package_info["package_version"]
                     index_url = python_package_info["index_url"]
 
-                    python_package_index = self._get_or_create_python_package_index(index_url)
-
-                    entity, _ = PythonPackageVersionEntity.get_or_create(
-                        self._session,
-                        package_name=self.normalize_python_package_name(package_name),
-                        package_version=package_version,
-                        python_package_index_id=python_package_index.id,
-                    )
-
-                    python_package_version, _ = PythonPackageVersion.get_or_create(
-                        self._session,
-                        package_name=self.normalize_python_package_name(package_name),
-                        package_version=package_version,
-                        python_package_index_id=python_package_index.id,
+                    python_package_version = self._create_python_package_version(
+                        package_name,
+                        package_version,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
-                        entity_id=entity.id,
+                        index_url=index_url,
                     )
 
                     for sha256 in python_package_info["sha256"]:
@@ -1429,7 +1427,7 @@ class GraphDatabase(SQLBase):
                                     self._session,
                                     package_name=self.normalize_python_package_name(dependency["package_name"]),
                                     package_version=dependency_version,
-                                    python_package_index_id=python_package_index.id,
+                                    python_package_index_id=None,
                                 )
 
                                 DependsOn.get_or_create(
@@ -1444,31 +1442,20 @@ class GraphDatabase(SQLBase):
                 package_version = error_info["version"]
                 index_url = error_info["index"]
 
-                python_package_index = self._get_or_create_python_package_index(index_url)
-
-                entity, _ = PythonPackageVersionEntity.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=python_package_index.id,
-                )
-
-                python_package_version, _ = PythonPackageVersion.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=python_package_index.id,
+                python_package_version = self._create_python_package_version(
+                    package_name,
+                    package_version,
                     os_name=ecosystem_solver.os_name,
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
-                    entity_id=entity.id,
+                    index_url=index_url,
                 )
 
                 solved, _ = Solved.get_or_create(
                     self._session,
                     datetime=solver_datetime,
                     document_id=solver_document_id,
-                    version=python_package_version,
+                    version_id=python_package_version.id,
                     ecosystem_solver=ecosystem_solver,
                     duration=None,
                     error=True,
@@ -1492,24 +1479,13 @@ class GraphDatabase(SQLBase):
                 index_url = unsolvable["index"]
                 package_version = unsolvable["version_spec"][len("=="):]
 
-                python_package_index = self._get_or_create_python_package_index(index_url)
-
-                entity, _ = PythonPackageVersionEntity.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=python_package_index.id,
-                )
-
-                python_package_version, _ = PythonPackageVersion.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=python_package_index.id,
+                python_package_version = self._create_python_package_version(
+                    package_name,
+                    package_version,
                     os_name=ecosystem_solver.os_name,
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
-                    entity_id=entity.id,
+                    index_url=index_url,
                 )
 
                 solved, _ = Solved.get_or_create(
@@ -1535,22 +1511,13 @@ class GraphDatabase(SQLBase):
 
                 package_name, package_version = parts
 
-                entity, _ = PythonPackageVersionEntity.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=None,
-                )
-
-                python_package_version, _ = PythonPackageVersion.get_or_create(
-                    self._session,
-                    package_name=self.normalize_python_package_name(package_name),
-                    package_version=package_version,
-                    python_package_index_id=None,
+                python_package_version = self._create_python_package_version(
+                    package_name,
+                    package_version,
                     os_name=ecosystem_solver.os_name,
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
-                    entity_id=entity.id,
+                    index_url=None,
                 )
 
                 solved, _ = Solved.get_or_create(
