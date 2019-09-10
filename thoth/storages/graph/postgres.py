@@ -168,7 +168,23 @@ class GraphDatabase(SQLBase):
 
     def get_analysis_metadata(self, analysis_document_id: str) -> dict:
         """Get metadata stored for the given analysis document."""
-        raise NotImplementedError
+        query = (
+            self._session.query(PackageExtractRun)
+            .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
+            .with_entities(
+                PackageExtractRun.datetime,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.package_extract_name,
+                PackageExtractRun.package_extract_version
+            )
+        )
+        query_result = query.one()
+        return {
+            "analysis_datetime": query_result[0],
+            "analysis_document_id": query_result[1],
+            "package_extract_name": query_result[2],
+            "package_extract_version": query_result[3],
+        }
 
     def _do_software_environment_listing(
         self, start_offset: int, count: int, is_user_run: bool, environment_type: str
