@@ -236,6 +236,7 @@ class PackageExtractRun(Base, BaseExtension):
     found_debs = relationship("FoundDeb", back_populates="package_extract_run")
     python_package_version_entities = relationship("Identified", back_populates="package_extract_run")
     software_environment = relationship("SoftwareEnvironment", back_populates="package_extract_runs")
+    versioned_symbols = relationship("DetectedSymbol", back_populates="package_extract_run")
 
 
 class FoundPythonFile(Base, BaseExtension):
@@ -731,6 +732,7 @@ class SoftwareEnvironment(Base, BaseExtension):
         foreign_keys="InspectionRun.run_software_environment_id",
     )
     package_extract_runs = relationship("PackageExtractRun", back_populates="software_environment")
+    versioned_symbols = relationship("HasSymbol", back_populates="software_environment")
 
 
 class IncludedFile(Base, BaseExtension):
@@ -915,3 +917,45 @@ class DebDependency(Base, BaseExtension):
     deb_package_versions_depends = relationship("DebDepends", back_populates="deb_dependency")
     deb_package_versions_pre_depends = relationship("DebPreDepends", back_populates="deb_dependency")
     deb_package_versions_replaces = relationship("DebReplaces", back_populates="deb_dependency")
+
+
+class VersionedSymbol(Base, BaseExtension):
+    """A system symbol."""
+
+    __tablename__ = "versioned_symbol"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    library_name = Column(String(256), nullable=False)
+    symbol = Column(String(256), nullable=False)
+
+    package_extract_runs = relationship("DetectedSymbol", back_populates="versioned_symbol")
+    software_environments = relationship("HasSymbol", back_populates="versioned_symbol")
+
+
+class HasSymbol(Base, BaseExtension):
+    """A relation stating a software environment has a symbol."""
+
+    __tablename__ = "has_symbol"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+
+    software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
+    versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
+
+
+class DetectedSymbol(Base, BaseExtension):
+    """A relation stating a package extract run detected a symbol."""
+
+    __tablename__ = "detected_symbol"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+
+    package_extract_run = relationship("PackageExtractRun", back_populates="versioned_symbols")
+    versioned_symbol = relationship("VersionedSymbol", back_populates="package_extract_runs")
