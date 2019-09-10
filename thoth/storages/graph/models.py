@@ -292,6 +292,9 @@ class PythonPackageRequirement(Base, BaseExtension):
 
     index = relationship("PythonPackageIndex", back_populates="python_package_requirements")
     python_software_stacks = relationship("PythonRequirements", back_populates="python_package_requirement")
+    dependency_monkey_runs = relationship(
+        "PythonDependencyMonkeyRequirements", back_populates="python_package_requirement"
+    )
 
 
 class CVE(Base, BaseExtension):
@@ -398,18 +401,22 @@ class InspectionRun(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    inspection_document_id = Column(String(256), nullable=False)
-    datetime = Column(DateTime, nullable=False)
-    amun_version = Column(String(256), nullable=False)
-    build_requests_cpu = Column(Float, nullable=False)
-    build_requests_memory = Column(Float, nullable=False)
-    run_requests_cpu = Column(Float, nullable=False)
-    run_requests_memory = Column(Float, nullable=False)
+    inspection_document_id = Column(String(256), primary_key=True, nullable=False)
+    datetime = Column(DateTime, nullable=True)
+    amun_version = Column(String(256), nullable=True)
+    build_requests_cpu = Column(Float, nullable=True)
+    build_requests_memory = Column(Float, nullable=True)
+    run_requests_cpu = Column(Float, nullable=True)
+    run_requests_memory = Column(Float, nullable=True)
+    inspection_sync_state = Column(
+        ENUM("PENDING", "SYNCED", name="inspection_sync_state", create_type=True), nullable=False
+    )
 
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
     run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
     build_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
     run_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
+    dependency_monkey_run_id = Column(Integer, ForeignKey("dependency_monkey_run.id"), nullable=True)
 
     build_hardware_information = relationship(
         "HardwareInformation", back_populates="inspection_runs_build", foreign_keys=[build_hardware_information_id]
@@ -424,6 +431,8 @@ class InspectionRun(Base, BaseExtension):
     run_software_environment = relationship(
         "SoftwareEnvironment", back_populates="inspection_runs_run", foreign_keys=[run_software_environment_id]
     )
+
+    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="inspection_runs")
 
     inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
     inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
@@ -515,8 +524,13 @@ class DependencyMonkeyRun(Base, BaseExtension):
 
     run_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
     build_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
+    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
+    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
 
-    resolved_software_stacks = relationship("Resolved", back_populates="dependency_monkey_run")
+    inspection_runs = relationship("InspectionRun", back_populates="dependency_monkey_run")
+    python_package_requirements = relationship(
+        "PythonDependencyMonkeyRequirements", back_populates="dependency_monkey_run"
+    )
     run_software_environment = relationship(
         "SoftwareEnvironment", back_populates="dependency_monkey_runs_run", foreign_keys=[run_software_environment_id]
     )
@@ -524,6 +538,14 @@ class DependencyMonkeyRun(Base, BaseExtension):
         "SoftwareEnvironment",
         back_populates="dependency_monkey_runs_build",
         foreign_keys=[build_software_environment_id],
+    )
+    run_hardware_information = relationship(
+        "HardwareInformation", back_populates="dependency_monkey_runs_run", foreign_keys=[run_hardware_information_id]
+    )
+    build_hardware_information = relationship(
+        "HardwareInformation",
+        back_populates="dependency_monkey_runs_build",
+        foreign_keys=[build_hardware_information_id],
     )
 
 
@@ -558,6 +580,16 @@ class HardwareInformation(Base, BaseExtension):
         "InspectionRun",
         back_populates="build_hardware_information",
         foreign_keys="InspectionRun.build_hardware_information_id",
+    )
+    dependency_monkey_runs_run = relationship(
+        "DependencyMonkeyRun",
+        back_populates="run_hardware_information",
+        foreign_keys="DependencyMonkeyRun.run_hardware_information_id",
+    )
+    dependency_monkey_runs_build = relationship(
+        "DependencyMonkeyRun",
+        back_populates="build_hardware_information",
+        foreign_keys="DependencyMonkeyRun.build_hardware_information_id",
     )
 
     adviser_runs = relationship("AdviserRun", back_populates="hardware_information")
@@ -743,20 +775,6 @@ class HasVulnerability(Base, BaseExtension):
     cve = relationship("CVE", back_populates="python_package_versions")
 
 
-class Resolved(Base, BaseExtension):
-    """The given dependency monkey run resolved an inspection software stack which was sent to inspection run."""
-
-    __tablename__ = "resolved"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    dependency_monkey_run_id = Column(Integer, ForeignKey("dependency_monkey_run.id"), primary_key=True)
-    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"), primary_key=True)
-
-    software_stack = relationship("PythonSoftwareStack", back_populates="dependency_monkey_runs")
-    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="resolved_software_stacks")
-
-
 class PythonSoftwareStack(Base, BaseExtension):
     """A Python software stack definition."""
 
@@ -775,7 +793,6 @@ class PythonSoftwareStack(Base, BaseExtension):
 
     python_package_requirements = relationship("PythonRequirements", back_populates="python_software_stack")
     python_package_versions = relationship("PythonRequirementsLock", back_populates="python_software_stack")
-    dependency_monkey_runs = relationship("Resolved", back_populates="software_stack")
 
 
 class PythonRequirements(Base, BaseExtension):
@@ -790,6 +807,20 @@ class PythonRequirements(Base, BaseExtension):
 
     python_package_requirement = relationship("PythonPackageRequirement", back_populates="python_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_requirements")
+
+
+class PythonDependencyMonkeyRequirements(Base, BaseExtension):
+    """Requirements for a software stack as run on Dependency Monkey."""
+
+    __tablename__ = "python_dependency_monkey_requirements"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_requirement_id = Column(Integer, ForeignKey("python_package_requirement.id"), primary_key=True)
+    dependency_monkey_run_id = Column(Integer, ForeignKey("dependency_monkey_run.id"), primary_key=True)
+
+    python_package_requirement = relationship("PythonPackageRequirement", back_populates="dependency_monkey_runs")
+    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="python_package_requirements")
 
 
 class PythonRequirementsLock(Base, BaseExtension):

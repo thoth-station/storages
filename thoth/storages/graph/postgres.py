@@ -60,6 +60,7 @@ from .models import ProvenanceCheckerRun
 from .models import InspectionRun
 from .models import EcosystemSolver
 from .models import PythonPackageRequirement
+from .models import PythonDependencyMonkeyRequirements
 from .models import RPMRequirement
 from .models import RPMPackageVersion
 from .models import DebReplaces
@@ -84,6 +85,7 @@ from .sql_base import SQLBase
 from .models_base import Base
 
 from ..analyses import AnalysisResultsStore
+from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
@@ -1052,6 +1054,45 @@ class GraphDatabase(SQLBase):
 
         return result
 
+    def _runtime_environment_conf2models(
+        self,
+        runtime_environment: dict,
+        software_environment_type: str,
+        is_user: bool,
+    ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
+        """Create models out of runtime environment configuration."""
+        hardware = runtime_environment.get("hardware", {})
+        hardware_information, _ = HardwareInformation.get_or_create(
+            self._session,
+            cpu_vendor=hardware.get("cpu_vendor"),
+            cpu_model=hardware.get("cpu_model"),
+            cpu_cores=hardware.get("cpu_cores"),
+            cpu_model_name=hardware.get("cpu_model_name"),
+            cpu_family=hardware.get("cpu_family"),
+            cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+            gpu_model_name=hardware.get("gpu_model_name"),
+            gpu_vendor=hardware.get("gpu_vendor"),
+            gpu_cores=hardware.get("gpu_cores"),
+            gpu_memory_size=hardware.get("gpu_memory_size"),
+            ram_size=hardware.get("ram_size"),
+            is_user=True,
+        )
+
+        software_environment, _ = SoftwareEnvironment.get_or_create(
+            self._session,
+            environment_name=runtime_environment.get("environment_name"),
+            python_version=runtime_environment.get("python_version"),
+            image_name=None,
+            image_sha=None,
+            os_name=runtime_environment.get("os_name"),
+            os_version=runtime_environment.get("os_version"),
+            cuda_version=runtime_environment.get("cuda_version"),
+            software_environment_type=software_environment_type,
+            is_user=is_user,
+        )
+
+        return hardware_information, software_environment
+
     def _create_python_package_version(
         self,
         package_name: str,
@@ -1585,38 +1626,14 @@ class GraphDatabase(SQLBase):
         cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
         origin = (cli_arguments.get("metadata") or {}).get("origin")
         runtime_environment = document["result"]["parameters"]["runtime_environment"]
-        hardware = runtime_environment.get("hardware", {})
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
 
         try:
             with self._session.begin(subtransactions=True):
-                hardware_information, _ = HardwareInformation.get_or_create(
-                    self._session,
-                    cpu_vendor=hardware.get("cpu_vendor"),
-                    cpu_model=hardware.get("cpu_model"),
-                    cpu_cores=hardware.get("cpu_cores"),
-                    cpu_model_name=hardware.get("cpu_model_name"),
-                    cpu_family=hardware.get("cpu_family"),
-                    cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
-                    gpu_model_name=hardware.get("gpu_model_name"),
-                    gpu_vendor=hardware.get("gpu_vendor"),
-                    gpu_cores=hardware.get("gpu_cores"),
-                    gpu_memory_size=hardware.get("gpu_memory_size"),
-                    ram_size=hardware.get("ram_size"),
-                    is_user=True,
-                )
-
-                user_run_software_environment, _ = SoftwareEnvironment.get_or_create(
-                    self._session,
-                    environment_name=runtime_environment.get("environment_name"),
-                    python_version=runtime_environment.get("python_version"),
-                    image_name=None,
-                    image_sha=None,
-                    os_name=runtime_environment.get("os_name"),
-                    os_version=runtime_environment.get("os_version"),
-                    cuda_version=runtime_environment.get("cuda_version"),
+                hardware_information, user_run_software_environment = self._runtime_environment_conf2models(
+                    runtime_environment=runtime_environment,
                     software_environment_type="RUN",
                     is_user=True,
                 )
@@ -1737,7 +1754,66 @@ class GraphDatabase(SQLBase):
 
     def sync_dependency_monkey_result(self, document: dict) -> None:
         """Sync reports of dependency monkey runs."""
-        raise NotImplementedError
+        try:
+            with self._session.begin(subtransactions=True):
+                run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
+                    document["result"]["parameters"].get("runtime_environment", {}),
+                    software_environment_type="RUN",
+                    is_user=False,
+                )
+                build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
+                    document["result"]["parameters"].get("runtime_environment", {}),
+                    software_environment_type="BUILD",
+                    is_user=False,
+                )
+                dependency_monkey_run = DependencyMonkeyRun.get_or_create(
+                    self._session,
+                    dependency_monkey_document_id=DependencyMonkeyReportsStore.get_document_id(document),
+                    dependency_monkey_datetime=document["metadata"]["datetime"],
+                    dependency_monkey_name=document["metadata"]["analyzer"],
+                    dependency_monkey_version=document["metadata"]["analyzer_version"],
+                    seed=document["result"]["parameters"].get("seed"),
+                    decision=document["result"]["parameters"].get("decision"),
+                    count=document["result"]["parameters"].get("count"),
+                    limit_latest_versions=document["result"]["parameters"].get("limit_latest_versions"),
+                    debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
+                    dependency_monkey_error=document["result"]["error"],
+                    duration=None,  # TODO: assign duration
+                    build_software_environment_id=build_software_environment.id,
+                    build_hardware_information_id=build_hardware_information.id,
+                    run_software_environment_id=run_software_environment.id,
+                    run_hardware_information_id=run_hardware_information.id,
+                )
+
+                python_package_requirements = self.create_python_package_requirement(
+                    document["result"]["parameters"]["requirements"]
+                )
+                for python_package_requirement in python_package_requirements:
+                    PythonDependencyMonkeyRequirements.get_or_create(
+                        self._session,
+                        python_package_requirement_id=python_package_requirement.id,
+                        dependency_monkey_run_id=dependency_monkey_run.id,
+                    )
+
+                for inspection_document_id in document["result"]["output"]:
+                    inspection_run = self._session.query(InspectionRun).filter(
+                        InspectionRun.inspection_document_id == inspection_document_id
+                    ).first()
+
+                    if inspection_run is None:
+                        inspection_run = InspectionRun(
+                            inspection_document_id=inspection_document_id,
+                            inspection_sync_state="PENDING",
+                            dependency_monkey_run_id=dependency_monkey_run.id,
+                        )
+                        self._session.add(inspection_run)
+
+                    inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def get_number_of_each_vertex_in_graph(self) -> dict:
         """Retrieve dictionary with number of vertices per vertex label in the graph database."""
