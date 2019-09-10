@@ -45,6 +45,7 @@ from .models import PythonPackageIndex
 from .models import PythonArtifact
 from .models import DependencyMonkeyRun
 from .models import AdviserRun
+from .models import HardwareInformation
 from .models import HasArtifact
 from .models import Solved
 from .models import PythonSoftwareStack
@@ -72,6 +73,7 @@ from .models import Identified
 from .models import PythonFileDigest
 from .models import FoundPythonFile
 from .models import FoundRPM
+from .models import Advised
 from .models import CVE
 from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
@@ -84,6 +86,7 @@ from .models_base import Base
 from ..analyses import AnalysisResultsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
+from ..advisers import AdvisersResultsStore
 from thoth.storages.exceptions import PythonIndexNotRegistered
 
 _LOGGER = logging.getLogger(__name__)
@@ -183,12 +186,12 @@ class GraphDatabase(SQLBase):
         self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
-        return self._do_software_environment_listing(start_offset, count, is_user_run, "run")
+        return self._do_software_environment_listing(start_offset, count, is_user_run, "RUN")
 
     def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of software environments available for build."""
         # We do not have user software environment which is build environment yet.
-        return self._do_software_environment_listing(start_offset, count, False, "build")
+        return self._do_software_environment_listing(start_offset, count, False, "BUILD")
 
     def run_software_environment_analyses_listing(
         self,
@@ -1569,7 +1572,165 @@ class GraphDatabase(SQLBase):
 
     def sync_adviser_result(self, document: dict) -> None:
         """Sync adviser result into graph database."""
-        raise NotImplementedError
+        adviser_document_id = AdvisersResultsStore.get_document_id(document)
+        parameters = document["result"]["parameters"]
+        cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
+        origin = (cli_arguments.get("metadata") or {}).get("origin")
+        runtime_environment = document["result"]["parameters"]["runtime_environment"]
+        hardware = runtime_environment.get("hardware", {})
+
+        if not origin:
+            _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
+
+        try:
+            with self._session.begin(subtransactions=True):
+                hardware_information, _ = HardwareInformation.get_or_create(
+                    self._session,
+                    cpu_vendor=hardware.get("cpu_vendor"),
+                    cpu_model=hardware.get("cpu_model"),
+                    cpu_cores=hardware.get("cpu_cores"),
+                    cpu_model_name=hardware.get("cpu_model_name"),
+                    cpu_family=hardware.get("cpu_family"),
+                    cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+                    gpu_model_name=hardware.get("gpu_model_name"),
+                    gpu_vendor=hardware.get("gpu_vendor"),
+                    gpu_cores=hardware.get("gpu_cores"),
+                    gpu_memory_size=hardware.get("gpu_memory_size"),
+                    ram_size=hardware.get("ram_size"),
+                    is_user=True,
+                )
+
+                user_run_software_environment, _ = SoftwareEnvironment.get_or_create(
+                    self._session,
+                    environment_name=runtime_environment.get("environment_name"),
+                    python_version=runtime_environment.get("python_version"),
+                    image_name=None,
+                    image_sha=None,
+                    os_name=runtime_environment.get("os_name"),
+                    os_version=runtime_environment.get("os_version"),
+                    cuda_version=runtime_environment.get("cuda_version"),
+                    software_environment_type="RUN",
+                    is_user=True,
+                )
+
+                adviser_run, _ = AdviserRun.get_or_create(
+                    self._session,
+                    additional_stack_info=bool(document["result"].get("stack_info")),
+                    advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+                    adviser_document_id=adviser_document_id,
+                    adviser_error=document["result"]["error"],
+                    adviser_name=document["metadata"]["analyzer"],
+                    adviser_version=document["metadata"]["analyzer_version"],
+                    count=parameters["count"],
+                    datetime=document["metadata"]["datetime"],
+                    debug=cli_arguments.get("verbose", False),
+                    duration=None,  # TODO: assign duration
+                    limit=parameters["limit"],
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
+                    origin=origin,
+                    recommendation_type=parameters["recommendation_type"].upper(),
+                    requirements_format=parameters["requirements_format"].upper(),
+                    hardware_information_id=hardware_information.id,
+                    user_build_software_environment_id=None,
+                    user_run_software_environment_id=user_run_software_environment.id,
+                )
+
+                # Input stack.
+                software_stack, _ = PythonSoftwareStack.get_or_create(
+                    self._session,
+                    performance_score=None,
+                    overall_score=None,
+                    software_stack_type="USER",
+                )
+
+                if document["result"]["input"].get("requirements"):
+                    python_package_requirements = self.create_python_package_requirement(
+                        document["result"]["input"]["requirements"]
+                    )
+                    for python_package_requirement in python_package_requirements:
+                        PythonRequirements.get_or_create(
+                            self._session,
+                            python_software_stack_id=software_stack.id,
+                            python_package_requirement_id=python_package_requirement.id,
+                        )
+
+                if document["result"]["input"].get("requirements_locked"):
+                    # User provided a Pipfile.lock, we can sync it.
+                    python_package_versions = self.create_python_packages_pipfile(
+                        document["result"]["input"]["requirements_locked"],
+                        user_run_software_environment
+                    )
+                    for python_package_version in python_package_versions:
+                        PythonRequirementsLock.get_or_create(
+                            self._session,
+                            python_software_stack_id=software_stack.id,
+                            python_package_version_id=python_package_version.id,
+                        )
+
+                # Output stacks - advised stacks
+                for idx, result in enumerate(document["result"]["report"]):
+                    if len(result) != 3:
+                        _LOGGER.warning("Omitting stack as no output Pipfile.lock was provided")
+                        continue
+
+                    # result[0] is score report
+                    # result[1]["requirements"] is Pipfile
+                    # result[1]["requirements_locked"] is Pipfile.lock
+                    # result[2] is overall score
+                    performance_score = None
+                    overall_score = result[2]
+                    for entry in result[0] or []:
+                        if "performance_score" in entry:
+                            if performance_score is not None:
+                                _LOGGER.error(
+                                    "Multiple performance score entries found in %r (index: %d)",
+                                    adviser_document_id,
+                                    idx
+                                )
+                            performance_score = entry["performance_score"]
+
+                    if result[1] and result[1].get("requirements_locked"):
+                        software_stack, _ = PythonSoftwareStack.get_or_create(
+                            self._session,
+                            overall_score=overall_score,
+                            performance_score=performance_score,
+                            software_stack_type="ADVISED"
+                        )
+
+                        if result[1].get("requirements"):
+                            python_package_requirements = self.create_python_package_requirement(
+                                document["result"]["input"]["requirements"]
+                            )
+                            for python_package_requirement in python_package_requirements:
+                                PythonRequirements.get_or_create(
+                                    self._session,
+                                    python_software_stack_id=software_stack.id,
+                                    python_package_requirement_id=python_package_requirement.id,
+                                )
+
+                        if result[1].get("requirements_locked"):
+                            # User provided a Pipfile.lock, we can sync it.
+                            python_package_versions = self.create_python_packages_pipfile(
+                                document["result"]["input"]["requirements_locked"],
+                                user_run_software_environment
+                            )
+                            for python_package_version in python_package_versions:
+                                PythonRequirementsLock.get_or_create(
+                                    self._session,
+                                    python_software_stack_id=software_stack.id,
+                                    python_package_version_id=python_package_version.id,
+                                )
+
+                        Advised.get_or_create(
+                            self._session,
+                            adviser_run_id=adviser_run.id,
+                            python_software_stack_id=software_stack.id
+                        )
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
@@ -1585,7 +1746,7 @@ class GraphDatabase(SQLBase):
                     self._session,
                     performance_score=None,
                     overall_score=None,
-                    software_stack_type="user",
+                    software_stack_type="USER",
                 )
 
                 provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
