@@ -34,6 +34,7 @@ from sqlalchemy import desc
 from sqlalchemy import tuple_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
+from thoth.common.helpers import format_datetime
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -198,6 +199,44 @@ class GraphDatabase(SQLBase):
         # We do not have user software environment which is build environment yet.
         return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
 
+    def _do_software_environment_analyses_listing(
+        self,
+        software_environment_name: str,
+        start_offset: int,
+        count: int,
+        convert_datetime: bool,
+        is_user_run: bool,
+        environment_type: str,
+    ) -> List[dict]:
+        """Get listing of available software environment analyses."""
+        query_result = (
+            self._session.query(SoftwareEnvironment)
+            .filter(SoftwareEnvironment.software_environment_type == environment_type)
+            .filter(SoftwareEnvironment.environment_name == software_environment_name)
+            .filter(SoftwareEnvironment.is_user_run == is_user_run)
+            .join(PackageExtractRun)
+            .with_entities(
+                PackageExtractRun.datetime,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.package_extract_name,
+                PackageExtractRun.package_extract_version,
+            )
+            .offset(start_offset)
+            .limit(count)
+            .all()
+        )
+
+        result = []
+        for item in query_result:
+            result.append({
+                "analysis_datetime": item[0] if not convert_datetime else format_datetime(item[0]),
+                "analysis_document_id": item[1],
+                "package_extract_name": item[2],
+                "package_extract_version": item[3]
+            })
+
+        return result
+
     def run_software_environment_analyses_listing(
         self,
         run_software_environment_name: str,
@@ -205,9 +244,16 @@ class GraphDatabase(SQLBase):
         count: int = 100,
         convert_datetime: bool = True,
         is_user_run: bool = False,
-    ) -> list:
+    ) -> List[dict]:
         """Get listing of analyses available for the given software environment for run."""
-        raise NotImplementedError
+        return self._do_software_environment_analyses_listing(
+            run_software_environment_name,
+            start_offset=start_offset,
+            count=count,
+            is_user_run=is_user_run,
+            convert_datetime=convert_datetime,
+            environment_type="RUNTIME",
+        )
 
     def build_software_environment_analyses_listing(
         self,
@@ -215,9 +261,17 @@ class GraphDatabase(SQLBase):
         start_offset: int = 0,
         count: int = 100,
         convert_datetime: bool = True,
-    ) -> list:
+        is_user_run: bool = False,
+    ) -> List[dict]:
         """Get listing of analyses available for the given software environment for build."""
-        raise NotImplementedError
+        return self._do_software_environment_analyses_listing(
+            build_software_environment_name,
+            start_offset=start_offset,
+            count=count,
+            is_user_run=is_user_run,
+            convert_datetime=convert_datetime,
+            environment_type="BUILDTIME",
+        )
 
     def python_package_version_exists(
         self, package_name: str, package_version: str, index_url: str = None, solver_name: str = None
