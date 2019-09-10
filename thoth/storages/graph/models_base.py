@@ -95,28 +95,3 @@ def get_python_package_version_index_combinations(*, index_as_property: bool = T
             )
 
     return result
-
-
-def get_python_package_version_filter_kwargs(
-    package_name: str,
-    package_version: Union[str, None],
-    index_url: Union[str, None],
-    *,
-    os_name: Union[str, None],
-    os_version: Union[str, None],
-    python_version: Union[str, None],
-) -> dict:
-    """Get filter kwargs to query PythonPackageVersion records."""
-    filter_kwargs = {"package_name": package_name}
-    if package_version is not None:
-        filter_kwargs["package_version"] = package_version
-    if index_url is not None:
-        filter_kwargs["index_url"] = index_url
-    if os_name is not None:
-        filter_kwargs["os_name"] = os_name
-    if os_version is not None:
-        filter_kwargs["os_version"] = os_version
-    if python_version is not None:
-        filter_kwargs["python_version"] = python_version
-
-    return filter_kwargs
