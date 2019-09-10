@@ -403,11 +403,11 @@
         },
         "pydgraph": {
             "hashes": [
-                "sha256:2d8543c6f1f64dc4aa24b27898954e7a7a2b88ef50d3f1dd9670b2cff1430df8",
-                "sha256:2ee8ffb4df371b0b1098d0779ff8de13a5a8db74b0875951cfa94268ddcc88da"
+                "sha256:38bfa37b785bf5bcf53f58a02ce8417d40c83723c6b2cdbf428437fbc517ce61",
+                "sha256:b4c91156aef5ef0899bee52224dab7ad8cf8ae63a82d16011d372f18f91090f7"
             ],
             "index": "pypi",
-            "version": "==2.0.1"
+            "version": "==2.0.2"
         },
         "pyjwt": {
             "hashes": [
@@ -994,11 +994,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:9ff1b1c5a354142de080b8a4e9803e5d0d59283c93aed808617c787d16768375",
-                "sha256:b7143592e374e50584564794fcb8aaf00a23025f9db866627f89a21491847a8d"
+                "sha256:0c505102757e7fa28b9f0958d8bc81301159dea16e2649858c92edc158b78a83",
+                "sha256:9a9f75ce32e78170905888acbf2376a81d3f21ecb3bb4867050413411d3ca7a9"
             ],
             "markers": "python_version < '3.8'",
-            "version": "==0.20"
+            "version": "==0.21"
         },
         "ipython-genutils": {
             "hashes": [
