@@ -39,9 +39,6 @@ _LOGGER = logging.getLogger(__name__)
 class PerformanceIndicatorBase:
     """A base class for implementing performance indicators."""
 
-    SCHEMA_PARAMETERS = None
-    SCHEMA_RESULT = None
-
     # ML framework used for the performance indicator.
     framework = Column(String(256), nullable=True)
 
@@ -118,12 +115,6 @@ class PerformanceIndicatorBase:
             ru_nivcsw=inspection_document["job_log"].get("usage", {}).get("ru_nivcsw"),
         )
 
-        if cls.SCHEMA_PARAMETERS:
-            cls.SCHEMA_PARAMETERS(inspection_document["job_log"]["stdout"]["@parameters"])
-
-        if cls.SCHEMA_RESULT:
-            cls.SCHEMA_RESULT(inspection_document["job_log"]["stdout"]["@result"])
-
         return cls.from_report(inspection_document, partial_model)
 
     @classmethod
@@ -146,12 +137,6 @@ class PiMatmul(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a matrix multiplication micro-performance test."""
 
     __tablename__ = "pi_matmul"
-
-    SCHEMA_PARAMETERS = Schema(
-        {Required("matrix_size"): int, Required("dtype"): str, Required("reps"): int, Required("device"): str}
-    )
-
-    SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -181,24 +166,6 @@ class PiConv1D(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a conv1D micro-performance test."""
 
     __tablename__ = "pi_conv1d"
-
-    SCHEMA_PARAMETERS = Schema(
-        {
-            Required("dtype"): str,
-            Required("reps"): int,
-            Required("device"): str,
-            Required("data_format"): str,
-            Required("batch"): int,
-            Required("input_width"): int,
-            Required("input_channels"): int,
-            Required("filter_width"): int,
-            Required("output_channels"): int,
-            Required("strides"): int,
-            Required("padding"): str,
-        }
-    )
-
-    SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -243,26 +210,6 @@ class PiConv2D(Base, BaseExtension, PerformanceIndicatorBase):
     """A class for representing a conv2D micro-performance test."""
 
     __tablename__ = "pi_conv2d"
-
-    SCHEMA_PARAMETERS = Schema(
-        {
-            Required("dtype"): str,
-            Required("reps"): int,
-            Required("device"): str,
-            Required("data_format"): str,
-            Required("batch"): int,
-            Required("input_height"): int,
-            Required("input_width"): int,
-            Required("input_channels"): int,
-            Required("filter_height"): int,
-            Required("filter_width"): int,
-            Required("output_channels"): int,
-            Required("strides"): int,
-            Required("padding"): str,
-        }
-    )
-
-    SCHEMA_RESULT = Schema({Required("elapsed"): float, Required("rate"): float})
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 

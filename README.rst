@@ -93,7 +93,7 @@ and hardware configuration. Please follow instructions on how to create a
 performance script shown in the `README of performance repo
 <https://github.com/thoth-station/performance>`_.
 
-To create relevant models, adjust `thoth/storages/graph/performance.py` file
+To create relevant models, adjust `thoth/storages/graph/models_performance.py` file
 and add your model. Describe parameters (reported in `@parameters` section of
 performance indicator result) and result (reported in `@result`). The name of
 class should match `name` which is reported by performance indicator run.
@@ -104,18 +104,6 @@ class should match `name` which is reported by performance indicator run.
   class PiMatmul(PerformanceIndicatorBase):
       """A class for representing a matrix multiplication micro-performance test."""
 
-      SCHEMA_PARAMETERS = Schema({
-          Required("matrix_size"): int,
-          Required("dtype"): str,
-          Required("reps"): int,
-          Required("device"): str,
-      })
-
-      SCHEMA_RESULT = Schema({
-          Required("elapsed"): float,
-          Required("rate"): float,
-      })
-
       # Device used during performance indicator run - CPU/GPU/TPU/...
       device = Column(String(128), nullable=False)
       matrix_size = Column(Integer, nullable=False)
@@ -124,7 +112,8 @@ class should match `name` which is reported by performance indicator run.
       elapsed = Column(Float, nullable=False)
       rate = Column(Float, nullable=False)
 
-All the models use `SQLAchemy <https://www.sqlalchemy.org/>`_. See `docs <https://docs.sqlalchemy.org/>`_ for more info.
+All the models use `SQLAchemy <https://www.sqlalchemy.org/>`_.
+See `docs <https://docs.sqlalchemy.org/>`_ for more info.
 
 Online debugging of queries
 ===========================
