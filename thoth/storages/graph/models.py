@@ -35,6 +35,10 @@ from .models_base import Base
 from .models_base import get_python_package_version_index_combinations
 
 
+# Environment type used in package-extract as a flag as well as in software environment records.
+_ENVIRONMENT_TYPE_ENUM = ENUM("RUNTIME", "BUILDTIME", name="environment_type", create_type=True)
+
+
 class PythonPackageVersion(Base, BaseExtension):
     """Representation of a Python package version running on a specific software environment."""
 
@@ -211,7 +215,7 @@ class PackageExtractRun(Base, BaseExtension):
     package_extract_version = Column(String(256), nullable=False)
     analysis_document_id = Column(String(256), nullable=False)
     datetime = Column(DateTime, nullable=False)
-    environment_type = Column(ENUM("RUNTIME", "BUILDTIME", name="environment_type", create_type=True), nullable=False)
+    environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
     origin = Column(String(256), nullable=True)
     debug = Column(Boolean, nullable=False, default=False)
     package_extract_error = Column(Boolean, nullable=False, default=False)
@@ -693,9 +697,7 @@ class SoftwareEnvironment(Base, BaseExtension):
     os_name = Column(String(256), nullable=True)
     os_version = Column(String(256), nullable=True)
     cuda_version = Column(String(256), nullable=True)
-    software_environment_type = Column(
-        ENUM("BUILD", "RUN", name="software_environment_type", create_type=True), nullable=False
-    )
+    environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
     is_user = Column(Boolean, default=False, nullable=False)
 
     adviser_inputs_run = relationship(
