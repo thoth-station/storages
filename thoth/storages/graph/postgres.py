@@ -1091,6 +1091,47 @@ class GraphDatabase(SQLBase):
 
         return python_package_version
 
+    def _create_python_software_stack(
+        self,
+        software_stack_type: str,
+        requirements: dict = None,
+        requirements_lock: dict = None,
+        software_environment: SoftwareEnvironment = None,
+        *,
+        performance_score: float = None,
+        overall_score: float = None,
+    ) -> PythonSoftwareStack:
+        """Create a Python software stack out of its JSON/dict representation."""
+        software_stack, _ = PythonSoftwareStack.get_or_create(
+            self._session,
+            performance_score=performance_score,
+            overall_score=overall_score,
+            software_stack_type=software_stack_type,
+        )
+
+        if requirements is not None:
+            python_package_requirements = self.create_python_package_requirement(requirements)
+            for python_package_requirement in python_package_requirements:
+                PythonRequirements.get_or_create(
+                    self._session,
+                    python_software_stack_id=software_stack.id,
+                    python_package_requirement_id=python_package_requirement.id,
+                )
+
+        if requirements_lock is not None:
+            python_package_versions = self.create_python_packages_pipfile(
+                requirements_lock,
+                software_environment=software_environment,
+            )
+            for python_package_version in python_package_versions:
+                PythonRequirementsLock.get_or_create(
+                    self._session,
+                    python_software_stack_id=software_stack.id,
+                    python_package_version_id=python_package_version.id,
+                )
+
+        return software_stack
+
     def create_inspection_software_stack_pipfile(self, document_id: str, pipfile_locked: dict) -> PythonSoftwareStack:
         """Create an inspection software stack entry from Pipfile.lock."""
         raise NotImplementedError
@@ -1580,6 +1621,16 @@ class GraphDatabase(SQLBase):
                     is_user=True,
                 )
 
+                # Input stack.
+                software_stack = self._create_python_software_stack(
+                    software_stack_type="USER",
+                    requirements=document["result"]["input"].get("requirements"),
+                    requirements_lock=document["result"]["input"].get("requirements_locked"),
+                    software_environment=user_run_software_environment,
+                    performance_score=None,
+                    overall_score=None,
+                )
+
                 adviser_run, _ = AdviserRun.get_or_create(
                     self._session,
                     additional_stack_info=bool(document["result"].get("stack_info")),
@@ -1600,39 +1651,8 @@ class GraphDatabase(SQLBase):
                     hardware_information_id=hardware_information.id,
                     user_build_software_environment_id=None,
                     user_run_software_environment_id=user_run_software_environment.id,
+                    user_software_stack_id=software_stack.id,
                 )
-
-                # Input stack.
-                software_stack, _ = PythonSoftwareStack.get_or_create(
-                    self._session,
-                    performance_score=None,
-                    overall_score=None,
-                    software_stack_type="USER",
-                )
-
-                if document["result"]["input"].get("requirements"):
-                    python_package_requirements = self.create_python_package_requirement(
-                        document["result"]["input"]["requirements"]
-                    )
-                    for python_package_requirement in python_package_requirements:
-                        PythonRequirements.get_or_create(
-                            self._session,
-                            python_software_stack_id=software_stack.id,
-                            python_package_requirement_id=python_package_requirement.id,
-                        )
-
-                if document["result"]["input"].get("requirements_locked"):
-                    # User provided a Pipfile.lock, we can sync it.
-                    python_package_versions = self.create_python_packages_pipfile(
-                        document["result"]["input"]["requirements_locked"],
-                        user_run_software_environment
-                    )
-                    for python_package_version in python_package_versions:
-                        PythonRequirementsLock.get_or_create(
-                            self._session,
-                            python_software_stack_id=software_stack.id,
-                            python_package_version_id=python_package_version.id,
-                        )
 
                 # Output stacks - advised stacks
                 for idx, result in enumerate(document["result"]["report"]):
@@ -1657,36 +1677,14 @@ class GraphDatabase(SQLBase):
                             performance_score = entry["performance_score"]
 
                     if result[1] and result[1].get("requirements_locked"):
-                        software_stack, _ = PythonSoftwareStack.get_or_create(
-                            self._session,
-                            overall_score=overall_score,
+                        software_stack = self._create_python_software_stack(
+                            software_stack_type="ADVISED",
+                            requirements=result[1].get("requirements"),
+                            requirements_lock=result[1].get("requirements_locked"),
+                            software_environment=user_run_software_environment,
                             performance_score=performance_score,
-                            software_stack_type="ADVISED"
+                            overall_score=overall_score,
                         )
-
-                        if result[1].get("requirements"):
-                            python_package_requirements = self.create_python_package_requirement(
-                                document["result"]["input"]["requirements"]
-                            )
-                            for python_package_requirement in python_package_requirements:
-                                PythonRequirements.get_or_create(
-                                    self._session,
-                                    python_software_stack_id=software_stack.id,
-                                    python_package_requirement_id=python_package_requirement.id,
-                                )
-
-                        if result[1].get("requirements_locked"):
-                            # User provided a Pipfile.lock, we can sync it.
-                            python_package_versions = self.create_python_packages_pipfile(
-                                document["result"]["input"]["requirements_locked"],
-                                user_run_software_environment
-                            )
-                            for python_package_version in python_package_versions:
-                                PythonRequirementsLock.get_or_create(
-                                    self._session,
-                                    python_software_stack_id=software_stack.id,
-                                    python_package_version_id=python_package_version.id,
-                                )
 
                         Advised.get_or_create(
                             self._session,
@@ -1709,11 +1707,14 @@ class GraphDatabase(SQLBase):
 
         try:
             with self._session.begin(subtransactions=True):
-                software_stack, _ = PythonSoftwareStack.get_or_create(
-                    self._session,
+                user_input = document["result"]["input"]
+                software_stack = self._create_python_software_stack(
+                    software_stack_type="USER",
+                    requirements=user_input.get("requirements"),
+                    requirements_lock=user_input.get("requirements_locked"),
+                    software_environment=None,
                     performance_score=None,
                     overall_score=None,
-                    software_stack_type="USER",
                 )
 
                 provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
@@ -1728,25 +1729,6 @@ class GraphDatabase(SQLBase):
                     duration=None,  # TODO: assign duration
                     user_software_stack_id=software_stack.id,
                 )
-
-                user_input = document["result"]["input"]
-                if user_input.get("requirements"):
-                    python_package_requirements = self.create_python_package_requirement(user_input["requirements"])
-                    for python_package_requirement in python_package_requirements:
-                        PythonRequirements.get_or_create(
-                            self._session,
-                            python_software_stack_id=software_stack.id,
-                            python_package_requirement_id=python_package_requirement.id,
-                        )
-
-                if user_input.get("requirements_locked"):
-                    python_package_versions = self.create_python_packages_pipfile(user_input["requirements_locked"])
-                    for python_package_version in python_package_versions:
-                        PythonRequirementsLock.get_or_create(
-                            self._session,
-                            python_software_stack_id=software_stack.id,
-                            python_package_version_id=python_package_version.id,
-                        )
         except Exception:
             self._session.rollback()
             raise
