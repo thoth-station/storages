@@ -75,6 +75,9 @@ from .models import PythonFileDigest
 from .models import FoundPythonFile
 from .models import FoundRPM
 from .models import Advised
+from .models import VersionedSymbol
+from .models import HasSymbol
+from .models import DetectedSymbol
 from .models import CVE
 from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
@@ -1304,6 +1307,33 @@ class GraphDatabase(SQLBase):
                     version_range=replaces.get("version")
                 )
 
+    def _system_symbols_analysis_result(
+        self,
+        package_extract_run: PackageExtractRun,
+        document: dict,
+        software_environment: SoftwareEnvironment
+    ) -> None:
+        """Sync system symbols detected in a package-extract run into the database."""
+        for library, symbols in document["result"]["system-symbols"].items():
+            for symbol in symbols:
+                versioned_symbol, _ = VersionedSymbol.get_or_create(
+                    self._session,
+                    library_name=library,
+                    symbol=symbol,
+                )
+
+                HasSymbol.get_or_create(
+                    self._session,
+                    software_environment_id=software_environment.id,
+                    versioned_symbol_id=versioned_symbol.id
+                )
+
+                DetectedSymbol.get_or_create(
+                    self._session,
+                    package_extract_run_id=package_extract_run.id,
+                    versioned_symbol_id=versioned_symbol.id
+                )
+
     def _python_sync_analysis_result(
         self, package_extract_run: PackageExtractRun, document: dict, software_environment: SoftwareEnvironment,
     ) -> None:
@@ -1411,6 +1441,7 @@ class GraphDatabase(SQLBase):
                 self._deb_sync_analysis_result(package_extract_run, document)
                 self._python_sync_analysis_result(package_extract_run, document, software_environment)
                 self._python_file_digests_sync_analysis_result(package_extract_run, document)
+                self._system_symbols_analysis_result(package_extract_run, document, software_environment)
         except Exception:
             self._session.rollback()
             raise
