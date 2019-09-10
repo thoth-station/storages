@@ -1778,9 +1778,14 @@ class GraphDatabase(SQLBase):
         else:
             self._session.commit()
 
-    def get_number_of_each_vertex_in_graph(self) -> dict:
-        """Retrieve dictionary with number of vertices per vertex label in the graph database."""
-        raise NotImplementedError
+    def get_number_of_pi_records(self) -> Dict[str, int]:
+        """Retrieve number of performance indicator records stored in the database."""
+        result = {}
+
+        for performance_model in ALL_PERFORMANCE_MODELS:
+            result[performance_model.__tablename__] = self._session.query(performance_model).count()
+
+        return result
 
     def get_all_pi_per_framework_count(self, framework: str) -> dict:
         """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
