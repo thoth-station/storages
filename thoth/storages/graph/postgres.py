@@ -80,6 +80,9 @@ from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
 from .models_performance import PiConv2D
 from .models_performance import PiMatmul
+from .models_performance import ALL_PERFORMANCE_MODELS
+from collections import Counter
+from sqlalchemy import func
 
 from .sql_base import SQLBase
 from .models_base import Base
@@ -1782,9 +1785,18 @@ class GraphDatabase(SQLBase):
         """Retrieve dictionary with number of vertices per vertex label in the graph database."""
         raise NotImplementedError
 
-    def get_all_pi_per_framework_count(self, framework: str) -> dict:
+    def get_all_pi_per_framework_count(self) -> dict:
         """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
-        raise NotImplementedError
+        counter = Counter()
+        for pi_model in ALL_PERFORMANCE_MODELS:
+            query_result = (
+                self._session.query(pi_model.framework, func.count(pi_model.framework))
+                .group_by(PiMatmul.framework)
+                .all()
+            )
+            counter.update(dict(query_result))
+
+        return dict(counter)
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
