@@ -135,7 +135,7 @@ class GraphDatabase(SQLBase):
         if self.is_connected():
             raise ValueError("Cannot connect, the adapter is already connected")
 
-        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", False)))
+        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         self._engine = create_engine(self.construct_connection_string(), echo=echo)
         self._session = sessionmaker(bind=self._engine)()
         # We do not use connection pool, but directly talk to the database.
@@ -360,28 +360,39 @@ class GraphDatabase(SQLBase):
         package_version: str,
         index_url: str,
         *,
-        os_name: str,
-        os_version: str,
-        python_version: str,
+        os_name: Union[str, None],
+        os_version: Union[str, None],
+        python_version: Union[str, None],
     ) -> bool:
         """Retrieve information whether the given package has any solver error."""
-        result = (
+        query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
             .filter(PythonPackageVersion.package_version == package_version)
-            .filter(PythonPackageVersion.os_name == os_name)
-            .filter(PythonPackageVersion.os_version == os_version)
-            .filter(PythonPackageVersion.python_version == python_version)
+        )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = (
+            query
             .join(PythonPackageIndex)
             .filter(PythonPackageIndex.url == index_url)
             .join(Solved)
             .order_by(desc(Solved.id))
             .with_entities(Solved.error)
-            .first()
         )
 
+        result = query.first()
+
         if result is None:
-            raise ValueError(
+            raise NotFoundError(
                 f"No package record found for {package_name!r} in version {package_version!r} "
                 f"from {index_url!r}, OS name is {os_name!r}:{os_version!r} with Python version {python_version!r}"
             )
@@ -825,7 +836,9 @@ class GraphDatabase(SQLBase):
 
         package_query = query
         dependencies = (
-            query.join(PythonPackageVersion.dependencies)
+            query
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
             .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
             .distinct()
             .all()
@@ -1030,7 +1043,7 @@ class GraphDatabase(SQLBase):
             python_package_index.enabled = enabled
 
             try:
-                with self._session.begin():
+                with self._session.begin(subtransactions=True):
                     self._session.add(python_package_index)
             except Exception:
                 self._session.rollback()

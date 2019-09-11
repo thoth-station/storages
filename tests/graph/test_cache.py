@@ -79,7 +79,7 @@ class TestCache(ThothStoragesTest):
         cache.add_depends_on(**record)
         record.pop("dependency_name")
         record.pop("dependency_version")
-        assert cache.get_depends_on(**record) is None
+        assert cache.get_depends_on(**record) == []
 
     def test_add_depends_on_no_deps_error(self, tmp_path: Path) -> None:
         """Test error if wrong parameters are supplied"""

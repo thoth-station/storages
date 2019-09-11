@@ -30,6 +30,7 @@ from thoth.storages.graph import GraphCache
 from thoth.storages.graph import GraphDatabase
 from thoth.storages import GraphCacheStore
 from thoth.storages import __version__ as thoth_storages_version
+from thoth.storages.exceptions import NotFoundError
 
 daiquiri.setup(level=logging.INFO)
 _LOGGER = logging.getLogger("thoth.storages")
@@ -109,8 +110,6 @@ def create_graph_cache(cache_file: str, cache_config: str):
     for package_name in packages:
         versions = graph.get_all_versions_python_package(
             package_name=package_name,
-            # only_known_index=True, # TODO
-            # only_solved=True # TODO
         )
 
         if not versions:
@@ -118,6 +117,22 @@ def create_graph_cache(cache_file: str, cache_config: str):
             continue
 
         for package_version, index_url in versions:
+            try:
+                solver_error = graph.has_python_solver_error(
+                    package_name,
+                    package_version,
+                    index_url,
+                    os_name=None,
+                    os_version=None,
+                    python_version=None,
+                )
+                if solver_error:
+                    _LOGGER.debug(
+                        "Omitting package %r due to solver errors",
+                        (package_name, package_version, index_url)
+                    )
+            except NotFoundError:
+                continue
             _LOGGER.info("Adding record for %r in version %r from %r", package_name, package_version, index_url)
             graph.retrieve_transitive_dependencies_python(package_name, package_version, index_url)
 
