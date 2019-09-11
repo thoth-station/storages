@@ -109,8 +109,6 @@ def create_graph_cache(cache_file: str, cache_config: str):
     for package_name in packages:
         versions = graph.get_all_versions_python_package(
             package_name=package_name,
-            # only_known_index=True, # TODO
-            # only_solved=True # TODO
         )
 
         if not versions:
