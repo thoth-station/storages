@@ -31,13 +31,16 @@ import attr
 from methodtools import lru_cache
 from sqlalchemy import create_engine
 from sqlalchemy import desc
+from sqlalchemy import func
 from sqlalchemy import tuple_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import insert
 from thoth.common.helpers import format_datetime
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
+from thoth.common import OpenShift
 
 from .cache import GraphCache
 from .models import PythonPackageVersion
@@ -88,9 +91,8 @@ from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
 from .models_performance import PiConv1D
 from .models_performance import PiConv2D
 from .models_performance import PiMatmul
-from .models_performance import ALL_PERFORMANCE_MODELS
+from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
-from sqlalchemy import func
 
 from .sql_base import SQLBase
 from .models_base import Base
@@ -98,6 +100,7 @@ from .models_base import Base
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
+from ..inspections import InspectionResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
 from ..package_analyses import PackageAnalysisResultsStore
@@ -109,7 +112,7 @@ _LOGGER = logging.getLogger(__name__)
 
 @attr.s()
 class GraphDatabase(SQLBase):
-    """A SQL datatabase adapter providing graph-like operations on top of SQL queires."""
+    """A SQL database adapter providing graph-like operations on top of SQL queries."""
 
     _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
 
@@ -1253,7 +1256,126 @@ class GraphDatabase(SQLBase):
 
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
-        raise NotImplementedError
+        # Check if we have such performance model before creating any other records.
+        performance_indicator = None
+        inspection_document_id = InspectionResultsStore.get_document_id(document)
+
+        try:
+            with self._session.begin(subtransactions=True):
+
+                build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
+                build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
+                run_cpu = OpenShift.parse_cpu_spec(document["specification"]["run"]["requests"]["cpu"])
+                run_memory = OpenShift.parse_memory_spec(document["specification"]["run"]["requests"]["memory"])
+
+                # Convert bytes to GiB, we need float number given the fixed int size.
+                run_memory = run_memory / (1024 ** 3)
+                build_memory = build_memory / (1024 ** 3)
+
+                run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
+                    document["specification"]["run"].get("requests", {}), environment_type="RUNTIME", is_user=False
+                )
+
+                build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
+                    document["specification"]["build"].get("requests", {}),
+                    environment_type="BUILDTIME",
+                    is_user=False,
+                )
+
+                if "python" in document["specification"]:
+                    # Inspection stack.
+                    software_stack = self._create_python_software_stack(
+                        software_stack_type="INSPECTION",
+                        requirements=document["specification"].get("requirements"),
+                        requirements_lock=document["specification"].get("requirements_locked"),
+                        software_environment=run_software_environment,
+                        performance_score=None,
+                        overall_score=None,
+                    )
+
+                inspection_run = (
+                    self._session.query(InspectionRun)
+                    .filter(InspectionRun.inspection_document_id == inspection_document_id)
+                    .first()
+                )
+
+                if inspection_run and inspection_run.dependency_monkey_run_id:
+                    # If inspection was run through Depedency Monkey
+
+                    # INSERT…ON CONFLICT (Upsert)
+                    # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+                    row = insert(InspectionRun).values(
+                        inspection_document_id=inspection_document_id,
+                        dependency_monkey_run_id=inspection_run.dependency_monkey_run_id)
+
+                    do_update_row = row.on_conflict_do_update(
+                        constraint='inspection_run',
+                        set_=dict(
+                            inspection_sync_state="SYNCED",
+                            inspection_document_id=inspection_document_id,
+                            datetime=document.get("created"),
+                            amun_version=None,  # TODO: propagate Amun version here which should match API version
+                            build_requests_cpu=build_cpu,
+                            build_requests_memory=build_memory,
+                            run_requests_cpu=run_cpu,
+                            run_requests_memory=run_memory,
+                            build_software_environment_id=build_software_environment.id,
+                            build_hardware_information_id=build_hardware_information.id,
+                            run_software_environment_id=run_software_environment.id,
+                            run_hardware_information_id=run_hardware_information.id
+                            )
+                    )
+
+                else:
+                    inspection_run, _ = InspectionRun.get_or_create(
+                        self._session,
+                        inspection_sync_state="SYNCED",
+                        inspection_document_id=inspection_document_id,
+                        datetime=document.get("created"),
+                        amun_version=None,  # TODO: propagate Amun version here which should match API version
+                        build_requests_cpu=build_cpu,
+                        build_requests_memory=build_memory,
+                        run_requests_cpu=run_cpu,
+                        run_requests_memory=run_memory,
+                        build_software_environment_id=build_software_environment.id,
+                        build_hardware_information_id=build_hardware_information.id,
+                        run_software_environment_id=run_software_environment.id,
+                        run_hardware_information_id=run_hardware_information.id,
+                    )
+
+                if document["specification"].get("script"):  # We have run an inspection job.
+
+                    if not document["job_log"]["stdout"]:
+                        raise ValueError("No values provided for inspection output %r", inspection_document_id)
+
+                    performance_indicator_name = document["job_log"]["stdout"].get("name")
+                    performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
+
+                    if not performance_model_class:
+                        raise PerformanceIndicatorNotRegistered(
+                            f"No performance indicator registered for name {performance_indicator_name!r}"
+                        )
+                    framework = document["job_log"]["stdout"].get("framework")
+                    if not framework:
+                        _LOGGER.warning(
+                            "No machine learning framework specified in performance indicator %r", cls.__name__
+                        )
+
+                    overall_score = document["job_log"]["stdout"].get("overall_score")
+                    if overall_score is None:
+                        _LOGGER.warning("No overall score detected in performance indicator %r", overall_score)
+
+                    performance_indicator, _ = performance_model_class.create_from_report(
+                        self._session,
+                        document,
+                        inspection_run_id=inspection_run.id
+                        )
+
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def create_python_cve_record(
         self,
