@@ -1020,7 +1020,7 @@ class GraphDatabase(SQLBase):
             python_package_index.enabled = enabled
 
             try:
-                with self._session.begin():
+                with self._session.begin(subtransactions=True):
                     self._session.add(python_package_index)
             except Exception:
                 self._session.rollback()
