@@ -813,7 +813,9 @@ class GraphDatabase(SQLBase):
 
         package_query = query
         dependencies = (
-            query.join(PythonPackageVersion.dependencies)
+            query
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
             .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
             .distinct()
             .all()
