@@ -131,7 +131,7 @@ class GraphDatabase(SQLBase):
         if self.is_connected():
             raise ValueError("Cannot connect, the adapter is already connected")
 
-        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", False)))
+        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         self._engine = create_engine(self.construct_connection_string(), echo=echo)
         self._session = sessionmaker(bind=self._engine)()
         # We do not use connection pool, but directly talk to the database.
