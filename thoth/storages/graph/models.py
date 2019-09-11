@@ -324,20 +324,20 @@ class PackageAnalyzerRun(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    name = Column(String(256), nullable=True)
-    version = Column(String(256), nullable=True)
+    package_analyzer_name = Column(String(256), nullable=True)
+    package_analyzer_version = Column(String(256), nullable=True)
     package_analysis_document_id = Column(String(256), nullable=False)
     datetime = Column(DateTime, nullable=False)
     debug = Column(Boolean, nullable=False, default=False)
     package_analyzer_error = Column(Boolean, nullable=False, default=False)
-    duration = Column(Integer, nullable=False)
+    duration = Column(Integer, nullable=True)
     input_python_package_version_entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"))
 
     input_python_package_version_entity = relationship(
         "PythonPackageVersionEntity", back_populates="package_analyzer_runs"
     )
     python_artifacts = relationship("Investigated", back_populates="package_analyzer_run")
-    python_files = relationship("InvestigatedPythonFile", back_populates="package_analyzer_run")
+    python_files = relationship("InvestigatedFile", back_populates="package_analyzer_run")
 
 
 class PythonArtifact(Base, BaseExtension):
@@ -354,12 +354,13 @@ class PythonArtifact(Base, BaseExtension):
     python_files = relationship("IncludedFile", back_populates="python_artifact")
     python_package_versions = relationship("HasArtifact", back_populates="python_artifact")
     package_analyzer_runs = relationship("Investigated", back_populates="python_artifact")
+    versioned_symbols = relationship("RequiresSymbol", back_populates="python_artifact")
 
 
-class InvestigatedPythonFile(Base, BaseExtension):
+class InvestigatedFile(Base, BaseExtension):
     """A record about found file by package analyzer."""
 
-    __tablename__ = "investigated_python_file"
+    __tablename__ = "investigated_file"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -393,7 +394,7 @@ class PythonFileDigest(Base, BaseExtension):
     sha256 = Column(String(256), nullable=False)
 
     package_extract_runs = relationship("FoundPythonFile", back_populates="python_file_digest")
-    package_analyzer_runs = relationship("InvestigatedPythonFile", back_populates="python_file_digest")
+    package_analyzer_runs = relationship("InvestigatedFile", back_populates="python_file_digest")
     python_artifacts = relationship("IncludedFile", back_populates="python_file_digest")
 
     __table_args__ = (UniqueConstraint("sha256"), Index("sha256_idx", "sha256", unique=True))
@@ -931,6 +932,7 @@ class VersionedSymbol(Base, BaseExtension):
 
     package_extract_runs = relationship("DetectedSymbol", back_populates="versioned_symbol")
     software_environments = relationship("HasSymbol", back_populates="versioned_symbol")
+    python_artifacts = relationship("RequiresSymbol", back_populates="versioned_symbol")
 
 
 class HasSymbol(Base, BaseExtension):
@@ -945,6 +947,20 @@ class HasSymbol(Base, BaseExtension):
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
+
+
+class RequiresSymbol(Base, BaseExtension):
+    """A relation stating a software environment has a symbol."""
+
+    __tablename__ = "requires_symbol"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+
+    python_artifact = relationship("PythonArtifact", back_populates="versioned_symbols")
+    versioned_symbol = relationship("VersionedSymbol", back_populates="python_artifacts")
 
 
 class DetectedSymbol(Base, BaseExtension):

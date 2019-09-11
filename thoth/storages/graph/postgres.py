@@ -44,6 +44,7 @@ from .models import PythonPackageVersion
 from .models import SoftwareEnvironment
 from .models import PythonPackageIndex
 from .models import PythonArtifact
+from .models import Investigated
 from .models import DependencyMonkeyRun
 from .models import AdviserRun
 from .models import HardwareInformation
@@ -77,6 +78,9 @@ from .models import FoundPythonFile
 from .models import FoundRPM
 from .models import Advised
 from .models import VersionedSymbol
+from .models import RequiresSymbol
+from .models import IncludedFile
+from .models import InvestigatedFile
 from .models import HasSymbol
 from .models import DetectedSymbol
 from .models import CVE
@@ -96,6 +100,7 @@ from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
+from ..package_analyses import PackageAnalysisResultsStore
 from ..exceptions import NotFoundError
 from thoth.storages.exceptions import PythonIndexNotRegistered
 
@@ -1030,7 +1035,7 @@ class GraphDatabase(SQLBase):
             python_package_index.enabled = enabled
 
             try:
-                with self._session.begin():
+                with self._session.begin(subtransactions=True):
                     self._session.add(python_package_index)
             except Exception:
                 self._session.rollback()
@@ -1491,7 +1496,84 @@ class GraphDatabase(SQLBase):
 
     def sync_package_analysis_result(self, document: dict) -> None:
         """Sync the given package analysis result to the graph database."""
-        raise NotImplementedError
+        package_analysis_document_id = PackageAnalysisResultsStore.get_document_id(document)
+        package_name = document["metadata"]["arguments"]["python"]["package_name"]
+        package_version = document["metadata"]["arguments"]["python"]["package_version"]
+        index_url = document["metadata"]["arguments"]["python"]["index_url"]
+
+        try:
+            with self._session.begin(subtransactions=True):
+                python_package_index, _ = PythonPackageIndex.get_or_create(
+                    self._session,
+                    url=index_url,
+                )
+                python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
+                    self._session,
+                    package_name=package_name,
+                    package_version=package_version,
+                    python_package_index_id=python_package_index.id,
+                )
+                package_analyzer_run, _ = PackageAnalyzerRun.get_or_create(
+                    self._session,
+                    package_analyzer_name=document["metadata"]["analyzer"],
+                    package_analyzer_version=document["metadata"]["analyzer_version"],
+                    package_analysis_document_id=package_analysis_document_id,
+                    datetime=document["metadata"]["datetime"],
+                    debug=document["metadata"]["arguments"]["thoth-package-analyzer"]["verbose"],
+                    package_analyzer_error=document["result"].get("error", False),
+                    duration=None,  # TODO: assign duration
+                    input_python_package_version_entity_id=python_package_version_entity.id,
+                )
+
+                for artifact in document["result"]["artifacts"]:
+                    python_artifact, _ = PythonArtifact.get_or_create(
+                        self._session,
+                        artifact_hash_sha256=artifact["sha256"],
+                        artifact_name=artifact["name"],
+                    )
+                    Investigated.get_or_create(
+                        self._session,
+                        package_analyzer_run_id=package_analyzer_run.id,
+                        python_artifact_id=python_artifact.id,
+                    )
+                    for digest in artifact["digests"]:
+                        file = digest["filepath"]
+                        if file.endswith(".py"):
+                            python_file_digest, _ = PythonFileDigest.get_or_create(
+                                self._session,
+                                sha256=digest["sha256"],
+                            )
+                            InvestigatedFile.get_or_create(
+                                self._session,
+                                package_analyzer_run_id=package_analyzer_run.id,
+                                python_file_digest_id=python_file_digest.id,
+                            )
+                            IncludedFile.get_or_create(
+                                self._session,
+                                python_file_digest_id=python_file_digest.id,
+                                python_artifact_id=python_artifact.id,
+                                file=file,
+                            )
+                        else:
+                            _LOGGER.warning("File %r found inside artifact not synced", file)
+
+                    for library, symbols in artifact["symbols"].items():
+                        for symbol in symbols:
+                            versioned_symbol, _ = VersionedSymbol.get_or_create(
+                                self._session,
+                                library_name=library,
+                                symbol=symbol,
+                            )
+                            RequiresSymbol.get_or_create(
+                                self._session,
+                                python_artifact_id=python_artifact.id,
+                                versioned_symbol_id=versioned_symbol.id,
+                            )
+        except Exception:
+            self._session.rollback()
+            raise
+        else:
+            self._session.commit()
 
     def _get_or_create_python_package_index(
         self, index_url: str, only_if_enabled: bool = True
