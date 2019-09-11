@@ -897,9 +897,7 @@ class GraphDatabase(SQLBase):
     ]:
         """Get all transitive dependencies for a given set of packages by traversing the dependency graph."""
         result = {}
-        _LOGGER.warning(len(package_tuples))
         for package_tuple in package_tuples:
-            _LOGGER.warning(package_tuple)
             result[package_tuple] = self.retrieve_transitive_dependencies_python(
                 *package_tuple,
                 os_name=os_name,
