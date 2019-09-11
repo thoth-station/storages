@@ -31,9 +31,11 @@ import attr
 from methodtools import lru_cache
 from sqlalchemy import create_engine
 from sqlalchemy import desc
+from sqlalchemy import func
 from sqlalchemy import tuple_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import insert
 from thoth.common.helpers import format_datetime
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
@@ -91,7 +93,6 @@ from .models_performance import PiConv2D
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
-from sqlalchemy import func
 
 from .sql_base import SQLBase
 from .models_base import Base
@@ -1300,21 +1301,30 @@ class GraphDatabase(SQLBase):
 
                 if inspection_run and inspection_run.dependency_monkey_run_id:
                     # If inspection was run through Depedency Monkey
-                    inspection_run = InspectionRun(
-                        inspection_sync_state="SYNCED",
+
+                    # INSERT…ON CONFLICT (Upsert)
+                    # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+                    row = insert(InspectionRun).values(
                         inspection_document_id=inspection_document_id,
-                        datetime=document.get("created"),
-                        amun_version=None,  # TODO: propagate Amun version here which should match API version
-                        build_requests_cpu=build_cpu,
-                        build_requests_memory=build_memory,
-                        run_requests_cpu=run_cpu,
-                        run_requests_memory=run_memory,
-                        build_software_environment_id=build_software_environment.id,
-                        build_hardware_information_id=build_hardware_information.id,
-                        run_software_environment_id=run_software_environment.id,
-                        run_hardware_information_id=run_hardware_information.id,
+                        dependency_monkey_run_id=inspection_run.dependency_monkey_run_id)
+
+                    do_update_row = row.on_conflict_do_update(
+                        constraint='inspection_run',
+                        set_=dict(
+                            inspection_sync_state="SYNCED",
+                            inspection_document_id=inspection_document_id,
+                            datetime=document.get("created"),
+                            amun_version=None,  # TODO: propagate Amun version here which should match API version
+                            build_requests_cpu=build_cpu,
+                            build_requests_memory=build_memory,
+                            run_requests_cpu=run_cpu,
+                            run_requests_memory=run_memory,
+                            build_software_environment_id=build_software_environment.id,
+                            build_hardware_information_id=build_hardware_information.id,
+                            run_software_environment_id=run_software_environment.id,
+                            run_hardware_information_id=run_hardware_information.id
+                            )
                     )
-                    self._session.upsert(inspection_run)
 
                 else:
                     inspection_run, _ = InspectionRun.get_or_create(
