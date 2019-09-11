@@ -113,7 +113,6 @@ class Solved(Base, BaseExtension):
     version = relationship("PythonPackageVersion", back_populates="solvers")
 
     __table_args__ = (
-        UniqueConstraint("ecosystem_solver_id", "version_id", "document_id"),
         Index("solver_document_id_idx", "document_id"),
     )
 
