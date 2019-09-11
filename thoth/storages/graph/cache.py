@@ -158,7 +158,7 @@ class GraphCache(SQLBase):
         if self.is_connected():
             raise ValueError("Cannot connect, the adapter is already connected")
 
-        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", False)))
+        echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         # self._engine = create_engine(f"sqlite+pysqlite:///{self.cache}", echo=echo, module=sqlite)
         self._engine = create_engine(self.cache, echo=echo, module=sqlite)
         self._session = sessionmaker(bind=self._engine)()
@@ -185,11 +185,11 @@ class GraphCache(SQLBase):
         )
 
         dependencies = (
-            self._session.query(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
-            .filter(PythonPackageVersionEntity.package_version.isnot(None))
-            .join(DependsOn)
-            .join(PythonPackageVersion)
+            self._session.query(PythonPackageVersion)
             .filter_by(**filter_kwargs)
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
+            .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
             .all()
         )
 
@@ -204,7 +204,7 @@ class GraphCache(SQLBase):
                 result.append((dependency_name, dependency_version))
 
         self.sqlite_cache_stats["get_depends_on"]["hits"] += 1
-        return dependencies
+        return result
 
     @_only_if_enabled
     def get_python_package_version_records(
@@ -293,7 +293,7 @@ class GraphCache(SQLBase):
                 entity, _ = PythonPackageVersionEntity.get_or_create(
                     self._session, package_name=dependency_name, package_version=dependency_version
                 )
-                DependsOn.get_or_create(self._session, entity=entity, version=python_package_version)
+                DependsOn.get_or_create(self._session, entity_id=entity.id, version_id=python_package_version.id)
         except Exception:
             self._session.rollback()
             raise
