@@ -204,7 +204,7 @@ class GraphCache(SQLBase):
                 result.append((dependency_name, dependency_version))
 
         self.sqlite_cache_stats["get_depends_on"]["hits"] += 1
-        return dependencies
+        return result
 
     @_only_if_enabled
     def get_python_package_version_records(
