@@ -120,7 +120,7 @@ class GraphCache(SQLBase):
     @staticmethod
     def is_inserts_enabled():
         """Check if inserts to this cache are enabled."""
-        return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED", 0)))
+        return not bool(int(os.getenv("THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED", 1)))
 
     @classmethod
     def load(cls, cache: str = None) -> "GraphCache":
