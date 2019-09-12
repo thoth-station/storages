@@ -20,6 +20,7 @@
 from pathlib import Path
 
 import pytest
+import flexmock
 
 from thoth.storages.graph import GraphCache
 
@@ -31,6 +32,7 @@ class TestCache(ThothStoragesTest):
 
     def test_add_depends_on_simple(self, tmp_path: Path) -> None:
         """Test adding dependencies to cache."""
+        flexmock(GraphCache).should_receive("is_inserts_enabled").and_return(True)
         cache = GraphCache.load(str(tmp_path / "db.sqlite3"))
         package_records = (
             dict(
@@ -64,6 +66,7 @@ class TestCache(ThothStoragesTest):
 
     def test_add_depends_on_no_deps(self, tmp_path: Path) -> None:
         """Test if no dependencies are present for the given package."""
+        flexmock(GraphCache).should_receive("is_inserts_enabled").and_return(True)
         cache = GraphCache.load(str(tmp_path / "db.sqlite3"))
         record = dict(
             package_name="flask",
@@ -83,6 +86,7 @@ class TestCache(ThothStoragesTest):
 
     def test_add_depends_on_no_deps_error(self, tmp_path: Path) -> None:
         """Test error if wrong parameters are supplied"""
+        flexmock(GraphCache).should_receive("is_inserts_enabled").and_return(True)
         cache = GraphCache.load(str(tmp_path / "db.sqlite3"))
 
         with pytest.raises(ValueError):
@@ -124,8 +128,8 @@ class TestCache(ThothStoragesTest):
 
     def test_multiple_match(self, tmp_path: Path) -> None:
         """Test retrieval of multiple records from the database."""
+        flexmock(GraphCache).should_receive("is_inserts_enabled").and_return(True)
         cache = GraphCache.load(str(tmp_path / "db.sqlite3"))
-
         package_records = (
             dict(
                 package_name="tensorflow",
@@ -171,6 +175,7 @@ class TestCache(ThothStoragesTest):
 
     def test_stats(self, tmp_path: Path):
         """Test gathering statistics about cache."""
+        flexmock(GraphCache).should_receive("is_inserts_enabled").and_return(True)
         cache = GraphCache.load(str(tmp_path / "db.sqlite3"))
         cache.add_depends_on(
             package_name="flask",
@@ -308,3 +313,11 @@ class TestCache(ThothStoragesTest):
                 'python_package_version_entity': 1
             }
         }
+
+    def test_inserts_disabled_by_default(self):
+        """Test inserts are disabled by default."""
+        assert GraphCache.is_inserts_enabled() is False
+
+    def test_enabled_by_default(self):
+        """Test cache is enabled by default."""
+        assert GraphCache.is_enabled() is True
