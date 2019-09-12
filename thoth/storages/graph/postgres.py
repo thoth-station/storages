@@ -344,24 +344,6 @@ class GraphDatabase(SQLBase):
             > 0
         )
 
-    def compute_python_package_version_avg_performance(
-        self, packages: Set[tuple], *, run_software_environment: dict = None, hardware_specs: dict = None
-    ) -> float:
-        """Get average performance of Python packages on the given runtime environment.
-
-        We derive this average performance based on software stacks we have
-        evaluated on the given software environment for run including the given
-        package in specified version. There are also included stacks that
-        failed for some reason that have negative performance impact on the overall value.
-
-        There are considered software stacks that include packages listed,
-        they can however include also other packages.
-
-        Optional parameters additionally slice results - e.g. if run_software_environment is set,
-        it picks only results that match the given parameters criteria.
-        """
-        raise NotImplementedError
-
     def has_python_solver_error(
         self,
         package_name: str,
