@@ -123,12 +123,12 @@ class GraphDatabase(SQLBase):
         """Construct a connection string needed to connect to database."""
         connection_string = (
             f"postgresql+psycopg2://"
-            f"{os.getenv('POSTGRESQL_USER', 'postgres')}:{os.getenv('POSTGRESQL_PASSWORD', 'postgres')}"
-            f"@{os.getenv('POSTGRESQL_SERVICE_HOST', 'localhost')}:{os.getenv('POSTGRESQL_SERVICE_PORT', 5432)}"
-            f"/{os.getenv('POSTGRESQL_DATABASE', 'thoth')}"
+            f"{os.getenv('KNOWLEDGE_GRAPH_USER', 'postgres')}:{os.getenv('KNOWLEDGE_GRAPH_PASSWORD', 'postgres')}"
+            f"@{os.getenv('KNOWLEDGE_GRAPH_HOST', 'localhost')}:{os.getenv('KNOWLEDGE_GRAPH_PORT', 5432)}"
+            f"/{os.getenv('KNOWLEDGE_GRAPH_DATABASE', 'thoth')}"
         )
 
-        if bool(int(os.getenv("POSTGRESQL_SSL_DISABLED", 0))):
+        if bool(int(os.getenv("KNOWLEDGE_GRAPH_SSL_DISABLED", 0))):
             connection_string += "?sslmode=disable"
 
         return connection_string
