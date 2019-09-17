@@ -87,9 +87,6 @@ from .models import InvestigatedFile
 from .models import HasSymbol
 from .models import DetectedSymbol
 from .models import CVE
-from .models import SoftwareEnvironment as UserRunSoftwareEnvironmentModel
-from .models_performance import PiConv1D
-from .models_performance import PiConv2D
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
