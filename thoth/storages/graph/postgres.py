@@ -18,6 +18,7 @@
 """An SQL database for storing Thoth data."""
 
 import logging
+import json
 import os
 from typing import List
 from typing import Set
@@ -117,6 +118,14 @@ class GraphDatabase(SQLBase):
     _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
 
     _DECLARATIVE_BASE = Base
+
+    def __del__(self) -> None:
+        """Destruct adapter object."""
+        if int(bool(os.getenv("THOTH_STORAGES_LOG_STATS", 0))):
+            stats = self.stats()
+            _LOGGER.info("Graph adapter statistics:\n%s", json.dumps(stats, indent=2))
+
+        super().__del__()
 
     @staticmethod
     def construct_connection_string() -> str:
