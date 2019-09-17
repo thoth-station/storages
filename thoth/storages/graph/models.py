@@ -53,9 +53,9 @@ class PythonPackageVersion(Base, BaseExtension):
     os_name = Column(String(256), nullable=True)
     os_version = Column(String(256), nullable=True)
     python_version = Column(String(256), nullable=True)
-    entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), nullable=False)
+    entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
     # Null if cannot parse.
-    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     dependencies = relationship("DependsOn", back_populates="version")
     package_extract_runs = relationship("Identified", back_populates="python_package_version")
@@ -84,8 +84,10 @@ class HasArtifact(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
-    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id"), primary_key=True)
+    python_package_version_id = Column(
+        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
 
     python_package_version = relationship("PythonPackageVersion", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="python_package_versions")
@@ -106,8 +108,8 @@ class Solved(Base, BaseExtension):
     error_unsolvable = Column(Boolean, default=False, nullable=False)
     is_provided = Column(Boolean)
 
-    ecosystem_solver_id = Column(Integer, ForeignKey("ecosystem_solver.id"), primary_key=True)
-    version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
+    ecosystem_solver_id = Column(Integer, ForeignKey("ecosystem_solver.id", ondelete="CASCADE"), primary_key=True)
+    version_id = Column(Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     ecosystem_solver = relationship("EcosystemSolver", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="solvers")
@@ -129,7 +131,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     package_version = Column(String(256), nullable=True)
     # Nullable if coming from user or cross-index resolution.
 
-    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     versions = relationship("DependsOn", back_populates="entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
@@ -158,8 +160,8 @@ class DependsOn(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), primary_key=True)
-    version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
+    entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True)
+    version_id = Column(Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     version_range = Column(String(128))
 
@@ -228,7 +230,7 @@ class PackageExtractRun(Base, BaseExtension):
     os_name = Column(String(256), nullable=False)
     os_id = Column(String(256), nullable=False)
     os_version_id = Column(String(256), nullable=False)
-    software_environment_id = Column(Integer, ForeignKey("software_environment.id"), nullable=False)
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), nullable=False)
 
     found_python_files = relationship("FoundPythonFile", back_populates="package_extract_run")
     found_rpms = relationship("FoundRPM", back_populates="package_extract_run")
@@ -247,8 +249,8 @@ class FoundPythonFile(Base, BaseExtension):
 
     file = Column(String(256), nullable=False)
 
-    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id"), primary_key=True)
-    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
+    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
 
     python_file_digest = relationship("PythonFileDigest", back_populates="package_extract_runs")
     package_extract_run = relationship("PackageExtractRun", back_populates="found_python_files")
@@ -261,8 +263,8 @@ class FoundRPM(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id"), primary_key=True)
-    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
+    rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id", ondelete="CASCADE"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
 
     rpm_package_version = relationship("RPMPackageVersion", back_populates="package_extract_runs")
     package_extract_run = relationship("PackageExtractRun", back_populates="found_rpms")
@@ -275,8 +277,8 @@ class FoundDeb(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id"), primary_key=True)
-    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
+    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
 
     deb_package_version = relationship("DebPackageVersion", back_populates="package_extract_runs")
     package_extract_run = relationship("PackageExtractRun", back_populates="found_debs")
@@ -292,7 +294,7 @@ class PythonPackageRequirement(Base, BaseExtension):
     name = Column(String(256), nullable=False)
     version_range = Column(String(256), nullable=False)
     develop = Column(Boolean, nullable=False)
-    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id"), nullable=True)
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     index = relationship("PythonPackageIndex", back_populates="python_package_requirements")
     python_software_stacks = relationship("PythonRequirements", back_populates="python_package_requirement")
@@ -330,7 +332,9 @@ class PackageAnalyzerRun(Base, BaseExtension):
     debug = Column(Boolean, nullable=False, default=False)
     package_analyzer_error = Column(Boolean, nullable=False, default=False)
     duration = Column(Integer, nullable=True)
-    input_python_package_version_entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"))
+    input_python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE")
+    )
 
     input_python_package_version_entity = relationship(
         "PythonPackageVersionEntity", back_populates="package_analyzer_runs"
@@ -363,8 +367,10 @@ class InvestigatedFile(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    package_analyzer_run_id = Column(Integer, ForeignKey("package_analyzer_run.id"), primary_key=True)
-    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id"), primary_key=True)
+    package_analyzer_run_id = Column(
+        Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
 
     package_analyzer_run = relationship("PackageAnalyzerRun", back_populates="python_files")
     python_file_digest = relationship("PythonFileDigest", back_populates="package_analyzer_runs")
@@ -377,8 +383,10 @@ class Investigated(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    package_analyzer_run_id = Column(Integer, ForeignKey("package_analyzer_run.id"), primary_key=True)
-    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id"), primary_key=True)
+    package_analyzer_run_id = Column(
+        Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
 
     package_analyzer_run = relationship("PackageAnalyzerRun", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="package_analyzer_runs")
@@ -417,11 +425,13 @@ class InspectionRun(Base, BaseExtension):
         ENUM("PENDING", "SYNCED", name="inspection_sync_state", create_type=True), nullable=False
     )
 
-    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
-    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
-    build_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
-    run_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
-    dependency_monkey_run_id = Column(Integer, ForeignKey("dependency_monkey_run.id"), nullable=True)
+    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
+    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
+    build_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    run_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    dependency_monkey_run_id = Column(
+        Integer, ForeignKey("dependency_monkey_run.id", ondelete="CASCADE"), nullable=True
+    )
 
     build_hardware_information = relationship(
         "HardwareInformation", back_populates="inspection_runs_build", foreign_keys=[build_hardware_information_id]
@@ -439,7 +449,7 @@ class InspectionRun(Base, BaseExtension):
 
     dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="inspection_runs")
 
-    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
+    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
     inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
 
     matmul_perf_indicators = relationship("PiMatmul", back_populates="inspection_run")
@@ -474,10 +484,10 @@ class AdviserRun(Base, BaseExtension):
     advised_configuration_changes = Column(Boolean, nullable=False, default=False)
     additional_stack_info = Column(Boolean, nullable=False, default=False)
 
-    user_run_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
-    user_build_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
+    user_run_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    user_build_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
 
-    user_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
+    user_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
     user_software_stack = relationship(
         "PythonSoftwareStack", back_populates="adviser_runs", foreign_keys=[user_software_stack_id]
     )
@@ -490,7 +500,7 @@ class AdviserRun(Base, BaseExtension):
         "SoftwareEnvironment", back_populates="adviser_inputs_build", foreign_keys=[user_build_software_environment_id]
     )
 
-    hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
+    hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
     hardware_information = relationship("HardwareInformation", back_populates="adviser_runs")
 
 
@@ -501,8 +511,8 @@ class Advised(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id"))
-    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"))
+    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id", ondelete="CASCADE"))
+    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
 
     adviser_run = relationship("AdviserRun", back_populates="advised_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="advised_by")
@@ -527,10 +537,10 @@ class DependencyMonkeyRun(Base, BaseExtension):
     dependency_monkey_error = Column(Boolean, default=False)
     duration = Column(Integer, nullable=True)  # XXX: nullable for now
 
-    run_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
-    build_software_environment_id = Column(Integer, ForeignKey("software_environment.id"))
-    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
-    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id"))
+    run_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    build_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
+    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
 
     inspection_runs = relationship("InspectionRun", back_populates="dependency_monkey_run")
     python_package_requirements = relationship(
@@ -617,7 +627,9 @@ class ProvenanceCheckerRun(Base, BaseExtension):
     # Duration in seconds.
     duration = Column(Integer, nullable=True)  # nullable for now.
 
-    user_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"), primary_key=True)
+    user_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
     user_software_stack = relationship("PythonSoftwareStack", back_populates="provenance_checker_runs")
 
 
@@ -666,8 +678,8 @@ class RPMRequires(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id"), primary_key=True)
-    rpm_requirement_id = Column(Integer, ForeignKey("rpm_requirement.id"), primary_key=True)
+    rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id", ondelete="CASCADE"), primary_key=True)
+    rpm_requirement_id = Column(Integer, ForeignKey("rpm_requirement.id", ondelete="CASCADE"), primary_key=True)
 
     rpm_package_version = relationship("RPMPackageVersion", back_populates="rpm_requirements")
     rpm_requirement = relationship("RPMRequirement", back_populates="rpm_package_versions")
@@ -744,8 +756,8 @@ class IncludedFile(Base, BaseExtension):
 
     file = Column(String(256), nullable=False)
 
-    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id"), primary_key=True)
-    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id"), primary_key=True)
+    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
+    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
 
     python_file_digest = relationship("PythonFileDigest", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="python_files")
@@ -758,8 +770,10 @@ class Identified(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
-    python_package_version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
+    python_package_version_id = Column(
+        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
+    )
 
     package_extract_run = relationship("PackageExtractRun", back_populates="python_package_version_entities")
     python_package_version = relationship("PythonPackageVersion", back_populates="package_extract_runs")
@@ -772,8 +786,10 @@ class HasVulnerability(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_version_entity_id = Column(Integer, ForeignKey("python_package_version_entity.id"), primary_key=True)
-    cve_id = Column(Integer, ForeignKey("cve.id"), primary_key=True)
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
+    cve_id = Column(Integer, ForeignKey("cve.id", ondelete="CASCADE"), primary_key=True)
 
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_versions")
@@ -806,8 +822,12 @@ class PythonRequirements(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_requirement_id = Column(Integer, ForeignKey("python_package_requirement.id"), primary_key=True)
-    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"), primary_key=True)
+    python_package_requirement_id = Column(
+        Integer, ForeignKey("python_package_requirement.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
 
     python_package_requirement = relationship("PythonPackageRequirement", back_populates="python_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_requirements")
@@ -820,8 +840,12 @@ class PythonDependencyMonkeyRequirements(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_requirement_id = Column(Integer, ForeignKey("python_package_requirement.id"), primary_key=True)
-    dependency_monkey_run_id = Column(Integer, ForeignKey("dependency_monkey_run.id"), primary_key=True)
+    python_package_requirement_id = Column(
+        Integer, ForeignKey("python_package_requirement.id", ondelete="CASCADE"), primary_key=True
+    )
+    dependency_monkey_run_id = Column(
+        Integer, ForeignKey("dependency_monkey_run.id", ondelete="CASCADE"), primary_key=True
+    )
 
     python_package_requirement = relationship("PythonPackageRequirement", back_populates="dependency_monkey_runs")
     dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="python_package_requirements")
@@ -834,8 +858,12 @@ class PythonRequirementsLock(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_version_id = Column(Integer, ForeignKey("python_package_version.id"), primary_key=True)
-    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id"), primary_key=True)
+    python_package_version_id = Column(
+        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
 
     python_package_version = relationship("PythonPackageVersion", back_populates="python_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_versions")
@@ -868,8 +896,8 @@ class DebDepends(Base, BaseExtension):
 
     version_range = Column(String(256), nullable=False)
 
-    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id"), primary_key=True)
-    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id"), primary_key=True)
+    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id", ondelete="CASCADE"), primary_key=True)
+    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     deb_package_version = relationship("DebPackageVersion", back_populates="depends")
     deb_dependency = relationship("DebDependency", back_populates="deb_package_versions_depends")
@@ -882,8 +910,8 @@ class DebPreDepends(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id"), primary_key=True)
-    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id"), primary_key=True)
+    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id", ondelete="CASCADE"), primary_key=True)
+    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     version_range = Column(String(256), nullable=True)
     deb_package_version = relationship("DebPackageVersion", back_populates="pre_depends")
@@ -897,8 +925,8 @@ class DebReplaces(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id"), primary_key=True)
-    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id"), primary_key=True)
+    deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id", ondelete="CASCADE"), primary_key=True)
+    deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     version_range = Column(String(256), nullable=False)
     deb_package_version = relationship("DebPackageVersion", back_populates="replaces")
@@ -941,8 +969,10 @@ class HasSymbol(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    software_environment_id = Column(Integer, ForeignKey("software_environment.id"), primary_key=True)
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+    software_environment_id = Column(
+        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
+    )
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
@@ -955,8 +985,8 @@ class RequiresSymbol(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id"), primary_key=True)
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     python_artifact = relationship("PythonArtifact", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="python_artifacts")
@@ -969,8 +999,8 @@ class DetectedSymbol(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id"), primary_key=True)
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     package_extract_run = relationship("PackageExtractRun", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="package_extract_runs")
