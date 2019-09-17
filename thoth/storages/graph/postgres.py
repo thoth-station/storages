@@ -1240,9 +1240,7 @@ class GraphDatabase(SQLBase):
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
-        performance_indicator = None
         inspection_document_id = InspectionResultsStore.get_document_id(document)
-
         try:
             with self._session.begin(subtransactions=True):
 
@@ -1265,6 +1263,7 @@ class GraphDatabase(SQLBase):
                     is_user=False,
                 )
 
+                software_stack = None
                 if "python" in document["specification"]:
                     # Inspection stack.
                     software_stack = self._create_python_software_stack(
@@ -1283,7 +1282,7 @@ class GraphDatabase(SQLBase):
                 )
 
                 if inspection_run and inspection_run.dependency_monkey_run_id:
-                    # If inspection was run through Depedency Monkey
+                    # If inspection was run through Dependency Monkey
 
                     # INSERT…ON CONFLICT (Upsert)
                     # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
@@ -1291,7 +1290,7 @@ class GraphDatabase(SQLBase):
                         inspection_document_id=inspection_document_id,
                         dependency_monkey_run_id=inspection_run.dependency_monkey_run_id)
 
-                    do_update_row = row.on_conflict_do_update(
+                    row.on_conflict_do_update(
                         constraint='inspection_run',
                         set_=dict(
                             inspection_sync_state="SYNCED",
@@ -1305,7 +1304,8 @@ class GraphDatabase(SQLBase):
                             build_software_environment_id=build_software_environment.id,
                             build_hardware_information_id=build_hardware_information.id,
                             run_software_environment_id=run_software_environment.id,
-                            run_hardware_information_id=run_hardware_information.id
+                            run_hardware_information_id=run_hardware_information.id,
+                            inspection_software_stack_id=software_stack.id if software_stack else None,
                             )
                     )
 
@@ -1324,6 +1324,7 @@ class GraphDatabase(SQLBase):
                         build_hardware_information_id=build_hardware_information.id,
                         run_software_environment_id=run_software_environment.id,
                         run_hardware_information_id=run_hardware_information.id,
+                        inspection_software_stack_id=software_stack.id if software_stack else None,
                     )
 
                 if document["specification"].get("script"):  # We have run an inspection job.
@@ -1352,7 +1353,7 @@ class GraphDatabase(SQLBase):
                         self._session,
                         document,
                         inspection_run_id=inspection_run.id
-                        )
+                    )
 
         except Exception:
             self._session.rollback()
