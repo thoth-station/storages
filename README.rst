@@ -100,8 +100,7 @@ class should match `name` which is reported by performance indicator run.
 
 .. code-block:: python
 
-  @attr.s(slots=True)
-  class PiMatmul(PerformanceIndicatorBase):
+  class PiMatmul(Base, BaseExtension, PerformanceIndicatorBase):
       """A class for representing a matrix multiplication micro-performance test."""
 
       # Device used during performance indicator run - CPU/GPU/TPU/...
