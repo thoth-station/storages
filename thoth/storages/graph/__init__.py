@@ -18,4 +18,5 @@
 """A graph database adapter for communicating with dgraph via gRPC."""
 
 
-from .dgraph import GraphDatabase
+from .cache import GraphCache
+from .postgres import GraphDatabase

@@ -11,6 +11,12 @@ amun = "*"
 pydgraph = "*"
 python-dateutil = "*"
 thoth-python = "*"
+click = "*"
+pyyaml = "*"
+methodtools = "*"
+sqlalchemy = "*"
+psycopg2-binary = "*"
+sqlalchemy-utils = "*"
 
 [dev-packages]
 pytest = "*"
@@ -19,6 +25,8 @@ pytest-cov = "*"
 coala-bears = "*"
 flexmock = "*"
 moto = "==1.3.8"
+sadisplay = "*"
+pydot = "*"
 
 [requires]
 python_version = "3.6"

@@ -59,7 +59,7 @@ def sync_adviser_documents(
         if force or not graph.adviser_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing adviser document from {adviser_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -99,7 +99,7 @@ def sync_solver_documents(
         if force or not graph.solver_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing solver document from {solver_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -140,7 +140,7 @@ def sync_analysis_documents(
         if force or not graph.analysis_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing analysis document from {analysis_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -181,7 +181,7 @@ def sync_package_analysis_documents(
         if force or not graph.package_analysis_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing package analysis document from {package_analysis_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -222,7 +222,7 @@ def sync_provenance_checker_documents(
         if force or not graph.provenance_checker_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing provenance-checker document from {provenance_check_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -263,7 +263,7 @@ def sync_dependency_monkey_documents(
         if force or not graph.dependency_monkey_document_id_exist(document_id):
             _LOGGER.info(
                 f"Syncing dependency monkey report document from {dependency_monkey_reports_store.ceph.host} "
-                f"with id {document_id!r} to graph {graph.hosts}"
+                f"with id {document_id!r} to graph"
             )
 
             try:
@@ -337,7 +337,7 @@ def sync_inspection_documents(
                     # failed to sync to graph - see if statement that is asking
                     # for Ceph document presents first.
                     if not only_ceph_sync:
-                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to {graph.hosts}")
+                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to graph")
                         graph.sync_inspection_result(document)
 
                     if not only_graph_sync:
