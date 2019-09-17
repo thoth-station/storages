@@ -3459,3 +3459,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.19.1 (2019-09-17T13:22:50)
 * :pushpin: Automatic update of dependency thoth-python from 0.6.1 to 0.6.2
 * Use more generic env variable names
+
+## Release 0.19.2 (2019-09-17T15:11:07)
+* Fix documentation for performance indicators
+* Implemented CASCADE on delete for Foreign Keys
