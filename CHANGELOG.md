@@ -3341,3 +3341,117 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency voluptuous from 0.11.5 to 0.11.7
 * :pushpin: Automatic update of dependency boto3 from 1.9.205 to 1.9.206
 * :pushpin: Automatic update of dependency thoth-python from 0.6.0 to 0.6.1
+
+## Release 0.19.0 (2019-09-17T08:54:47)
+* :pushpin: Automatic update of dependency pydgraph from 1.2.0 to 2.0.2
+* :pushpin: Automatic update of dependency boto3 from 1.9.222 to 1.9.229
+* Remove accidentally committed file
+* Provide method for disabling and enabling Python package index
+* Remove unused imports
+* Add missing software stack relation to inspections
+* Add missing import
+* State how to print stats to logs in README file
+* Log statistics of graph cache and memory cache if requested so
+* :pushpin: Automatic update of dependency boto3 from 1.9.228 to 1.9.229
+* :pushpin: Automatic update of dependency boto3 from 1.9.227 to 1.9.228
+* Drop performance related query
+* Add tests and adjust existing testsuite to respect cache flags
+* :pushpin: Automatic update of dependency boto3 from 1.9.226 to 1.9.227
+* Disable cache inserts by default as they are expensive
+* upsert-like logic
+* Updates for consistency
+* Logic to sync inspection
+* Increase lines allowed in a file
+* Sync pacakge-analyzer results
+* Sync system symbols detected by a package-extract
+* Fix cache test
+* Fix returned variable
+* Check for solver errors before adding package to cache
+* Remove debug warnings accidentally committed
+* Start session with subtransactions enabled
+* Be explicit about join
+* Package version can have some of the values None
+* Remove unique constraint
+* Rewrite cache query to retrieved dependencies
+* Remove unused parameters
+* Raise NotFoundError if no records were found
+* Adjust query for retrieving performance indicators
+* :pushpin: Automatic update of dependency boto3 from 1.9.225 to 1.9.226
+* :pushpin: Automatic update of dependency pydgraph from 2.0.1 to 2.0.2
+* Count number of performance indicators based on framework
+* Introduce method for counting performance indicator entries
+* Implement method for listing analyses
+* Implement method for getting analysis metadata
+* Make methods which create data without starting transaction private
+* Remove methods which should not be used outside of module
+* Unify environment type handling
+* Sync system symbols detected by a package-extract
+* Do not maintain schema for performance indicators
+* Minor fixes to make dependency monkey syncs work properly
+* Fix invalid foreign key error on schema creation
+* Reformat using black
+* Substitute from_properties with get_or_create in performance models
+* Introduce logic for syncing dependency-monkey documents
+* Unify software stack creation handling
+* Unify Python package version handling in PostgreSQL
+* Move cache specific function to cache implementation
+* Implement logic for syncing adviser results
+* Fix typos
+* Implement logic for syncing provenance checker results
+* :pushpin: Automatic update of dependency boto3 from 1.9.224 to 1.9.225
+* Implement logic for syncing package-extract results
+* Fix property name
+* Introduce a new query which is used by adviser to filter out based on indexes
+* Fix coala complains
+* Remove old schema files
+* Switch to PostgreSQL
+* :pushpin: Automatic update of dependency boto3 from 1.9.223 to 1.9.224
+* :pushpin: Automatic update of dependency pydgraph from 1.2.0 to 2.0.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.222 to 1.9.223
+* capture error
+* updated schema
+* Sync package analyzer error
+* Add error flag to package analyzer run
+* Remove index key
+* Adjust tests to work with new implementation
+* Do not raise exception, return None instead
+* :pushpin: Automatic update of dependency boto3 from 1.9.221 to 1.9.222
+* Call dgraph initialization
+* Remove caching on top of Dgraph
+* Remove accidentally committed file
+* Mirror PostgreSQL with Dgraph for now
+* PostgreSQL implementation
+* Add statistics of queries to sqlite3 cache
+* Optimize two queries into one and iterate over all configurations resolved
+* Do not use slots as LRU cache wrappers fail
+* Provide mechanism to clear in-memory cache
+* Add entries to cache only if there were no solver errors
+* Provide more information on cache statistics
+* Use methodtools to properly handle lru cache on methods
+* Provide adapter for storing and restoring graph cache in builds
+* Use indexes and minor fixes
+* Use sqlite3 as cache
+* Introduce cache for caching results of well-used packages
+* Adjust query for retrieving transitive dependencies
+* Adjust syncing logic to new depends_on schemantics
+* :pushpin: Automatic update of dependency boto3 from 1.9.220 to 1.9.221
+* :pushpin: Automatic update of dependency pytest from 5.1.1 to 5.1.2
+* :pushpin: Automatic update of dependency boto3 from 1.9.219 to 1.9.220
+* :pushpin: Automatic update of dependency boto3 from 1.9.218 to 1.9.219
+* :pushpin: Automatic update of dependency boto3 from 1.9.217 to 1.9.218
+* :pushpin: Automatic update of dependency boto3 from 1.9.216 to 1.9.217
+* :pushpin: Automatic update of dependency boto3 from 1.9.215 to 1.9.216
+* :pushpin: Automatic update of dependency boto3 from 1.9.214 to 1.9.215
+* :pushpin: Automatic update of dependency boto3 from 1.9.213 to 1.9.214
+* Add is_provided flag
+* :pushpin: Automatic update of dependency boto3 from 1.9.212 to 1.9.213
+* :pushpin: Automatic update of dependency pytest from 5.1.0 to 5.1.1
+* :pushpin: Automatic update of dependency boto3 from 1.9.211 to 1.9.212
+* :pushpin: Automatic update of dependency boto3 from 1.9.210 to 1.9.211
+* :pushpin: Automatic update of dependency boto3 from 1.9.209 to 1.9.210
+* :pushpin: Automatic update of dependency pytest from 5.0.1 to 5.1.0
+* :pushpin: Automatic update of dependency boto3 from 1.9.208 to 1.9.209
+* :pushpin: Automatic update of dependency boto3 from 1.9.207 to 1.9.208
+* Coala errors
+* Store symbols
+* Add models for versioned symbols and associated edges
