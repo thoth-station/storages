@@ -3455,3 +3455,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Coala errors
 * Store symbols
 * Add models for versioned symbols and associated edges
+
+## Release 0.19.1 (2019-09-17T13:22:50)
+* :pushpin: Automatic update of dependency thoth-python from 0.6.1 to 0.6.2
+* Use more generic env variable names
