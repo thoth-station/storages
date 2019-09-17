@@ -124,6 +124,19 @@ You can print to logger all the queries that are performed to a PostgreSQL insta
 
   export THOTH_STORAGES_DEBUG_QUERIES=1
 
+Online debugging of queries
+===========================
+
+You can print information about PostgreSQL adapter together with statisics on
+the graph cache and memory cache usage to logger (it has to have at least level
+`INFO` set). To do so, set the following environment variable:
+
+.. code-block::
+
+  export THOTH_STORAGES_LOG_STATS=1
+
+These statistics will be printed once the database adapter is destructed.
+
 Graph database cache
 ====================
 
