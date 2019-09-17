@@ -37,11 +37,12 @@ from sqlalchemy import tuple_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
-from thoth.common.helpers import format_datetime
+from sqlalchemy.pool import NullPool
 from sqlalchemy.dialects import postgresql
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
+from thoth.common.helpers import format_datetime
 from thoth.common import OpenShift
 
 from .cache import GraphCache
@@ -152,12 +153,9 @@ class GraphDatabase(SQLBase):
             raise ValueError("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
-        self._engine = create_engine(self.construct_connection_string(), echo=echo)
-        self._session = sessionmaker(bind=self._engine)()
         # We do not use connection pool, but directly talk to the database.
-        # session_factory = sessionmaker(bind=create_engine(self.construct_connection_string()), poolclass=NullPool)
-        # self._session = scoped_session(session_factory)
-        self._session = sessionmaker(bind=create_engine(self.construct_connection_string()))()
+        self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
+        self._session = sessionmaker(bind=self._engine)()
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
