@@ -105,7 +105,8 @@ from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
 from ..package_analyses import PackageAnalysisResultsStore
 from ..exceptions import NotFoundError
-from thoth.storages.exceptions import PythonIndexNotRegistered
+from ..exceptions import PythonIndexNotRegistered
+from ..exceptions import PerformanceIndicatorNotRegistered
 
 _LOGGER = logging.getLogger(__name__)
 
