@@ -38,6 +38,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 from thoth.common.helpers import format_datetime
+from sqlalchemy.dialects import postgresql
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -1291,8 +1292,8 @@ class GraphDatabase(SQLBase):
                     # Inspection stack.
                     software_stack = self._create_python_software_stack(
                         software_stack_type="INSPECTION",
-                        requirements=document["specification"].get("requirements"),
-                        requirements_lock=document["specification"].get("requirements_locked"),
+                        requirements=document["specification"]["python"].get("requirements"),
+                        requirements_lock=document["specification"]["python"].get("requirements_locked"),
                         software_environment=run_software_environment,
                         performance_score=None,
                         overall_score=None,
@@ -1309,28 +1310,30 @@ class GraphDatabase(SQLBase):
 
                     # INSERT…ON CONFLICT (Upsert)
                     # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+                    # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
                     row = insert(InspectionRun).values(
+                        id=inspection_run.dependency_monkey_run_id,
                         inspection_document_id=inspection_document_id,
-                        dependency_monkey_run_id=inspection_run.dependency_monkey_run_id)
-
-                    row.on_conflict_do_update(
-                        constraint='inspection_run',
-                        set_=dict(
-                            inspection_sync_state="SYNCED",
-                            inspection_document_id=inspection_document_id,
-                            datetime=document.get("created"),
-                            amun_version=None,  # TODO: propagate Amun version here which should match API version
-                            build_requests_cpu=build_cpu,
-                            build_requests_memory=build_memory,
-                            run_requests_cpu=run_cpu,
-                            run_requests_memory=run_memory,
-                            build_software_environment_id=build_software_environment.id,
-                            build_hardware_information_id=build_hardware_information.id,
-                            run_software_environment_id=run_software_environment.id,
-                            run_hardware_information_id=run_hardware_information.id,
-                            inspection_software_stack_id=software_stack.id if software_stack else None,
-                            )
-                    )
+                        dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
+                        inspection_sync_state="PENDING"
+                        ).on_conflict_do_update(
+                            index_elements=['id'],
+                            set_=dict(
+                                inspection_sync_state="SYNCED",
+                                inspection_document_id=inspection_document_id,
+                                datetime=document.get("created"),
+                                amun_version=None,  # TODO: propagate Amun version here which should match API version
+                                build_requests_cpu=build_cpu,
+                                build_requests_memory=build_memory,
+                                run_requests_cpu=run_cpu,
+                                run_requests_memory=run_memory,
+                                build_software_environment_id=build_software_environment.id,
+                                build_hardware_information_id=build_hardware_information.id,
+                                run_software_environment_id=run_software_environment.id,
+                                run_hardware_information_id=run_hardware_information.id,
+                                inspection_software_stack_id=software_stack.id if software_stack else None,
+                                )
+                        ).compile(dialect=postgresql.dialect())
 
                 else:
                     inspection_run, _ = InspectionRun.get_or_create(
@@ -1382,7 +1385,10 @@ class GraphDatabase(SQLBase):
             self._session.rollback()
             raise
         else:
-            self._session.commit()
+            if inspection_run and inspection_run.dependency_monkey_run_id:
+                self._engine.execute(row)
+            else:
+                self._session.commit()
 
     def create_python_cve_record(
         self,
