@@ -3471,3 +3471,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Count and limit for advises can be nullable
 * Increase advisory message for CVEs
 * :pushpin: Automatic update of dependency boto3 from 1.9.229 to 1.9.230
+
+## Release 0.19.5 (2019-09-18T16:47:17)
+* Document how to dump and restore database in the running cluster
+* Adjust logged message to inform about concurrent writes
+* Randomize retrieval of unsolved Python packages
+* New class methods for InspectionStore
+* Fix unsolved Python packages query
+* Adjust signature of method to respect its return value
