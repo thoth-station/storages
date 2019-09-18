@@ -191,3 +191,15 @@ are expensive operations).
 
 To disable graph cache completely, set ``THOTH_STORAGES_GRAPH_CACHE_DISABLED``
 environment variable to ``1`` (the default value of ``0`` enables it).
+
+Creating backups from Thoth deployment
+======================================
+
+You can use `pg_dump` and `pg_restore` utilities to create dumps and restore
+the database content from dumps. This tool is pre-installed in the container image
+which is running PostgreSQL so the only thing you need to do is execute
+`pg_dump` in Thoth's deployment in a PostgreSQL container to create a dump, use
+`oc cp` to retrieve dump (or directly use `oc exec` and create the dump from the
+cluster) and subsequently `pg_restore` to restore the database content. The
+prerequisite for this is to have access to the running container (edit rights).
+
