@@ -17,6 +17,10 @@
 
 """Adapter for persisting Amun inspection results."""
 
+
+import typing
+from typing import List, Dict
+
 from .result_base import ResultStorageBase
 from .inspection_schema import INSPECTION_SCHEMA
 
@@ -31,3 +35,19 @@ class InspectionResultsStore(ResultStorageBase):
     def get_document_id(cls, document: dict) -> str:
         """Get id under which the given document will be stored."""
         return document["inspection_id"]
+
+    def filter_document_ids(cls, inspection_identifiers: List[str]) -> Dict[str, List]:
+        """Filter inspection document ids list according to the inspection identifiers selected.
+
+        :param inspection_identifiers: list of identifier/s to filter inspection ids
+        """
+        inspection_document_ids = list(cls.get_document_listing())
+        filtered_inspection_document_ids = dict((i, []) for i in inspection_identifiers)
+
+        for sid in inspection_document_ids:
+            inspection_filter = "-".join(sid.split("-")[1:(len(sid.split("-")) - 1)])
+
+            if inspection_filter and inspection_filter in inspection_identifiers:
+                filtered_inspection_document_ids[inspection_filter].append(sid)
+
+        return filtered_inspection_document_ids
