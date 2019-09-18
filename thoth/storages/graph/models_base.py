@@ -51,9 +51,14 @@ class BaseExtension:
                 session.add(instance)
                 session.commit()
                 return instance, False
-            except IntegrityError:
+            except IntegrityError as exc:
                 session.rollback()
-                _LOGGER.exception("Integrity error for %r", kwargs)
+                _LOGGER.warning(
+                    "Integrity error on creating a new record; this can be due to "
+                    "concurrent writes to database, recovering (attributes: %r): %s",
+                    kwargs,
+                    str(exc),
+                )
                 return session.query(cls).filter_by(**kwargs).one(), True
 
     @classmethod
