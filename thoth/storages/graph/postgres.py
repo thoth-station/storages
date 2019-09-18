@@ -452,12 +452,16 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def retrieve_unsolved_python_packages(self, solver_name: str) -> List[Tuple[str, str]]:
+    def retrieve_unsolved_python_packages(self, solver_name: str, randomize: bool = True) -> List[Tuple[str, str]]:
         """Retrieve a list of tuples (package name, package version) of dependencies which were not yet resolved.
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
         query = self._construct_unsolved_python_packages_query(solver_name)
+
+        if randomize:
+            query = query.order_by(func.random())
+
         return query.all()
 
     def retrieve_unsolved_python_packages_count(self, solver_name: str) -> int:
