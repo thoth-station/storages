@@ -452,8 +452,8 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def retrieve_unsolved_python_packages(self, solver_name: str) -> dict:
-        """Retrieve a dictionary mapping package names to versions that dependencies were not yet resolved.
+    def retrieve_unsolved_python_packages(self, solver_name: str) -> List[Tuple[str, str]]:
+        """Retrieve a list of tuples (package name, package version) of dependencies which were not yet resolved.
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
         """
