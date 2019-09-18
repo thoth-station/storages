@@ -446,7 +446,7 @@ class GraphDatabase(SQLBase):
                     subquery
                 )
             )
-            .with_entities(PythonPackageVersion.package_name, PythonPackageVersion.package_version)
+            .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
             .distinct()
         )
 
