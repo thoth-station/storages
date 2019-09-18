@@ -310,7 +310,7 @@ class CVE(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    advisory = Column(String(256), nullable=True)
+    advisory = Column(String(16384), nullable=True)
     cve_name = Column(String(256), nullable=True)
     cve_id = Column(String(256), nullable=True)
     version_range = Column(String(256), nullable=True)
