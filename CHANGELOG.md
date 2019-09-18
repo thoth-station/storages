@@ -3466,3 +3466,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.19.3 (2019-09-17T16:49:19)
 * Disable connection pooling
+
+## Release 0.19.4 (2019-09-18T07:11:52)
+* Count and limit for advises can be nullable
+* Increase advisory message for CVEs
+* :pushpin: Automatic update of dependency boto3 from 1.9.229 to 1.9.230
