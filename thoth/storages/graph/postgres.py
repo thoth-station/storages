@@ -1183,6 +1183,47 @@ class GraphDatabase(SQLBase):
 
         return hardware_information, software_environment
 
+    def create_python_package_version_entity(
+        self,
+        package_name: str,
+        package_version: str = None,
+        index_url: str = None,
+        only_if_package_seen: bool = False,
+    ) -> Optional[Tuple[PythonPackageVersionEntity, bool]]:
+        """Create a Python package version entity record in the system.
+
+        By creating this entity, the system will record and track the given package.
+        """
+        if only_if_package_seen:
+            seen_count = (
+                self._session.query(PythonPackageVersionEntity)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+                .count()
+            )
+
+            if seen_count == 0:
+                return None
+
+        try:
+            with self._session.begin(subtransactions=True):
+                index = None
+                if index_url:
+                    index = self._get_or_create_python_package_index(index_url, only_if_enabled=False)
+
+                entity, existed = PythonPackageVersionEntity.get_or_create(
+                    self._session,
+                    package_name=package_name,
+                    package_version=package_version,
+                    python_package_index_id=index.id if index else None,
+                )
+        except Exception:
+            self._session.rollbal()
+            raise
+        else:
+            self._session.commit()
+
+        return entity, existed
+
     def _create_python_package_version(
         self,
         package_name: str,
