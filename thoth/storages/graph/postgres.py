@@ -1231,7 +1231,7 @@ class GraphDatabase(SQLBase):
                     python_package_index_id=index.id if index else None,
                 )
         except Exception:
-            self._session.rollbal()
+            self._session.rollback()
             raise
         else:
             self._session.commit()
