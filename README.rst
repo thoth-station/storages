@@ -77,8 +77,8 @@ generated with procedure described bellow.
 If you make any changes, follow the following steps which will generate version
 for you:
 
-1. make sure your local PostgreSQL instance is running (follow Running
-   PostgreSQL locally instructions above):
+1. make sure your local PostgreSQL instance is running (follow `Running
+   PostgreSQL locally` instructions above):
 
   .. code-block:: console
 
@@ -96,7 +96,7 @@ for you:
    automatically detected by Alembic
    <https://alembic.sqlalchemy.org/en/latest/autogenerate.html#what-does-autogenerate-detect-and-what-does-it-not-detect>`_.
 
-4. Make sure generated migrations are part of you pull request so changes are
+4. Make sure generated migrations are part of your pull request so changes are
    propagated to deployments:
 
 
@@ -106,7 +106,7 @@ for you:
 
 4. In a deployment, use Management API and its `/graph/initialize` endpoint to
    propagate database schema changes in deployment (Management API has to have
-   recent schema changes present which are populated with new thoth-storages
+   recent schema changes present which are populated with new `thoth-storages`
    releases).
 
 5. If running locally and you would like to propagate changes, run the following Alembic command to update migrations to the latest version:
@@ -120,11 +120,11 @@ for you:
 
   .. code-block:: python
 
-  from thoth.storages import GraphDatabase
+    from thoth.storages import GraphDatabase
 
-  graph = GraphDatabase()
-  graph.connect()
-  graph.initilize_schema()
+    graph = GraphDatabase()
+    graph.connect()
+    graph.initilize_schema()
 
 Generate schema images
 ======================
