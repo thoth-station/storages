@@ -30,6 +30,7 @@ from collections import deque
 
 import attr
 from methodtools import lru_cache
+from alembic.config import main as alembic_main
 from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
@@ -39,6 +40,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.pool import NullPool
 from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.functions import create_database
+from sqlalchemy_utils.functions import database_exists
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -134,7 +137,7 @@ class GraphDatabase(SQLBase):
             f"postgresql+psycopg2://"
             f"{os.getenv('KNOWLEDGE_GRAPH_USER', 'postgres')}:{os.getenv('KNOWLEDGE_GRAPH_PASSWORD', 'postgres')}"
             f"@{os.getenv('KNOWLEDGE_GRAPH_HOST', 'localhost')}:{os.getenv('KNOWLEDGE_GRAPH_PORT', 5432)}"
-            f"/{os.getenv('KNOWLEDGE_GRAPH_DATABASE', 'thoth')}"
+            f"/{os.getenv('KNOWLEDGE_GRAPH_DATABASE', 'postgres')}"
         )
 
         if bool(int(os.getenv("KNOWLEDGE_GRAPH_SSL_DISABLED", 0))):
@@ -156,6 +159,17 @@ class GraphDatabase(SQLBase):
         # We do not use connection pool, but directly talk to the database.
         self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
         self._session = sessionmaker(bind=self._engine)()
+
+    def initialize_schema(self):
+        """Initialize schema of database."""
+        if not self.is_connected():
+            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
+
+        if not database_exists(self._engine.url):
+            create_database(self._engine.url)
+
+        _LOGGER.info("Running Alembic migrations...")
+        alembic_main(argv=["upgrade", "head"])
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:

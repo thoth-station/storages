@@ -2,7 +2,7 @@
 bears = LineCountBear, FilenameBear
 files = **.py, **.yaml, **.toml, **.rst, **.md
 file_naming_convention = snake
-ignore = **/__pycache__/**, **/__pycache__, __pycache__, __pycache__/**, **/*.pyc, *.pyc, .github/**/*.md, test/**, thoth/storages/graph/dgraph.py, CHANGELOG.md
+ignore = **/__pycache__/**, **/__pycache__, __pycache__, __pycache__/**, **/*.pyc, *.pyc, .github/**/*.md, test/**, thoth/storages/graph/dgraph.py, CHANGELOG.md, alembic/
 max_line_length = 120
 max_lines_per_file = 4000
 
@@ -11,7 +11,7 @@ bears = PycodestyleBear, PyDocStyleBear
 files = **.py
 language = Python
 editor = vim
-ignore = setup.py, tests/**,docs/source/conf.py
+ignore = setup.py, tests/**,docs/source/conf.py, alembic/
 
 [zuul.yaml]
 bears = YAMLLintBear
