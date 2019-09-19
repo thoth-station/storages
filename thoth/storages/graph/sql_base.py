@@ -21,8 +21,6 @@ import attr
 import abc
 
 from sqlalchemy.engine import Engine
-from sqlalchemy_utils.functions import create_database
-from sqlalchemy_utils.functions import database_exists
 
 
 @attr.s(slots=True)
@@ -53,15 +51,9 @@ class SQLBase:
         # self._engine.dispose()
         self._engine = None
 
+    @abc.abstractmethod
     def initialize_schema(self) -> None:
         """Initialize schema in the database."""
-        if not self.is_connected():
-            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
-
-        if not database_exists(self._engine.url):
-            create_database(self._engine.url)
-
-        self._DECLARATIVE_BASE.metadata.create_all(self._engine)
 
     def drop_all(self) -> None:
         """Drop all content stored in the database."""

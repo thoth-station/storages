@@ -34,6 +34,8 @@ import attr
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy_utils.functions import create_database
+from sqlalchemy_utils.functions import database_exists
 
 from .sql_base import SQLBase
 from .models_cache import CacheBase as Base
@@ -162,6 +164,16 @@ class GraphCache(SQLBase):
         # self._engine = create_engine(f"sqlite+pysqlite:///{self.cache}", echo=echo, module=sqlite)
         self._engine = create_engine(self.cache, echo=echo, module=sqlite)
         self._session = sessionmaker(bind=self._engine)()
+
+    def initialize_schema(self):
+        """Initialize schema of database."""
+        if not self.is_connected():
+            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
+
+        if not database_exists(self._engine.url):
+            create_database(self._engine.url)
+
+        self._DECLARATIVE_BASE.metadata.create_all(self._engine)
 
     @_only_if_enabled
     def get_depends_on(
