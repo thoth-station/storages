@@ -177,6 +177,11 @@ class GraphDatabase(SQLBase):
         return PackageVersion.normalize_python_package_name(package_name)
 
     @staticmethod
+    def normalize_python_package_version(package_version: str) -> str:
+        """Normalize Python package name based on PEP-440."""
+        return PackageVersion.normalize_python_package_version(package_version)
+
+    @staticmethod
     def parse_python_solver_name(solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
         if solver_name.startswith("solver-"):
@@ -333,6 +338,8 @@ class GraphDatabase(SQLBase):
         If optional solver_name parameter is set, the call answers if the given package was solved by
         the given solver. Otherwise, any solver run is taken into account.
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -357,6 +364,7 @@ class GraphDatabase(SQLBase):
 
     def python_package_exists(self, package_name: str) -> bool:
         """Check if the given Python package exists regardless of version."""
+        package_name = self.normalize_python_package_name(package_name)
         return (
             self._session.query(PythonPackageVersionEntity)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -375,6 +383,8 @@ class GraphDatabase(SQLBase):
         python_version: Union[str, None],
     ) -> bool:
         """Retrieve information whether the given package has any solver error."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -420,6 +430,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
     ) -> List[Tuple[str, str]]:
         """Get all versions available for a Python package."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self._session.query(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
 
         if os_name is not None:
@@ -620,11 +631,13 @@ class GraphDatabase(SQLBase):
 
     def retrieve_dependent_packages(self, package_name: str, package_version: str = None) -> dict:
         """Get mapping package name to package version of packages that depend on the given package."""
+        package_name = self.normalize_python_package_name(package_name)
         query = self._session.query(PythonPackageVersionEntity).filter(
             PythonPackageVersionEntity.package_name == package_name
         )
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         query_result = (
@@ -657,6 +670,8 @@ class GraphDatabase(SQLBase):
         without_cache: bool = False,
     ) -> List[dict]:
         """Get records for the given package regardless of index_url."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         if not without_cache:
             result = self._cache.get_python_package_version_records(
                 package_name=package_name,
@@ -745,6 +760,8 @@ class GraphDatabase(SQLBase):
         queries into graph instance.
         """
         package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         result = []
         package_tuple = (package_name, package_version, index_url)
         stack = deque((package_tuple,))
@@ -814,6 +831,9 @@ class GraphDatabase(SQLBase):
 
         If no environment is provided, dependencies are returned for all environments as stored in the database.
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         package_requested = locals()
         package_requested.pop("self")
         package_requested.pop("without_cache")
@@ -989,6 +1009,9 @@ class GraphDatabase(SQLBase):
 
     def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         result = (
             self._session.query(CVE)
             .join(CVE.python_package_versions)
@@ -1003,6 +1026,9 @@ class GraphDatabase(SQLBase):
         self, package_name: str, package_version: str, index_url: str = None
     ) -> List[str]:
         """Get hashes for a Python package in a specified version."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         if index_url is not None:
             query = (
                 self._session.query(PythonPackageIndex)
@@ -1024,6 +1050,8 @@ class GraphDatabase(SQLBase):
 
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
         """Get hashes for a Python package per index."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         # TODO: remove  this from sources and substitute it
         return self.get_python_package_version_hashes_sha256(package_name, package_version, None)
 
@@ -1208,6 +1236,10 @@ class GraphDatabase(SQLBase):
 
         By creating this entity, the system will record and track the given package.
         """
+        package_name = self.normalize_python_package_name(package_name)
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+
         if only_if_package_seen:
             seen_count = (
                 self._session.query(PythonPackageVersionEntity)
@@ -1251,11 +1283,14 @@ class GraphDatabase(SQLBase):
 
         Make sure it is properly mirrored with a Python package entity and connected to a Python package index.
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         index = None
         if index_url is not None:
             index = self._get_or_create_python_package_index(index_url, only_if_enabled=False)
 
         package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
 
         entity, _ = PythonPackageVersionEntity.get_or_create(
             self._session,
@@ -1459,6 +1494,8 @@ class GraphDatabase(SQLBase):
         cve: str = None,
     ) -> Tuple[CVE, bool]:
         """Store information about a CVE in the graph database for the given Python package."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
         try:
             with self._session.begin(subtransactions=True):
                 cve, _ = CVE.get_or_create(
@@ -1701,7 +1738,9 @@ class GraphDatabase(SQLBase):
         """Sync the given package analysis result to the graph database."""
         package_analysis_document_id = PackageAnalysisResultsStore.get_document_id(document)
         package_name = document["metadata"]["arguments"]["python"]["package_name"]
+        package_name = self.normalize_python_package_name(package_name)
         package_version = document["metadata"]["arguments"]["python"]["package_version"]
+        package_version = self.normalize_python_package_version(package_version)
         index_url = document["metadata"]["arguments"]["python"]["index_url"]
 
         try:
@@ -1820,6 +1859,7 @@ class GraphDatabase(SQLBase):
                 )
 
                 for python_package_info in document["result"]["tree"]:
+                    # Normalized in `_create_python_package_version'.
                     package_name = python_package_info["package_name"]
                     package_version = python_package_info["package_version"]
                     index_url = python_package_info["index_url"]
@@ -1865,7 +1905,7 @@ class GraphDatabase(SQLBase):
                                 dependency_entity, _ = PythonPackageVersionEntity.get_or_create(
                                     self._session,
                                     package_name=self.normalize_python_package_name(dependency["package_name"]),
-                                    package_version=dependency_version,
+                                    package_version=self.normalize_python_package_version(dependency_version),
                                     python_package_index_id=None,
                                 )
 
@@ -1877,6 +1917,7 @@ class GraphDatabase(SQLBase):
                                 )
 
             for error_info in document["result"]["errors"]:
+                # Normalized in `_create_python_package_version'.
                 package_name = error_info.get("package_name") or error_info["package"]
                 package_version = error_info["version"]
                 index_url = error_info["index"]
@@ -1914,9 +1955,9 @@ class GraphDatabase(SQLBase):
                     )
                     continue
 
-                package_name = unsolvable["package_name"]
+                package_name = self.normalize_python_package_name(unsolvable["package_name"])
                 index_url = unsolvable["index"]
-                package_version = unsolvable["version_spec"][len("=="):]
+                package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
                 python_package_version = self._create_python_package_version(
                     package_name,
