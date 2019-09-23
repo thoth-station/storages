@@ -11,3 +11,4 @@ methodtools
 sqlalchemy
 psycopg2-binary
 sqlalchemy-utils
+alembic
