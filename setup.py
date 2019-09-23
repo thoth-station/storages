@@ -73,7 +73,10 @@ setup(
     ],
     package_data={
         'thoth.storages': [
-            os.path.join('graph', 'schema.rdf')
+            os.path.join('data', 'alembic.ini'),
+            os.path.join('data', 'alembic', 'script.py.mako'),
+            os.path.join('data', 'alembic', 'env.py'),
+            os.path.join('data', 'alembic', 'versions', '*.py'),
         ]
     },
     zip_safe=False,
