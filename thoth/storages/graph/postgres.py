@@ -46,6 +46,7 @@ from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
+from thoth.common.helpers import cwd
 from thoth.common import OpenShift
 
 from .cache import GraphCache
@@ -162,14 +163,22 @@ class GraphDatabase(SQLBase):
 
     def initialize_schema(self):
         """Initialize schema of database."""
+        import thoth.storages
+        from alembic import config
+        from alembic import command
+
         if not self.is_connected():
             raise ValueError("Cannot initialize schema: the adapter is not connected yet")
 
         if not database_exists(self._engine.url):
             create_database(self._engine.url)
 
-        _LOGGER.info("Running Alembic migrations...")
-        alembic_main(argv=["upgrade", "head"])
+        # Change directory to data dir as that's where alembic configuration sits in and refers revisions.
+        with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
+            alembic_cfg = config.Config("alembic.ini")
+            # Overwrite URL based on deployment configuration.
+            alembic_cfg.set_main_option('sqlalchemy.url', self.construct_connection_string())
+            command.upgrade(alembic_cfg, "head")
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
