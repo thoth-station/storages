@@ -186,6 +186,31 @@ class GraphDatabase(SQLBase):
         # Drop alembic version to be able re-run alembic migrations next time.
         self._engine.execute("DROP TABLE alembic_version;")
 
+    def is_schema_up2date(self) -> bool:
+        """Check if the current schema is up2date with the one configured on database side."""
+        import thoth.storages
+        from alembic import config
+        from alembic import script
+        from alembic.runtime import migration
+
+        if not self.is_connected():
+            raise ValueError("Cannot check schema: the adapter is not connected yet")
+
+        with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
+            alembic_cfg = config.Config("alembic.ini")
+            directory = script.ScriptDirectory.from_config(alembic_cfg)
+            context = migration.MigrationContext.configure(self._engine)
+
+            database_heads = set(context.get_current_heads())
+            if not database_heads:
+                raise ValueError("Database is not initialized yet")
+
+            revision_heads = set(directory.get_heads())
+
+            _LOGGER.debug("Current library revision heads: %r", revision_heads)
+            _LOGGER.debug("Current database heads: %r", database_heads)
+            return revision_heads == revision_heads
+
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
