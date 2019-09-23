@@ -180,6 +180,12 @@ class GraphDatabase(SQLBase):
             alembic_cfg.set_main_option('sqlalchemy.url', self.construct_connection_string())
             command.upgrade(alembic_cfg, "head")
 
+    def drop_all(self):
+        """Drop all content stored in the database."""
+        super().drop_all()
+        # Drop alembic version to be able re-run alembic migrations next time.
+        self._engine.execute("DROP TABLE alembic_version;")
+
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
