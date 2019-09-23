@@ -3479,3 +3479,21 @@ Starting with this release we have a Zuul-CI pipeline that:
 * New class methods for InspectionStore
 * Fix unsolved Python packages query
 * Adjust signature of method to respect its return value
+
+## Release 0.19.6 (2019-09-23T06:50:42)
+* Add missing migrations to requirements.txt file
+* :pushpin: Automatic update of dependency pytest from 5.1.2 to 5.1.3
+* :pushpin: Automatic update of dependency boto3 from 1.9.232 to 1.9.233
+* :pushpin: Automatic update of dependency alembic from 1.1.0 to 1.2.0
+* Normalize Python package versions before each insert or query
+* :pushpin: Automatic update of dependency boto3 from 1.9.231 to 1.9.232
+* Fix small typo
+* Make sure devs update to most recent version before generating new versions
+* Minor typo fixes in README file
+* Make coala happy
+* Use UTC when generating schema versions
+* Generate initial schema using Alembic
+* Start using Alembic for database migrations
+* Add missing method used to register new packages in package releases
+* :pushpin: Automatic update of dependency thoth-common from 0.9.9 to 0.9.10
+* :pushpin: Automatic update of dependency boto3 from 1.9.230 to 1.9.231
