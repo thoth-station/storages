@@ -492,18 +492,20 @@ class GraphDatabase(SQLBase):
 
         return query.with_entities(PythonPackageVersion.package_version, PythonPackageIndex.url).all()
 
-    def _construct_unsolved_python_packages_query(self, solver_name: str) -> Query:
+    def _construct_unsolved_python_packages_query(self, solver_name: str = None) -> Query:
         """Construct query for retrieving unsolved Python packages, the query is not executed."""
-        solver_info = self.parse_python_solver_name(solver_name)
-        subquery = (
-            self._session.query(PythonPackageVersion.package_name, PythonPackageVersion.package_version)
-            .filter(PythonPackageVersion.os_name == solver_info["os_name"])
-            .filter(PythonPackageVersion.os_version == solver_info["os_version"])
-            .filter(PythonPackageVersion.python_version == solver_info["python_version"])
-            .distinct()
-            .subquery()
-        )
+        subquery = self._session.query(PythonPackageVersion.package_name, PythonPackageVersion.package_version)
 
+        if solver_name is not None:
+            solver_info = self.parse_python_solver_name(solver_name)
+            subquery = (
+                subquery
+                .filter(PythonPackageVersion.os_name == solver_info["os_name"])
+                .filter(PythonPackageVersion.os_version == solver_info["os_version"])
+                .filter(PythonPackageVersion.python_version == solver_info["python_version"])
+            )
+
+        subquery = subquery.distinct().subquery()
         query = (
             self._session.query(PythonPackageVersionEntity)
             .filter(
@@ -517,7 +519,11 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def retrieve_unsolved_python_packages(self, solver_name: str, randomize: bool = True) -> List[Tuple[str, str]]:
+    def retrieve_unsolved_python_packages(
+        self,
+        solver_name: str = None,
+        randomize: bool = True
+    ) -> List[Tuple[str, str]]:
         """Retrieve a list of tuples (package name, package version) of dependencies which were not yet resolved.
 
         Using solver_name argument the query narrows down to packages that were not resolved by the given solver.
@@ -529,7 +535,7 @@ class GraphDatabase(SQLBase):
 
         return query.all()
 
-    def retrieve_unsolved_python_packages_count(self, solver_name: str) -> int:
+    def retrieve_unsolved_python_packages_count(self, solver_name: str = None) -> int:
         """Retrieve number of unsolved Python packages for the given solver."""
         query = self._construct_unsolved_python_packages_query(solver_name)
         return query.count()
