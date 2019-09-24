@@ -472,7 +472,7 @@ class AdviserRun(Base, BaseExtension):
     limit = Column(Integer, nullable=True)
     origin = Column(String(256), nullable=True)
     debug = Column(Boolean, nullable=False)
-    limit_latest_versions = Column(Integer, nullable=False)
+    limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
     recommendation_type = Column(
         ENUM("STABLE", "TESTING", "LATEST", name="recommendation_type", create_type=True), nullable=False
