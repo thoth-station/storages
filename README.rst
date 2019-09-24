@@ -105,7 +105,7 @@ for you:
 
   .. code-block:: console
 
-    $ git add alembic/versions/
+    $ git add thoth/storages/data/alembic/versions/
 
 4. In a deployment, use Management API and its `/graph/initialize` endpoint to
    propagate database schema changes in deployment (Management API has to have
