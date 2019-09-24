@@ -3497,3 +3497,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add missing method used to register new packages in package releases
 * :pushpin: Automatic update of dependency thoth-common from 0.9.9 to 0.9.10
 * :pushpin: Automatic update of dependency boto3 from 1.9.230 to 1.9.231
+
+## Release 0.19.7 (2019-09-24T13:30:23)
+* Fix path to alembic versions - it has changed recently
+* Allow limit latest versions to be None
+* :pushpin: Automatic update of dependency boto3 from 1.9.233 to 1.9.234
+* Make solver name optional when retrieving unsolved packages
+* :pushpin: Automatic update of dependency thoth-python from 0.6.2 to 0.6.3
+* :pushpin: Automatic update of dependency thoth-python from 0.6.2 to 0.6.3
+* Introduce a check to verify the current database schema is up2date
+* Drop also alembic version table
+* Distribute alembic migrations with thoth-storages
