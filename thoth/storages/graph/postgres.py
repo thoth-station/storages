@@ -1789,6 +1789,12 @@ class GraphDatabase(SQLBase):
         package_version = self.normalize_python_package_version(package_version)
         index_url = document["metadata"]["arguments"]["python"]["index_url"]
 
+        _LOGGER.info(
+            "Syncing package analysis for package %r in version %r from %r",
+            package_name,
+            package_version,
+            index_url,
+        )
         try:
             with self._session.begin(subtransactions=True):
                 python_package_index, _ = PythonPackageIndex.get_or_create(
@@ -1910,6 +1916,13 @@ class GraphDatabase(SQLBase):
                     package_version = python_package_info["package_version"]
                     index_url = python_package_info["index_url"]
 
+                    _LOGGER.info(
+                        "Syncing solver result of package %r in version %r from %r solved by %r",
+                        package_name,
+                        package_version,
+                        index_url,
+                        solver_info,
+                    )
                     python_package_version = self._create_python_package_version(
                         package_name,
                         package_version,
@@ -1968,6 +1981,13 @@ class GraphDatabase(SQLBase):
                 package_version = error_info["version"]
                 index_url = error_info["index"]
 
+                _LOGGER.info(
+                    "Syncing solver errors for package %r in version %r from %r found by solver %r",
+                    package_name,
+                    package_version,
+                    index_url,
+                    solver_info,
+                )
                 python_package_version = self._create_python_package_version(
                     package_name,
                     package_version,
@@ -2005,6 +2025,13 @@ class GraphDatabase(SQLBase):
                 index_url = unsolvable["index"]
                 package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
+                _LOGGER.info(
+                    "Syncing unsolvable package %r in version %r from %r found by solver %r",
+                    package_name,
+                    package_version,
+                    index_url,
+                    solver_info,
+                )
                 python_package_version = self._create_python_package_version(
                     package_name,
                     package_version,
@@ -2037,6 +2064,12 @@ class GraphDatabase(SQLBase):
 
                 package_name, package_version = parts
 
+                _LOGGER.info(
+                    "Syncing unparsed package %r in version %r from %r",
+                    package_name,
+                    package_version,
+                    solver_info,
+                )
                 python_package_version = self._create_python_package_version(
                     package_name,
                     package_version,
