@@ -33,17 +33,17 @@ You can run prepared testsuite via the following command:
 Running PostgreSQL locally
 ==========================
 
-You can use `docker-compose` present in this repository to run a local PostgreSQL instance:
+You can use `docker-compose.yaml` present in this repository to run a local PostgreSQL instance, (make sure you installed `podman-compose <https://github.com/containers/podman-compose>`_):
 
 .. code-block:: console
 
-  $ docker-compose up
+  $ podman-compose up
 
-After running the command above (make sure your big fat daemon is up using `systemctl start docker`), you should be able to access a local PostgreSQL instance at `localhost:5432`. This is also the default configuration for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly. The default configuration uses database named `thoth` which can be accessed using `postgres` user and `postgres` password (SSL is disabled).
+After running the command above, you should be able to access a local PostgreSQL instance at `localhost:5432`. This is also the default configuration for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly. The default configuration uses database named `postgres` which can be accessed using `postgres` user and `postgres` password (SSL is disabled).
 
-The provided `docker-compose` has also PGweb enabled for to have an UI for the database content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
+The provided `docker-compose.yaml` has also PGweb enabled for to have an UI for the database content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
 
-The provided `docker-compose` does not use any volume. After you containers restart, the content will not be available anymore.
+The provided `docker-compose.yaml` does not use any volume. After you containers restart, the content will not be available anymore.
 
 If you would like to experiment with PostgreSQL programatically, you can use the following code snippet as a starting point:
 
@@ -82,7 +82,7 @@ for you:
 
   .. code-block:: console
 
-    $ docker-compose up
+    $ podman-compose up
 
 2. Run Alembic CLI to generate versions for you:
 
