@@ -145,6 +145,19 @@ The command above will produce 2 images named ``schema.png`` and
 instance and the latter one, as the name suggests, shows how cache schema looks
 like.
 
+
+If the command above fails with the following exception:
+
+.. code-block:: python
+
+  FileNotFoundError: [Errno 2] "dot" not found in path.
+
+make sure you have `graphviz` package installed:
+
+.. code-block:: console
+
+  dnf install -y graphviz
+
 Creating own performance indicators
 ===================================
 
