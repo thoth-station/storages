@@ -274,11 +274,33 @@ environment variable to ``1`` (the default value of ``0`` enables it).
 Creating backups from Thoth deployment
 ======================================
 
-You can use `pg_dump` and `pg_restore` utilities to create dumps and restore
+You can use `pg_dump` and `psql` utilities to create dumps and restore
 the database content from dumps. This tool is pre-installed in the container image
 which is running PostgreSQL so the only thing you need to do is execute
 `pg_dump` in Thoth's deployment in a PostgreSQL container to create a dump, use
 `oc cp` to retrieve dump (or directly use `oc exec` and create the dump from the
-cluster) and subsequently `pg_restore` to restore the database content. The
+cluster) and subsequently `psql` to restore the database content. The
 prerequisite for this is to have access to the running container (edit rights).
 
+.. code-block:: console
+
+  # Execute the following commands from the root of this Git repo:
+  # List PostgreSQL pods running:
+  $ oc get pod -l name=postgresql
+  NAME                 READY     STATUS    RESTARTS   AGE
+  postgresql-1-glwnr   1/1       Running   0          3d
+  # Open remote shell to the running container in the PostgreSQL pod:
+  $ oc rsh -t postgresql-1-glwnr bash
+  # Perform dump of the database:
+  (cluster-postgres) $ pg_dump > pg_dump-$(date +"%s").sql
+  (cluster-postgres) $ ls pg_dump-*.sql   # Remember the current dump name
+  (cluster-postgres) pg_dump-1569491024.sql
+  (cluster-postgres) $ exit
+  # Copy the dump to the current dir:
+  $ oc cp thoth-test-core/postgresql-1-glwnr:/opt/app-root/src/pg_dump-1569491024.sql  .
+  # Start local PostgreSQL instance:
+  $ podman-compose up --detach
+  <logs will show up>
+  $ psql -h localhost -p 5432 --username=postgres < pg_dump-1569491024.sql
+  password: <type password "postgres" here>
+  <logs will show up>
