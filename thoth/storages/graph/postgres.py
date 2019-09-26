@@ -647,7 +647,7 @@ class GraphDatabase(SQLBase):
         return query.join(Solved).filter_by(error_unparseable=True).all()
 
     def get_all_python_packages_count(self, without_error: bool = True) -> int:
-        """Retrieve number of Python packages stored in the graph database."""
+        """Retrieve number of Solved Python packages stored in the graph database."""
         query = self._session.query(PythonPackageVersion)
 
         if without_error:
@@ -1156,7 +1156,7 @@ class GraphDatabase(SQLBase):
                 return False
 
     def python_package_index_listing(self, enabled: bool = None) -> list:
-        """Get listing of Python package indexes registered in the graph database database."""
+        """Get listing of Python package indexes registered in the graph database."""
         query = self._session.query(
             PythonPackageIndex.url, PythonPackageIndex.warehouse_api_url, PythonPackageIndex.verify_ssl
         )
@@ -1173,7 +1173,7 @@ class GraphDatabase(SQLBase):
         if enabled is not None:
             query = query.filter(PythonPackageIndex.enabled == enabled)
 
-        return set(item[0] for item in query.with_entities(PythonPackageIndex.url).all())
+        return set(item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all())
 
     def get_python_packages_for_index(self, index_url: str) -> Set[str]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
@@ -1183,12 +1183,13 @@ class GraphDatabase(SQLBase):
             .join(PythonPackageIndex)
             .filter(PythonPackageIndex.url == index_url)
             .with_entities(PythonPackageVersion.package_name)
+            .distinct()
             .all()
         )
 
     def get_python_packages(self) -> Set[str]:
         """Retrieve listing of all Python packages known to graph database instance."""
-        return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).all())
+        return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
 
     def _create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
