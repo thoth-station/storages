@@ -1401,6 +1401,22 @@ class GraphDatabase(SQLBase):
 
         return software_stack
 
+    def python_software_stack_count(
+        self,
+        software_stack_type: str,
+        unique: bool = False,
+    ) -> List[str]:
+        """Get number of Python software stacks available filtered by type."""
+        query = (
+            self._session.query(PythonSoftwareStack.software_stack_type)
+            .filter(PythonSoftwareStack.software_stack_type == software_stack_type)
+        )
+
+        if unique:
+            return query.distinct().count()
+
+        return query.count()
+
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
