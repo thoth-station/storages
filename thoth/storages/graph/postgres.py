@@ -555,6 +555,41 @@ class GraphDatabase(SQLBase):
 
         return query.count()
 
+    def retrieve_unanalyzed_python_packages_versions_count(self) -> int:
+        """Retrieve number of unanalyzed Python packages/versions"""
+        subquery = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+            )
+            .distinct()
+            .subquery()
+        )
+
+        query_result = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+            )
+            .distinct()
+            .count()
+        )
+        return query_result
+
     def retrieve_unanalyzed_python_package_versions(self, start_offset: int = 0, count: int = 100) -> List[dict]:
         """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
         subquery = (
@@ -1189,7 +1224,7 @@ class GraphDatabase(SQLBase):
         )
 
     def get_python_packages(self) -> Set[str]:
-        """Retrieve listing of all Python packages known to graph database instance."""
+        """Retrieve listing of all distinct Python packages known to graph database instance."""
         return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
 
     def _create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
@@ -1405,7 +1440,7 @@ class GraphDatabase(SQLBase):
         self,
         software_stack_type: str,
         unique: bool = False,
-    ) -> List[str]:
+    ) -> int:
         """Get number of Python software stacks available filtered by type."""
         query = (
             self._session.query(PythonSoftwareStack.software_stack_type)
