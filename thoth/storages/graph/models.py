@@ -1004,3 +1004,59 @@ class DetectedSymbol(Base, BaseExtension):
 
     package_extract_run = relationship("PackageExtractRun", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="package_extract_runs")
+
+
+ALL_MAIN_MODELS = frozenset(
+    (
+        AdviserRun,
+        CVE,
+        DebDependency,
+        DebPackageVersion,
+        DebPreDepends,
+        DebReplaces,
+        DependencyMonkeyRun,
+        EcosystemSolver,
+        HardwareInformation,
+        InspectionRun,
+        PackageAnalyzerRun,
+        PackageExtractRun,
+        ProvenanceCheckerRun,
+        PythonArtifact,
+        PythonFileDigest,
+        PythonPackageIndex,
+        PythonPackageRequirement,
+        PythonPackageVersion,
+        PythonPackageVersionEntity,
+        PythonRequirements,
+        PythonRequirementsLock,
+        PythonSoftwareStack,
+        RPMPackageVersion,
+        RPMRequirement,
+        SoftwareEnvironment,
+        VersionedSymbol,
+    )
+)
+
+ALL_RELATION_MODELS = frozenset(
+    (
+        DebDepends,
+        DebPreDepends,
+        DebReplaces,
+        DependsOn,
+        DetectedSymbol,
+        FoundDeb,
+        FoundPythonFile,
+        FoundRPM,
+        HasArtifact,
+        HasSymbol,
+        HasVulnerability,
+        Identified,
+        IncludedFile,
+        Investigated,
+        InvestigatedFile,
+        PythonDependencyMonkeyRequirements,
+        RequiresSymbol,
+        RPMRequires,
+        Solved,
+    )
+)

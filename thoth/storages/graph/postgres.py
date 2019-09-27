@@ -94,6 +94,7 @@ from .models import InvestigatedFile
 from .models import HasSymbol
 from .models import DetectedSymbol
 from .models import CVE
+from .models import ALL_MAIN_MODELS, ALL_RELATION_MODELS
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
@@ -2293,15 +2294,6 @@ class GraphDatabase(SQLBase):
         else:
             self._session.commit()
 
-    def get_number_of_pi_records(self) -> Dict[str, int]:
-        """Retrieve number of performance indicator records stored in the database."""
-        result = {}
-
-        for performance_model in ALL_PERFORMANCE_MODELS:
-            result[performance_model.__tablename__] = self._session.query(performance_model).count()
-
-        return result
-
     def get_all_pi_per_framework_count(self, framework: str) -> dict:
         """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
         result = {}
@@ -2322,6 +2314,33 @@ class GraphDatabase(SQLBase):
             counter.update(dict(query_result))
 
         return dict(counter)
+
+    def get_number_performance_tables_records(self) -> Dict[str, int]:
+        """Retrieve dictionary mapping performance tables to records count."""
+        result = {}
+
+        for performance_model in ALL_PERFORMANCE_MODELS:
+            result[performance_model.__tablename__] = self._session.query(performance_model).count()
+
+        return result
+
+    def get_number_main_tables_records(self) -> Dict[str, int]:
+        """Retrieve dictionary mapping main tables to records count."""
+        result = {}
+
+        for main_model in ALL_MAIN_MODELS:
+            result[main_model.__tablename__] = self._session.query(main_model).count()
+
+        return result
+
+    def get_number_relation_tables_records(self) -> Dict[str, int]:
+        """Retrieve dictionary mapping relation tables to records count."""
+        result = {}
+
+        for relation_model in ALL_RELATION_MODELS:
+            result[relation_model.__tablename__] = self._session.query(relation_model).count()
+
+        return result
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
