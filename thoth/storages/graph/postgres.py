@@ -290,12 +290,13 @@ class GraphDatabase(SQLBase):
         self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
-        return self._do_software_environment_listing(start_offset, count, is_user_run, "RUNTIME")
+        software_environment = SoftwareEnvironment()
+        return self._do_software_environment_listing(start_offset, count, is_user_run, environment_type=software_environment.RUNTIME)
 
     def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
         """Get listing of software environments available for build."""
         # We do not have user software environment which is build environment yet.
-        return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
+        return self._do_software_environment_listing(start_offset, count, False, SoftwareEnvironment.BUILDTIME)
 
     def _do_software_environment_analyses_listing(
         self,
