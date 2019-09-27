@@ -65,6 +65,7 @@ METADATA_SCHEMA = Schema(
         Required("arguments"): dict,
         Required("datetime"): Datetime(),
         Required("distribution"): DISTRIBUTION_SCHEMA,
+        Required("duration"): int,
         Required("hostname"): str,
         Required("python"): PYTHON_SCHEMA,
         Required("timestamp"): int,
