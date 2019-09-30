@@ -1241,15 +1241,18 @@ class GraphDatabase(SQLBase):
         start_offset: int = 0,
         count: int = 10,
         os_name: str = None,
-        os_version: str =None,
+        os_version: str = None,
         python_version: str = None,
-        distinct: bool=False,
+        distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve Python package versions in Thoth Database."""
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
-            .with_entities(PythonPackageVersion.package_name, PythonPackageVersion.package_version, PythonPackageIndex.url.isnot(None))
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
             )
 
         if os_name is not None:
