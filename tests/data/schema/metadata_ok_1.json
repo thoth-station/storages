@@ -26,6 +26,7 @@
         "minor": ""
       }
     },
+    "duration": 11,
     "hostname": "fridex-thoth-solver-fc26-thoth-solver-fc26-2gnwq",
     "python": {
       "api_version": 1013,

@@ -28,6 +28,7 @@
         "minor": ""
       }
     },
+    "duration": 32,
     "hostname": "fridex-thoth-package-extract-tensorflow-serving-s2i-d2gsr",
     "python": {
       "api_version": 1013,
