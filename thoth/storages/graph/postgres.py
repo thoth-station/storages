@@ -1235,17 +1235,13 @@ class GraphDatabase(SQLBase):
 
         return {(item[0], item[1], item[2]): item[3] for item in query}
 
-    def get_python_package_versions_count_all(
+    def _construct_python_package_versions_query(
         self,
-        *,
-        start_offset: int = 0,
-        count: int = 10,
         os_name: str = None,
         os_version: str = None,
-        python_version: str = None,
-        distinct: bool = False,
-    ) -> List[Tuple[str, str, str]]:
-        """Retrieve Python package versions in Thoth Database."""
+        python_version: str = None
+    ) -> Query:
+        """Construct query for Python packages versions functions, the query is not executed."""
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -1263,6 +1259,25 @@ class GraphDatabase(SQLBase):
 
         if python_version is not None:
             query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        return query
+
+    def get_python_package_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 10,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str, str]]:
+        """Retrieve Python package versions in Thoth Database."""
+        query = self._construct_python_package_versions_query(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+            )
 
         query = query.offset(start_offset).limit(count)
 
@@ -1282,23 +1297,11 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve Python package versions number in Thoth Database."""
-        query = (
-            self._session.query(PythonPackageVersion)
-            .join(PythonPackageIndex)
-            .with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url)
+        query = self._construct_python_package_versions_query(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
             )
-
-        if os_name is not None:
-            query = query.filter(PythonPackageVersion.os_name == os_name)
-
-        if os_version is not None:
-            query = query.filter(PythonPackageVersion.os_version == os_version)
-
-        if python_version is not None:
-            query = query.filter(PythonPackageVersion.python_version == python_version)
 
         if distinct:
             query = query.distinct()

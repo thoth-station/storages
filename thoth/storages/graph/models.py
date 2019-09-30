@@ -50,9 +50,9 @@ class PythonPackageVersion(Base, BaseExtension):
     package_version = Column(String(256), nullable=False)
     # Nullable if we have unparseable entries or entries comming from package-extract where we
     # were unable to detect these entries.
-    os_name = Column(String(256))
-    os_version = Column(String(256))
-    python_version = Column(String(256))
+    os_name = Column(String(256), nullable=True)
+    os_version = Column(String(256), nullable=True)
+    python_version = Column(String(256), nullable=True)
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
     # Null if cannot parse.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
