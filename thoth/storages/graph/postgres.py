@@ -1264,7 +1264,46 @@ class GraphDatabase(SQLBase):
         if python_version is not None:
             query = query.filter(PythonPackageVersion.python_version == python_version)
 
-        query = query.offset(start_offset).limit(count).all()
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return query
+
+    def get_python_package_versions_count_all(
+        self,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve Python package versions number in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        if distinct:
+            query = query.distinct()
+
+        query = query.count()
 
         return query
 
