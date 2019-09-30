@@ -3522,3 +3522,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * State graphviz package as a dependency when generating schema images
 * :pushpin: Automatic update of dependency alembic from 1.2.0 to 1.2.1
 * :pushpin: Automatic update of dependency boto3 from 1.9.234 to 1.9.235
+
+## Release 0.19.9 (2019-09-30T07:50:08)
+* Fix testsuite with recent changes
+* :pushpin: Automatic update of dependency pytest from 5.1.3 to 5.2.0
+* :pushpin: Automatic update of dependency boto3 from 1.9.237 to 1.9.238
+* Add duration to the result schema
