@@ -1192,6 +1192,40 @@ class GraphDatabase(SQLBase):
         """Retrieve listing of all Python packages known to graph database instance."""
         return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
 
+    def get_python_package_versions_count_all(
+        self,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve Python package versions number in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        if distinct:
+            query = query.distinct()
+
+        query = query.count()
+
+        return query
+
     def _create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
         result = []
