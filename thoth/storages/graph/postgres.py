@@ -1192,6 +1192,49 @@ class GraphDatabase(SQLBase):
         """Retrieve listing of all Python packages known to graph database instance."""
         return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
 
+    def get_python_package_versions_count(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 10,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> Dict[Tuple[str, str, str], int]:
+        """Retrieve number of versions per Python package in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+                func.count(PythonPackageVersion.package_version))
+            .group_by(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return {(item[0], item[1], item[2]): item[3] for item in query}
+
     def get_python_package_versions_count_all(
         self,
         *,
