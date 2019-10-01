@@ -1153,21 +1153,61 @@ class GraphDatabase(SQLBase):
 
         return set(item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all())
 
-    def get_python_packages_for_index(self, index_url: str) -> Set[str]:
+    def get_python_packages_per_index(self, index_url: str, distinct: bool = False) -> Dict[str, List[str]]:
         """Retrieve listing of Python packages known to graph database instance for the given index."""
-        return set(
-            item[0]
-            for item in self._session.query(PythonPackageVersion)
+        query = (
+            self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
             .filter(PythonPackageIndex.url == index_url)
             .with_entities(PythonPackageVersion.package_name)
-            .distinct()
-            .all()
         )
 
-    def get_python_packages(self) -> Set[str]:
-        """Retrieve listing of all Python packages known to graph database instance."""
-        return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return {index_url: [item[0] for item in query]}
+
+    def get_python_package_version_entities_count_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 100,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve listing of all Python package versions entity with known index to graph database instance."""
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            ).count()
+
+        return query
+
+    def get_python_package_version_entities(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 100,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str, str]]:
+        """Retrieve listing of all Python package versions entity with known index to graph database instance."""
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            ).all()
+
+        return [(item[0], item[1], item[2]) for item in query]
 
     def get_python_packages_all(
         self,
