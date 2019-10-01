@@ -2133,7 +2133,7 @@ class GraphDatabase(SQLBase):
                     debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
                     package_extract_error=False,
                     image_tag=image_tag,
-                    duration=None,  # TODO: assign duration
+                    duration=document["metadata"].get("duration"),
                     os_id=document["result"].get("operating-system", {}).get("id"),
                     os_name=os_name,
                     os_version_id=os_version,
@@ -2185,7 +2185,7 @@ class GraphDatabase(SQLBase):
                     datetime=document["metadata"]["datetime"],
                     debug=document["metadata"]["arguments"]["thoth-package-analyzer"]["verbose"],
                     package_analyzer_error=document["result"].get("error", False),
-                    duration=None,  # TODO: assign duration
+                    duration=document["metadata"].get("duration"),
                     input_python_package_version_entity_id=python_package_version_entity.id,
                 )
 
@@ -2264,6 +2264,7 @@ class GraphDatabase(SQLBase):
         solver_info = self.parse_python_solver_name(solver_name)
         solver_datetime = document["metadata"]["datetime"]
         solver_version = document["metadata"]["analyzer_version"]
+        solver_duration = document["metadata"].get("duration"),
         os_name = solver_info["os_name"]
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
@@ -2320,7 +2321,7 @@ class GraphDatabase(SQLBase):
                         document_id=solver_document_id,
                         version=python_package_version,
                         ecosystem_solver=ecosystem_solver,
-                        duration=None,
+                        duration=solver_duration,
                         error=False,
                         error_unparseable=False,
                         error_unsolvable=False,
@@ -2373,7 +2374,7 @@ class GraphDatabase(SQLBase):
                     document_id=solver_document_id,
                     version_id=python_package_version.id,
                     ecosystem_solver=ecosystem_solver,
-                    duration=None,
+                    duration=solver_duration,
                     error=True,
                     error_unparseable=False,
                     error_unsolvable=False,
@@ -2417,7 +2418,7 @@ class GraphDatabase(SQLBase):
                     document_id=solver_document_id,
                     version_id=python_package_version.id,
                     ecosystem_solver=ecosystem_solver,
-                    duration=None,
+                    duration=solver_duration,
                     error=True,
                     error_unparseable=False,
                     error_unsolvable=True,
@@ -2455,7 +2456,7 @@ class GraphDatabase(SQLBase):
                     document_id=solver_document_id,
                     version=python_package_version,
                     ecosystem_solver=ecosystem_solver,
-                    duration=None,
+                    duration=solver_duration,
                     error=True,
                     error_unparseable=True,
                     error_unsolvable=False,
@@ -2506,7 +2507,7 @@ class GraphDatabase(SQLBase):
                     count=parameters["count"],
                     datetime=document["metadata"]["datetime"],
                     debug=cli_arguments.get("verbose", False),
-                    duration=None,  # TODO: assign duration
+                    duration=document["metadata"].get("duration"),
                     limit=parameters["limit"],
                     limit_latest_versions=parameters.get("limit_latest_versions"),
                     origin=origin,
@@ -2590,7 +2591,7 @@ class GraphDatabase(SQLBase):
                     origin=origin,
                     debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
                     provenance_checker_error=document["result"]["error"],
-                    duration=None,  # TODO: assign duration
+                    duration=document["metadata"].get("duration"),
                     user_software_stack_id=software_stack.id,
                 )
         except Exception:
@@ -2625,7 +2626,7 @@ class GraphDatabase(SQLBase):
                     limit_latest_versions=document["result"]["parameters"].get("limit_latest_versions"),
                     debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
                     dependency_monkey_error=document["result"]["error"],
-                    duration=None,  # TODO: assign duration
+                    duration=document["metadata"].get("duration"),
                     build_software_environment_id=build_software_environment.id,
                     build_hardware_information_id=build_hardware_information.id,
                     run_software_environment_id=run_software_environment.id,
