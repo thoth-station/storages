@@ -1235,6 +1235,96 @@ class GraphDatabase(SQLBase):
 
         return {(item[0], item[1], item[2]): item[3] for item in query}
 
+    def get_python_package_versions_count_per_index(
+        self,
+        index_url: str,
+        *,
+        start_offset: int = 0,
+        count: int = 100,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> Dict[Tuple[str, str, str], int]:
+        """Retrieve number of Python package versions per index url in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageIndex.url == index_url)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+                func.count(PythonPackageVersion.package_name))
+            .group_by(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return {index_url: {(item[0], item[1]): item[3] for item in query}}
+
+    def get_python_package_versions_count_per_version(
+        self,
+        package_name: str,
+        *,
+        start_offset: int = 0,
+        count: int = 100,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> Dict[Tuple[str, str, str], int]:
+        """Retrieve number of Python package versions per index url in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageVersion.package_name == package_name)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+                func.count(PythonPackageVersion.package_version))
+            .group_by(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return {item[1]: {item[2]: item[3]} for item in query}
+
     def _construct_python_package_versions_query(
         self,
         os_name: str = None,
