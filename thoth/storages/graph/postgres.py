@@ -1192,6 +1192,131 @@ class GraphDatabase(SQLBase):
         """Retrieve listing of all Python packages known to graph database instance."""
         return set(item[0] for item in self._session.query(PythonPackageVersionEntity.package_name).distinct().all())
 
+    def get_python_packages_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 10,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str]]:
+        """Retrieve number of versions per Python package in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        return [(item[0], item[1]) for item in query]
+
+    def _construct_python_packages_query(
+        self,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None
+    ) -> Query:
+        """Construct query for Python packages functions, the query is not executed."""
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            .group_by(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        return query
+
+    def get_python_packages_count_all(
+        self,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve number of versions per Python package in Thoth Database."""
+        query = self._construct_python_packages_query(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+            )
+
+        if distinct:
+            query.distinct()
+
+        query = query.count()
+
+        return query
+
+    def get_python_packages_all_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = 10,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> Dict[str, List[Tuple[str, str]]]:
+        """Retrieve number of versions per Python package in Thoth Database."""
+        query = self._construct_python_packages_query(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query.distinct()
+
+        query = query.all()
+
+        query_result = {}
+
+        for item in query:
+            if item[0] not in query_result.keys():
+                query_result[item[0]] = []
+                query_result[item[0]].append((item[1], item[2]))
+            else:
+                query_result[item[0]].append((item[1], item[2]))
+
+        return query_result
+
     def get_python_package_versions_count(
         self,
         *,
