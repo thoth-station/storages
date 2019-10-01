@@ -1245,7 +1245,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> Dict[Tuple[str, str, str], int]:
+    ) -> Dict[Tuple[str, str], int]:
         """Retrieve number of Python package versions per index url in Thoth Database."""
         query = (
             self._session.query(PythonPackageVersion)
@@ -1278,7 +1278,16 @@ class GraphDatabase(SQLBase):
 
         query = query.all()
 
-        return {index_url: {(item[0], item[1]): item[3] for item in query}}
+        query_result = {}
+        query_result[index_url] = {}
+
+        for item in query:
+            if (item[0], item[1]) not in query_result[index_url].keys():
+                query_result[index_url][(item[0], item[1])] = item[3]
+            else:
+                query_result[index_url][(item[0], item[1])] += item[3]
+
+        return query_result
 
     def get_python_package_versions_count_per_version(
         self,
@@ -1290,7 +1299,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> Dict[Tuple[str, str, str], int]:
+    ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of Python package versions per index url in Thoth Database."""
         query = (
             self._session.query(PythonPackageVersion)
@@ -1323,7 +1332,17 @@ class GraphDatabase(SQLBase):
 
         query = query.all()
 
-        return {item[1]: {item[2]: item[3]} for item in query}
+        query_result = {}
+
+        for item in query:
+            if item[1] not in query_result.keys():
+                query_result[item[1]] = {}
+                query_result[item[1]][item[2]] = item[3]
+            else:
+                if item[2] not in query_result[item[1]].keys():
+                    query_result[item[1]][item[2]] = item[3]
+
+        return query_result
 
     def _construct_python_package_versions_query(
         self,
