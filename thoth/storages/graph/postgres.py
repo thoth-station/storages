@@ -123,6 +123,7 @@ class GraphDatabase(SQLBase):
     _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
 
     _DECLARATIVE_BASE = Base
+    _DEFAULT_COUNT = 100
 
     def __del__(self) -> None:
         """Destruct adapter object."""
@@ -287,12 +288,12 @@ class GraphDatabase(SQLBase):
         return [item[0] for item in query.all()]
 
     def run_software_environment_listing(
-        self, start_offset: int = 0, count: int = 100, is_user_run: bool = False
+        self, start_offset: int = 0, count: int = _DEFAULT_COUNT, is_user_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
         return self._do_software_environment_listing(start_offset, count, is_user_run, "RUNTIME")
 
-    def build_software_environment_listing(self, start_offset: int = 0, count: int = 100) -> list:
+    def build_software_environment_listing(self, start_offset: int = 0, count: int = _DEFAULT_COUNT) -> list:
         """Get listing of software environments available for build."""
         # We do not have user software environment which is build environment yet.
         return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
@@ -339,7 +340,7 @@ class GraphDatabase(SQLBase):
         self,
         run_software_environment_name: str,
         start_offset: int = 0,
-        count: int = 100,
+        count: int = _DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_user_run: bool = False,
     ) -> List[dict]:
@@ -357,7 +358,7 @@ class GraphDatabase(SQLBase):
         self,
         build_software_environment_name: str,
         start_offset: int = 0,
-        count: int = 100,
+        count: int = _DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_user_run: bool = False,
     ) -> List[dict]:
@@ -555,7 +556,11 @@ class GraphDatabase(SQLBase):
 
         return query.count()
 
-    def retrieve_unanalyzed_python_package_versions(self, start_offset: int = 0, count: int = 100) -> List[dict]:
+    def retrieve_unanalyzed_python_package_versions(
+        self,
+        start_offset: int = 0,
+        count: int = _DEFAULT_COUNT,
+    ) -> List[dict]:
         """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
         subquery = (
             self._session.query(PackageAnalyzerRun)
@@ -593,7 +598,12 @@ class GraphDatabase(SQLBase):
 
         return [{"package_name": item[0], "package_version": item[1], "index_url": item[2]} for item in query_result]
 
-    def retrieve_solved_python_packages(self, count: int = 10, start_offset: int = 0, solver_name: str = None) -> dict:
+    def retrieve_solved_python_packages(
+        self,
+        count: int = _DEFAULT_COUNT,
+        start_offset: int = 0,
+        solver_name: str = None
+    ) -> dict:
         """Retrieve a dictionary mapping package names to versions for dependencies that were already solved.
 
         Using count and start_offset is possible to change pagination.
@@ -1196,7 +1206,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = 10,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1286,7 +1296,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = 10,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1321,7 +1331,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = 10,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1365,7 +1375,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
         *,
         start_offset: int = 0,
-        count: int = 100,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1419,7 +1429,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = 100,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1500,7 +1510,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = 10,
+        count: int = _DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
