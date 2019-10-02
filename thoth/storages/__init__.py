@@ -37,11 +37,12 @@ from .result_schema import RESULT_SCHEMA
 from .solvers import SolverResultsStore
 from .sync import sync_adviser_documents
 from .sync import sync_analysis_documents
-from .sync import sync_package_analysis_documents
-from .sync import sync_solver_documents
-from .sync import sync_inspection_documents
-from .sync import sync_provenance_checker_documents
 from .sync import sync_dependency_monkey_documents
+from .sync import sync_documents
+from .sync import sync_inspection_documents
+from .sync import sync_package_analysis_documents
+from .sync import sync_provenance_checker_documents
+from .sync import sync_solver_documents
 
 
 __name__ = "thoth-storages"
