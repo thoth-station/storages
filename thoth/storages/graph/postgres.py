@@ -2337,8 +2337,6 @@ class GraphDatabase(SQLBase):
                         error_unsolvable=False,
                     )
 
-                    # TODO: detect and store extras
-                    # TODO: detect and store markers
                     for dependency in python_package_info["dependencies"]:
                         for index_entry in dependency["resolved_versions"]:
                             for dependency_version in index_entry["versions"]:
@@ -2349,11 +2347,30 @@ class GraphDatabase(SQLBase):
                                     python_package_index_id=None,
                                 )
 
+                                if len(dependency.get("extra") or []) > 1:
+                                    # Not sure if this can happen in the ecosystem, report error
+                                    # if this incident happens.
+                                    _LOGGER.error(
+                                        "Multiple extra detected for dependency %r in version %r required "
+                                        "by %r in version %r from index %r with marker %r, only the "
+                                        "first extra will be used: %r",
+                                        dependency["name"],
+                                        dependency_version,
+                                        package_name,
+                                        package_version,
+                                        index_url,
+                                        dependency.get("marker"),
+                                        dependency_version["extra"]
+                                    )
+
                                 DependsOn.get_or_create(
                                     self._session,
                                     version=python_package_version,
                                     entity=dependency_entity,
                                     version_range=dependency.get("required_version") or "*",
+                                    marker=dependency.get("marker"),
+                                    extra=dependency["extra"][0] if dependency.get("extra") else None,
+                                    marker_evaluation_result=dependency.get("marker_evaluation_result"),
                                 )
 
             for error_info in document["result"]["errors"]:
