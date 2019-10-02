@@ -18,6 +18,8 @@
 """Routines for syncing data from Ceph into graph database."""
 
 import logging
+from typing import Dict
+from typing import Tuple
 
 from amun import get_inspection_build_log
 from amun import get_inspection_job_log
@@ -39,10 +41,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def sync_adviser_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync adviser documents into graph."""
     if not graph:
@@ -80,10 +82,10 @@ def sync_adviser_documents(
 
 
 def sync_solver_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync solver documents into graph."""
     if not graph:
@@ -120,10 +122,10 @@ def sync_solver_documents(
 
 
 def sync_analysis_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync image analysis documents into graph."""
     if not graph:
@@ -161,10 +163,10 @@ def sync_analysis_documents(
 
 
 def sync_package_analysis_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync package analysis documents into graph."""
     if not graph:
@@ -202,10 +204,10 @@ def sync_package_analysis_documents(
 
 
 def sync_provenance_checker_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync provenance check documents into graph."""
     if not graph:
@@ -243,10 +245,10 @@ def sync_provenance_checker_documents(
 
 
 def sync_dependency_monkey_documents(
-        document_ids: list = None,
-        force: bool = False,
-        graceful: bool = False,
-        graph: GraphDatabase = None,
+    document_ids: list = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
 ) -> tuple:
     """Sync dependency monkey reports into graph database."""
     if not graph:
@@ -359,3 +361,74 @@ def sync_inspection_documents(
             skipped += 1
 
     return processed, synced, skipped, failed
+
+
+# Corresponding mapping of document prefix (before the actual unique document identifier part) to
+# functions which can handle the given document sync.
+
+_HANDLERS_MAPPING = {
+    "adviser": sync_adviser_documents,
+    "solver": sync_solver_documents,
+    "package-extract": sync_analysis_documents,
+    "package-analyzer": sync_package_analysis_documents,
+    "provenance-checker": sync_provenance_checker_documents,
+    "dependency-monkey": sync_dependency_monkey_documents,
+    "inspection": sync_inspection_documents,
+}
+
+
+def sync_documents(
+    document_ids: list = None,
+    *,
+    amun_api_url: str = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: GraphDatabase = None,
+    only_graph_sync: bool = False,
+    only_ceph_sync: bool = False,
+) -> Dict[str, Tuple[int, int, int, int]]:
+    """Sync documents based on document type.
+
+    If no list of document ids is provided, all documents will be synced.
+    >>> from thoth.storages.sync import sync_documents
+    >>> sync_documents(["adviser-efa7213babd12911", "package-extract-f8e354d9597a1203"])
+    """
+    stats = dict.fromkeys(_HANDLERS_MAPPING, (0, 0, 0, 0))
+
+    for document_id in document_ids or [None]*len(_HANDLERS_MAPPING):
+        for document_prefix, handler in _HANDLERS_MAPPING.items():
+            if document_id is None or document_id.startswith(document_prefix):
+                to_sync_document_id = [document_id] if document_id is not None else None
+                if handler == sync_inspection_documents:
+                    # A special case with additional arguments to obtain results from Amun API.
+                    if amun_api_url is None:
+                        error_msg = f"Cannot sync document with id {document_id!r} without specifying Amun API URL"
+                        if not graceful:
+                            raise ValueError(error_msg)
+
+                        _LOGGER.error(error_msg)
+
+                    stats_change = handler(
+                        to_sync_document_id,
+                        force=force,
+                        graceful=graceful,
+                        graph=graph,
+                        amun_api_url=amun_api_url,
+                        only_ceph_sync=only_ceph_sync,
+                        only_graph_sync=only_graph_sync,
+                    )
+                else:
+                    stats_change = handler(to_sync_document_id, force=force, graceful=graceful, graph=graph)
+
+                stats[document_prefix] = tuple(map(sum, zip(stats[document_prefix], stats_change)))
+                if document_id is not None:
+                    break
+        else:
+            if document_id is not None:
+                error_msg = f"No handler defined for document identifier {document_id!r}"
+                if not graceful:
+                    raise ValueError(error_msg)
+
+                _LOGGER.error(error_msg)
+
+    return stats
