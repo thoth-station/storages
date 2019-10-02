@@ -384,8 +384,8 @@ def sync_documents(
     force: bool = False,
     graceful: bool = False,
     graph: GraphDatabase = None,
-    only_graph_sync: bool = False,
-    only_ceph_sync: bool = False,
+    inspection_only_graph_sync: bool = False,
+    inspection_only_ceph_sync: bool = False,
 ) -> Dict[str, Tuple[int, int, int, int]]:
     """Sync documents based on document type.
 
@@ -395,7 +395,10 @@ def sync_documents(
     """
     stats = dict.fromkeys(_HANDLERS_MAPPING, (0, 0, 0, 0))
 
-    for document_id in document_ids or [None]*len(_HANDLERS_MAPPING):
+    if inspection_only_ceph_sync and inspection_only_graph_sync:
+        raise ValueError("Parameters `inspection_only_ceph_sync' and `inspection_only_graph_sync' are disjoint")
+
+    for document_id in document_ids or [None] * len(_HANDLERS_MAPPING):
         for document_prefix, handler in _HANDLERS_MAPPING.items():
             if document_id is None or document_id.startswith(document_prefix):
                 to_sync_document_id = [document_id] if document_id is not None else None
@@ -414,8 +417,8 @@ def sync_documents(
                         graceful=graceful,
                         graph=graph,
                         amun_api_url=amun_api_url,
-                        only_ceph_sync=only_ceph_sync,
-                        only_graph_sync=only_graph_sync,
+                        inspection_only_ceph_sync=inspection_only_ceph_sync,
+                        inspection_only_graph_sync=inspection_only_graph_sync,
                     )
                 else:
                     stats_change = handler(to_sync_document_id, force=force, graceful=graceful, graph=graph)
