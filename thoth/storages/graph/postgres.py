@@ -1010,7 +1010,7 @@ class GraphDatabase(SQLBase):
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
         return (
-            self._session.query(AdviserRun).filter(AdviserRun.adviser_document_idc == adviser_document_id).count() > 0
+            self._session.query(AdviserRun).filter(AdviserRun.adviser_document_id == adviser_document_id).count() > 0
         )
 
     def analysis_records_exist(self, analysis_document: dict) -> bool:
