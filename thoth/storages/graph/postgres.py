@@ -1179,7 +1179,14 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str]]:
-        """Retrieve number of versions per Python package in Thoth Database."""
+        """Retrieve number of versions per Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_packages_all()
+        [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
+        """
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -1269,7 +1276,14 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
-        """Retrieve number of versions per Python package in Thoth Database."""
+        """Retrieve number of versions per Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_packages_all_versions()
+        {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
+        """
         query = self._construct_python_packages_query(
             os_name=os_name,
             os_version=os_version,
@@ -1304,7 +1318,14 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
-        """Retrieve number of versions per Python package in Thoth Database."""
+        """Retrieve number of versions per Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_versions_count()
+        {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
+        """
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -1347,8 +1368,15 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> Dict[Tuple[str, str], int]:
-        """Retrieve number of Python package versions per index url in Thoth Database."""
+    ) -> Dict[str, Dict[Tuple[str, str], int]]:
+        """Retrieve number of Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
+        {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
+        """
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -1402,7 +1430,14 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[str, int]]:
-        """Retrieve number of Python package versions per index url in Thoth Database."""
+        """Retrieve number of Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_versions_count_per_version(package_name='tensorflow')
+        {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
+        """
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -1503,7 +1538,6 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-
         >>> graph.get_python_package_versions()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
