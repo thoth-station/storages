@@ -461,39 +461,6 @@ class GraphDatabase(SQLBase):
 
         return result[0]
 
-    def get_all_versions_python_package(
-        self,
-        package_name: str,
-        index_url: str = None,
-        *,
-        index_enabled: bool = None,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
-    ) -> List[Tuple[str, str]]:
-        """Get all versions available for a Python package."""
-        package_name = self.normalize_python_package_name(package_name)
-        query = self._session.query(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
-
-        if os_name is not None:
-            query = query.filter(PythonPackageVersion.os_name == os_name)
-
-        if os_version is not None:
-            query = query.filter(PythonPackageVersion.os_version == os_version)
-
-        if python_version is not None:
-            query = query.filter(PythonPackageVersion.python_version == python_version)
-
-        query = query.join(PythonPackageIndex)
-
-        if index_url is not None:
-            query = query.filter(PythonPackageIndex.url == index_url)
-
-        if index_enabled is not None:
-            query = query.filter(PythonPackageIndex.enabled == index_enabled)
-
-        return query.with_entities(PythonPackageVersion.package_version, PythonPackageIndex.url).all()
-
     def _construct_unsolved_python_packages_query(self, solver_name: str = None) -> Query:
         """Construct query for retrieving unsolved Python packages, the query is not executed."""
         subquery = self._session.query(PythonPackageVersion.package_name, PythonPackageVersion.package_version)
@@ -1481,6 +1448,9 @@ class GraphDatabase(SQLBase):
 
     def _construct_python_package_versions_query(
         self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None
@@ -1494,6 +1464,15 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersion.package_version,
                 PythonPackageIndex.url)
             )
+
+        if package_name is not None:
+            query = query.filter(PythonPackageVersion.package_name == package_name)
+
+        if package_version is not None:
+            query = query.filter(PythonPackageVersion.package_version == package_version)
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
 
         if os_name is not None:
             query = query.filter(PythonPackageVersion.os_name == os_name)
@@ -1511,13 +1490,27 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: int = _DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
-        """Retrieve Python package versions in Thoth Database."""
+        """Retrieve Python package versions in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+
+        >>> graph.get_python_package_versions()
+        [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
+        """
         query = self._construct_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
             os_name=os_name,
             os_version=os_version,
             python_version=python_version
@@ -1542,6 +1535,9 @@ class GraphDatabase(SQLBase):
     ) -> int:
         """Retrieve Python package versions number in Thoth Database."""
         query = self._construct_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
             os_name=os_name,
             os_version=os_version,
             python_version=python_version
