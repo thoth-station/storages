@@ -164,6 +164,9 @@ class DependsOn(Base, BaseExtension):
     version_id = Column(Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     version_range = Column(String(128))
+    marker = Column(String(256), nullable=True)
+    extra = Column(String(256), nullable=True)
+    marker_evaluation_result = Column(Boolean, nullable=True)
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
