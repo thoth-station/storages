@@ -40,10 +40,10 @@
         },
         "asn1crypto": {
             "hashes": [
-                "sha256:d02bf8ea1b964a5ff04ac7891fe3a39150045d1e5e4fe99273ba677d11b92a04",
-                "sha256:f822954b90c4c44f002e2cd46d636ab630f1fe4df22c816a82b66505c404eb2a"
+                "sha256:0b199f211ae690df3db4fd6c1c4ff976497fb1da689193e368eedbadc53d9292",
+                "sha256:bca90060bd995c3f62c4433168eab407e44bdbdb567b3f3a396a676c1a4c4a3f"
             ],
-            "version": "==1.0.0"
+            "version": "==1.0.1"
         },
         "attrs": {
             "hashes": [
@@ -729,10 +729,10 @@
         },
         "asn1crypto": {
             "hashes": [
-                "sha256:d02bf8ea1b964a5ff04ac7891fe3a39150045d1e5e4fe99273ba677d11b92a04",
-                "sha256:f822954b90c4c44f002e2cd46d636ab630f1fe4df22c816a82b66505c404eb2a"
+                "sha256:0b199f211ae690df3db4fd6c1c4ff976497fb1da689193e368eedbadc53d9292",
+                "sha256:bca90060bd995c3f62c4433168eab407e44bdbdb567b3f3a396a676c1a4c4a3f"
             ],
-            "version": "==1.0.0"
+            "version": "==1.0.1"
         },
         "astroid": {
             "hashes": [
@@ -858,10 +858,10 @@
         },
         "cfn-lint": {
             "hashes": [
-                "sha256:32a3e1597c681c9411205bff48b421db60908c304c472f4644d5a32bc9ecdad3",
-                "sha256:623cf0f6ed4c7b3fb4563549e25ac68119478900d89ca976639f11c5d85063a6"
+                "sha256:23b0f4cba4249c4ddb99041ff1e81901644e796ab93cbaa80e284aae2e5249c5",
+                "sha256:3c9eb585156af28ceb69b59eca3406525919dc97f3de898156164e908f848725"
             ],
-            "version": "==0.24.3"
+            "version": "==0.24.4"
         },
         "chardet": {
             "hashes": [
@@ -1434,11 +1434,11 @@
         },
         "pytest-cov": {
             "hashes": [
-                "sha256:9b64b54d21bd0fd77f7eb6ccb38638b8daba8d98ab5a51d67c93a133ec8c5ba4",
-                "sha256:a42cb9af7a429b6cd7c97be307cbb4cefca1d50c5b3018711558341979946851"
+                "sha256:cc6742d8bac45070217169f5f72ceee1e0e55b0221f54bcf24845972d3a47f2b",
+                "sha256:cdbdef4f870408ebdbfeb44e63e07eb18bb4619fae852f6e760645fa36172626"
             ],
             "index": "pypi",
-            "version": "==2.8.0"
+            "version": "==2.8.1"
         },
         "pytest-timeout": {
             "hashes": [
