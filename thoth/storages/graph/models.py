@@ -57,7 +57,6 @@ class PythonPackageVersion(Base, BaseExtension):
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     dependencies = relationship("DependsOn", back_populates="version")
-    package_extract_runs = relationship("Identified", back_populates="python_package_version")
     solvers = relationship("Solved", back_populates="version")
     python_artifacts = relationship("HasArtifact", back_populates="python_package_version")
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
@@ -133,12 +132,16 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     versions = relationship("DependsOn", back_populates="entity")
+    package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
     # inspection_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
     # user_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
     index = relationship("PythonPackageIndex", back_populates="python_package_version_entities")
     python_package_versions = relationship("PythonPackageVersion", back_populates="entity")
+    python_software_stacks = relationship(
+        "ExternalPythonRequirementsLock",
+        back_populates="python_package_version_entity")
 
     __table_args__ = (
         UniqueConstraint("package_name", "package_version", "python_package_index_id"),
@@ -486,24 +489,40 @@ class AdviserRun(Base, BaseExtension):
     advised_configuration_changes = Column(Boolean, nullable=False, default=False)
     additional_stack_info = Column(Boolean, nullable=False, default=False)
 
-    external_run_software_environment_id = Column(Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"))
-    external_build_software_environment_id = Column(Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"))
-
     user_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
     user_software_stack = relationship(
         "PythonSoftwareStack", back_populates="adviser_runs", foreign_keys=[user_software_stack_id]
     )
 
     advised_software_stacks = relationship("Advised", back_populates="adviser_run")
-    external_run_software_environment = relationship(
-        "ExternalSoftwareEnvironment", back_populates="adviser_inputs_run", foreign_keys=[external_run_software_environment_id]
-    )
-    external_build_software_environment = relationship(
-        "ExternalSoftwareEnvironment", back_populates="adviser_inputs_build", foreign_keys=[external_build_software_environment_id]
+
+    external_run_software_environment_id = Column(
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
     )
 
-    external_hardware_information_id = Column(Integer, ForeignKey("external_hardware_information.id", ondelete="CASCADE"))
-    external_hardware_information = relationship("ExternalHardwareInformation", back_populates="adviser_runs")
+    external_run_software_environment = relationship(
+        "ExternalSoftwareEnvironment",
+        back_populates="adviser_inputs_run",
+        foreign_keys=[external_run_software_environment_id],
+    )
+
+    external_build_software_environment_id = Column(
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
+    )
+
+    external_build_software_environment = relationship(
+        "ExternalSoftwareEnvironment",
+        back_populates="adviser_inputs_build",
+        foreign_keys=[external_build_software_environment_id],
+    )
+
+    external_hardware_information_id = Column(
+        Integer, ForeignKey("external_hardware_information.id", ondelete="CASCADE")
+    )
+    external_hardware_information = relationship(
+        "ExternalHardwareInformation",
+        back_populates="adviser_runs",
+        foreign_keys=[external_hardware_information_id])
 
 
 class Advised(Base, BaseExtension):
@@ -737,7 +756,7 @@ class SoftwareEnvironment(Base, BaseExtension):
 
     dependency_monkey_runs_run = relationship(
         "DependencyMonkeyRun",
-        back_populates="build_software_environment",
+        back_populates="run_software_environment",
         foreign_keys="DependencyMonkeyRun.run_software_environment_id",
     )
     dependency_monkey_runs_build = relationship(
@@ -747,7 +766,7 @@ class SoftwareEnvironment(Base, BaseExtension):
     )
     inspection_runs_run = relationship(
         "InspectionRun",
-        back_populates="build_software_environment",
+        back_populates="run_software_environment",
         foreign_keys="InspectionRun.build_software_environment_id",
     )
     inspection_runs_build = relationship(
@@ -812,12 +831,12 @@ class Identified(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
-    python_package_version_id = Column(
-        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
 
     package_extract_run = relationship("PackageExtractRun", back_populates="python_package_version_entities")
-    python_package_version = relationship("PythonPackageVersion", back_populates="package_extract_runs")
+    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="package_extract_runs")
 
 
 class HasVulnerability(Base, BaseExtension):
@@ -854,6 +873,9 @@ class PythonSoftwareStack(Base, BaseExtension):
 
     python_package_requirements = relationship("PythonRequirements", back_populates="python_software_stack")
     python_package_versions = relationship("PythonRequirementsLock", back_populates="python_software_stack")
+    python_package_versions_entities = relationship(
+        "ExternalPythonRequirementsLock",
+        back_populates="python_software_stack")
 
 
 class PythonRequirements(Base, BaseExtension):
@@ -908,6 +930,24 @@ class PythonRequirementsLock(Base, BaseExtension):
 
     python_package_version = relationship("PythonPackageVersion", back_populates="python_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_versions")
+
+
+class ExternalPythonRequirementsLock(Base, BaseExtension):
+    """An External pinned down requirements for an application."""
+
+    __tablename__ = "external_python_requirements_lock"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="python_software_stacks")
+    python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_versions_entities")
 
 
 class DebPackageVersion(Base, BaseExtension):
@@ -1057,6 +1097,9 @@ ALL_MAIN_MODELS = frozenset(
         DebReplaces,
         DependencyMonkeyRun,
         EcosystemSolver,
+        ExternalHardwareInformation,
+        ExternalPythonRequirementsLock,
+        ExternalSoftwareEnvironment,
         HardwareInformation,
         InspectionRun,
         PackageAnalyzerRun,
