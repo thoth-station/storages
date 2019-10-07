@@ -48,11 +48,10 @@ class PythonPackageVersion(Base, BaseExtension):
 
     package_name = Column(String(256), nullable=False)
     package_version = Column(String(256), nullable=False)
-    # Nullable if we have unparseable entries or entries comming from package-extract where we
-    # were unable to detect these entries.
-    os_name = Column(String(256), nullable=True)
-    os_version = Column(String(256), nullable=True)
-    python_version = Column(String(256), nullable=True)
+    # Only solved packages can be synced.
+    os_name = Column(String(256), nullable=False)
+    os_version = Column(String(256), nullable=False)
+    python_version = Column(String(256), nullable=False)
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
     # Null if cannot parse.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
@@ -487,8 +486,8 @@ class AdviserRun(Base, BaseExtension):
     advised_configuration_changes = Column(Boolean, nullable=False, default=False)
     additional_stack_info = Column(Boolean, nullable=False, default=False)
 
-    user_run_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
-    user_build_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+    external_run_software_environment_id = Column(Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"))
+    external_build_software_environment_id = Column(Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"))
 
     user_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
     user_software_stack = relationship(
@@ -496,15 +495,15 @@ class AdviserRun(Base, BaseExtension):
     )
 
     advised_software_stacks = relationship("Advised", back_populates="adviser_run")
-    user_run_software_environment = relationship(
-        "SoftwareEnvironment", back_populates="adviser_inputs_run", foreign_keys=[user_run_software_environment_id]
+    external_run_software_environment = relationship(
+        "ExternalSoftwareEnvironment", back_populates="adviser_inputs_run", foreign_keys=[external_run_software_environment_id]
     )
-    user_build_software_environment = relationship(
-        "SoftwareEnvironment", back_populates="adviser_inputs_build", foreign_keys=[user_build_software_environment_id]
+    external_build_software_environment = relationship(
+        "ExternalSoftwareEnvironment", back_populates="adviser_inputs_build", foreign_keys=[external_build_software_environment_id]
     )
 
-    hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
-    hardware_information = relationship("HardwareInformation", back_populates="adviser_runs")
+    external_hardware_information_id = Column(Integer, ForeignKey("external_hardware_information.id", ondelete="CASCADE"))
+    external_hardware_information = relationship("ExternalHardwareInformation", back_populates="adviser_runs")
 
 
 class Advised(Base, BaseExtension):
@@ -587,7 +586,6 @@ class HardwareInformation(Base, BaseExtension):
     gpu_memory_size = Column(Integer, nullable=True)
 
     ram_size = Column(Integer, nullable=True)
-    is_user = Column(Boolean, nullable=False)
 
     inspection_runs_run = relationship(
         "InspectionRun",
@@ -610,7 +608,29 @@ class HardwareInformation(Base, BaseExtension):
         foreign_keys="DependencyMonkeyRun.build_hardware_information_id",
     )
 
-    adviser_runs = relationship("AdviserRun", back_populates="hardware_information")
+
+class ExternalHardwareInformation(Base, BaseExtension):
+    """External Hardware information base class to derive for specific HW environments."""
+
+    __tablename__ = "external_hardware_information"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    cpu_vendor = Column(Integer, nullable=True)
+    cpu_model = Column(Integer, nullable=True)
+    cpu_cores = Column(Integer, nullable=True)
+    cpu_model_name = Column(String(256), nullable=True)
+    cpu_family = Column(Integer, nullable=True)
+    cpu_physical_cpus = Column(Integer, nullable=True)
+
+    gpu_model_name = Column(String(256), nullable=True)
+    gpu_vendor = Column(String(256), nullable=True)
+    gpu_cores = Column(Integer, nullable=True)
+    gpu_memory_size = Column(Integer, nullable=True)
+
+    ram_size = Column(Integer, nullable=True)
+
+    adviser_runs = relationship("AdviserRun", back_populates="external_hardware_information")
 
 
 class ProvenanceCheckerRun(Base, BaseExtension):
@@ -714,18 +734,7 @@ class SoftwareEnvironment(Base, BaseExtension):
     os_version = Column(String(256), nullable=True)
     cuda_version = Column(String(256), nullable=True)
     environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
-    is_user = Column(Boolean, default=False, nullable=False)
 
-    adviser_inputs_run = relationship(
-        "AdviserRun",
-        back_populates="user_run_software_environment",
-        foreign_keys="AdviserRun.user_run_software_environment_id",
-    )
-    adviser_inputs_build = relationship(
-        "AdviserRun",
-        back_populates="user_build_software_environment",
-        foreign_keys="AdviserRun.user_build_software_environment_id",
-    )
     dependency_monkey_runs_run = relationship(
         "DependencyMonkeyRun",
         back_populates="build_software_environment",
@@ -746,8 +755,37 @@ class SoftwareEnvironment(Base, BaseExtension):
         back_populates="build_software_environment",
         foreign_keys="InspectionRun.run_software_environment_id",
     )
+
     package_extract_runs = relationship("PackageExtractRun", back_populates="software_environment")
     versioned_symbols = relationship("HasSymbol", back_populates="software_environment")
+
+
+class ExternalSoftwareEnvironment(Base, BaseExtension):
+    """A base class for environment types."""
+
+    __tablename__ = "external_software_environment"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    environment_name = Column(String(256), nullable=True)
+    python_version = Column(String(256), nullable=True)
+    image_name = Column(String(256), nullable=True)
+    image_sha = Column(String(256), nullable=True)
+    os_name = Column(String(256), nullable=True)
+    os_version = Column(String(256), nullable=True)
+    cuda_version = Column(String(256), nullable=True)
+    environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
+
+    adviser_inputs_run = relationship(
+        "AdviserRun",
+        back_populates="external_run_software_environment",
+        foreign_keys="AdviserRun.external_run_software_environment_id",
+    )
+    adviser_inputs_build = relationship(
+        "AdviserRun",
+        back_populates="external_build_software_environment",
+        foreign_keys="AdviserRun.external_build_software_environment_id",
+    )
 
 
 class IncludedFile(Base, BaseExtension):
@@ -982,7 +1020,7 @@ class HasSymbol(Base, BaseExtension):
 
 
 class RequiresSymbol(Base, BaseExtension):
-    """A relation stating a software environment has a symbol."""
+    """A relation stating a software environment requires a symbol."""
 
     __tablename__ = "requires_symbol"
 

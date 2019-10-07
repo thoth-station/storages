@@ -1219,7 +1219,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str]]:
-        """Retrieve number of versions per Python package in Thoth Database.
+        """Retrieve Python packages with index in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -1316,7 +1316,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
-        """Retrieve number of versions per Python package in Thoth Database.
+        """Retrieve Python package versions per package in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -1645,7 +1645,10 @@ class GraphDatabase(SQLBase):
         return result
 
     def _create_python_packages_pipfile(
-        self, pipfile_locked: dict, software_environment: SoftwareEnvironment = None,
+        self,
+        pipfile_locked: dict,
+        software_environment: SoftwareEnvironment = None,
+        sync_only_entity: bool = False
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
         result = []
@@ -1662,6 +1665,7 @@ class GraphDatabase(SQLBase):
                 os_version=os_version,
                 python_version=python_version,
                 index_url=package.index.url if package.index else None,
+                sync_only_entity=sync_only_entity,
             ))
 
         return result
@@ -1674,34 +1678,61 @@ class GraphDatabase(SQLBase):
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
         hardware = runtime_environment.get("hardware", {})
-        hardware_information, _ = HardwareInformation.get_or_create(
-            self._session,
-            cpu_vendor=hardware.get("cpu_vendor"),
-            cpu_model=hardware.get("cpu_model"),
-            cpu_cores=hardware.get("cpu_cores"),
-            cpu_model_name=hardware.get("cpu_model_name"),
-            cpu_family=hardware.get("cpu_family"),
-            cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
-            gpu_model_name=hardware.get("gpu_model_name"),
-            gpu_vendor=hardware.get("gpu_vendor"),
-            gpu_cores=hardware.get("gpu_cores"),
-            gpu_memory_size=hardware.get("gpu_memory_size"),
-            ram_size=hardware.get("ram_size"),
-            is_user=True,
-        )
+        if is_user:
+            hardware_information, _ = ExternalHardwareInformation.get_or_create(
+                self._session,
+                cpu_vendor=hardware.get("cpu_vendor"),
+                cpu_model=hardware.get("cpu_model"),
+                cpu_cores=hardware.get("cpu_cores"),
+                cpu_model_name=hardware.get("cpu_model_name"),
+                cpu_family=hardware.get("cpu_family"),
+                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+                gpu_model_name=hardware.get("gpu_model_name"),
+                gpu_vendor=hardware.get("gpu_vendor"),
+                gpu_cores=hardware.get("gpu_cores"),
+                gpu_memory_size=hardware.get("gpu_memory_size"),
+                ram_size=hardware.get("ram_size")
+            )
 
-        software_environment, _ = SoftwareEnvironment.get_or_create(
-            self._session,
-            environment_name=runtime_environment.get("environment_name"),
-            python_version=runtime_environment.get("python_version"),
-            image_name=None,
-            image_sha=None,
-            os_name=runtime_environment.get("os_name"),
-            os_version=runtime_environment.get("os_version"),
-            cuda_version=runtime_environment.get("cuda_version"),
-            environment_type=environment_type,
-            is_user=is_user,
-        )
+            software_environment, _ = ExternalSoftwareEnvironment.get_or_create(
+                self._session,
+                environment_name=runtime_environment.get("environment_name"),
+                python_version=runtime_environment.get("python_version"),
+                image_name=None,
+                image_sha=None,
+                os_name=runtime_environment.get("os_name"),
+                os_version=runtime_environment.get("os_version"),
+                cuda_version=runtime_environment.get("cuda_version"),
+                environment_type=environment_type
+            )
+
+        else:
+            hardware_information, _ = HardwareInformation.get_or_create(
+                self._session,
+                cpu_vendor=hardware.get("cpu_vendor"),
+                cpu_model=hardware.get("cpu_model"),
+                cpu_cores=hardware.get("cpu_cores"),
+                cpu_model_name=hardware.get("cpu_model_name"),
+                cpu_family=hardware.get("cpu_family"),
+                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+                gpu_model_name=hardware.get("gpu_model_name"),
+                gpu_vendor=hardware.get("gpu_vendor"),
+                gpu_cores=hardware.get("gpu_cores"),
+                gpu_memory_size=hardware.get("gpu_memory_size"),
+                ram_size=hardware.get("ram_size")
+            )
+
+            software_environment, _ = SoftwareEnvironment.get_or_create(
+                self._session,
+                environment_name=runtime_environment.get("environment_name"),
+                python_version=runtime_environment.get("python_version"),
+                image_name=None,
+                image_sha=None,
+                os_name=runtime_environment.get("os_name"),
+                os_version=runtime_environment.get("os_version"),
+                cuda_version=runtime_environment.get("cuda_version"),
+                environment_type=environment_type
+            )
 
         return hardware_information, software_environment
 
@@ -1758,6 +1789,7 @@ class GraphDatabase(SQLBase):
         os_version: Union[str, None],
         python_version: Union[str, None],
         index_url: Union[str, None],
+        sync_only_entity: bool = False,
     ) -> PythonPackageVersion:
         """Create a Python package version.
 
@@ -1779,16 +1811,17 @@ class GraphDatabase(SQLBase):
             python_package_index_id=index.id if index else None,
         )
 
-        python_package_version, _ = PythonPackageVersion.get_or_create(
-            self._session,
-            package_name=package_name,
-            package_version=package_version,
-            python_package_index_id=index.id if index else None,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version,
-            entity_id=entity.id,
-        )
+        if not sync_only_entity:
+            python_package_version, _ = PythonPackageVersion.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id if index else None,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                entity_id=entity.id,
+            )
 
         return python_package_version
 
@@ -1801,6 +1834,7 @@ class GraphDatabase(SQLBase):
         *,
         performance_score: float = None,
         overall_score: float = None,
+        sync_only_entity: bool = False
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
         software_stack, _ = PythonSoftwareStack.get_or_create(
@@ -1823,6 +1857,7 @@ class GraphDatabase(SQLBase):
             python_package_versions = self._create_python_packages_pipfile(
                 requirements_lock,
                 software_environment=software_environment,
+                sync_only_entity=sync_only_entity
             )
             for python_package_version in python_package_versions:
                 PythonRequirementsLock.get_or_create(
@@ -2148,6 +2183,7 @@ class GraphDatabase(SQLBase):
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
                 index_url=None,
+                sync_only_entity=True
             )
 
             Identified.get_or_create(
@@ -2546,6 +2582,7 @@ class GraphDatabase(SQLBase):
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
                     index_url=None,
+                    sync_only_entity=True
                 )
 
                 solved, _ = Solved.get_or_create(
@@ -2578,7 +2615,7 @@ class GraphDatabase(SQLBase):
 
         try:
             with self._session.begin(subtransactions=True):
-                hardware_information, user_run_software_environment = self._runtime_environment_conf2models(
+                external_hardware_information, external_run_software_environment = self._runtime_environment_conf2models(
                     runtime_environment=runtime_environment,
                     environment_type="RUNTIME",
                     is_user=True,
@@ -2589,9 +2626,10 @@ class GraphDatabase(SQLBase):
                     software_stack_type="USER",
                     requirements=document["result"]["input"].get("requirements"),
                     requirements_lock=document["result"]["input"].get("requirements_locked"),
-                    software_environment=user_run_software_environment,
+                    software_environment=external_run_software_environment,
                     performance_score=None,
                     overall_score=None,
+                    sync_only_entity=True
                 )
 
                 adviser_run, _ = AdviserRun.get_or_create(
@@ -2611,9 +2649,9 @@ class GraphDatabase(SQLBase):
                     origin=origin,
                     recommendation_type=parameters["recommendation_type"].upper(),
                     requirements_format=parameters["requirements_format"].upper(),
-                    hardware_information_id=hardware_information.id,
-                    user_build_software_environment_id=None,
-                    user_run_software_environment_id=user_run_software_environment.id,
+                    external_hardware_information_id=external_hardware_information.id,
+                    external_build_software_environment=None,
+                    external_run_software_environment=external_run_software_environment.id,
                     user_software_stack_id=software_stack.id,
                 )
 
@@ -2644,7 +2682,7 @@ class GraphDatabase(SQLBase):
                             software_stack_type="ADVISED",
                             requirements=result[1].get("requirements"),
                             requirements_lock=result[1].get("requirements_locked"),
-                            software_environment=user_run_software_environment,
+                            software_environment=external_run_software_environment,
                             performance_score=performance_score,
                             overall_score=overall_score,
                         )
@@ -2678,6 +2716,7 @@ class GraphDatabase(SQLBase):
                     software_environment=None,
                     performance_score=None,
                     overall_score=None,
+                    sync_only_entity=True
                 )
 
                 provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
