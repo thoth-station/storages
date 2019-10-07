@@ -1956,7 +1956,8 @@ class GraphDatabase(SQLBase):
                     framework = document["job_log"]["stdout"].get("framework")
                     if not framework:
                         _LOGGER.warning(
-                            "No machine learning framework specified in performance indicator %r", cls.__name__
+                            "No machine learning framework specified in performance indicator %r",
+                            performance_indicator_name,
                         )
 
                     overall_score = document["job_log"]["stdout"].get("overall_score")
