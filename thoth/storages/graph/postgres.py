@@ -115,6 +115,8 @@ from ..package_analyses import PackageAnalysisResultsStore
 from ..exceptions import NotFoundError
 from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
+from ..exceptions import PythonIndexNotProvided
+from ..exceptions import SolverNotRun
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1369,13 +1371,11 @@ class GraphDatabase(SQLBase):
         query = query.all()
 
         query_result = {}
-
         for item in query:
-            if item[0] not in query_result.keys():
+            if item[0] not in query_result:
                 query_result[item[0]] = []
-                query_result[item[0]].append((item[1], item[2]))
-            else:
-                query_result[item[0]].append((item[1], item[2]))
+
+            query_result[item[0]].append((item[1], item[2]))
 
         return query_result
 
@@ -1479,9 +1479,7 @@ class GraphDatabase(SQLBase):
 
         query = query.all()
 
-        query_result = {}
-        query_result[index_url] = {}
-
+        query_result = {index_url: {}}
         for item in query:
             if (item[0], item[1]) not in query_result[index_url].keys():
                 query_result[index_url][(item[0], item[1])] = item[3]
