@@ -52,3 +52,11 @@ class UnboundModel(ThothStorageException):
 
 class PerformanceIndicatorNotRegistered(ThothStorageException):
     """Raised if a performance indicator model which is about to be synced was not found."""
+
+
+class PythonIndexNotProvided(ThothStorageException):
+    """Raised if an attempt to insert a package without an index."""
+
+
+class SolverNotRun(ThothStorageException):
+    """Raised if an attempt to insert a package which was not solved."""

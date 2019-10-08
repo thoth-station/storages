@@ -94,6 +94,9 @@ from .models import InvestigatedFile
 from .models import HasSymbol
 from .models import DetectedSymbol
 from .models import CVE
+from .models import ExternalHardwareInformation
+from .models import ExternalSoftwareEnvironment
+from .models import ExternalPythonRequirementsLock
 from .models import ALL_MAIN_MODELS, ALL_RELATION_MODELS
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
@@ -274,12 +277,20 @@ class GraphDatabase(SQLBase):
         }
 
     def _do_software_environment_listing(
-        self, start_offset: int, count: int, is_user_run: bool, environment_type: str
+        self, start_offset: int, count: int, is_external_run: bool, environment_type: str
     ) -> List[str]:
         """Perform actual query to software environments."""
+        if is_external_run:
+            query = (
+                self._session.query(ExternalSoftwareEnvironment.environment_name)
+                .filter(ExternalSoftwareEnvironment.environment_type == environment_type)
+                .offset(start_offset)
+                .limit(count)
+            )
+            return [item[0] for item in query.all()]
+
         query = (
             self._session.query(SoftwareEnvironment.environment_name)
-            .filter(SoftwareEnvironment.is_user == is_user_run)
             .filter(SoftwareEnvironment.environment_type == environment_type)
             .offset(start_offset)
             .limit(count)
@@ -288,10 +299,10 @@ class GraphDatabase(SQLBase):
         return [item[0] for item in query.all()]
 
     def run_software_environment_listing(
-        self, start_offset: int = 0, count: int = _DEFAULT_COUNT, is_user_run: bool = False
+        self, start_offset: int = 0, count: int = _DEFAULT_COUNT, is_external_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
-        return self._do_software_environment_listing(start_offset, count, is_user_run, "RUNTIME")
+        return self._do_software_environment_listing(start_offset, count, is_external_run, "RUNTIME")
 
     def build_software_environment_listing(self, start_offset: int = 0, count: int = _DEFAULT_COUNT) -> list:
         """Get listing of software environments available for build."""
@@ -304,26 +315,42 @@ class GraphDatabase(SQLBase):
         start_offset: int,
         count: int,
         convert_datetime: bool,
-        is_user_run: bool,
+        is_external_run: bool,
         environment_type: str,
     ) -> List[dict]:
         """Get listing of available software environment analyses."""
-        query_result = (
-            self._session.query(SoftwareEnvironment)
-            .filter(SoftwareEnvironment.software_environment_type == environment_type)
-            .filter(SoftwareEnvironment.environment_name == software_environment_name)
-            .filter(SoftwareEnvironment.is_user_run == is_user_run)
-            .join(PackageExtractRun)
-            .with_entities(
-                PackageExtractRun.datetime,
-                PackageExtractRun.analysis_document_id,
-                PackageExtractRun.package_extract_name,
-                PackageExtractRun.package_extract_version,
+        if is_external_run:
+            query_result = (
+                self._session.query(ExternalSoftwareEnvironment)
+                .filter(ExternalSoftwareEnvironment.software_environment_type == environment_type)
+                .filter(ExternalSoftwareEnvironment.environment_name == software_environment_name)
+                .join(PackageExtractRun)
+                .with_entities(
+                    PackageExtractRun.datetime,
+                    PackageExtractRun.analysis_document_id,
+                    PackageExtractRun.package_extract_name,
+                    PackageExtractRun.package_extract_version,
+                )
+                .offset(start_offset)
+                .limit(count)
+                .all()
             )
-            .offset(start_offset)
-            .limit(count)
-            .all()
-        )
+        else:
+            query_result = (
+                self._session.query(SoftwareEnvironment)
+                .filter(SoftwareEnvironment.software_environment_type == environment_type)
+                .filter(SoftwareEnvironment.environment_name == software_environment_name)
+                .join(PackageExtractRun)
+                .with_entities(
+                    PackageExtractRun.datetime,
+                    PackageExtractRun.analysis_document_id,
+                    PackageExtractRun.package_extract_name,
+                    PackageExtractRun.package_extract_version,
+                )
+                .offset(start_offset)
+                .limit(count)
+                .all()
+            )
 
         result = []
         for item in query_result:
@@ -342,14 +369,14 @@ class GraphDatabase(SQLBase):
         start_offset: int = 0,
         count: int = _DEFAULT_COUNT,
         convert_datetime: bool = True,
-        is_user_run: bool = False,
+        is_external_run: bool = False,
     ) -> List[dict]:
         """Get listing of analyses available for the given software environment for run."""
         return self._do_software_environment_analyses_listing(
             run_software_environment_name,
             start_offset=start_offset,
             count=count,
-            is_user_run=is_user_run,
+            is_external_run=is_external_run,
             convert_datetime=convert_datetime,
             environment_type="RUNTIME",
         )
@@ -360,14 +387,14 @@ class GraphDatabase(SQLBase):
         start_offset: int = 0,
         count: int = _DEFAULT_COUNT,
         convert_datetime: bool = True,
-        is_user_run: bool = False,
+        is_external_run: bool = False,
     ) -> List[dict]:
         """Get listing of analyses available for the given software environment for build."""
         return self._do_software_environment_analyses_listing(
             build_software_environment_name,
             start_offset=start_offset,
             count=count,
-            is_user_run=is_user_run,
+            is_external_run=is_external_run,
             convert_datetime=convert_datetime,
             environment_type="BUILDTIME",
         )
@@ -1223,7 +1250,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str]]:
-        """Retrieve number of versions per Python package in Thoth Database.
+        """Retrieve Python packages with index in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -1320,7 +1347,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
-        """Retrieve number of versions per Python package in Thoth Database.
+        """Retrieve Python package versions per package in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -1649,7 +1676,10 @@ class GraphDatabase(SQLBase):
         return result
 
     def _create_python_packages_pipfile(
-        self, pipfile_locked: dict, software_environment: SoftwareEnvironment = None,
+        self,
+        pipfile_locked: dict,
+        software_environment: SoftwareEnvironment = None,
+        sync_only_entity: bool = False
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
         result = []
@@ -1657,55 +1687,121 @@ class GraphDatabase(SQLBase):
         os_name = software_environment.os_name if software_environment else None
         os_version = software_environment.os_version if software_environment else None
         python_version = software_environment.python_version if software_environment else None
+        if sync_only_entity:
+            for package in pipfile_locked.packages.packages.values():
+                result.append(self._create_python_package_version(
+                    package_name=package.name,
+                    package_version=package.locked_version,
+                    os_name=os_name,
+                    os_version=os_version,
+                    python_version=python_version,
+                    index_url=package.index.url if package.index else None,
+                    sync_only_entity=sync_only_entity,
+                ))
 
-        for package in pipfile_locked.packages.packages.values():
-            result.append(self._create_python_package_version(
-                package_name=package.name,
-                package_version=package.locked_version,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-                index_url=package.index.url if package.index else None,
-            ))
+            return result
+        else:
+            for package in pipfile_locked.packages.packages.values():
+                # Check if the package has a known index
+                if package.index:
+                    python_package_version = (
+                        self._session.query(PythonPackageVersion)
+                        .join(PythonPackageIndex)
+                        .filter(PythonPackageVersion.package_name == package.name)
+                        .filter(PythonPackageVersion.package_version == package.locked_version)
+                        .filter(PythonPackageVersion.os_name == os_name)
+                        .filter(PythonPackageVersion.os_version == os_version)
+                        .filter(PythonPackageVersion.python_version == python_version)
+                        .filter(PythonPackageIndex.url == package.index.url if package.index else None)
+                        .first()
+                    )
+                else:
+                    raise PythonIndexNotProvided(
+                        f"Trying to sync package {package.name!r} in version {package.locked_version!r} "
+                        "which does not have corresponding Python entity record"
+                        )
+                # Check if we run the solver for a specific package already
+                if python_package_version:
+                    result.append(self._create_python_package_version(
+                        package_name=package.name,
+                        package_version=package.locked_version,
+                        os_name=os_name,
+                        os_version=os_version,
+                        python_version=python_version,
+                        index_url=package.index.url if package.index else None,
+                        sync_only_entity=sync_only_entity,
+                    ))
+                else:
+                    raise SolverNotRun(
+                        f"Trying to sync package {package.name!r} in version {package.locked_version!r} "
+                        f"not solved by {os_name!r}-{os_version!r}-{python_version!r}"
+                        )
 
-        return result
+            return result
 
     def _runtime_environment_conf2models(
         self,
         runtime_environment: dict,
         environment_type: str,
-        is_user: bool,
+        is_external: bool
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
         hardware = runtime_environment.get("hardware", {})
-        hardware_information, _ = HardwareInformation.get_or_create(
-            self._session,
-            cpu_vendor=hardware.get("cpu_vendor"),
-            cpu_model=hardware.get("cpu_model"),
-            cpu_cores=hardware.get("cpu_cores"),
-            cpu_model_name=hardware.get("cpu_model_name"),
-            cpu_family=hardware.get("cpu_family"),
-            cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
-            gpu_model_name=hardware.get("gpu_model_name"),
-            gpu_vendor=hardware.get("gpu_vendor"),
-            gpu_cores=hardware.get("gpu_cores"),
-            gpu_memory_size=hardware.get("gpu_memory_size"),
-            ram_size=hardware.get("ram_size"),
-            is_user=True,
-        )
+        if is_external:
+            hardware_information, _ = ExternalHardwareInformation.get_or_create(
+                self._session,
+                cpu_vendor=hardware.get("cpu_vendor"),
+                cpu_model=hardware.get("cpu_model"),
+                cpu_cores=hardware.get("cpu_cores"),
+                cpu_model_name=hardware.get("cpu_model_name"),
+                cpu_family=hardware.get("cpu_family"),
+                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+                gpu_model_name=hardware.get("gpu_model_name"),
+                gpu_vendor=hardware.get("gpu_vendor"),
+                gpu_cores=hardware.get("gpu_cores"),
+                gpu_memory_size=hardware.get("gpu_memory_size"),
+                ram_size=hardware.get("ram_size")
+            )
 
-        software_environment, _ = SoftwareEnvironment.get_or_create(
-            self._session,
-            environment_name=runtime_environment.get("environment_name"),
-            python_version=runtime_environment.get("python_version"),
-            image_name=None,
-            image_sha=None,
-            os_name=runtime_environment.get("os_name"),
-            os_version=runtime_environment.get("os_version"),
-            cuda_version=runtime_environment.get("cuda_version"),
-            environment_type=environment_type,
-            is_user=is_user,
-        )
+            software_environment, _ = ExternalSoftwareEnvironment.get_or_create(
+                self._session,
+                environment_name=runtime_environment.get("environment_name"),
+                python_version=runtime_environment.get("python_version"),
+                image_name=None,
+                image_sha=None,
+                os_name=runtime_environment["operating_system"].get("name"),
+                os_version=runtime_environment["operating_system"].get("version"),
+                cuda_version=runtime_environment.get("cuda_version"),
+                environment_type=environment_type
+            )
+
+        else:
+            hardware_information, _ = HardwareInformation.get_or_create(
+                self._session,
+                cpu_vendor=hardware.get("cpu_vendor"),
+                cpu_model=hardware.get("cpu_model"),
+                cpu_cores=hardware.get("cpu_cores"),
+                cpu_model_name=hardware.get("cpu_model_name"),
+                cpu_family=hardware.get("cpu_family"),
+                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+                gpu_model_name=hardware.get("gpu_model_name"),
+                gpu_vendor=hardware.get("gpu_vendor"),
+                gpu_cores=hardware.get("gpu_cores"),
+                gpu_memory_size=hardware.get("gpu_memory_size"),
+                ram_size=hardware.get("ram_size")
+            )
+
+            software_environment, _ = SoftwareEnvironment.get_or_create(
+                self._session,
+                environment_name=runtime_environment.get("environment_name"),
+                python_version=runtime_environment.get("python_version"),
+                image_name=None,
+                image_sha=None,
+                os_name=runtime_environment["operating_system"].get("name"),
+                os_version=runtime_environment["operating_system"].get("version"),
+                cuda_version=runtime_environment.get("cuda_version"),
+                environment_type=environment_type
+            )
 
         return hardware_information, software_environment
 
@@ -1762,6 +1858,7 @@ class GraphDatabase(SQLBase):
         os_version: Union[str, None],
         python_version: Union[str, None],
         index_url: Union[str, None],
+        sync_only_entity: bool = False,
     ) -> PythonPackageVersion:
         """Create a Python package version.
 
@@ -1783,16 +1880,20 @@ class GraphDatabase(SQLBase):
             python_package_index_id=index.id if index else None,
         )
 
-        python_package_version, _ = PythonPackageVersion.get_or_create(
-            self._session,
-            package_name=package_name,
-            package_version=package_version,
-            python_package_index_id=index.id if index else None,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version,
-            entity_id=entity.id,
-        )
+        if not sync_only_entity:
+            python_package_version, _ = PythonPackageVersion.get_or_create(
+                self._session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id if index else None,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                entity_id=entity.id,
+            )
+
+        if sync_only_entity:
+            return entity
 
         return python_package_version
 
@@ -1805,6 +1906,7 @@ class GraphDatabase(SQLBase):
         *,
         performance_score: float = None,
         overall_score: float = None,
+        sync_only_entity: bool = False
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
         software_stack, _ = PythonSoftwareStack.get_or_create(
@@ -1824,16 +1926,30 @@ class GraphDatabase(SQLBase):
                 )
 
         if requirements_lock is not None:
-            python_package_versions = self._create_python_packages_pipfile(
-                requirements_lock,
-                software_environment=software_environment,
-            )
-            for python_package_version in python_package_versions:
-                PythonRequirementsLock.get_or_create(
-                    self._session,
-                    python_software_stack_id=software_stack.id,
-                    python_package_version_id=python_package_version.id,
+            if sync_only_entity:
+                python_package_versions_entities = self._create_python_packages_pipfile(
+                    requirements_lock,
+                    software_environment=software_environment,
+                    sync_only_entity=sync_only_entity
                 )
+                for python_package_version_entity in python_package_versions_entities:
+                    ExternalPythonRequirementsLock.get_or_create(
+                        self._session,
+                        python_software_stack_id=software_stack.id,
+                        python_package_version_entity_id=python_package_version_entity.id,
+                    )
+            else:
+                python_package_versions = self._create_python_packages_pipfile(
+                    requirements_lock,
+                    software_environment=software_environment,
+                    sync_only_entity=sync_only_entity
+                )
+                for python_package_version in python_package_versions:
+                    PythonRequirementsLock.get_or_create(
+                        self._session,
+                        python_software_stack_id=software_stack.id,
+                        python_package_version_id=python_package_version.id,
+                    )
 
         return software_stack
 
@@ -1869,14 +1985,30 @@ class GraphDatabase(SQLBase):
                 run_memory = run_memory / (1024 ** 3)
                 build_memory = build_memory / (1024 ** 3)
 
+                # TODO: Change Amun API to obtain consistent result as Adviser and Dependency Monkey
+                runtime_environment = {}
+                runtime_environment["cuda_version"] = None
+                runtime_environment["hardware"] = document["specification"]["run"]["requests"]["hardware"]
+                runtime_environment["name"] = None
+                runtime_environment["operating_system"] = {
+                    "name": document["job_log"]["os_release"]["id"],
+                    "version": document["job_log"]["os_release"]["version_id"]
+                }
+                runtime_environment["python_version"] = document["specification"]["python"]["requirements"]["requires"][
+                    "python_version"
+                    ]
+
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                    document["specification"]["run"].get("requests", {}), environment_type="RUNTIME", is_user=False
+                    runtime_environment, environment_type="RUNTIME",
+                    is_external=False
                 )
 
+                runtime_environment["hardware"] = document["specification"]["build"]["requests"]["hardware"]
+
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
-                    document["specification"]["build"].get("requests", {}),
+                    runtime_environment,
                     environment_type="BUILDTIME",
-                    is_user=False,
+                    is_external=False
                 )
 
                 software_stack = None
@@ -2097,7 +2229,7 @@ class GraphDatabase(SQLBase):
         self,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: SoftwareEnvironment
+        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment
     ) -> None:
         """Sync system symbols detected in a package-extract run into the database."""
         for library, symbols in document["result"]["system-symbols"].items():
@@ -2121,7 +2253,10 @@ class GraphDatabase(SQLBase):
                 )
 
     def _python_sync_analysis_result(
-        self, package_extract_run: PackageExtractRun, document: dict, software_environment: SoftwareEnvironment,
+        self,
+        package_extract_run: PackageExtractRun,
+        document: dict,
+        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment,
     ) -> None:
         """Sync results of Python packages found in the given container image."""
         for python_package_info in document["result"]["mercator"] or []:
@@ -2145,19 +2280,20 @@ class GraphDatabase(SQLBase):
                 )
                 continue
 
-            python_package_version = self._create_python_package_version(
+            python_package_version_entity = self._create_python_package_version(
                 package_name=python_package_info["result"]["name"],
                 package_version=python_package_info["result"]["version"],
                 os_name=software_environment.os_name,
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
                 index_url=None,
+                sync_only_entity=True
             )
 
             Identified.get_or_create(
                 self._session,
                 package_extract_run_id=package_extract_run.id,
-                python_package_version_id=python_package_version.id,
+                python_package_version_entity_id=python_package_version_entity.id,
             )
 
     def _python_file_digests_sync_analysis_result(self, package_extract_run: PackageExtractRun, document: dict) -> None:
@@ -2185,6 +2321,9 @@ class GraphDatabase(SQLBase):
         os_name = document["result"]["operating-system"]["name"]
         os_version = document["result"]["operating-system"]["version_id"]
 
+        # Check if it comes from a User
+        is_external = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("is_external", True)
+
         image_tag = "latest"
         image_name = environment_name
         parts = environment_name.rsplit(":", maxsplit=1)
@@ -2195,18 +2334,30 @@ class GraphDatabase(SQLBase):
         # TODO: capture errors on image analysis? result of package-extract should be a JSON with error flag
         try:
             with self._session.begin(subtransactions=True):
-                software_environment, _ = SoftwareEnvironment.get_or_create(
-                    self._session,
-                    environment_name=environment_name,
-                    python_version=None,  # TODO: find Python version which would be used by default
-                    image_name=image_name,
-                    image_sha=document["result"]["layers"][-1],
-                    os_name=os_name,
-                    os_version=os_version,
-                    cuda_version=None,  # TODO: find CUDA version
-                    environment_type=environment_type,
-                    is_user=False,
-                )
+                if is_external:
+                    software_environment, _ = ExternalSoftwareEnvironment.get_or_create(
+                        self._session,
+                        environment_name=environment_name,
+                        python_version=None,  # TODO: find Python version which would be used by default
+                        image_name=image_name,
+                        image_sha=document["result"]["layers"][-1],
+                        os_name=os_name,
+                        os_version=os_version,
+                        cuda_version=None,  # TODO: find CUDA version
+                        environment_type=environment_type
+                    )
+                else:
+                    software_environment, _ = SoftwareEnvironment.get_or_create(
+                        self._session,
+                        environment_name=environment_name,
+                        python_version=None,  # TODO: find Python version which would be used by default
+                        image_name=image_name,
+                        image_sha=document["result"]["layers"][-1],
+                        os_name=os_name,
+                        os_version=os_version,
+                        cuda_version=None,  # TODO: find CUDA version
+                        environment_type=environment_type
+                    )
                 package_extract_run, _ = PackageExtractRun.get_or_create(
                     self._session,
                     analysis_document_id=analysis_document_id,
@@ -2550,6 +2701,7 @@ class GraphDatabase(SQLBase):
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
                     index_url=None,
+                    sync_only_entity=True
                 )
 
                 solved, _ = Solved.get_or_create(
@@ -2582,10 +2734,10 @@ class GraphDatabase(SQLBase):
 
         try:
             with self._session.begin(subtransactions=True):
-                hardware_information, user_run_software_environment = self._runtime_environment_conf2models(
+                external_hardware_info, external_run_software_environment = self._runtime_environment_conf2models(
                     runtime_environment=runtime_environment,
                     environment_type="RUNTIME",
-                    is_user=True,
+                    is_external=True
                 )
 
                 # Input stack.
@@ -2593,9 +2745,10 @@ class GraphDatabase(SQLBase):
                     software_stack_type="USER",
                     requirements=document["result"]["input"].get("requirements"),
                     requirements_lock=document["result"]["input"].get("requirements_locked"),
-                    software_environment=user_run_software_environment,
+                    software_environment=external_run_software_environment,
                     performance_score=None,
                     overall_score=None,
+                    sync_only_entity=True
                 )
 
                 adviser_run, _ = AdviserRun.get_or_create(
@@ -2615,9 +2768,9 @@ class GraphDatabase(SQLBase):
                     origin=origin,
                     recommendation_type=parameters["recommendation_type"].upper(),
                     requirements_format=parameters["requirements_format"].upper(),
-                    hardware_information_id=hardware_information.id,
-                    user_build_software_environment_id=None,
-                    user_run_software_environment_id=user_run_software_environment.id,
+                    external_hardware_information_id=external_hardware_info.id,
+                    external_build_software_environment=None,
+                    external_run_software_environment_id=external_run_software_environment.id,
                     user_software_stack_id=software_stack.id,
                 )
 
@@ -2648,7 +2801,7 @@ class GraphDatabase(SQLBase):
                             software_stack_type="ADVISED",
                             requirements=result[1].get("requirements"),
                             requirements_lock=result[1].get("requirements_locked"),
-                            software_environment=user_run_software_environment,
+                            software_environment=external_run_software_environment,
                             performance_score=performance_score,
                             overall_score=overall_score,
                         )
@@ -2682,6 +2835,7 @@ class GraphDatabase(SQLBase):
                     software_environment=None,
                     performance_score=None,
                     overall_score=None,
+                    sync_only_entity=True
                 )
 
                 provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
@@ -2709,12 +2863,12 @@ class GraphDatabase(SQLBase):
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
                     environment_type="RUNTIME",
-                    is_user=False,
+                    is_external=False
                 )
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
                     environment_type="BUILDTIME",
-                    is_user=False,
+                    is_external=False
                 )
                 dependency_monkey_run, _ = DependencyMonkeyRun.get_or_create(
                     self._session,
