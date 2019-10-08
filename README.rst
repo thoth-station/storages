@@ -304,3 +304,24 @@ prerequisite for this is to have access to the running container (edit rights).
   $ psql -h localhost -p 5432 --username=postgres < pg_dump-1569491024.sql
   password: <type password "postgres" here>
   <logs will show up>
+
+Syncing results of jobs run in the cluster
+==========================================
+
+Each job in the cluster reports a JSON which states necessary information about
+the job run (metadata) and actual job results. These results of jobs are stored
+on object storage `Ceph <https://ceph.io/>`_ via S3 compatible API and later on
+synced via graph syncs to the knowledge graph. The component responsible for
+graph syncs is `graph-sync-job
+<https://github.com/thoth-station/graph-sync-job>`_ which is written generic
+enough to sync any data and report metrics about synced data so you don't need
+to provide such logic on each new workload registered in the system. To sync
+your own results of job results (workload) done in the cluster, implement
+related syncing logic in the `sync.py
+<https://github.com/thoth-station/storages/blob/master/thoth/storages/sync.py>`_
+and register handler in the ``_HANDLERS_MAPPING`` in the same file. The mapping
+maps prefix of the document id to the handler (function) which is responsible
+for syncing data into the knowledge base (please mind signatures of existing
+syncing funcions to automatically integrate with ``sync_documents`` function
+which is called from ``graph-sync-job``).
+
