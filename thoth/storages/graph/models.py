@@ -237,12 +237,20 @@ class PackageExtractRun(Base, BaseExtension):
     os_version_id = Column(String(256), nullable=False)
     software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), nullable=False)
 
+    external_software_environment_id = Column(
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), nullable=False
+    )
+
     found_python_files = relationship("FoundPythonFile", back_populates="package_extract_run")
     found_rpms = relationship("FoundRPM", back_populates="package_extract_run")
     found_debs = relationship("FoundDeb", back_populates="package_extract_run")
     python_package_version_entities = relationship("Identified", back_populates="package_extract_run")
     software_environment = relationship("SoftwareEnvironment", back_populates="package_extract_runs")
     versioned_symbols = relationship("DetectedSymbol", back_populates="package_extract_run")
+
+    external_software_environment = relationship(
+        "ExternalSoftwareEnvironment", back_populates="external_package_extract_runs"
+    )
 
 
 class FoundPythonFile(Base, BaseExtension):
@@ -520,9 +528,8 @@ class AdviserRun(Base, BaseExtension):
         Integer, ForeignKey("external_hardware_information.id", ondelete="CASCADE")
     )
     external_hardware_information = relationship(
-        "ExternalHardwareInformation",
-        back_populates="adviser_runs",
-        foreign_keys=[external_hardware_information_id])
+        "ExternalHardwareInformation", back_populates="adviser_runs", foreign_keys=[external_hardware_information_id]
+    )
 
 
 class Advised(Base, BaseExtension):
@@ -806,6 +813,9 @@ class ExternalSoftwareEnvironment(Base, BaseExtension):
         foreign_keys="AdviserRun.external_build_software_environment_id",
     )
 
+    external_package_extract_runs = relationship("PackageExtractRun", back_populates="external_software_environment")
+    versioned_symbols = relationship("HasSymbol", back_populates="external_software_environment")
+
 
 class IncludedFile(Base, BaseExtension):
     """A relation representing file found in the given artifact."""
@@ -874,8 +884,8 @@ class PythonSoftwareStack(Base, BaseExtension):
     python_package_requirements = relationship("PythonRequirements", back_populates="python_software_stack")
     python_package_versions = relationship("PythonRequirementsLock", back_populates="python_software_stack")
     python_package_versions_entities = relationship(
-        "ExternalPythonRequirementsLock",
-        back_populates="python_software_stack")
+        "ExternalPythonRequirementsLock", back_populates="python_software_stack"
+    )
 
 
 class PythonRequirements(Base, BaseExtension):
@@ -1057,6 +1067,12 @@ class HasSymbol(Base, BaseExtension):
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
+
+    external_software_environment_id = Column(
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    external_software_environment = relationship("ExternalSoftwareEnvironment", back_populates="versioned_symbols")
 
 
 class RequiresSymbol(Base, BaseExtension):
