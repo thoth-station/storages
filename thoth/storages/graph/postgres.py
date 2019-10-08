@@ -1081,7 +1081,11 @@ class GraphDatabase(SQLBase):
 
     def is_python_package_index_enabled(self, url: str) -> bool:
         """Check if the given Python package index is enabled."""
-        return self._session.query(PythonPackageIndex.enabled).filter_by(url=url).one()[0]
+        result = self._session.query(PythonPackageIndex.enabled).filter_by(url=url).first()
+        if result is None:
+            raise NotFoundError(f"No records for Python package index with URL {url!r} found")
+
+        return result
 
     def set_python_package_index_state(self, url: str, *, enabled: bool) -> None:
         """Enable or disable Python package index."""
