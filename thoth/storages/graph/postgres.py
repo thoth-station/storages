@@ -30,7 +30,6 @@ from collections import deque
 
 import attr
 from methodtools import lru_cache
-from alembic.config import main as alembic_main
 from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
