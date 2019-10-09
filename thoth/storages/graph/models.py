@@ -47,7 +47,7 @@ class PythonPackageVersion(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
 
     package_name = Column(String(256), nullable=False)
-    package_version = Column(String(256), nullable=False)
+    package_version = Column(String(256), nullable=True)
     # Only solved packages can be synced.
     os_name = Column(String(256), nullable=False)
     os_version = Column(String(256), nullable=False)
@@ -85,10 +85,15 @@ class HasArtifact(Base, BaseExtension):
     python_package_version_id = Column(
         Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
     )
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
     python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
 
     python_package_version = relationship("PythonPackageVersion", back_populates="python_artifacts")
+    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="python_package_versions")
+    python_artifact = relationship("PythonArtifact", back_populates="python_package_version_entities")
 
 
 class Solved(Base, BaseExtension):
@@ -139,6 +144,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     # user_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
     index = relationship("PythonPackageIndex", back_populates="python_package_version_entities")
     python_package_versions = relationship("PythonPackageVersion", back_populates="entity")
+    python_artifacts = relationship("HasArtifact", back_populates="python_package_version_entity")
     python_software_stacks = relationship(
         "ExternalPythonRequirementsLock",
         back_populates="python_package_version_entity")
@@ -235,10 +241,10 @@ class PackageExtractRun(Base, BaseExtension):
     os_name = Column(String(256), nullable=False)
     os_id = Column(String(256), nullable=False)
     os_version_id = Column(String(256), nullable=False)
-    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), nullable=False)
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), nullable=True)
 
     external_software_environment_id = Column(
-        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), nullable=True
     )
 
     found_python_files = relationship("FoundPythonFile", back_populates="package_extract_run")
@@ -369,6 +375,7 @@ class PythonArtifact(Base, BaseExtension):
 
     python_files = relationship("IncludedFile", back_populates="python_artifact")
     python_package_versions = relationship("HasArtifact", back_populates="python_artifact")
+    python_package_version_entities = relationship("HasArtifact", back_populates="python_artifact")
     package_analyzer_runs = relationship("Investigated", back_populates="python_artifact")
     versioned_symbols = relationship("RequiresSymbol", back_populates="python_artifact")
 
