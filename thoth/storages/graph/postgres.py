@@ -1213,7 +1213,7 @@ class GraphDatabase(SQLBase):
 
         result = query.all()
 
-        unsolved = self._get_unsolved_python_package_edge_cases(
+        unsolved = self.get_unsolved_python_package_edge_cases(
             package_name=package_name,
             package_version=package_version
         )
@@ -1234,6 +1234,53 @@ class GraphDatabase(SQLBase):
         package_name: str = None,
         package_version: str = None
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
+        """Retrieve unsolved packages in edge cases.
+
+        Edge cases:
+        CASE 1: ('package_name', None, 'index_url') (ALREADY INCLUDED in general function)
+
+        CASE 2: ('package_name', 'package_version', None)
+
+        CASE 3: ('package_name', None, None)
+        """
+        case_2 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.python_package_index_id.is_(None),
+                PythonPackageVersionEntity.package_version.isnot(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        case_3 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.package_version.is_(None),
+                PythonPackageVersionEntity.python_package_index_id.is_(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        if package_name:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        return case_2.all() + case_3.all()
+
+    def get_unsolved_python_package_edge_cases(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None
+    ) -> List[Tuple[str, str, str]]:
         """Retrieve unsolved packages in edge cases.
 
         Edge cases:
