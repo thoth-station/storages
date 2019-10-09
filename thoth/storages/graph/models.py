@@ -53,7 +53,7 @@ class PythonPackageVersion(Base, BaseExtension):
     os_version = Column(String(256), nullable=False)
     python_version = Column(String(256), nullable=False)
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
-    # Null if cannot parse.
+    # Null if package is unparseable.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     dependencies = relationship("DependsOn", back_populates="version")
