@@ -3375,7 +3375,7 @@ class GraphDatabase(SQLBase):
                         HasArtifact.get_or_create(
                             self._session,
                             python_artifact_id=artifact.id,
-                            python_package_version_id=python_package_version.id,
+                            python_package_version_entity_id=python_package_version.entity_id,
                         )
 
                     solved, _ = Solved.get_or_create(

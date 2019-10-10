@@ -58,7 +58,6 @@ class PythonPackageVersion(Base, BaseExtension):
 
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
-    python_artifacts = relationship("HasArtifact", back_populates="python_package_version")
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
     index = relationship("PythonPackageIndex", back_populates="python_package_versions")
 
@@ -82,17 +81,12 @@ class HasArtifact(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_version_id = Column(
-        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
-    )
     python_package_version_entity_id = Column(
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
     python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
 
-    python_package_version = relationship("PythonPackageVersion", back_populates="python_artifacts")
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="python_artifacts")
-    python_artifact = relationship("PythonArtifact", back_populates="python_package_versions")
     python_artifact = relationship("PythonArtifact", back_populates="python_package_version_entities")
 
 
@@ -374,7 +368,6 @@ class PythonArtifact(Base, BaseExtension):
     # TODO: parse wheel specific tags to make them queryable?
 
     python_files = relationship("IncludedFile", back_populates="python_artifact")
-    python_package_versions = relationship("HasArtifact", back_populates="python_artifact")
     python_package_version_entities = relationship("HasArtifact", back_populates="python_artifact")
     package_analyzer_runs = relationship("Investigated", back_populates="python_artifact")
     versioned_symbols = relationship("RequiresSymbol", back_populates="python_artifact")
