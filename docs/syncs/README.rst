@@ -5,9 +5,9 @@ Thoth collects several type of observations and sync them using `graph-sync-job 
 To make sure that everything is consistent, we use schemas describing the syncing logic 
 for each of the components that created a document result to be synced into Thoth database:
 
-`solver <https://github.com/thoth-station/storages/tree/master/docs/>`_,
-`package-analyzer <https://github.com/thoth-station/storages/tree/master/docs/>`_,
-`package-extract <https://github.com/thoth-station/storages/tree/master/docs/>`_,
+`solver <https://github.com/thoth-station/storages/tree/master/docs/thoth_sync_solver.jpg>`_,
+`package-analyzer <https://github.com/thoth-station/storages/tree/master/docs/thoth_sync_package_analyzer.jpg>`_,
+`package-extract <https://github.com/thoth-station/storages/tree/master/docs/thoth_sync_package_extract.jpg>`_,
 `adviser <https://github.com/thoth-station/storages/tree/master/docs/thoth_sync_adviser.jpg>`_,
 `provenance-checker <https://github.com/thoth-station/storages/tree/master/docs/syncs/thoth_sync_provenance_checker.jpg>`_,
 `dependency-monkey <https://github.com/thoth-station/storages/tree/master/docs/>`_ and
