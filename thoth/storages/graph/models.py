@@ -242,6 +242,7 @@ class PackageExtractRun(Base, BaseExtension):
     )
 
     found_python_files = relationship("FoundPythonFile", back_populates="package_extract_run")
+    found_python_interpreters = relationship("FoundPythonInterpreter", back_populates="package_extract_run")
     found_rpms = relationship("FoundRPM", back_populates="package_extract_run")
     found_debs = relationship("FoundDeb", back_populates="package_extract_run")
     python_package_version_entities = relationship("Identified", back_populates="package_extract_run")
@@ -267,6 +268,34 @@ class FoundPythonFile(Base, BaseExtension):
 
     python_file_digest = relationship("PythonFileDigest", back_populates="package_extract_runs")
     package_extract_run = relationship("PackageExtractRun", back_populates="found_python_files")
+
+
+class PythonInterpreter(Base, BaseExtension):
+    """A class representing a single python interpreter."""
+
+    __tablename__ = "python_interpreter"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    path = Column(String(256), nullable=False)
+    link = Column(String(256), nullable=True)
+    version = Column(String(256), nullable=True)
+
+    package_extract_runs = relationship("FoundPythonInterpreter", back_populates="python_interpreter")
+
+
+class FoundPythonInterpreter(Base, BaseExtension):
+    """State a package extract run found a Python interpreter."""
+
+    __tablename__ = "found_python_interpreter"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_interpreter_id = Column(Integer, ForeignKey("python_interpreter.id", ondelete="CASCADE"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
+
+    python_interpreter = relationship("PythonInterpreter", back_populates="package_extract_runs")
+    package_extract_run = relationship("PackageExtractRun", back_populates="found_python_interpreters")
 
 
 class FoundRPM(Base, BaseExtension):
@@ -1123,6 +1152,7 @@ ALL_MAIN_MODELS = frozenset(
         ProvenanceCheckerRun,
         PythonArtifact,
         PythonFileDigest,
+        PythonInterpreter,
         PythonPackageIndex,
         PythonPackageRequirement,
         PythonPackageVersion,
@@ -1146,6 +1176,7 @@ ALL_RELATION_MODELS = frozenset(
         DetectedSymbol,
         FoundDeb,
         FoundPythonFile,
+        FoundPythonInterpreter,
         FoundRPM,
         HasArtifact,
         HasSymbol,
