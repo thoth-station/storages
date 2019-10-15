@@ -55,7 +55,9 @@ class PythonPackageVersion(Base, BaseExtension):
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
     # Null if cannot parse.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
-    python_package_metadata_id = Column(Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True)
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True
+    )
 
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")

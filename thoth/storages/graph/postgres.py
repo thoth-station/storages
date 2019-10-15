@@ -2458,6 +2458,30 @@ class GraphDatabase(SQLBase):
 
         return query
 
+    def get_python_package_version_metadata(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+    ) -> Dict[str, str]:
+        """Retrieve Python package metadata."""
+        selected_columns = PythonPackageMetadata.__table__.columns
+        query = (
+            self._session.query(PythonPackageMetadata)
+            .join(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .filter(PythonPackageIndex.url == index_url)
+        ).with_entities(*selected_columns)
+
+        result = query.first()
+
+        if result is None:
+            raise NotFoundError(f"No record found for {package_name!r}, {package_version!r}, {index_url!r}")
+
+        return result.to_dict()
+
     def _create_python_package_requirement(self, requirements: dict) -> List[PythonPackageRequirement]:
         """Create requirements for un-pinned Python packages."""
         result = []
@@ -3387,7 +3411,9 @@ class GraphDatabase(SQLBase):
 
                     if importlib_metadata:
                         raise PythonPackageMetadataAttributeMissing(
-                            f"{importlib_metadata.keys()} keys not in PythonPackageMetadata."
+                            f"No related columns for {list(importlib_metadata.keys())!r}"
+                            "found in PythonPackageMetadata table,"
+                            "cannot sync the whole solver result, schema needs to be modified."
                             )
 
                     python_package_version = self._create_python_package_version(
