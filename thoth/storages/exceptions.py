@@ -60,3 +60,7 @@ class PythonIndexNotProvided(ThothStorageException):
 
 class SolverNotRun(ThothStorageException):
     """Raised if an attempt to insert a package which was not solved."""
+
+
+class PythonPackageMetadataAttributeMissing(ThothStorageException):
+    """Raised if a Python Package metadata attribute is not included in the class attributes."""

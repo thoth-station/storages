@@ -96,6 +96,7 @@ from .models import CVE
 from .models import ExternalHardwareInformation
 from .models import ExternalSoftwareEnvironment
 from .models import ExternalPythonRequirementsLock
+from .models import PythonPackageMetadata
 from .models import ALL_MAIN_MODELS, ALL_RELATION_MODELS
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
@@ -116,6 +117,7 @@ from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import PythonIndexNotProvided
 from ..exceptions import SolverNotRun
+from ..exceptions import PythonPackageMetadataAttributeMissing
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -2659,6 +2661,7 @@ class GraphDatabase(SQLBase):
         os_version: Union[str, None],
         python_version: Union[str, None],
         index_url: Union[str, None],
+        metadata: PythonPackageMetadata = None,
         sync_only_entity: bool = False,
     ) -> PythonPackageVersion:
         """Create a Python package version.
@@ -2691,6 +2694,7 @@ class GraphDatabase(SQLBase):
                 os_version=os_version,
                 python_version=python_version,
                 entity_id=entity.id,
+                python_package_metadata_id=metadata.id if metadata else None
             )
 
         if sync_only_entity:
@@ -3349,6 +3353,7 @@ class GraphDatabase(SQLBase):
                     package_name = python_package_info["package_name"]
                     package_version = python_package_info["package_version"]
                     index_url = python_package_info["index_url"]
+                    importlib_metadata = python_package_info['importlib_metadata']["metadata"]
 
                     _LOGGER.info(
                         "Syncing solver result of package %r in version %r from %r solved by %r",
@@ -3357,6 +3362,34 @@ class GraphDatabase(SQLBase):
                         index_url,
                         solver_info,
                     )
+
+                    package_metadata, _ = PythonPackageMetadata.get_or_create(
+                        self._session,
+                        author=importlib_metadata.pop("Author", None),
+                        author_email=importlib_metadata.pop("Author-email", None),
+                        classifier=importlib_metadata.pop("Classifier", None),
+                        download_url=importlib_metadata.pop("Download-URL", None),
+                        home_page=importlib_metadata.pop("Home-page", None),
+                        keywords=importlib_metadata.pop("Keywords", None),
+                        # package licence
+                        license=importlib_metadata.pop("License", None),
+                        maintainer=importlib_metadata.pop('Maintainer', None),
+                        maintainer_email=importlib_metadata.pop('Maintainer-email', None),
+                        metadata_version=importlib_metadata.pop("Metadata-Version", None),
+                        # package name
+                        name=importlib_metadata.pop("Name", None),
+                        platform=importlib_metadata.pop("Platform", None),
+                        requires_dist=importlib_metadata.pop("Requires-Dist", None),
+                        summary=importlib_metadata.pop("Summary", None),
+                        # package version
+                        version=importlib_metadata.pop("Version", None),
+                    )
+
+                    if importlib_metadata:
+                        raise PythonPackageMetadataAttributeMissing(
+                            f"{importlib_metadata.keys()} keys not in PythonPackageMetadata."
+                            )
+
                     python_package_version = self._create_python_package_version(
                         package_name,
                         package_version,
@@ -3364,6 +3397,7 @@ class GraphDatabase(SQLBase):
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
                         index_url=index_url,
+                        metadata=package_metadata
                     )
 
                     for sha256 in python_package_info["sha256"]:
