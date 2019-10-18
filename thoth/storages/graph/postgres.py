@@ -20,6 +20,7 @@
 import logging
 import json
 import os
+import itertools
 from typing import List
 from typing import Set
 from typing import Tuple
@@ -129,7 +130,7 @@ class GraphDatabase(SQLBase):
     _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
 
     _DECLARATIVE_BASE = Base
-    _DEFAULT_COUNT = 100
+    DEFAULT_COUNT = 100
 
     def __del__(self) -> None:
         """Destruct adapter object."""
@@ -302,12 +303,12 @@ class GraphDatabase(SQLBase):
         return [item[0] for item in query.all()]
 
     def run_software_environment_listing(
-        self, start_offset: int = 0, count: int = _DEFAULT_COUNT, is_external_run: bool = False
+        self, start_offset: int = 0, count: int = DEFAULT_COUNT, is_external_run: bool = False
     ) -> list:
         """Get listing of software environments available for run."""
         return self._do_software_environment_listing(start_offset, count, is_external_run, "RUNTIME")
 
-    def build_software_environment_listing(self, start_offset: int = 0, count: int = _DEFAULT_COUNT) -> list:
+    def build_software_environment_listing(self, start_offset: int = 0, count: int = DEFAULT_COUNT) -> list:
         """Get listing of software environments available for build."""
         # We do not have user software environment which is build environment yet.
         return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
@@ -370,7 +371,7 @@ class GraphDatabase(SQLBase):
         self,
         run_software_environment_name: str,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_external_run: bool = False,
     ) -> List[dict]:
@@ -388,7 +389,7 @@ class GraphDatabase(SQLBase):
         self,
         build_software_environment_name: str,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_external_run: bool = False,
     ) -> List[dict]:
@@ -491,11 +492,13 @@ class GraphDatabase(SQLBase):
 
         return result[0]
 
+    # Solved Python Packages
+
     def get_solved_python_packages_all(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -542,15 +545,15 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        return result
 
     def get_solved_python_packages_all_versions(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -575,16 +578,14 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
         query_result = {}
 
-        for item in query:
-            if item[0] not in query_result.keys():
+        for item in result:
+            if item[0] not in query_result:
                 query_result[item[0]] = []
-                query_result[item[0]].append((item[1], item[2]))
-            else:
-                query_result[item[0]].append((item[1], item[2]))
+            query_result[item[0]].append((item[1], item[2]))
 
         return query_result
 
@@ -592,13 +593,13 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
-        """Retrieve number of solved versions per Python package in Thoth Database.
+        """Retrieve number of Python Package (package_name, package_version, index_url) solved in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -615,7 +616,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -638,7 +639,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -649,7 +650,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions_count_per_version(package_name='tensorflow')
+        >>> graph.get_solved_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
         result = self.__class__.get_python_package_versions_count_per_version(**locals())
@@ -674,7 +675,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
@@ -688,7 +689,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions()
+        >>> graph.get_solved_python_package_versions()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_solved_python_package_versions_query(
@@ -705,9 +706,9 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return query
+        return result
 
     def get_solved_python_package_versions_count_all(
         self,
@@ -733,14 +734,131 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        return result
+
+    # Solved Python Packages with error
+
+    def _construct_error_solved_python_package_versions_query(
+        self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None
+    ) -> Query:
+        """Construct query for solved with error Python packages versions functions, the query is not executed."""
+        result = self.__class__._construct_python_package_versions_query(**locals())
+
+        return result
+
+    def get_error_solved_python_package_versions(
+        self,
+        *,
+        unsolvable: bool = False,
+        unparseable: bool = False,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str, str]]:
+        """Retrieve solved with error Python package versions in Thoth Database.
+
+        if unsolvable=True -> get_unsolvable_python_package_versions
+        if unparseable=True -> get_unparseable_python_package_versions
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_error_solved_python_package_versions()
+        [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
+        """
+        if unsolvable is True and unparseable is True:
+            raise ValueError("Cannot query for unparseable and unsolvable at the same time")
+
+        query = self._construct_solved_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+            )
+
+        query = query.join(Solved).filter_by(error=True)
+
+        if unsolvable:
+            query = query.filter_by(error_unsolvable=True)
+
+        if unparseable:
+            query = query.filter_by(error_unparseable=True)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return result
+
+    def get_error_solved_python_package_versions_count_all(
+        self,
+        *,
+        unsolvable: bool = False,
+        unparseable: bool = False,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve solved with error Python package versions number in Thoth Database.
+
+        if unsolvable=True -> get_unsolvable_python_package_versions_count_all
+        if unparseable=True -> get_unparseable_python_package_versions_count_all
+        """
+        if unsolvable is True and unparseable is True:
+            raise ValueError("Cannot query for unparseable and unsolvable at the same time")
+
+        query = self._construct_solved_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version
+            )
+
+        query = query.join(Solved).filter_by(error=True)
+
+        if unsolvable:
+            query = query.filter_by(error_unsolvable=True)
+
+        if unparseable:
+            query = query.filter_by(error_unparseable=True)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.count()
+
+        return result
 
     # Unsolved Python Packages
 
     def _construct_solved_query(
         self,
+        *,
         index_url: str = None,
         package_name: str = None,
         package_version: str = None,
@@ -777,6 +895,101 @@ class GraphDatabase(SQLBase):
 
         return query
 
+    def _get_unsolved_python_package_versions_count_edge_cases(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        distinct: bool = False,
+        count: int = DEFAULT_COUNT,
+        is_count: bool = False
+    ) -> List[Tuple[str, Optional[str], Optional[str]]]:
+        """Retrieve unsolved packages in edge cases.
+
+        Edge cases:
+        CASE 1: ('package_name', None, 'index_url')
+
+        CASE 2: ('package_name', 'package_version', None)
+
+        CASE 3: ('package_name', None, None)
+        """
+        case_2 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.package_version.isnot(None),
+                PythonPackageVersionEntity.python_package_index_id.is_(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageVersionEntity.python_package_index_id)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        if package_name:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if distinct:
+            case_2 = case_2.distinct()
+
+        if is_count:
+            result_2 = case_2.count()
+        else:
+            case_2 = case_2.limit(count)
+            result_2 = case_2.all()
+
+        case_3 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.package_version.is_(None),
+                PythonPackageVersionEntity.python_package_index_id.is_(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageVersionEntity.python_package_index_id)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        if package_name:
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version:
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if distinct:
+            case_3 = case_3.distinct()
+
+        if is_count:
+            result_3 = case_3.count()
+        else:
+            if len(result_2) < count:
+                case_3 = case_3.limit(count - len(result_2))
+                result_3 = case_3.all()
+            else:
+                return result_2
+
+        return result_2 + result_3
+
     def get_unsolved_python_packages_all(
         self,
         *,
@@ -784,9 +997,9 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         distinct: bool = False,
-    ) -> List[Tuple[str, str]]:
+    ) -> List[Tuple[str, Optional[str]]]:
         """Retrieve unsolved Python package with index in Thoth Database.
 
         Examples:
@@ -821,9 +1034,16 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return query
+        if len(result) < count:
+
+            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
+
+            for unsolved_tuple in unsolved:
+                result.append((unsolved_tuple[0], unsolved_tuple[1]))
+
+        return result
 
     def _construct_unsolved_python_packages_query(
         self,
@@ -882,9 +1102,13 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        unsolved = self._get_unsolved_python_package_versions_count_edge_cases(is_count=True)
+
+        total_count = result + unsolved
+
+        return total_count
 
     def get_unsolved_python_packages_all_versions(
         self,
@@ -893,9 +1117,9 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         distinct: bool = False,
-    ) -> Dict[str, List[Tuple[str, str]]]:
+    ) -> Dict[str, List[Tuple[Optional[str], Optional[str]]]]:
         """Retrieve unsolved Python package versions per package in Thoth Database.
 
         Examples:
@@ -915,16 +1139,18 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
         query_result = {}
 
-        for item in query:
-            if item[0] not in query_result.keys():
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
+
+        for item in result + unsolved:
+            if item[0] not in query_result:
                 query_result[item[0]] = []
-                query_result[item[0]].append((item[1], item[2]))
-            else:
-                query_result[item[0]].append((item[1], item[2]))
+            query_result[item[0]].append((item[1], item[2]))
 
         return query_result
 
@@ -935,9 +1161,9 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         distinct: bool = False,
-    ) -> Dict[Tuple[str, str, str], int]:
+    ) -> Dict[Tuple[str, Optional[str], Optional[str]], int]:
         """Retrieve number of unsolved versions per Python package in Thoth Database.
 
         Examples:
@@ -969,7 +1195,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
-                func.count(PythonPackageVersionEntity.package_version))
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
             .group_by(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -981,9 +1212,21 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return {(item[0], item[1], item[2]): item[3] for item in query}
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
+
+        query_result = {}
+
+        for item in itertools.chain(result, unsolved):
+            if (item[0], item[1], item[2]) not in query_result:
+                query_result[(item[0], item[1], item[2])] = item[3]
+            else:
+                query_result[(item[0], item[1], item[2])] += item[3]
+
+        return query_result
 
     def get_unsolved_python_package_versions_count_per_index(
         self,
@@ -993,9 +1236,9 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         distinct: bool = False,
-    ) -> Dict[str, Dict[Tuple[str, str], int]]:
+    ) -> Dict[str, Dict[Tuple[str, Optional[str]], int]]:
         """Retrieve number of unsolved Python package versions per index url in Thoth Database.
 
         Examples:
@@ -1029,7 +1272,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
-                func.count(PythonPackageVersionEntity.package_name))
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
             .group_by(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1044,16 +1292,21 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
+
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
 
         query_result = {}
         query_result[index_url] = {}
 
-        for item in query:
-            if (item[0], item[1]) not in query_result[index_url].keys():
-                query_result[index_url][(item[0], item[1])] = item[3]
-            else:
-                query_result[index_url][(item[0], item[1])] += item[3]
+        for item in itertools.chain(result, unsolved):
+            if item[2] == index_url:
+                if (item[0], item[1]) not in query_result[index_url].keys():
+                    query_result[index_url][(item[0], item[1])] = item[3]
+                else:
+                    query_result[index_url][(item[0], item[1])] += item[3]
 
         return query_result
 
@@ -1062,18 +1315,18 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> Dict[str, Dict[str, int]]:
+    ) -> Dict[Optional[str], Dict[Optional[str], int]]:
         """Retrieve number of unsolved Python package versions per package version in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions_count_per_version(package_name='tensorflow')
+        >>> graph.get_unsolved_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
         solved = self._construct_solved_query(
@@ -1101,7 +1354,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
-                func.count(PythonPackageVersionEntity.package_version))
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
             .group_by(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1116,17 +1374,23 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
+
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
 
         query_result = {}
 
-        for item in query:
-            if item[1] not in query_result.keys():
+        for item in itertools.chain(result, unsolved):
+            if item[1] not in query_result:
                 query_result[item[1]] = {}
                 query_result[item[1]][item[2]] = item[3]
             else:
-                if item[2] not in query_result[item[1]].keys():
+                if item[2] not in query_result[item[1]]:
                     query_result[item[1]][item[2]] = item[3]
+                else:
+                    query_result[item[1]][item[2]] += item[3]
 
         return query_result
 
@@ -1169,11 +1433,87 @@ class GraphDatabase(SQLBase):
 
         return query
 
+    def _get_unsolved_python_package_versions_edge_cases(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        distinct: bool = False,
+        count: int = DEFAULT_COUNT,
+        is_count: bool = False
+    ) -> List[Tuple[str, Optional[str], Optional[str]]] or int:
+        """Retrieve unsolved packages in edge cases.
+
+        Edge cases:
+        CASE 1: ('package_name', None, 'index_url') (ALREADY INCLUDED in general function)
+
+        CASE 2: ('package_name', 'package_version', None)
+
+        CASE 3: ('package_name', None, None)
+        """
+        case_2 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.package_version.isnot(None),
+                PythonPackageVersionEntity.python_package_index_id.is_(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        if package_name:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version:
+            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if distinct:
+            case_2 = case_2.distinct()
+            case_3 = case_3.distinct()
+
+        if is_count:
+            result_2 = case_2.count()
+        else:
+            case_2 = case_2.limit(count)
+            result_2 = case_2.all()
+
+        case_3 = (
+            self._session.query(PythonPackageVersionEntity)
+            .filter(
+                PythonPackageVersionEntity.package_version.is_(None),
+                PythonPackageVersionEntity.python_package_index_id.is_(None))
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageVersionEntity.python_package_index_id)
+        )
+
+        if package_name:
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version:
+            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if distinct:
+            case_3 = case_3.distinct()
+
+        if is_count:
+            result_3 = case_3.count()
+        else:
+            if len(result_2) < count:
+                case_3 = case_3.limit(count - len(result_2))
+                result_3 = case_3.all()
+            else:
+                return result_2
+
+        return result_2 + result_3
+
     def get_unsolved_python_package_versions(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
@@ -1187,7 +1527,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions()
+        >>> graph.get_unsolved_python_package_versions()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_unsolved_python_package_versions_query(
@@ -1208,74 +1548,24 @@ class GraphDatabase(SQLBase):
         if package_version is not None:
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
-        query = query.offset(start_offset).limit(count/2)
+        query = query.offset(start_offset).limit(count)
 
         if distinct:
             query = query.distinct()
 
         result = query.all()
 
-        unsolved = self._get_unsolved_python_package_edge_cases(
-            package_name=package_name,
-            package_version=package_version
-        )
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_edge_cases(
+                package_name=package_name,
+                package_version=package_version,
+                count=count - len(result)
+            )
 
-        if unsolved:
-            n = 1
-            for unsolved_tuple in unsolved:
-                result.append(unsolved_tuple)
-                n += 1
-                if n == count/2:
-                    break
+        result.extend(unsolved)
 
         return result
-
-    def _get_unsolved_python_package_edge_cases(
-        self,
-        *,
-        package_name: str = None,
-        package_version: str = None
-    ) -> List[Tuple[str, Optional[str], Optional[str]]]:
-        """Retrieve unsolved packages in edge cases.
-
-        Edge cases:
-        CASE 1: ('package_name', None, 'index_url') (ALREADY INCLUDED in general function)
-
-        CASE 2: ('package_name', 'package_version', None)
-
-        CASE 3: ('package_name', None, None)
-        """
-        case_2 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.python_package_index_id.is_(None),
-                PythonPackageVersionEntity.package_version.isnot(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        case_3 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.package_version.is_(None),
-                PythonPackageVersionEntity.python_package_index_id.is_(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        if package_name:
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version:
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        return case_2.all() + case_3.all()
 
     def get_unsolved_python_package_versions_count_all(
         self,
@@ -1310,24 +1600,226 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        unsolved = self._get_unsolved_python_package_edge_cases(
-            package_name=package_name,
-            package_version=package_version
-        )
+        unsolved = []
+        if len(result) < count:
+            unsolved = self._get_unsolved_python_package_versions_edge_cases(
+                package_name=package_name,
+                package_version=package_version,
+                distinct=distinct,
+                is_count=True
+            )
 
-        total_count = query + len(unsolved)
+        total_count = result + unsolved
 
         return total_count
 
-    def retrieve_unanalyzed_python_package_versions(
+    # Analyzed packages
+
+    def get_analyzed_python_packages_all(
         self,
+        *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
-    ) -> List[dict]:
-        """Retrieve a list of package names, versions and index urls that were not analyzed yet by package-analyzer."""
-        subquery = (
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str]]:
+        """Retrieve analyzed Python package with index in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_packages_all()
+        [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
+        """
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageIndex.url
+            )
+        )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return [(item[0], item[1]) for item in result]
+
+    def _construct_analyzed_python_packages_query(self) -> Query:
+        """Construct query for analyzed Python packages functions, the query is not executed."""
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url
+            )
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url
+            )
+        )
+
+        return query
+
+    def get_analyzed_python_packages_count_all(
+        self,
+        *,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve number of analyzed Python package versions in Thoth Database."""
+        query = self._construct_analyzed_python_packages_query()
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.count()
+
+        return result
+
+    def get_analyzed_python_packages_all_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, List[Tuple[str, str]]]:
+        """Retrieve analyzed Python package versions per package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_packages_all_versions()
+        {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
+        """
+        query = self._construct_analyzed_python_packages_query()
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+
+        for item in result:
+            if item[0] not in query_result:
+                query_result[item[0]] = []
+            query_result[item[0]].append((item[1], item[2]))
+
+        return query_result
+
+    def _construct_analyzed_python_package_versions_query(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None
+    ) -> Query:
+        """Construct query for analyzed Python packages versions functions, the query is not executed."""
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url
+            )
+        )
+
+        if package_name is not None:
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version is not None:
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
+
+        return query
+
+    def get_analyzed_python_package_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str, str]]:
+        """Retrieve analyzed Python package versions in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_package_versions()
+        [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
+        """
+        query = self._construct_analyzed_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return result
+
+    def get_analyzed_python_package_versions_count_all(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve analyzed Python package versions number in Thoth Database."""
+        query = self._construct_analyzed_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url
+            )
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.count()
+
+        return result
+
+    def get_analyzed_python_package_versions_count(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[Tuple[str, str, str], int]:
+        """Retrieve number of versions per analyzed Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_package_versions_count()
+        {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
+        """
+        query = (
             self._session.query(PackageAnalyzerRun)
             .join(PythonPackageVersionEntity)
             .join(PythonPackageIndex)
@@ -1335,12 +1827,367 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
             )
-            .distinct()
-            .subquery()
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+        for item in result:
+            if (item[0], item[1], item[2]) not in query_result:
+                query_result[(item[0], item[1], item[2])] = item[3]
+            else:
+                query_result[(item[0], item[1], item[2])] += item[3]
+
+        return query_result
+
+    def get_analyzed_python_package_versions_count_per_index(
+        self,
+        index_url: str,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, Dict[Tuple[str, str], int]]:
+        """Retrieve number of analyzed Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
+        {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
+        """
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageIndex.url == index_url)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {index_url: {}}
+        for item in result:
+            if (item[0], item[1]) not in query_result[index_url].keys():
+                query_result[index_url][(item[0], item[1])] = item[3]
+            else:
+                query_result[index_url][(item[0], item[1])] += item[3]
+
+        return query_result
+
+    def get_analyzed_python_package_versions_count_per_version(
+        self,
+        package_name: str,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, Dict[str, int]]:
+        """Retrieve number of analyzed Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_python_package_versions_count_per_version(package_name='tensorflow')
+        {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
+        """
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .join(PythonPackageVersionEntity)
+            .filter(PythonPackageVersionEntity.package_name == package_name)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+
+        for item in result:
+            if item[1] not in query_result:
+                query_result[item[1]] = {}
+                query_result[item[1]][item[2]] = item[3]
+            else:
+                if item[2] not in query_result[item[1]]:
+                    query_result[item[1]][item[2]] = item[3]
+                else:
+                    query_result[item[1]][item[2]] += item[3]
+
+        return query_result
+
+    def _construct_analyzed_error_python_package_versions_query(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None
+    ) -> Query:
+        """Construct query for analyzed Python packages versions functions with error, the query is not executed."""
+        query = (
+            self._session.query(PackageAnalyzerRun)
+            .filter_by(package_analyzer_error=True)
+            .join(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url
+            )
         )
 
-        query_result = (
+        if package_name is not None:
+            query = query.filter(PythonPackageVersion.package_name == package_name)
+
+        if package_version is not None:
+            query = query.filter(PythonPackageVersion.package_version == package_version)
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
+
+        return query
+
+    def get_analyzed_error_python_package_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str, str]]:
+        """Retrieve analyzed Python package versions with error in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analyzed_error_python_package_versions()
+        [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
+        """
+        query = self._construct_analyzed_error_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return result
+
+    def get_analyzed_error_python_package_versions_count_all(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve analyzed Python package versions with error number in Thoth Database."""
+        query = self._construct_analyzed_error_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url
+            )
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.count()
+
+        return result
+
+    # Unanalyzed packages
+
+    def get_unanalyzed_python_packages_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> List[Tuple[str, str]]:
+        """Retrieve unanalyzed Python package with index in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_unanalyzed_python_packages_all()
+        [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
+        """
+        analyzed = self._construct_analyzed_python_packages_query()
+
+        subquery = analyzed.subquery()
+
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageIndex.url,
+            )
+        )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return [(item[0], item[1]) for item in result]
+
+    def _construct_unanalyzed_python_packages_query(self) -> Query:
+        """Construct query for unanalyzed Python packages functions, the query is not executed."""
+        analyzed = self._construct_analyzed_python_packages_query()
+
+        subquery = analyzed.subquery()
+
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url
+            )
+        )
+
+        return query
+
+    def get_unanalyzed_python_packages_count_all(
+        self,
+        *,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve number of unanalyzed Python package versions in Thoth Database."""
+        query = self._construct_unanalyzed_python_packages_query()
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.count()
+
+        return result
+
+    def get_unanalyzed_python_packages_all_versions(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, List[Tuple[str, str]]]:
+        """Retrieve unanalyzed Python package versions per package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_unanalyzed_python_packages_all_versions()
+        {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
+        """
+        query = self._construct_unanalyzed_python_packages_query()
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+
+        for item in result:
+            if item[0] not in query_result:
+                query_result[item[0]] = []
+            query_result[item[0]].append((item[1], item[2]))
+
+        return query_result
+
+    def _construct_unanalyzed_python_package_versions_query(
+        self,
+        *,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None
+    ) -> Query:
+        """Construct query for unanalyzed Python packages versions functions, the query is not executed."""
+        analyzed = self._construct_analyzed_python_package_versions_query(
+            package_name=package_name,
+            package_version=package_version,
+            index_url=index_url,
+            )
+
+        subquery = analyzed.subquery()
+
+        query = (
             self._session.query(PythonPackageVersionEntity)
             .join(PythonPackageIndex)
             .filter(
@@ -1355,127 +2202,269 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
             )
-            .distinct()
-            .offset(start_offset)
-            .limit(count)
-            .all()
         )
 
-        return [{"package_name": item[0], "package_version": item[1], "index_url": item[2]} for item in query_result]
+        if package_name is not None:
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
-    def _construct_error_solved_python_package_versions_query(
-        self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None
-    ) -> Query:
-        """Construct query for solved with error Python packages versions functions, the query is not executed."""
-        result = self.__class__._construct_python_package_versions_query(**locals())
+        if package_version is not None:
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
-        return result
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
 
-    def get_error_solved_python_package_versions(
+        return query
+
+    def get_unanalyzed_python_package_versions(
         self,
         *,
-        unsolvable: bool = False,
-        unparseable: bool = False,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
         distinct: bool = False,
-    ) -> List[Tuple[str, str, str]]:
-        """Retrieve solved with error Python package versions in Thoth Database.
-
-        if unsolvable=True -> get_unsolvable_python_package_versions
-        if unparseable=True -> get_unparseable_python_package_versions
+    ) -> List[Tuple[str, Optional[str], str]]:
+        """Retrieve unanalyzed Python package versions in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions()
+        >>> graph.get_unanalyzed_python_package_versions()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
-        if unsolvable is True and unparseable is True:
-            raise ValueError("Cannot query for unparseable and unsolvable at the same time")
-
-        query = self._construct_solved_python_package_versions_query(
+        query = self._construct_unanalyzed_python_package_versions_query(
             package_name=package_name,
             package_version=package_version,
             index_url=index_url,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version
             )
-
-        query = query.join(Solved).filter_by(error=True)
-
-        if unsolvable:
-            query = query.filter_by(error_unsolvable=True)
-
-        if unparseable:
-            query = query.filter_by(error_unparseable=True)
 
         query = query.offset(start_offset).limit(count)
 
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return query
+        return result
 
-    def get_error_solved_python_package_versions_count_all(
+    def get_unanalyzed_python_package_versions_count_all(
         self,
         *,
-        unsolvable: bool = False,
-        unparseable: bool = False,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
         distinct: bool = False,
     ) -> int:
-        """Retrieve solved with error Python package versions number in Thoth Database.
-
-        if unsolvable=True -> get_unsolvable_python_package_versions_count_all
-        if unparseable=True -> get_unparseable_python_package_versions_count_all
-        """
-        if unsolvable is True and unparseable is True:
-            raise ValueError("Cannot query for unparseable and unsolvable at the same time")
-
-        query = self._construct_solved_python_package_versions_query(
+        """Retrieve unanalyzed Python package versions number in Thoth Database."""
+        query = self._construct_unanalyzed_python_package_versions_query(
             package_name=package_name,
             package_version=package_version,
-            index_url=index_url,
-            os_name=os_name,
-            os_version=os_version,
-            python_version=python_version
+            index_url=index_url
             )
-
-        query = query.join(Solved).filter_by(error=True)
-
-        if unsolvable:
-            query = query.filter_by(error_unsolvable=True)
-
-        if unparseable:
-            query = query.filter_by(error_unparseable=True)
 
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        return result
+
+    def get_unanalyzed_python_package_versions_count(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[Tuple[str, str, str], int]:
+        """Retrieve number of versions per unanalyzed Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_unanalyzed_python_package_versions_count()
+        {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
+        """
+        analyzed = self._construct_analyzed_python_package_versions_query()
+
+        subquery = analyzed.subquery()
+
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+        for item in result:
+            if (item[0], item[1], item[2]) not in query_result:
+                query_result[(item[0], item[1], item[2])] = item[3]
+            else:
+                query_result[(item[0], item[1], item[2])] += item[3]
+
+        return query_result
+
+    def get_unanalyzed_python_package_versions_count_per_index(
+        self,
+        index_url: str,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, Dict[Tuple[str, str], int]]:
+        """Retrieve number of unanalyzed Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_unanalyzed_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
+        {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
+        """
+        analyzed = self._construct_analyzed_python_package_versions_query(
+            index_url=index_url,
+            )
+
+        subquery = analyzed.subquery()
+
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageIndex.url == index_url)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {index_url: {}}
+        for item in result:
+            if (item[0], item[1]) not in query_result[index_url].keys():
+                query_result[index_url][(item[0], item[1])] = item[3]
+            else:
+                query_result[index_url][(item[0], item[1])] += item[3]
+
+        return query_result
+
+    def get_unanalyzed_python_package_versions_count_per_version(
+        self,
+        package_name: str,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> Dict[str, Dict[str, int]]:
+        """Retrieve number of unanalyzed Python package versions per index url in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_unanalyzed_python_package_versions_count_per_version(package_name='tensorflow')
+        {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
+        """
+        analyzed = self._construct_analyzed_python_package_versions_query(
+            package_name=package_name
+            )
+
+        subquery = analyzed.subquery()
+
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+            .filter(PythonPackageVersionEntity.package_name == package_name)
+            .filter(
+                tuple_(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                ).notin_(subquery)
+            )
+            .with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersionEntity.package_name,
+                        PythonPackageVersionEntity.package_version,
+                        PythonPackageIndex.url)
+                        ))
+            .group_by(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+            )
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        query_result = {}
+
+        for item in result:
+            if item[1] not in query_result:
+                query_result[item[1]] = {}
+                query_result[item[1]][item[2]] = item[3]
+            else:
+                if item[2] not in query_result[item[1]]:
+                    query_result[item[1]][item[2]] = item[3]
+                else:
+                    query_result[item[1]][item[2]] += item[3]
+
+        return query_result
 
     def get_solver_documents_count(self) -> int:
         """Get number of solver documents synced into graph."""
@@ -2008,48 +2997,61 @@ class GraphDatabase(SQLBase):
     def get_python_package_version_entities_count_all(
         self,
         *,
-        start_offset: int = 0,
-        count: int = 100,
-        python_version: str = None,
         distinct: bool = False,
     ) -> int:
-        """Retrieve listing of all Python package versions entity with known index to graph database instance."""
-        query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url)
-            ).count()
+        """Retrieve All Python packages in Thoth Database."""
+        result = self._session.query(PythonPackageVersionEntity)
 
-        return query
+        if distinct:
+            query = query.distinct()
 
-    def get_python_package_version_entities(
+        count = query.count()
+
+        return count
+
+    def get_python_package_names_all(
         self,
         *,
-        start_offset: int = 0,
-        count: int = 100,
+        os_name: str = None,
+        os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> List[Tuple[str, str, str]]:
-        """Retrieve listing of all Python package versions entity with known index to graph database instance."""
-        query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url)
-            ).all()
+    ) -> List[str]:
+        """Retrieve names of Python Packages known by Thoth.
 
-        return [(item[0], item[1], item[2]) for item in query]
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_packages_names_all()
+        ['regex', 'tensorflow']
+        """
+        query = (
+            self._session.query(PythonPackageVersion)
+            .with_entities(
+                PythonPackageVersion.package_name)
+            )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return [item[0] for item in result]
 
     def get_python_packages_all(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2085,12 +3087,13 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return [(item[0], item[1]) for item in query]
+        return [(item[0], item[1]) for item in result]
 
     def _construct_python_packages_query(
         self,
+        *,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None
@@ -2099,15 +3102,15 @@ class GraphDatabase(SQLBase):
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
-            .with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url)
             .group_by(
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
                 PythonPackageIndex.url)
-            )
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url)
+        )
 
         if os_name is not None:
             query = query.filter(PythonPackageVersion.os_name == os_name)
@@ -2138,15 +3141,15 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        return result
 
     def get_python_packages_all_versions(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2173,25 +3176,25 @@ class GraphDatabase(SQLBase):
 
         query = query.all()
 
-        query_result = {}
+        result = {}
         for item in query:
-            if item[0] not in query_result:
-                query_result[item[0]] = []
-            query_result[item[0]].append((item[1], item[2]))
+            if item[0] not in result:
+                result[item[0]] = []
+            result[item[0]].append((item[1], item[2]))
 
-        return query_result
+        return result
 
     def get_python_package_versions_count(
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
-        """Retrieve number of versions per Python package in Thoth Database.
+        """Retrieve number of Python Package (package_name, package_version, index_url) in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -2202,16 +3205,21 @@ class GraphDatabase(SQLBase):
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
-            .with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url,
-                func.count(PythonPackageVersion.package_version))
             .group_by(
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
                 PythonPackageIndex.url)
-            )
+            .with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+                func.count(
+                    tuple_(
+                        PythonPackageVersion.package_name,
+                        PythonPackageVersion.package_version,
+                        PythonPackageIndex.url)
+                        ))
+        )
 
         if os_name is not None:
             query = query.filter(PythonPackageVersion.os_name == os_name)
@@ -2227,16 +3235,71 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return {(item[0], item[1], item[2]): item[3] for item in query}
+        query_result = {}
+        for item in result:
+            if (item[0], item[1], item[2]) not in query_result:
+                query_result[(item[0], item[1], item[2])] = item[3]
+            else:
+                query_result[(item[0], item[1], item[2])] += item[3]
+
+        return query_result
+
+    def get_python_package_versions_all_count(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> Dict[str, int]:
+        """Retrieve number of versions per Python package name in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_versions_all_count()
+        {'setuptools': 988, 'pip': 211, 'termcolor': 14, 'six': 42}
+        """
+        query = (
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex)
+            .group_by(
+                PythonPackageVersion.package_name)
+            .with_entities(
+                PythonPackageVersion.package_name,
+                func.count(
+                    PythonPackageVersion.package_version)
+                )
+        )
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return {item[0]: item[1] for item in result}
 
     def get_python_package_versions_count_per_index(
         self,
         index_url: str,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2258,7 +3321,11 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
                 PythonPackageIndex.url,
-                func.count(PythonPackageVersion.package_name))
+                func.count(
+                    tuple_(
+                        PythonPackageVersion.package_name,
+                        PythonPackageVersion.package_version)
+                        ))
             .group_by(
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
@@ -2279,10 +3346,10 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
         query_result = {index_url: {}}
-        for item in query:
+        for item in result:
             if (item[0], item[1]) not in query_result[index_url].keys():
                 query_result[index_url][(item[0], item[1])] = item[3]
             else:
@@ -2295,7 +3362,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2317,7 +3384,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
                 PythonPackageIndex.url,
-                func.count(PythonPackageVersion.package_version))
+                func.count(
+                    tuple_(
+                        PythonPackageVersion.package_name,
+                        PythonPackageVersion.package_version,
+                        PythonPackageIndex.url)
+                        ))
             .group_by(
                 PythonPackageVersion.package_name,
                 PythonPackageVersion.package_version,
@@ -2338,17 +3410,19 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
         query_result = {}
 
-        for item in query:
-            if item[1] not in query_result.keys():
+        for item in result:
+            if item[1] not in query_result:
                 query_result[item[1]] = {}
                 query_result[item[1]][item[2]] = item[3]
             else:
-                if item[2] not in query_result[item[1]].keys():
+                if item[2] not in query_result[item[1]]:
                     query_result[item[1]][item[2]] = item[3]
+                else:
+                    query_result[item[1]][item[2]] += item[3]
 
         return query_result
 
@@ -2395,7 +3469,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = _DEFAULT_COUNT,
+        count: int = DEFAULT_COUNT,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
@@ -2426,9 +3500,9 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.all()
+        result = query.all()
 
-        return query
+        return result
 
     def get_python_package_versions_count_all(
         self,
@@ -2454,9 +3528,9 @@ class GraphDatabase(SQLBase):
         if distinct:
             query = query.distinct()
 
-        query = query.count()
+        result = query.count()
 
-        return query
+        return result
 
     def get_python_package_version_metadata(
         self,
@@ -2786,7 +3860,7 @@ class GraphDatabase(SQLBase):
         self,
         software_stack_type: str,
         unique: bool = False,
-    ) -> List[str]:
+    ) -> int:
         """Get number of Python software stacks available filtered by type."""
         query = (
             self._session.query(PythonSoftwareStack.software_stack_type)
