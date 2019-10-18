@@ -1602,18 +1602,15 @@ class GraphDatabase(SQLBase):
 
         result = query.count()
 
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_edge_cases(
-                package_name=package_name,
-                package_version=package_version,
-                distinct=distinct,
-                is_count=True
-            )
+        # Sum with unsolved edge cases.
+        unsolved = self._get_unsolved_python_package_versions_edge_cases(
+            package_name=package_name,
+            package_version=package_version,
+            distinct=distinct,
+            is_count=True
+        )
 
-        total_count = result + unsolved
-
-        return total_count
+        return result + unsolved
 
     # Analyzed packages
 
