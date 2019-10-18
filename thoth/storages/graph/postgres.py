@@ -1441,7 +1441,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
         count: int = DEFAULT_COUNT,
         is_count: bool = False
-    ) -> List[Tuple[str, Optional[str], Optional[str]]] or int:
+    ) -> Union[List[Tuple[str, Optional[str], Optional[str]]], int]:
         """Retrieve unsolved packages in edge cases.
 
         Edge cases:
@@ -1450,6 +1450,9 @@ class GraphDatabase(SQLBase):
         CASE 2: ('package_name', 'package_version', None)
 
         CASE 3: ('package_name', None, None)
+
+        If is_count is set to true, this method returns non-negative integer representing number
+        of packages - the count parameter has no effect in that case.
         """
         case_2 = (
             self._session.query(PythonPackageVersionEntity)
