@@ -3001,7 +3001,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve All Python packages in Thoth Database."""
-        result = self._session.query(PythonPackageVersionEntity)
+        query = self._session.query(PythonPackageVersionEntity)
 
         if distinct:
             query = query.distinct()
