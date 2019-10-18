@@ -1470,7 +1470,6 @@ class GraphDatabase(SQLBase):
 
         if distinct:
             case_2 = case_2.distinct()
-            case_3 = case_3.distinct()
 
         if is_count:
             result_2 = case_2.count()
