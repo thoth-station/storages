@@ -85,6 +85,8 @@ from .models import RPMRequires
 from .models import Identified
 from .models import PythonFileDigest
 from .models import FoundPythonFile
+from .models import PythonInterpreter
+from .models import FoundPythonInterpreter
 from .models import FoundRPM
 from .models import Advised
 from .models import VersionedSymbol
@@ -4210,6 +4212,27 @@ class GraphDatabase(SQLBase):
                 file=py_file["filepath"],
             )
 
+    def _python_interpreters_sync_analysis_result(
+        self,
+        package_extract_run: PackageExtractRun,
+        document: dict,
+        software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment]
+    ) -> None:
+        """Sync python interpreters detected in a package-extract run into the database."""
+        for py_interpreter in document["result"].get("python-interpreters"):
+            python_interpreter = PythonInterpreter.get_or_create(
+                self._session,
+                path=py_interpreter.get("path"),
+                link=py_interpreter.get("link"),
+                version=py_interpreter.get("version")
+            )
+
+            FoundPythonInterpreter.get_or_create(
+                self._session,
+                python_interpreter=python_interpreter,
+                package_extract_run=package_extract_run
+            )
+
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
         analysis_document_id = AnalysisResultsStore.get_document_id(document)
@@ -4300,6 +4323,7 @@ class GraphDatabase(SQLBase):
                 self._python_sync_analysis_result(package_extract_run, document, software_environment)
                 self._python_file_digests_sync_analysis_result(package_extract_run, document)
                 self._system_symbols_analysis_result(package_extract_run, document, software_environment)
+                self._python_interpreters_sync_analysis_result(package_extract_run, document, software_environment)
         except Exception:
             self._session.rollback()
             raise
