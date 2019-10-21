@@ -1,7 +1,7 @@
 """Added PythonPackageMetadata table
 
 Revision ID: e05d6d95ea95
-Revises: 184e698fe2c2
+Revises: 74f68dabbb46
 Create Date: 2019-10-15 16:59:27.902479+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'e05d6d95ea95'
-down_revision = '184e698fe2c2'
+down_revision = '74f68dabbb46'
 branch_labels = None
 depends_on = None
 
