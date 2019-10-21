@@ -4133,7 +4133,7 @@ class GraphDatabase(SQLBase):
         self,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment,
+        software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment],
         is_external: bool = False
     ) -> None:
         """Sync system symbols detected in a package-extract run into the database."""
@@ -4167,7 +4167,7 @@ class GraphDatabase(SQLBase):
         self,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment,
+        software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment],
     ) -> None:
         """Sync results of Python packages found in the given container image."""
         for python_package_info in document["result"]["mercator"] or []:
@@ -4332,7 +4332,11 @@ class GraphDatabase(SQLBase):
                 self._deb_sync_analysis_result(package_extract_run, document)
                 self._python_sync_analysis_result(package_extract_run, document, software_environment)
                 self._python_file_digests_sync_analysis_result(package_extract_run, document)
-                self._system_symbols_analysis_result(package_extract_run, document, software_environment, is_external=is_external)
+                self._system_symbols_analysis_result(
+                    package_extract_run, document,
+                    software_environment,
+                    is_external=is_external
+                )
                 self._python_interpreters_sync_analysis_result(package_extract_run, document, software_environment)
         except Exception:
             self._session.rollback()
