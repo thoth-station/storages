@@ -4133,7 +4133,8 @@ class GraphDatabase(SQLBase):
         self,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment
+        software_environment: SoftwareEnvironment or ExternalSoftwareEnvironment,
+        is_external: bool = False
     ) -> None:
         """Sync system symbols detected in a package-extract run into the database."""
         for library, symbols in document["result"]["system-symbols"].items():
@@ -4143,12 +4144,18 @@ class GraphDatabase(SQLBase):
                     library_name=library,
                     symbol=symbol,
                 )
-
-                HasSymbol.get_or_create(
-                    self._session,
-                    software_environment_id=software_environment.id,
-                    versioned_symbol_id=versioned_symbol.id
-                )
+                if is_external:
+                    HasSymbol.get_or_create(
+                        self._session,
+                        external_software_environment_id=software_environment.id,
+                        versioned_symbol_id=versioned_symbol.id
+                    )
+                else:
+                    HasSymbol.get_or_create(
+                        self._session,
+                        software_environment_id=software_environment.id,
+                        versioned_symbol_id=versioned_symbol.id
+                    )
 
                 DetectedSymbol.get_or_create(
                     self._session,
@@ -4325,7 +4332,7 @@ class GraphDatabase(SQLBase):
                 self._deb_sync_analysis_result(package_extract_run, document)
                 self._python_sync_analysis_result(package_extract_run, document, software_environment)
                 self._python_file_digests_sync_analysis_result(package_extract_run, document)
-                self._system_symbols_analysis_result(package_extract_run, document, software_environment)
+                self._system_symbols_analysis_result(package_extract_run, document, software_environment, is_external=is_external)
                 self._python_interpreters_sync_analysis_result(package_extract_run, document, software_environment)
         except Exception:
             self._session.rollback()
