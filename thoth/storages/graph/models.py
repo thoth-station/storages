@@ -1094,15 +1094,15 @@ class HasSymbol(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     software_environment_id = Column(
-        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("software_environment.id", ondelete="CASCADE")
     )
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"))
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
 
     external_software_environment_id = Column(
-        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
     )
 
     external_software_environment = relationship("ExternalSoftwareEnvironment", back_populates="versioned_symbols")
