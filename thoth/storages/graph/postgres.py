@@ -1902,6 +1902,60 @@ class GraphDatabase(SQLBase):
         )
         return [item[0] for item in query.all()]
 
+    # BOOKMARK
+    def get_python_package_required_symbols(
+        self, package_name: str, package_version: str, index_url: str = None
+    ) -> List[str]:
+        """Get required symbols for a Python package in a specified version."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
+        if index_url is not None:
+            query = (
+                self._session.query(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+                .join(PythonPackageVersion)
+            )
+        else:
+            query = self._session.query(PythonPackageVersion)
+
+        query = (
+            query.filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .join((HasArtifact, PythonPackageVersion.python_artifacts))
+            .join((PythonArtifact, HasArtifact.python_artifact))
+            .with_entities(PythonArtifact.versioned_symbols)
+            .distinct()
+        )
+        return [item[0] for item in query.all()]
+
+    def get_image_symbols(self,
+        environment_name: str, 
+        os_name: str,
+        os_version: str,
+        cuda_version: str,
+        python_version: str
+    ) -> List[str]:
+        """Get symbols associated with a given image."""
+        query = (
+            self._session.query(PackageExtractRun)
+            .filter(PackageExtractRun.analysis_document_id == environment_name)
+            .filter(PackageExtractRun.os_name == os_name)
+            .filter(PackageExtractRun.os_version == os_version)
+            .filter(PackageExtractRun.python_version == python_version)
+            .filter(PackageExtractRun.cuda_version == cuda_version)
+            .with_entities(
+                PackageExtractRun.versioned_symbols
+            )
+            .limit(1)
+        )
+        query_result = query.fetch()
+
+        if query_result is None:
+            raise NotFoundError(f"No records found for the given runtime environment.")
+
+        return query_result
+
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
         """Get hashes for a Python package per index."""
         package_name = self.normalize_python_package_name(package_name)
