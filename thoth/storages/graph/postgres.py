@@ -2970,25 +2970,37 @@ class GraphDatabase(SQLBase):
 
         return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
 
-    def get_hardware_environments(self, is_external: bool = False) -> List[Dict]:
+    def get_hardware_environments(
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+    ) -> List[Dict]:
         """Get hardware environments (external or internal) registered in the graph database."""
         if is_external:
             hardware_environment = ExternalHardwareInformation
         else:
             hardware_environment = HardwareInformation
 
-        result = self._session.query(hardware_environment).all()
+        result = self._session.query(hardware_environment).offset(start_offset).limit(count).all()
 
         return [model.dict() for model in result]
 
-    def get_software_environments(self, is_external: bool = False) -> List[Dict]:
+    def get_software_environments(
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+    ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database."""
         if is_external:
             software_environment = ExternalSoftwareEnvironment
         else:
             software_environment = SoftwareEnvironment
 
-        result = self._session.query(software_environment).all()
+        result = self._session.query(software_environment).offset(start_offset).limit(count).all()
 
         return [model.dict() for model in result]
 
