@@ -1161,6 +1161,9 @@ class PythonPackageMetadata(Base, BaseExtension):
     summary = Column(String(256), nullable=True)
     # package version
     version = Column(String(256), nullable=True)
+    requires_python = Column(String(256), nullable=True)
+    description_content_type = Column(String(256), nullable=True)
+    project_url = Column(String(256), nullable=True)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
 
