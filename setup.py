@@ -32,7 +32,17 @@ def get_version():
 class Test(TestCommand):
     """Introduce test command to run testsuite using pytest."""
 
-    _IMPLICIT_PYTEST_ARGS = ['tests/', '--timeout=2', '--cov=./thoth', '--capture=no', '--verbose', '-l', '-s', '-vv']
+    _IMPLICIT_PYTEST_ARGS = [
+        'tests/',
+        '--timeout=2',
+        '--cov=./thoth',
+        '--mypy',
+        '--capture=no',
+        '--verbose',
+        '-l',
+        '-s',
+        '-vv'
+    ]
 
     user_options = [
         ('pytest-args=', 'a', "Arguments to pass into py.test")
