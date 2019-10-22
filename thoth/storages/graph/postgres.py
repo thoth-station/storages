@@ -4518,6 +4518,7 @@ class GraphDatabase(SQLBase):
                         requires_python=importlib_metadata.pop("Requires-Python", None),
                         description_content_type=importlib_metadata.pop("Description-Content-Type", None),
                         project_url=importlib_metadata.pop("Project-URL", None),
+                        provides_extra=importlib_metadata.pop("Provides-Extra", None),
                     )
 
                     if importlib_metadata:
