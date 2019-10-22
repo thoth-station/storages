@@ -2894,9 +2894,8 @@ class GraphDatabase(SQLBase):
         )
         return [item[0] for item in query.all()]
 
-    # BOOKMARK
     def get_python_package_required_symbols(
-        self, package_name: str, package_version: str, index_url: str = None
+        self, package_name: str, package_version: str, index_url: str
     ) -> List[str]:
         """Get required symbols for a Python package in a specified version."""
         package_name = self.normalize_python_package_name(package_name)
@@ -2917,9 +2916,14 @@ class GraphDatabase(SQLBase):
             .join((HasArtifact, PythonPackageVersion.python_artifacts))
             .join((PythonArtifact, HasArtifact.python_artifact))
             .with_entities(PythonArtifact.versioned_symbols)
-            .distinct()
+            .limit(1)
         )
-        return [item[0] for item in query.all()]
+
+        result = query.all()
+        if (len(result) == 0):
+            raise NotFoundError(f"""No package found with arguments, package_name:{package_name!r}, 
+                                package_version:{package_version!r}, index_url:{index_url!r}""")
+        return result[0][0]
 
     def get_image_symbols(self,
         environment_name: str, 
@@ -2944,9 +2948,11 @@ class GraphDatabase(SQLBase):
         query_result = query.fetch()
 
         if query_result is None:
-            raise NotFoundError(f"No records found for the given runtime environment.")
+            raise NotFoundError(f"""No image found with the parameters environment_name:{environment_name!r}, 
+                                os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, 
+                                python_version:{python_version!r}""")
 
-        return query_result
+        return query_result[0]
 
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
         """Get hashes for a Python package per index."""
