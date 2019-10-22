@@ -4515,6 +4515,9 @@ class GraphDatabase(SQLBase):
                         summary=importlib_metadata.pop("Summary", None),
                         # package version
                         version=importlib_metadata.pop("Version", None),
+                        requires_python=importlib_metadata.pop("Requires-Python", None),
+                        description_content_type=importlib_metadata.pop("Description-Content-Type", None),
+                        project_url=importlib_metadata.pop("Project-URL", None),
                     )
 
                     if importlib_metadata:
