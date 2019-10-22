@@ -53,13 +53,17 @@ class PythonPackageVersion(Base, BaseExtension):
     os_version = Column(String(256), nullable=False)
     python_version = Column(String(256), nullable=False)
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), nullable=False)
-    # Null if cannot parse.
+    # Null if package is unparseable.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True
+    )
 
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
     index = relationship("PythonPackageIndex", back_populates="python_package_versions")
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="python_package_versions")
 
     python_software_stacks = relationship("PythonRequirementsLock", back_populates="python_package_version")
 
@@ -242,6 +246,7 @@ class PackageExtractRun(Base, BaseExtension):
     )
 
     found_python_files = relationship("FoundPythonFile", back_populates="package_extract_run")
+    found_python_interpreters = relationship("FoundPythonInterpreter", back_populates="package_extract_run")
     found_rpms = relationship("FoundRPM", back_populates="package_extract_run")
     found_debs = relationship("FoundDeb", back_populates="package_extract_run")
     python_package_version_entities = relationship("Identified", back_populates="package_extract_run")
@@ -267,6 +272,34 @@ class FoundPythonFile(Base, BaseExtension):
 
     python_file_digest = relationship("PythonFileDigest", back_populates="package_extract_runs")
     package_extract_run = relationship("PackageExtractRun", back_populates="found_python_files")
+
+
+class PythonInterpreter(Base, BaseExtension):
+    """A class representing a single python interpreter."""
+
+    __tablename__ = "python_interpreter"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    path = Column(String(256), nullable=False)
+    link = Column(String(256), nullable=True)
+    version = Column(String(256), nullable=True)
+
+    package_extract_runs = relationship("FoundPythonInterpreter", back_populates="python_interpreter")
+
+
+class FoundPythonInterpreter(Base, BaseExtension):
+    """State a package extract run found a Python interpreter."""
+
+    __tablename__ = "found_python_interpreter"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_interpreter_id = Column(Integer, ForeignKey("python_interpreter.id", ondelete="CASCADE"), primary_key=True)
+    package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
+
+    python_interpreter = relationship("PythonInterpreter", back_populates="package_extract_runs")
+    package_extract_run = relationship("PackageExtractRun", back_populates="found_python_interpreters")
 
 
 class FoundRPM(Base, BaseExtension):
@@ -1061,15 +1094,15 @@ class HasSymbol(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     software_environment_id = Column(
-        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("software_environment.id", ondelete="CASCADE")
     )
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"))
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
 
     external_software_environment_id = Column(
-        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE"), primary_key=True
+        Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
     )
 
     external_software_environment = relationship("ExternalSoftwareEnvironment", back_populates="versioned_symbols")
@@ -1103,6 +1136,39 @@ class DetectedSymbol(Base, BaseExtension):
     versioned_symbol = relationship("VersionedSymbol", back_populates="package_extract_runs")
 
 
+class PythonPackageMetadata(Base, BaseExtension):
+    """Metadata extracted for a Python Package."""
+
+    __tablename__ = "python_package_metadata"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    author = Column(String(256), nullable=True)
+    author_email = Column(String(256), nullable=True)
+    classifier = Column(String(256), nullable=True)
+    download_url = Column(String(256), nullable=True)
+    home_page = Column(String(256), nullable=True)
+    keywords = Column(String(256), nullable=True)
+    # package licence
+    license = Column(String(256), nullable=True)
+    maintainer = Column(String(256), nullable=True)
+    maintainer_email = Column(String(256), nullable=True)
+    metadata_version = Column(String(256), nullable=True)
+    # package name
+    name = Column(String(256), nullable=True)
+    platform = Column(String(256), nullable=True)
+    requires_dist = Column(String(256), nullable=True)
+    summary = Column(String(256), nullable=True)
+    # package version
+    version = Column(String(256), nullable=True)
+    requires_python = Column(String(256), nullable=True)
+    description_content_type = Column(String(256), nullable=True)
+    project_url = Column(String(256), nullable=True)
+    provides_extra = Column(String(256), nullable=True)
+
+    python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1123,7 +1189,9 @@ ALL_MAIN_MODELS = frozenset(
         ProvenanceCheckerRun,
         PythonArtifact,
         PythonFileDigest,
+        PythonInterpreter,
         PythonPackageIndex,
+        PythonPackageMetadata,
         PythonPackageRequirement,
         PythonPackageVersion,
         PythonPackageVersionEntity,
@@ -1146,6 +1214,7 @@ ALL_RELATION_MODELS = frozenset(
         DetectedSymbol,
         FoundDeb,
         FoundPythonFile,
+        FoundPythonInterpreter,
         FoundRPM,
         HasArtifact,
         HasSymbol,

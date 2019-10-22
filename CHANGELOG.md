@@ -3528,3 +3528,84 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency pytest from 5.1.3 to 5.2.0
 * :pushpin: Automatic update of dependency boto3 from 1.9.237 to 1.9.238
 * Add duration to the result schema
+
+## Release 0.19.10 (2019-10-21T16:24:47)
+* Add update sync schema for PackageExtract
+* Correct syncing issue
+* Allow nullable software environemnts in the schema
+* Fix multiple heads present
+* Fix reference to variable in the query
+* Fix signature of the private method - unsolved edge cases
+* Fix query to retrieve number of unsolved packages
+* Fix error when case 3 is not declared yet
+* Created query for python package metadata for user-api
+* Created and updated queries for analyzed packages
+* :pushpin: Automatic update of dependency boto3 from 1.9.251 to 1.9.252
+* :pushpin: Automatic update of dependency boto3 from 1.9.250 to 1.9.251
+* Sync python interpreters
+* :pushpin: Automatic update of dependency boto3 from 1.9.249 to 1.9.250
+* New schema and sync in Solver for PythonPackageMetadata
+* :pushpin: Automatic update of dependency boto3 from 1.9.248 to 1.9.249
+* :pushpin: Automatic update of dependency boto3 from 1.9.247 to 1.9.248
+* Queries for packages with error in solvers and adjust schema
+* Increase lenght file
+* :pushpin: Automatic update of dependency boto3 from 1.9.246 to 1.9.247
+* Consistenly sync index_url and package_version
+* Added dependency monkey schema
+* Added schema for package extract
+* Added schema for package-extract sync
+* Added solver sync schema
+* Fix linkage of artifacts in Python package version entities
+* Created adviser sync schema
+* Add thoth sync schema for Amun
+* Added provenance checker sync and all components sync
+* Created docs for syncs inside Thoth Database
+* :pushpin: Automatic update of dependency thoth-common from 0.9.12 to 0.9.14
+* :pushpin: Automatic update of dependency thoth-python from 0.6.3 to 0.6.4
+* Queries for packages with error in solvers and adjust schema
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.9 to 1.3.10
+* :pushpin: Automatic update of dependency boto3 from 1.9.245 to 1.9.246
+* Updated and tested all solved/unsolved functions
+* Created solver functions following  naming convention
+* :pushpin: Automatic update of dependency boto3 from 1.9.244 to 1.9.245
+* Add missing import
+* Remove unused import
+* Created is_external for PackageExtractRun
+* Remove old file for Dgraph related tests
+* State how to implement syncing logic for any workload job done in the cluster
+* Raise not found error if the given Python index is not found
+* :pushpin: Automatic update of dependency boto3 from 1.9.243 to 1.9.244
+* :pushpin: Automatic update of dependency thoth-common from 0.9.11 to 0.9.12
+* Update syncs
+* Changed schema and Added new Tables
+* Fix performance indicator name
+* :pushpin: Automatic update of dependency pytest from 5.2.0 to 5.2.1
+* :pushpin: Automatic update of dependency pytest-cov from 2.8.0 to 2.8.1
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.8 to 1.3.9
+* :pushpin: Automatic update of dependency boto3 from 1.9.242 to 1.9.243
+* Update functions for metrics
+* :pushpin: Automatic update of dependency pytest-cov from 2.7.1 to 2.8.0
+* Add examples to docstrings
+* :pushpin: Automatic update of dependency boto3 from 1.9.241 to 1.9.242
+* Generate migration for new schema
+* Add logic for syncing marker and extra
+* :pushpin: Automatic update of dependency boto3 from 1.9.240 to 1.9.241
+* :pushpin: Automatic update of dependency thoth-common from 0.9.10 to 0.9.11
+* Convert function according to new naming convention
+* Remove obsolete exception
+* Expose sync_documents outside of module
+* Minor fix to address typo
+* Implement a generic approach to sync any document
+* :pushpin: Automatic update of dependency boto3 from 1.9.239 to 1.9.240
+* Sync duration
+* Generalized module varibale for count
+* Created functions for get_python_packages cases
+* Correct outputs
+* New python_package_versions_count functions
+* Hide query
+* Added distinct flag
+* No NULL values for some PythonPackageVersion attributes
+* New query
+* get_python_package_version_count
+* :pushpin: Automatic update of dependency boto3 from 1.9.238 to 1.9.239
+* New queries for python packages
