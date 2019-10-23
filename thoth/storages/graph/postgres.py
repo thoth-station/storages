@@ -25,6 +25,7 @@ from typing import List
 from typing import Set
 from typing import Tuple
 from typing import Optional
+from typing import FrozenSet
 from typing import Dict
 from typing import Union
 from collections import deque
@@ -35,6 +36,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import tuple_
+from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
@@ -2569,6 +2571,7 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
+        extras: FrozenSet[Optional[str]] = None,
     ) -> List[
         Tuple[
             Tuple[str, str, str],
@@ -2587,16 +2590,20 @@ class GraphDatabase(SQLBase):
 
         The ids map represents a map to optimize number of retrievals - not to perform duplicate
         queries into graph instance.
+
+        Extras are taken into account only for direct dependencies. Any extras required in libraries used in
+        transitive dependencies are not required as solver directly report dependencies regardless extras
+        configuration - see get_depends_on docs for extras parameter values..
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
 
         result = []
-        package_tuple = (package_name, package_version, index_url)
-        stack = deque((package_tuple,))
-        seen_tuples = {package_tuple}
+        initial_stack_entry = (extras, package_name, package_version, index_url)
+        stack = deque((initial_stack_entry,))
+        seen_tuples = {(package_name, package_version, index_url)}
         while stack:
-            package_tuple = stack.pop()
+            extras, *package_tuple = stack.pop()
 
             configurations = self.get_python_package_version_records(
                 package_name=package_tuple[0],
@@ -2615,9 +2622,10 @@ class GraphDatabase(SQLBase):
                     os_name=configuration["os_name"],
                     os_version=configuration["os_version"],
                     python_version=configuration["python_version"],
+                    extras=extras,
                 )
 
-                for dependency_name, dependency_version in dependencies:
+                for dependency_name, dependency_version in itertools.chain(*dependencies.values()):
                     records = self.get_python_package_version_records(
                         package_name=dependency_name,
                         package_version=dependency_version,
@@ -2627,7 +2635,7 @@ class GraphDatabase(SQLBase):
                         python_version=configuration["python_version"],
                     )
 
-                    if records is None:
+                    if not records:
                         # Not resolved yet.
                         result.append((package_tuple, (dependency_name, dependency_version, None)))
                     else:
@@ -2636,7 +2644,8 @@ class GraphDatabase(SQLBase):
                             result.append((package_tuple, dependency_tuple))
 
                             if dependency_tuple not in seen_tuples:
-                                stack.append(dependency_tuple)
+                                # Explicitly set extras to None as we do not have direct dependency anymore.
+                                stack.append((None, *dependency_tuple))
                                 seen_tuples.add(dependency_tuple)
 
         return result
@@ -2651,10 +2660,20 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-    ) -> List[Tuple[str, str]]:
-        """Get dependencies for the given Python package respecting environment.
+        extras: FrozenSet[Optional[str]] = None,
+    ) -> Dict[str, List[Tuple[str, str]]]:
+        """Get dependencies for the given Python package respecting environment and extras.
 
         If no environment is provided, dependencies are returned for all environments as stored in the database.
+
+        Extras (as described in PEP-0508) are respected. If no extras is provided (extras=None), all dependencies are
+        returned with all extras specified. A special value of None in extras listing no extra:
+
+          * extras=frozenset((None,)) - return only dependencies which do not have any extra assigned
+          * extras=frozenset((None, "postgresql")) - dependencies without extra and with extra "postgresql"
+          * extras=None - return all dependencies (regardless extra)
+
+        Environment markers are not taken into account in this query.
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
@@ -2679,12 +2698,24 @@ class GraphDatabase(SQLBase):
 
         query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
 
+        # Mark the query here for later check, if we do not have any records for the given
+        # package for the given environment.
         package_query = query
+
+        query = query.join(DependsOn)
+
+        if extras:
+            # We cannot use in_ here as sqlalchemy does not support None in the list.
+            query = query.filter(or_(*(DependsOn.extra == i for i in extras)))
+
         dependencies = (
             query
-            .join(DependsOn)
             .join(PythonPackageVersionEntity)
-            .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
+            .with_entities(
+                DependsOn.extra,
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+            )
             .distinct()
             .all()
         )
@@ -2693,7 +2724,15 @@ class GraphDatabase(SQLBase):
             if package_query.count() == 0:
                 raise NotFoundError(f"No package record for {package_requested!r} found")
 
-        return dependencies
+        result = {}
+        for dependency in dependencies:
+            extra, package_name, package_version = dependency
+            if extra not in result:
+                result[extra] = []
+
+            result[extra].append((package_name, package_version))
+
+        return result
 
     def retrieve_transitive_dependencies_python_multi(
         self,
