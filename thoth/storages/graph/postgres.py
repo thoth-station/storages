@@ -2951,7 +2951,7 @@ class GraphDatabase(SQLBase):
 
         if query_result is None:
             raise NotFoundError(f"No image found with the parameters environment_name:{environment_name!r}, "
-                                f"os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, " 
+                                f"os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, "
                                 f"python_version:{python_version!r}")
 
         return query_result[0]
