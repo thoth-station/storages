@@ -2921,12 +2921,14 @@ class GraphDatabase(SQLBase):
 
         result = query.all()
         if (len(result) == 0):
-            raise NotFoundError(f"""No package found with arguments, package_name:{package_name!r}, 
-                                package_version:{package_version!r}, index_url:{index_url!r}""")
+            raise NotFoundError(f"No package found with arguments, package_name:{package_name!r}, "
+                                f"package_version:{package_version!r}, index_url:{index_url!r}")
+
         return result[0][0]
 
-    def get_image_symbols(self,
-        environment_name: str, 
+    def get_image_symbols(
+        self,
+        environment_name: str,
         os_name: str,
         os_version: str,
         cuda_version: str,
@@ -2948,9 +2950,9 @@ class GraphDatabase(SQLBase):
         query_result = query.fetch()
 
         if query_result is None:
-            raise NotFoundError(f"""No image found with the parameters environment_name:{environment_name!r}, 
-                                os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, 
-                                python_version:{python_version!r}""")
+            raise NotFoundError(f"No image found with the parameters environment_name:{environment_name!r}, "
+                                f"os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, " 
+                                f"python_version:{python_version!r}")
 
         return query_result[0]
 
