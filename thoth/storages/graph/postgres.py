@@ -2650,6 +2650,51 @@ class GraphDatabase(SQLBase):
 
         return result
 
+    def get_python_environment_marker_evaluation_result(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        dependency_name: str,
+        dependency_version: str,
+        os_name: str,
+        os_version: str,
+        python_version: str,
+    ) -> bool:
+        """Get result of the Python evaluation marker.
+
+        The `extra` part of the environment marker (an exception in PEP-0508) is not taken into account and
+        is substituted with a value which always defaults to True (as it would cause an error during context
+        interpreting). See solver implementation for details.
+
+        @raises NotFoundError: if the given package has no entry in the database
+        """
+        query = (
+            self._session.query(PythonPackageVersion)
+            .filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .filter(PythonPackageVersion.os_name == os_name)
+            .filter(PythonPackageVersion.os_version == os_version)
+            .filter(PythonPackageVersion.python_version == python_version)
+            .join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
+            .filter(PythonPackageVersionEntity.package_name == dependency_name)
+            .filter(PythonPackageVersionEntity.package_version == dependency_version)
+            .with_entities(DependsOn.marker_evaluation_result)
+        )
+
+        result = query.first()
+        if result is None:
+            raise NotFoundError(
+                f"No records found for package {(package_name, package_version, index_url)!r} with "
+                f"dependency {(dependency_name, dependency_version)!r} running on {os_name!r} in version "
+                f"{os_version!r} using Python in version {python_version!r}"
+            )
+
+        return result[0]
+
     @lru_cache(maxsize=8192)
     def get_depends_on(
         self,
