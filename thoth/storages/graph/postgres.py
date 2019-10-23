@@ -49,7 +49,6 @@ from thoth.common.helpers import format_datetime
 from thoth.common.helpers import cwd
 from thoth.common import OpenShift
 
-from .cache import GraphCache
 from .models import PythonPackageVersion
 from .models import SoftwareEnvironment
 from .models import PythonPackageIndex
@@ -129,8 +128,6 @@ _LOGGER = logging.getLogger(__name__)
 class GraphDatabase(SQLBase):
     """A SQL database adapter providing graph-like operations on top of SQL queries."""
 
-    _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
-
     _DECLARATIVE_BASE = Base
     DEFAULT_COUNT = 100
 
@@ -156,11 +153,6 @@ class GraphDatabase(SQLBase):
             connection_string += "?sslmode=disable"
 
         return connection_string
-
-    @property
-    def cache(self) -> GraphCache:
-        """Get cache for this instance."""
-        return self._cache
 
     def connect(self):
         """Connect to the database."""
@@ -2513,22 +2505,10 @@ class GraphDatabase(SQLBase):
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
-        without_cache: bool = False,
     ) -> List[dict]:
         """Get records for the given package regardless of index_url."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
-        if not without_cache:
-            result = self._cache.get_python_package_version_records(
-                package_name=package_name,
-                package_version=package_version,
-                index_url=index_url,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-            )
-            if result is not None:
-                return result
 
         query = self._session.query(PythonPackageVersion).filter_by(
             package_name=package_name, package_version=package_version
@@ -2585,7 +2565,6 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
     ) -> List[
         Tuple[
             Tuple[str, str, str],
@@ -2622,7 +2601,6 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                without_cache=without_cache,
             )
 
             for configuration in configurations:
@@ -2633,7 +2611,6 @@ class GraphDatabase(SQLBase):
                     os_name=configuration["os_name"],
                     os_version=configuration["os_version"],
                     python_version=configuration["python_version"],
-                    without_cache=without_cache,
                 )
 
                 for dependency_name, dependency_version in dependencies:
@@ -2644,7 +2621,6 @@ class GraphDatabase(SQLBase):
                         os_name=configuration["os_name"],
                         os_version=configuration["os_version"],
                         python_version=configuration["python_version"],
-                        without_cache=without_cache,
                     )
 
                     if records is None:
@@ -2671,7 +2647,6 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
     ) -> List[Tuple[str, str]]:
         """Get dependencies for the given Python package respecting environment.
 
@@ -2682,20 +2657,6 @@ class GraphDatabase(SQLBase):
 
         package_requested = locals()
         package_requested.pop("self")
-        package_requested.pop("without_cache")
-
-        if not without_cache:
-            result = self._cache.get_depends_on(
-                package_name=package_name,
-                package_version=package_version,
-                index_url=index_url,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-            )
-
-            if result is not None:
-                return result
 
         query = (
             self._session.query(PythonPackageVersion)
@@ -2728,31 +2689,6 @@ class GraphDatabase(SQLBase):
             if package_query.count() == 0:
                 raise ValueError(f"No package record for {package_requested!r} found")
 
-        if not without_cache:
-            if not dependencies:
-                self._cache.add_depends_on(
-                    package_name=package_name,
-                    package_version=package_version,
-                    index_url=index_url,
-                    os_name=os_name,
-                    os_version=os_version,
-                    python_version=python_version,
-                    dependency_name=None,
-                    dependency_version=None,
-                )
-            else:
-                for dependency in dependencies:
-                    self._cache.add_depends_on(
-                        package_name=package_name,
-                        package_version=package_version,
-                        index_url=index_url,
-                        os_name=os_name,
-                        os_version=os_version,
-                        python_version=python_version,
-                        dependency_name=dependency[0],
-                        dependency_version=dependency[1],
-                    )
-
         return dependencies
 
     def retrieve_transitive_dependencies_python_multi(
@@ -2761,7 +2697,6 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
     ) -> Dict[
         Tuple[str, str, str],
         Set[
@@ -2783,7 +2718,6 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                without_cache=without_cache,
             )
 
         return result
@@ -4967,14 +4901,12 @@ class GraphDatabase(SQLBase):
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
-        stats = self._cache.stats()
-        stats["memory_cache_info"] = {}
-
+        stats = {}
         # We need to provide name explicitly as wrappers do not handle it correctly.
         for method, method_name in (
             (self.get_python_package_version_records, "get_python_package_version_records"),
             (self.get_depends_on, "get_depends_on"),
         ):
-            stats["memory_cache_info"][method_name] = dict(method.cache_info()._asdict())
+            stats[method_name] = dict(method.cache_info()._asdict())
 
-        return stats
+        return {"memory_cache_info": stats}
