@@ -119,6 +119,10 @@ from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import PythonIndexNotProvided
 from ..exceptions import SolverNotRun
+from ..exceptions import NotConnected
+from ..exceptions import AlreadyConnected
+from ..exceptions import DatabaseNotInitialized
+from ..exceptions import SolverNameParseError
 from ..exceptions import PythonPackageMetadataAttributeMissing
 
 _LOGGER = logging.getLogger(__name__)
@@ -157,7 +161,7 @@ class GraphDatabase(SQLBase):
     def connect(self):
         """Connect to the database."""
         if self.is_connected():
-            raise ValueError("Cannot connect, the adapter is already connected")
+            raise AlreadyConnected("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         # We do not use connection pool, but directly talk to the database.
@@ -171,7 +175,7 @@ class GraphDatabase(SQLBase):
         from alembic import command
 
         if not self.is_connected():
-            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
+            raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
 
         if not database_exists(self._engine.url):
             create_database(self._engine.url)
@@ -197,7 +201,7 @@ class GraphDatabase(SQLBase):
         from alembic.runtime import migration
 
         if not self.is_connected():
-            raise ValueError("Cannot check schema: the adapter is not connected yet")
+            raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
         with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
             alembic_cfg = config.Config("alembic.ini")
@@ -206,7 +210,7 @@ class GraphDatabase(SQLBase):
 
             database_heads = set(context.get_current_heads())
             if not database_heads:
-                raise ValueError("Database is not initialized yet")
+                raise DatabaseNotInitialized("Database is not initialized yet")
 
             revision_heads = set(directory.get_heads())
 
@@ -230,21 +234,21 @@ class GraphDatabase(SQLBase):
         if solver_name.startswith("solver-"):
             solver_identifiers = solver_name[len("solver-"):]
         else:
-            raise ValueError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
+            raise SolverNameParseError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
 
         parts = solver_identifiers.split("-")
         if len(parts) != 3:
-            raise ValueError(
+            raise SolverNameParseError(
                 "Solver should be in a form of 'solver-<os_name>-<os_version>-<python_version>, "
-                f"solver name {solver_name} does not correspond to this naming schema"
+                f"solver name {solver_name!r} does not correspond to this naming schema"
             )
 
         python_version = parts[2]
         if python_version.startswith("py"):
             python_version = python_version[len("py"):]
         else:
-            raise ValueError(
-                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
+            raise SolverNameParseError(
+                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name!r}"
             )
 
         python_version = ".".join(list(python_version))
@@ -2687,7 +2691,7 @@ class GraphDatabase(SQLBase):
 
         if not dependencies:
             if package_query.count() == 0:
-                raise ValueError(f"No package record for {package_requested!r} found")
+                raise NotFoundError(f"No package record for {package_requested!r} found")
 
         return dependencies
 
