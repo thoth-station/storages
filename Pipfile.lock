@@ -350,11 +350,10 @@
         },
         "methodtools": {
             "hashes": [
-                "sha256:0876910f21f11ce196d7208bd73076b9296b52cec44a21d2a0e8db0a7169eab7",
-                "sha256:197f2304dd3d78c95119b31d457996280af03e04a001855f5da04a5af693da20"
+                "sha256:09d0d979eb752da6998e598b8c0eca65b7ced56aebc9bf30dfd13a39e454142f"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.1.1"
         },
         "oauthlib": {
             "hashes": [
@@ -705,9 +704,9 @@
         },
         "wirerope": {
             "hashes": [
-                "sha256:448bb9eaf08d2fce611bccde832e48887339cfda5c4277c07e116167d94329c1"
+                "sha256:a8cb4642c83a55add676923059b4f9c61d785ac6dc71ff1d9de2aac4aed4a517"
             ],
-            "version": "==0.2.1"
+            "version": "==0.3.0"
         }
     },
     "develop": {
@@ -1169,10 +1168,10 @@
         },
         "jupyter-core": {
             "hashes": [
-                "sha256:1368a838bba378c3c99f54c2961489831ea929ec7689a1d59d9844e584bc27dc",
-                "sha256:85103cee6548992780912c1a0a9ec2583a4a18f1ef79a248ec0db4446500bce3"
+                "sha256:464769f7387d7a62a2403d067f1ddc616655b7f77f5d810c0dd62cb54bfd0fb9",
+                "sha256:a183e0ec2e8f6adddf62b0a3fc6a2237e3e0056d381e536d3e7c7ecc3067e244"
             ],
-            "version": "==4.6.0"
+            "version": "==4.6.1"
         },
         "lazy-object-proxy": {
             "hashes": [
