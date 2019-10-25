@@ -41,10 +41,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def sync_adviser_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync adviser documents into graph."""
     if not graph:
@@ -60,8 +57,7 @@ def sync_adviser_documents(
 
         if force or not graph.adviser_document_id_exist(document_id):
             _LOGGER.info(
-                f"Syncing adviser document from {adviser_store.ceph.host} "
-                f"with id {document_id!r} to graph"
+                f"Syncing adviser document from {adviser_store.ceph.host} " f"with id {document_id!r} to graph"
             )
 
             try:
@@ -82,10 +78,7 @@ def sync_adviser_documents(
 
 
 def sync_solver_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync solver documents into graph."""
     if not graph:
@@ -99,10 +92,7 @@ def sync_solver_documents(
     for document_id in document_ids or solver_store.get_document_listing():
         processed += 1
         if force or not graph.solver_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing solver document from {solver_store.ceph.host} "
-                f"with id {document_id!r} to graph"
-            )
+            _LOGGER.info(f"Syncing solver document from {solver_store.ceph.host} " f"with id {document_id!r} to graph")
 
             try:
                 document = solver_store.retrieve_document(document_id)
@@ -122,10 +112,7 @@ def sync_solver_documents(
 
 
 def sync_analysis_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync image analysis documents into graph."""
     if not graph:
@@ -141,8 +128,7 @@ def sync_analysis_documents(
 
         if force or not graph.analysis_document_id_exist(document_id):
             _LOGGER.info(
-                f"Syncing analysis document from {analysis_store.ceph.host} "
-                f"with id {document_id!r} to graph"
+                f"Syncing analysis document from {analysis_store.ceph.host} " f"with id {document_id!r} to graph"
             )
 
             try:
@@ -163,10 +149,7 @@ def sync_analysis_documents(
 
 
 def sync_package_analysis_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync package analysis documents into graph."""
     if not graph:
@@ -204,10 +187,7 @@ def sync_package_analysis_documents(
 
 
 def sync_provenance_checker_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync provenance check documents into graph."""
     if not graph:
@@ -245,10 +225,7 @@ def sync_provenance_checker_documents(
 
 
 def sync_dependency_monkey_documents(
-    document_ids: list = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: GraphDatabase = None,
+    document_ids: list = None, force: bool = False, graceful: bool = False, graph: GraphDatabase = None
 ) -> tuple:
     """Sync dependency monkey reports into graph database."""
     if not graph:
@@ -289,7 +266,7 @@ def sync_inspection_documents(
     amun_api_url: str,
     document_ids: list = None,
     *,
-    force_sync: bool = False,
+    force: bool = False,
     graceful: bool = False,
     only_graph_sync: bool = False,
     only_ceph_sync: bool = False,
@@ -312,7 +289,7 @@ def sync_inspection_documents(
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_id in document_ids or dependency_monkey_reports_store.iterate_inspection_ids():
         processed += 1
-        if force_sync or not inspection_store.document_exists(inspection_id):
+        if force or not inspection_store.document_exists(inspection_id):
             finished = is_inspection_finished(amun_api_url, inspection_id)
 
             if finished:
