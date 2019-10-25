@@ -268,9 +268,9 @@ def sync_inspection_documents(
     amun_api_url: str,
     force: bool = False,
     graceful: bool = False,
-    only_graph_sync: bool = False,
-    only_ceph_sync: bool = False,
     graph: GraphDatabase = None,
+    only_ceph_sync: bool = False,
+    only_graph_sync: bool = False,
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
     if only_graph_sync and only_ceph_sync:
@@ -390,12 +390,12 @@ def sync_documents(
 
                     stats_change = handler(
                         to_sync_document_id,
+                        amun_api_url=amun_api_url,
                         force=force,
                         graceful=graceful,
                         graph=graph,
-                        amun_api_url=amun_api_url,
-                        inspection_only_ceph_sync=inspection_only_ceph_sync,
-                        inspection_only_graph_sync=inspection_only_graph_sync,
+                        only_ceph_sync=inspection_only_ceph_sync,
+                        only_graph_sync=inspection_only_graph_sync,
                     )
                 else:
                     stats_change = handler(to_sync_document_id, force=force, graceful=graceful, graph=graph)
