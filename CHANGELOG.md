@@ -3632,3 +3632,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency psycopg2-binary from 2.8.3 to 2.8.4
 * :pushpin: Automatic update of dependency boto3 from 1.9.252 to 1.9.253
 * Generic webhook updated to trigger the build from zuul
+
+## Release 0.19.12 (2019-10-25T21:32:13)
+* Fixing the func argunment names
+* Fixing the func argunment design
+* consistency in using the variable force
+* Fix index url issue, now properly
+* Fix index_url key, now properly
+* Fix version key dereference
+* Fix index url key in new solvers implementation
+* Increase lines per file in Coala configuration
+* Query environment markers stored in the database
