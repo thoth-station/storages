@@ -4657,7 +4657,7 @@ class GraphDatabase(SQLBase):
             for error_info in document["result"]["errors"]:
                 # Normalized in `_create_python_package_version'.
                 package_name = error_info.get("package_name") or error_info["package"]
-                package_version = error_info.get("package_version", error_info["version"])
+                package_version = error_info.get("package_version") or error_info["version"]
                 index_url = error_info.get("index_url", error_info["index"])
 
                 _LOGGER.info(
