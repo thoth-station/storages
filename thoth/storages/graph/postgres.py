@@ -4701,7 +4701,7 @@ class GraphDatabase(SQLBase):
                     continue
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
-                index_url = unsolvable.get("index_url", unsolvable["index"])
+                index_url = unsolvable.get("index_url") or unsolvable["index"]
                 package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
                 _LOGGER.info(
