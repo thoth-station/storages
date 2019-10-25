@@ -4135,7 +4135,7 @@ class GraphDatabase(SQLBase):
                 cve, _ = CVE.get_or_create(
                     self._session, cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve
                 )
-                index = self._session.query(PythonPackageIndex).filter_by(url=index_url).one()
+                index = self._get_or_create_python_package_index(index_url, only_if_enabled=False)
                 entity, _ = PythonPackageVersionEntity.get_or_create(
                     self._session,
                     package_name=package_name,
@@ -4742,7 +4742,7 @@ class GraphDatabase(SQLBase):
                     continue
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
-                index_url = unsolvable["index"]
+                index_url = unsolvable.get("index_url", unsolvable["index"])
                 package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
                 _LOGGER.info(
