@@ -263,9 +263,9 @@ def sync_dependency_monkey_documents(
 
 
 def sync_inspection_documents(
-    amun_api_url: str,
     document_ids: list = None,
     *,
+    amun_api_url: str,
     force: bool = False,
     graceful: bool = False,
     only_graph_sync: bool = False,
