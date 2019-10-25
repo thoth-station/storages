@@ -4699,7 +4699,7 @@ class GraphDatabase(SQLBase):
                 # Normalized in `_create_python_package_version'.
                 package_name = error_info.get("package_name") or error_info["package"]
                 package_version = error_info.get("package_version") or error_info["version"]
-                index_url = error_info.get("index_url", error_info["index"])
+                index_url = error_info.get("index_url") or error_info["index"]
 
                 _LOGGER.info(
                     "Syncing solver errors for package %r in version %r from %r found by solver %r",
@@ -4742,7 +4742,7 @@ class GraphDatabase(SQLBase):
                     continue
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
-                index_url = unsolvable.get("index_url", unsolvable["index"])
+                index_url = unsolvable.get("index_url") or unsolvable["index"]
                 package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
                 _LOGGER.info(
