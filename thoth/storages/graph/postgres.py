@@ -4327,7 +4327,7 @@ class GraphDatabase(SQLBase):
     ) -> None:
         """Sync python interpreters detected in a package-extract run into the database."""
         for py_interpreter in document["result"].get("python-interpreters"):
-            python_interpreter = PythonInterpreter.get_or_create(
+            python_interpreter, _ = PythonInterpreter.get_or_create(
                 self._session,
                 path=py_interpreter.get("path"),
                 link=py_interpreter.get("link"),
