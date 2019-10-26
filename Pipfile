@@ -30,6 +30,7 @@ sadisplay = "*"
 pydot = "*"
 pytest-mypy = "*"
 typeshed = "*"
+podman-compose = "*"
 
 [requires]
 python_version = "3.6"
