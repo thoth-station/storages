@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bcf59e5bdf3bcd0f5e4c58973840aad7e7d62a8352e5b59912c7958530dfa932"
+            "sha256": "5b81acdd10cb8d698364bc7c7ea627529a4d8b36010019851190b01b117b013f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1348,6 +1348,14 @@
                 "sha256:fa5fa1622fa6dd5c030e9cad086fa19ef6a0cf6d7a2d12318e10cb49d6d68f34"
             ],
             "version": "==0.13.0"
+        },
+        "podman-compose": {
+            "hashes": [
+                "sha256:c4c03066f0b1254bad87df87cf2107b51b78a8a75f1550ee5dfa674b9ebaeb18",
+                "sha256:fb229362f188980ea3fbdee2a25d0a2dd6a0b886d925d5213e22e09f1062ebe9"
+            ],
+            "index": "pypi",
+            "version": "==0.1.5"
         },
         "polib": {
             "hashes": [
