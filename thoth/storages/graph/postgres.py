@@ -2942,16 +2942,16 @@ class GraphDatabase(SQLBase):
             query = (
                 self._session.query(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
-                .join(PythonPackageVersion)
+                .join(PythonPackageVersionEntity)
             )
         else:
-            query = self._session.query(PythonPackageVersion)
+            query = self._session.query(PythonPackageVersionEntity)
 
         query = (
-            query.filter(PythonPackageVersion.package_name == package_name)
-            .filter(PythonPackageVersion.package_version == package_version)
-            .join((HasArtifact, PythonPackageVersion.python_artifacts))
-            .join((PythonArtifact, HasArtifact.python_artifact))
+            query.filter(PythonPackageVersionEntity.package_name == package_name)
+            .filter(PythonPackageVersionEntity.package_version == package_version)
+            .join(HasArtifact)
+            .join(PythonArtifact)
             .with_entities(PythonArtifact.artifact_hash_sha256)
             .distinct()
         )
