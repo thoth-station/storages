@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: postgres
 
   pgweb:
-    image: sosedoff/pgweb
+    image: docker.io/sosedoff/pgweb
     container_name: pgweb
     restart: on-failure
     links:

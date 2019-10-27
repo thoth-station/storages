@@ -28,7 +28,6 @@ from .buildlogs_analyses_cache import BuildLogsAnalysesCacheStore
 from .ceph import CephStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
-from .graph_cache import GraphCacheStore
 from .inspections import InspectionResultsStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
@@ -46,4 +45,4 @@ from .sync import sync_solver_documents
 
 
 __name__ = "thoth-storages"
-__version__ = "0.19.10"
+__version__ = "0.19.12"

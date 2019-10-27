@@ -22,6 +22,8 @@ import abc
 
 from sqlalchemy.engine import Engine
 
+from ..exceptions import NotConnected
+
 
 @attr.s(slots=True)
 class SQLBase:
@@ -43,7 +45,7 @@ class SQLBase:
     def disconnect(self):
         """Disconnect from the connected database."""
         if not self.is_connected():
-            raise ValueError("Cannot disconnect, the adapter is not connected")
+            raise NotConnected("Cannot disconnect, the adapter is not connected")
 
         if self._session is not None:
             self._session = None
@@ -58,7 +60,7 @@ class SQLBase:
     def drop_all(self) -> None:
         """Drop all content stored in the database."""
         if not self.is_connected():
-            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
+            raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
 
         self._DECLARATIVE_BASE.metadata.drop_all(self._engine)
 

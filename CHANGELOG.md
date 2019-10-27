@@ -3609,3 +3609,37 @@ Starting with this release we have a Zuul-CI pipeline that:
 * get_python_package_version_count
 * :pushpin: Automatic update of dependency boto3 from 1.9.238 to 1.9.239
 * New queries for python packages
+
+## Release 0.19.11 (2019-10-25T07:51:29)
+* :pushpin: Automatic update of dependency pytest from 5.2.1 to 5.2.2
+* :pushpin: Automatic update of dependency boto3 from 1.10.1 to 1.10.2
+* :pushpin: Automatic update of dependency methodtools from 0.1.0 to 0.1.1
+* :pushpin: Automatic update of dependency boto3 from 1.10.0 to 1.10.1
+* Handle issues in a better way
+* Introduce query for checking marker evaluation results
+* Add support for extras in the Python package dependencies retrieval query
+* Remove graph cache tests
+* Introduce additional exception types for specific exceptions raised
+* Drop cache support
+* :pushpin: Automatic update of dependency boto3 from 1.9.253 to 1.10.0
+* Add offset and count
+* Increase max lines per file
+* Get internal software & hardware environments
+* Start using mypy for type checks
+* Add missing provides-extra column to Python metadata
+* Add missing columns to Python metadata
+* :pushpin: Automatic update of dependency thoth-python from 0.6.4 to 0.6.5
+* :pushpin: Automatic update of dependency psycopg2-binary from 2.8.3 to 2.8.4
+* :pushpin: Automatic update of dependency boto3 from 1.9.252 to 1.9.253
+* Generic webhook updated to trigger the build from zuul
+
+## Release 0.19.12 (2019-10-25T21:32:13)
+* Fixing the func argunment names
+* Fixing the func argunment design
+* consistency in using the variable force
+* Fix index url issue, now properly
+* Fix index_url key, now properly
+* Fix version key dereference
+* Fix index url key in new solvers implementation
+* Increase lines per file in Coala configuration
+* Query environment markers stored in the database

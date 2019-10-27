@@ -25,6 +25,7 @@ from typing import List
 from typing import Set
 from typing import Tuple
 from typing import Optional
+from typing import FrozenSet
 from typing import Dict
 from typing import Union
 from collections import deque
@@ -35,6 +36,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import tuple_
+from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
@@ -49,7 +51,6 @@ from thoth.common.helpers import format_datetime
 from thoth.common.helpers import cwd
 from thoth.common import OpenShift
 
-from .cache import GraphCache
 from .models import PythonPackageVersion
 from .models import SoftwareEnvironment
 from .models import PythonPackageIndex
@@ -120,6 +121,10 @@ from ..exceptions import PythonIndexNotRegistered
 from ..exceptions import PerformanceIndicatorNotRegistered
 from ..exceptions import PythonIndexNotProvided
 from ..exceptions import SolverNotRun
+from ..exceptions import NotConnected
+from ..exceptions import AlreadyConnected
+from ..exceptions import DatabaseNotInitialized
+from ..exceptions import SolverNameParseError
 from ..exceptions import PythonPackageMetadataAttributeMissing
 
 _LOGGER = logging.getLogger(__name__)
@@ -128,8 +133,6 @@ _LOGGER = logging.getLogger(__name__)
 @attr.s()
 class GraphDatabase(SQLBase):
     """A SQL database adapter providing graph-like operations on top of SQL queries."""
-
-    _cache = attr.ib(type=GraphCache, default=attr.Factory(GraphCache.load))
 
     _DECLARATIVE_BASE = Base
     DEFAULT_COUNT = 100
@@ -157,15 +160,10 @@ class GraphDatabase(SQLBase):
 
         return connection_string
 
-    @property
-    def cache(self) -> GraphCache:
-        """Get cache for this instance."""
-        return self._cache
-
     def connect(self):
         """Connect to the database."""
         if self.is_connected():
-            raise ValueError("Cannot connect, the adapter is already connected")
+            raise AlreadyConnected("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         # We do not use connection pool, but directly talk to the database.
@@ -179,7 +177,7 @@ class GraphDatabase(SQLBase):
         from alembic import command
 
         if not self.is_connected():
-            raise ValueError("Cannot initialize schema: the adapter is not connected yet")
+            raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
 
         if not database_exists(self._engine.url):
             create_database(self._engine.url)
@@ -205,7 +203,7 @@ class GraphDatabase(SQLBase):
         from alembic.runtime import migration
 
         if not self.is_connected():
-            raise ValueError("Cannot check schema: the adapter is not connected yet")
+            raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
         with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
             alembic_cfg = config.Config("alembic.ini")
@@ -214,7 +212,7 @@ class GraphDatabase(SQLBase):
 
             database_heads = set(context.get_current_heads())
             if not database_heads:
-                raise ValueError("Database is not initialized yet")
+                raise DatabaseNotInitialized("Database is not initialized yet")
 
             revision_heads = set(directory.get_heads())
 
@@ -238,21 +236,21 @@ class GraphDatabase(SQLBase):
         if solver_name.startswith("solver-"):
             solver_identifiers = solver_name[len("solver-"):]
         else:
-            raise ValueError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
+            raise SolverNameParseError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
 
         parts = solver_identifiers.split("-")
         if len(parts) != 3:
-            raise ValueError(
+            raise SolverNameParseError(
                 "Solver should be in a form of 'solver-<os_name>-<os_version>-<python_version>, "
-                f"solver name {solver_name} does not correspond to this naming schema"
+                f"solver name {solver_name!r} does not correspond to this naming schema"
             )
 
         python_version = parts[2]
         if python_version.startswith("py"):
             python_version = python_version[len("py"):]
         else:
-            raise ValueError(
-                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name}"
+            raise SolverNameParseError(
+                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name!r}"
             )
 
         python_version = ".".join(list(python_version))
@@ -2513,22 +2511,10 @@ class GraphDatabase(SQLBase):
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
-        without_cache: bool = False,
     ) -> List[dict]:
         """Get records for the given package regardless of index_url."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
-        if not without_cache:
-            result = self._cache.get_python_package_version_records(
-                package_name=package_name,
-                package_version=package_version,
-                index_url=index_url,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-            )
-            if result is not None:
-                return result
 
         query = self._session.query(PythonPackageVersion).filter_by(
             package_name=package_name, package_version=package_version
@@ -2585,7 +2571,7 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
+        extras: FrozenSet[Optional[str]] = None,
     ) -> List[
         Tuple[
             Tuple[str, str, str],
@@ -2604,16 +2590,20 @@ class GraphDatabase(SQLBase):
 
         The ids map represents a map to optimize number of retrievals - not to perform duplicate
         queries into graph instance.
+
+        Extras are taken into account only for direct dependencies. Any extras required in libraries used in
+        transitive dependencies are not required as solver directly report dependencies regardless extras
+        configuration - see get_depends_on docs for extras parameter values..
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
 
         result = []
-        package_tuple = (package_name, package_version, index_url)
-        stack = deque((package_tuple,))
-        seen_tuples = {package_tuple}
+        initial_stack_entry = (extras, package_name, package_version, index_url)
+        stack = deque((initial_stack_entry,))
+        seen_tuples = {(package_name, package_version, index_url)}
         while stack:
-            package_tuple = stack.pop()
+            extras, *package_tuple = stack.pop()
 
             configurations = self.get_python_package_version_records(
                 package_name=package_tuple[0],
@@ -2622,7 +2612,6 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                without_cache=without_cache,
             )
 
             for configuration in configurations:
@@ -2633,10 +2622,10 @@ class GraphDatabase(SQLBase):
                     os_name=configuration["os_name"],
                     os_version=configuration["os_version"],
                     python_version=configuration["python_version"],
-                    without_cache=without_cache,
+                    extras=extras,
                 )
 
-                for dependency_name, dependency_version in dependencies:
+                for dependency_name, dependency_version in itertools.chain(*dependencies.values()):
                     records = self.get_python_package_version_records(
                         package_name=dependency_name,
                         package_version=dependency_version,
@@ -2644,10 +2633,9 @@ class GraphDatabase(SQLBase):
                         os_name=configuration["os_name"],
                         os_version=configuration["os_version"],
                         python_version=configuration["python_version"],
-                        without_cache=without_cache,
                     )
 
-                    if records is None:
+                    if not records:
                         # Not resolved yet.
                         result.append((package_tuple, (dependency_name, dependency_version, None)))
                     else:
@@ -2656,10 +2644,97 @@ class GraphDatabase(SQLBase):
                             result.append((package_tuple, dependency_tuple))
 
                             if dependency_tuple not in seen_tuples:
-                                stack.append(dependency_tuple)
+                                # Explicitly set extras to None as we do not have direct dependency anymore.
+                                stack.append((None, *dependency_tuple))
                                 seen_tuples.add(dependency_tuple)
 
         return result
+
+    def get_python_environment_marker(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        dependency_name: str,
+        dependency_version: str,
+        os_name: str,
+        os_version: str,
+        python_version: str,
+    ) -> Optional[str]:
+        """Get Python evaluation marker as per PEP-0508.
+
+        @raises NotFoundError: if the given package has no entry in the database
+        """
+        query = (
+            self._session.query(PythonPackageVersion)
+            .filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .filter(PythonPackageVersion.os_name == os_name)
+            .filter(PythonPackageVersion.os_version == os_version)
+            .filter(PythonPackageVersion.python_version == python_version)
+            .join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
+            .filter(PythonPackageVersionEntity.package_name == dependency_name)
+            .filter(PythonPackageVersionEntity.package_version == dependency_version)
+            .with_entities(DependsOn.marker)
+        )
+
+        result = query.first()
+        if result is None:
+            raise NotFoundError(
+                f"No records found for package {(package_name, package_version, index_url)!r} with "
+                f"dependency {(dependency_name, dependency_version)!r} running on {os_name!r} in version "
+                f"{os_version!r} using Python in version {python_version!r}"
+            )
+
+        return result[0]
+
+    def get_python_environment_marker_evaluation_result(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        dependency_name: str,
+        dependency_version: str,
+        os_name: str,
+        os_version: str,
+        python_version: str,
+    ) -> bool:
+        """Get result of the Python evaluation marker.
+
+        The `extra` part of the environment marker (an exception in PEP-0508) is not taken into account and
+        is substituted with a value which always defaults to True (as it would cause an error during context
+        interpreting). See solver implementation for details.
+
+        @raises NotFoundError: if the given package has no entry in the database
+        """
+        query = (
+            self._session.query(PythonPackageVersion)
+            .filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .filter(PythonPackageVersion.os_name == os_name)
+            .filter(PythonPackageVersion.os_version == os_version)
+            .filter(PythonPackageVersion.python_version == python_version)
+            .join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+            .join(DependsOn)
+            .join(PythonPackageVersionEntity)
+            .filter(PythonPackageVersionEntity.package_name == dependency_name)
+            .filter(PythonPackageVersionEntity.package_version == dependency_version)
+            .with_entities(DependsOn.marker_evaluation_result)
+        )
+
+        result = query.first()
+        if result is None:
+            raise NotFoundError(
+                f"No records found for package {(package_name, package_version, index_url)!r} with "
+                f"dependency {(dependency_name, dependency_version)!r} running on {os_name!r} in version "
+                f"{os_version!r} using Python in version {python_version!r}"
+            )
+
+        return result[0]
 
     @lru_cache(maxsize=8192)
     def get_depends_on(
@@ -2671,31 +2746,26 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
-    ) -> List[Tuple[str, str]]:
-        """Get dependencies for the given Python package respecting environment.
+        extras: FrozenSet[Optional[str]] = None,
+    ) -> Dict[str, List[Tuple[str, str]]]:
+        """Get dependencies for the given Python package respecting environment and extras.
 
         If no environment is provided, dependencies are returned for all environments as stored in the database.
+
+        Extras (as described in PEP-0508) are respected. If no extras is provided (extras=None), all dependencies are
+        returned with all extras specified. A special value of None in extras listing no extra:
+
+          * extras=frozenset((None,)) - return only dependencies which do not have any extra assigned
+          * extras=frozenset((None, "postgresql")) - dependencies without extra and with extra "postgresql"
+          * extras=None - return all dependencies (regardless extra)
+
+        Environment markers are not taken into account in this query.
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
 
         package_requested = locals()
         package_requested.pop("self")
-        package_requested.pop("without_cache")
-
-        if not without_cache:
-            result = self._cache.get_depends_on(
-                package_name=package_name,
-                package_version=package_version,
-                index_url=index_url,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-            )
-
-            if result is not None:
-                return result
 
         query = (
             self._session.query(PythonPackageVersion)
@@ -2714,46 +2784,41 @@ class GraphDatabase(SQLBase):
 
         query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
 
+        # Mark the query here for later check, if we do not have any records for the given
+        # package for the given environment.
         package_query = query
+
+        query = query.join(DependsOn)
+
+        if extras:
+            # We cannot use in_ here as sqlalchemy does not support None in the list.
+            query = query.filter(or_(*(DependsOn.extra == i for i in extras)))
+
         dependencies = (
             query
-            .join(DependsOn)
             .join(PythonPackageVersionEntity)
-            .with_entities(PythonPackageVersionEntity.package_name, PythonPackageVersionEntity.package_version)
+            .with_entities(
+                DependsOn.extra,
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+            )
             .distinct()
             .all()
         )
 
         if not dependencies:
             if package_query.count() == 0:
-                raise ValueError(f"No package record for {package_requested!r} found")
+                raise NotFoundError(f"No package record for {package_requested!r} found")
 
-        if not without_cache:
-            if not dependencies:
-                self._cache.add_depends_on(
-                    package_name=package_name,
-                    package_version=package_version,
-                    index_url=index_url,
-                    os_name=os_name,
-                    os_version=os_version,
-                    python_version=python_version,
-                    dependency_name=None,
-                    dependency_version=None,
-                )
-            else:
-                for dependency in dependencies:
-                    self._cache.add_depends_on(
-                        package_name=package_name,
-                        package_version=package_version,
-                        index_url=index_url,
-                        os_name=os_name,
-                        os_version=os_version,
-                        python_version=python_version,
-                        dependency_name=dependency[0],
-                        dependency_version=dependency[1],
-                    )
+        result = {}
+        for dependency in dependencies:
+            extra, package_name, package_version = dependency
+            if extra not in result:
+                result[extra] = []
 
-        return dependencies
+            result[extra].append((package_name, package_version))
+
+        return result
 
     def retrieve_transitive_dependencies_python_multi(
         self,
@@ -2761,7 +2826,6 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
-        without_cache: bool = False,
     ) -> Dict[
         Tuple[str, str, str],
         Set[
@@ -2783,7 +2847,6 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
-                without_cache=without_cache,
             )
 
         return result
@@ -3031,6 +3094,40 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.enabled == enabled)
 
         return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
+
+    def get_hardware_environments(
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+    ) -> List[Dict]:
+        """Get hardware environments (external or internal) registered in the graph database."""
+        if is_external:
+            hardware_environment = ExternalHardwareInformation
+        else:
+            hardware_environment = HardwareInformation
+
+        result = self._session.query(hardware_environment).offset(start_offset).limit(count).all()
+
+        return [model.dict() for model in result]
+
+    def get_software_environments(
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+    ) -> List[Dict]:
+        """Get software environments (external or internal) registered in the graph database."""
+        if is_external:
+            software_environment = ExternalSoftwareEnvironment
+        else:
+            software_environment = SoftwareEnvironment
+
+        result = self._session.query(software_environment).offset(start_offset).limit(count).all()
+
+        return [model.dict() for model in result]
 
     def get_python_package_index_urls(self, enabled: bool = None) -> set:
         """Retrieve all the URLs of registered Python package indexes."""
@@ -4100,7 +4197,7 @@ class GraphDatabase(SQLBase):
                 cve, _ = CVE.get_or_create(
                     self._session, cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve
                 )
-                index = self._session.query(PythonPackageIndex).filter_by(url=index_url).one()
+                index = self._get_or_create_python_package_index(index_url, only_if_enabled=False)
                 entity, _ = PythonPackageVersionEntity.get_or_create(
                     self._session,
                     package_name=package_name,
@@ -4292,7 +4389,7 @@ class GraphDatabase(SQLBase):
     ) -> None:
         """Sync python interpreters detected in a package-extract run into the database."""
         for py_interpreter in document["result"].get("python-interpreters"):
-            python_interpreter = PythonInterpreter.get_or_create(
+            python_interpreter, _ = PythonInterpreter.get_or_create(
                 self._session,
                 path=py_interpreter.get("path"),
                 link=py_interpreter.get("link"),
@@ -4663,8 +4760,8 @@ class GraphDatabase(SQLBase):
             for error_info in document["result"]["errors"]:
                 # Normalized in `_create_python_package_version'.
                 package_name = error_info.get("package_name") or error_info["package"]
-                package_version = error_info.get("package_version", error_info["version"])
-                index_url = error_info.get("index_url", error_info["index"])
+                package_version = error_info.get("package_version") or error_info["version"]
+                index_url = error_info.get("index_url") or error_info["index"]
 
                 _LOGGER.info(
                     "Syncing solver errors for package %r in version %r from %r found by solver %r",
@@ -4707,7 +4804,7 @@ class GraphDatabase(SQLBase):
                     continue
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
-                index_url = unsolvable["index"]
+                index_url = unsolvable.get("index_url") or unsolvable["index"]
                 package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
 
                 _LOGGER.info(
@@ -5029,14 +5126,12 @@ class GraphDatabase(SQLBase):
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
-        stats = self._cache.stats()
-        stats["memory_cache_info"] = {}
-
+        stats = {}
         # We need to provide name explicitly as wrappers do not handle it correctly.
         for method, method_name in (
             (self.get_python_package_version_records, "get_python_package_version_records"),
             (self.get_depends_on, "get_depends_on"),
         ):
-            stats["memory_cache_info"][method_name] = dict(method.cache_info()._asdict())
+            stats[method_name] = dict(method.cache_info()._asdict())
 
-        return stats
+        return {"memory_cache_info": stats}
