@@ -2957,6 +2957,68 @@ class GraphDatabase(SQLBase):
         )
         return [item[0] for item in query.all()]
 
+    def get_python_package_required_symbols(
+        self, package_name: str, package_version: str, index_url: str
+    ) -> List[str]:
+        """Get required symbols for a Python package in a specified version."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
+        if index_url is not None:
+            query = (
+                self._session.query(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+                .join(PythonPackageVersion)
+            )
+        else:
+            query = self._session.query(PythonPackageVersion)
+
+        query = (
+            query.filter(PythonPackageVersion.package_name == package_name)
+            .filter(PythonPackageVersion.package_version == package_version)
+            .join((HasArtifact, PythonPackageVersion.python_artifacts))
+            .join((PythonArtifact, HasArtifact.python_artifact))
+            .with_entities(PythonArtifact.versioned_symbols)
+            .limit(1)
+        )
+
+        result = query.all()
+        if (len(result) == 0):
+            raise NotFoundError(f"No package found with arguments, package_name:{package_name!r}, "
+                                f"package_version:{package_version!r}, index_url:{index_url!r}")
+
+        return result[0][0]
+
+    def get_image_symbols(
+        self,
+        environment_name: str,
+        os_name: str,
+        os_version: str,
+        cuda_version: str,
+        python_version: str
+    ) -> List[str]:
+        """Get symbols associated with a given image."""
+        query = (
+            self._session.query(PackageExtractRun)
+            .filter(PackageExtractRun.analysis_document_id == environment_name)
+            .filter(PackageExtractRun.os_name == os_name)
+            .filter(PackageExtractRun.os_version == os_version)
+            .filter(PackageExtractRun.python_version == python_version)
+            .filter(PackageExtractRun.cuda_version == cuda_version)
+            .with_entities(
+                PackageExtractRun.versioned_symbols
+            )
+            .limit(1)
+        )
+        query_result = query.fetch()
+
+        if query_result is None:
+            raise NotFoundError(f"No image found with the parameters environment_name:{environment_name!r}, "
+                                f"os_name:{os_name!r}, os_version:{os_version!r}, cuda_version:{cuda_version!r}, "
+                                f"python_version:{python_version!r}")
+
+        return query_result[0]
+
     def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
         """Get hashes for a Python package per index."""
         package_name = self.normalize_python_package_name(package_name)
