@@ -3637,7 +3637,6 @@ class GraphDatabase(SQLBase):
         index_url: str,
     ) -> Dict[str, str]:
         """Retrieve Python package metadata."""
-        selected_columns = PythonPackageMetadata.__table__.columns
         query = (
             self._session.query(PythonPackageMetadata)
             .join(PythonPackageVersion)
@@ -3645,7 +3644,7 @@ class GraphDatabase(SQLBase):
             .filter(PythonPackageVersion.package_name == package_name)
             .filter(PythonPackageVersion.package_version == package_version)
             .filter(PythonPackageIndex.url == index_url)
-        ).with_entities(*selected_columns)
+        )
 
         result = query.first()
 
