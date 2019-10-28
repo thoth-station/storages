@@ -5061,6 +5061,20 @@ class GraphDatabase(SQLBase):
 
         return result
 
+    def get_ml_frameworks(self) -> List[str]:
+        """Retrieve ml frameworks which has PI in Thoth database."""
+        result = []
+        for performance_model in ALL_PERFORMANCE_MODELS:
+            query = (
+                self._session.query(performance_model)
+                .with_entities(performance_model.framework)
+                .distinct()
+            )
+
+            result = result + query.all()
+
+        return list(set(result))
+
     def stats(self) -> dict:
         """Get statistics for this adapter."""
         stats = {}
