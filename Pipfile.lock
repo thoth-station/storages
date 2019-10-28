@@ -55,18 +55,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:8a16dd6eab1b1b9f49886efa3de3d710bcf348ebe44297e3f238ad847c477e69",
-                "sha256:d5d233147eed71e6cad3b205e816729c7688035847750d1a2e94e9e039f5ed94"
+                "sha256:63b80dd065221a3143f80559392769a94c303e616bdb956d66685cd3160d409e",
+                "sha256:bf315a5aafab7e429ed08acce36f4c50de18024b1087e5050d5b7f0681862549"
             ],
             "index": "pypi",
-            "version": "==1.10.3"
+            "version": "==1.10.4"
         },
         "botocore": {
             "hashes": [
-                "sha256:181ffa38dd5ca68bc118f36702266949ff80af9f7482d9e9d53556b7bd1c9da1",
-                "sha256:c66c2f8c3578ca2ea0dca6b5891d8071135baf28c9f754d31ff0ca0e7970d239"
+                "sha256:3773a28e139ccd41435afe64ee5945e5ccd1b84706f54bcb971788d71f7f138c",
+                "sha256:efd131a59107ceb3c9a0f885d947f1b150ab68a875bbec05004d9768e45e6a0f"
             ],
-            "version": "==1.13.3"
+            "version": "==1.13.4"
         },
         "cachetools": {
             "hashes": [
@@ -799,18 +799,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:8a16dd6eab1b1b9f49886efa3de3d710bcf348ebe44297e3f238ad847c477e69",
-                "sha256:d5d233147eed71e6cad3b205e816729c7688035847750d1a2e94e9e039f5ed94"
+                "sha256:63b80dd065221a3143f80559392769a94c303e616bdb956d66685cd3160d409e",
+                "sha256:bf315a5aafab7e429ed08acce36f4c50de18024b1087e5050d5b7f0681862549"
             ],
             "index": "pypi",
-            "version": "==1.10.3"
+            "version": "==1.10.4"
         },
         "botocore": {
             "hashes": [
-                "sha256:181ffa38dd5ca68bc118f36702266949ff80af9f7482d9e9d53556b7bd1c9da1",
-                "sha256:c66c2f8c3578ca2ea0dca6b5891d8071135baf28c9f754d31ff0ca0e7970d239"
+                "sha256:3773a28e139ccd41435afe64ee5945e5ccd1b84706f54bcb971788d71f7f138c",
+                "sha256:efd131a59107ceb3c9a0f885d947f1b150ab68a875bbec05004d9768e45e6a0f"
             ],
-            "version": "==1.13.3"
+            "version": "==1.13.4"
         },
         "certifi": {
             "hashes": [
