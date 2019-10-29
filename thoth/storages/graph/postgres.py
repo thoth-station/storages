@@ -3039,7 +3039,7 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
-            query = query.filter(PythonPackageVersionEntity.index_url == index_url)
+            query = query.filter(PythonPackageIndex.url == index_url)
 
         query = (
             query.join(HasArtifact)
