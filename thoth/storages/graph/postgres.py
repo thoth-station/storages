@@ -171,10 +171,13 @@ class GraphDatabase(SQLBase):
         self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
         self._session = sessionmaker(bind=self._engine)()
 
-        if not self.is_schema_up2date():
-            _LOGGER.warning(
-                "Database schema is not up to date, you might encounter issues when manipulating with the database"
-            )
+        try:
+            if not self.is_schema_up2date():
+                _LOGGER.warning(
+                    "Database schema is not up to date, you might encounter issues when manipulating with the database"
+                )
+        except DatabaseNotInitialized as exc:
+            _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
 
     def initialize_schema(self):
         """Initialize schema of database."""
