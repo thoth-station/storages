@@ -3662,3 +3662,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Coala errors
 * More verbose errors, require all parameters
 * Add api to get versioned symbols
+
+## Release 0.19.14 (2019-10-29T20:28:31)
+* Fix model for index url in the query
+* Keep Python package tuples positional arguments
+* Issue warning if the database schema is not initialized yet in connect
