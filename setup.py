@@ -96,6 +96,9 @@ setup(
     entry_points={
         'console_scripts': ['thoth-storages=thoth.storages.cli:cli']
     },
+    url='https://github.com/thoth-station/storages',
+    maintainer='Francesco Murdaca',
+    maintainer_email='fmurdaca@redhat.com',
     command_options={
         'build_sphinx': {
             'version': ('setup.py', VERSION),
