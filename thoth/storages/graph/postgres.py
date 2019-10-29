@@ -28,6 +28,7 @@ from typing import Optional
 from typing import FrozenSet
 from typing import Dict
 from typing import Union
+from typing import Any
 from collections import deque
 
 import attr
@@ -261,8 +262,20 @@ class GraphDatabase(SQLBase):
         python_version = ".".join(list(python_version))
         return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
 
-    def get_analysis_metadata(self, analysis_document_id: str) -> dict:
-        """Get metadata stored for the given analysis document."""
+    def get_analysis_metadata(self, analysis_document_id: str) -> Dict[str, Any]:
+        """Get metadata stored for the given analysis document.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_analysis_metadata()
+        {
+            'analysis_datetime': datetime.datetime(2019, 10, 7, 18, 57, 22, 658131),
+            'analysis_document_id': 'package-extract-2ef02c9cea8b1ef7',
+            'package_extract_name': 'thoth-package-extract',
+            'package_extract_version': '1.0.1'
+            }
+        """
         query = (
             self._session.query(PackageExtractRun)
             .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
@@ -273,7 +286,7 @@ class GraphDatabase(SQLBase):
                 PackageExtractRun.package_extract_version
             )
         )
-        query_result = query.fetch()
+        query_result = query.first()
 
         if query_result is None:
             raise NotFoundError(f"No records found for analysis with id {analysis_document_id!r}")
@@ -286,10 +299,10 @@ class GraphDatabase(SQLBase):
         }
 
     def _do_software_environment_listing(
-        self, start_offset: int, count: int, is_external_run: bool, environment_type: str
+        self, start_offset: int, count: int, is_external: bool, environment_type: str
     ) -> List[str]:
         """Perform actual query to software environments."""
-        if is_external_run:
+        if is_external:
             query = (
                 self._session.query(ExternalSoftwareEnvironment.environment_name)
                 .filter(ExternalSoftwareEnvironment.environment_type == environment_type)
@@ -307,15 +320,31 @@ class GraphDatabase(SQLBase):
 
         return [item[0] for item in query.all()]
 
-    def run_software_environment_listing(
-        self, start_offset: int = 0, count: int = DEFAULT_COUNT, is_external_run: bool = False
-    ) -> list:
-        """Get listing of software environments available for run."""
-        return self._do_software_environment_listing(start_offset, count, is_external_run, "RUNTIME")
+    def get_run_software_environment_all(
+        self, start_offset: int = 0, count: int = DEFAULT_COUNT, is_external: bool = False
+    ) -> List[str]:
+        """Get all software environments available for run.
 
-    def build_software_environment_listing(self, start_offset: int = 0, count: int = DEFAULT_COUNT) -> list:
-        """Get listing of software environments available for build."""
-        # We do not have user software environment which is build environment yet.
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_run_software_environment_all()
+        ['quay.io/thoth-station/thoth-pylint:v0.7.0-ubi8']
+        """
+        return self._do_software_environment_listing(start_offset, count, is_external, "RUNTIME")
+
+    def get_build_software_environment_all(
+        self, start_offset: int = 0, count: int = DEFAULT_COUNT
+    ) -> List[str]:
+        """Get all software environments available for build.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_run_software_environment_all()
+        ['quay.io/thoth-station/thoth-pylint:v0.7.0-ubi8']
+        """
+        # We do not have external/user software environment which is build environment yet.
         return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
 
     def _do_software_environment_analyses_listing(
@@ -324,42 +353,35 @@ class GraphDatabase(SQLBase):
         start_offset: int,
         count: int,
         convert_datetime: bool,
-        is_external_run: bool,
+        is_external: bool,
         environment_type: str,
     ) -> List[dict]:
         """Get listing of available software environment analyses."""
-        if is_external_run:
-            query_result = (
+        if is_external:
+            query = (
                 self._session.query(ExternalSoftwareEnvironment)
-                .filter(ExternalSoftwareEnvironment.software_environment_type == environment_type)
+                .filter(ExternalSoftwareEnvironment.environment_type == environment_type)
                 .filter(ExternalSoftwareEnvironment.environment_name == software_environment_name)
-                .join(PackageExtractRun)
-                .with_entities(
-                    PackageExtractRun.datetime,
-                    PackageExtractRun.analysis_document_id,
-                    PackageExtractRun.package_extract_name,
-                    PackageExtractRun.package_extract_version,
-                )
-                .offset(start_offset)
-                .limit(count)
-                .all()
             )
         else:
-            query_result = (
+            query = (
                 self._session.query(SoftwareEnvironment)
-                .filter(SoftwareEnvironment.software_environment_type == environment_type)
+                .filter(SoftwareEnvironment.environment_type == environment_type)
                 .filter(SoftwareEnvironment.environment_name == software_environment_name)
-                .join(PackageExtractRun)
-                .with_entities(
-                    PackageExtractRun.datetime,
-                    PackageExtractRun.analysis_document_id,
-                    PackageExtractRun.package_extract_name,
-                    PackageExtractRun.package_extract_version,
-                )
-                .offset(start_offset)
-                .limit(count)
-                .all()
             )
+
+        query_result = (
+            query.join(PackageExtractRun)
+            .with_entities(
+                PackageExtractRun.datetime,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.package_extract_name,
+                PackageExtractRun.package_extract_version,
+            )
+            .offset(start_offset)
+            .limit(count)
+            .all()
+        )
 
         result = []
         for item in query_result:
@@ -372,38 +394,50 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def run_software_environment_analyses_listing(
+    def get_run_software_environment_analyses_all(
         self,
         run_software_environment_name: str,
         start_offset: int = 0,
         count: int = DEFAULT_COUNT,
         convert_datetime: bool = True,
-        is_external_run: bool = False,
+        is_external: bool = False,
     ) -> List[dict]:
-        """Get listing of analyses available for the given software environment for run."""
+        """Get listing of analyses available for the given software environment for run.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_run_software_environment_analyses_all()
+        [{
+            'analysis_datetime': datetime.datetime(2019, 10, 7, 18, 57, 22, 658131),
+            'analysis_document_id': 'package-extract-2ef02c9cea8b1ef7',
+            'package_extract_name': 'thoth-package-extract',
+            'package_extract_version': '1.0.1'
+            }]
+        """
         return self._do_software_environment_analyses_listing(
             run_software_environment_name,
             start_offset=start_offset,
             count=count,
-            is_external_run=is_external_run,
+            is_external=is_external,
             convert_datetime=convert_datetime,
             environment_type="RUNTIME",
         )
 
-    def build_software_environment_analyses_listing(
+    def get_build_software_environment_analyses_all(
         self,
         build_software_environment_name: str,
         start_offset: int = 0,
         count: int = DEFAULT_COUNT,
         convert_datetime: bool = True,
-        is_external_run: bool = False,
+        is_external: bool = False,
     ) -> List[dict]:
         """Get listing of analyses available for the given software environment for build."""
         return self._do_software_environment_analyses_listing(
             build_software_environment_name,
             start_offset=start_offset,
             count=count,
-            is_external_run=is_external_run,
+            is_external=is_external,
             convert_datetime=convert_datetime,
             environment_type="BUILDTIME",
         )
@@ -676,7 +710,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_solved_python_package_versions(
+    def get_solved_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -694,7 +728,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_solved_python_package_versions()
+        >>> graph.get_solved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_solved_python_package_versions_query(
@@ -759,7 +793,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_error_solved_python_package_versions(
+    def get_error_solved_python_package_versions_all(
         self,
         *,
         unsolvable: bool = False,
@@ -782,7 +816,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_error_solved_python_package_versions()
+        >>> graph.get_error_solved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         if unsolvable is True and unparseable is True:
@@ -884,9 +918,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersion.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersion.package_version == package_version)
 
         if os_name is not None:
@@ -939,10 +975,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -975,10 +1013,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1372,6 +1412,7 @@ class GraphDatabase(SQLBase):
             )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         query = query.offset(start_offset).limit(count)
@@ -1470,10 +1511,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1496,10 +1539,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1516,7 +1561,7 @@ class GraphDatabase(SQLBase):
 
         return result_2 + result_3
 
-    def get_unsolved_python_package_versions(
+    def get_unsolved_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -1534,7 +1579,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_unsolved_python_package_versions()
+        >>> graph.get_unsolved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_unsolved_python_package_versions_query(
@@ -1550,9 +1595,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         query = query.offset(start_offset).limit(count)
@@ -1599,9 +1646,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1743,9 +1792,11 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
@@ -1753,7 +1804,7 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def get_analyzed_python_package_versions(
+    def get_analyzed_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -1768,7 +1819,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_analyzed_python_package_versions()
+        >>> graph.get_analyzed_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_analyzed_python_package_versions_query(
@@ -1928,6 +1979,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_analyzed_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
         query = (
             self._session.query(PackageAnalyzerRun)
             .join(PythonPackageVersionEntity)
@@ -1991,17 +2044,19 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
-            query = query.filter(PythonPackageVersion.package_name == package_name)
+            package_name = self.normalize_python_package_name(package_name)
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
-            query = query.filter(PythonPackageVersion.package_version == package_version)
+            package_version = self.normalize_python_package_version(package_version)
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
             query = query.filter(PythonPackageIndex.url == index_url)
 
         return query
 
-    def get_analyzed_error_python_package_versions(
+    def get_analyzed_error_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -2016,7 +2071,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_analyzed_error_python_package_versions()
+        >>> graph.get_analyzed_error_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_analyzed_error_python_package_versions_query(
@@ -2209,9 +2264,11 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
@@ -2219,7 +2276,7 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def get_unanalyzed_python_package_versions(
+    def get_unanalyzed_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -2234,7 +2291,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_unanalyzed_python_package_versions()
+        >>> graph.get_unanalyzed_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_unanalyzed_python_package_versions_query(
@@ -2416,6 +2473,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unanalyzed_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
         analyzed = self._construct_analyzed_python_package_versions_query(
             package_name=package_name
             )
@@ -2470,11 +2529,11 @@ class GraphDatabase(SQLBase):
 
         return query_result
 
-    def get_solver_documents_count(self) -> int:
+    def get_solver_documents_count_all(self) -> int:
         """Get number of solver documents synced into graph."""
         return self._session.query(Solved).distinct(Solved.document_id).count()
 
-    def get_analyzer_documents_count(self) -> int:
+    def get_analyzer_documents_count_all(self) -> int:
         """Get number of image analysis documents synced into graph."""
         return self._session.query(PackageExtractRun).distinct(PackageExtractRun.analysis_document_id).count()
 
@@ -2671,6 +2730,9 @@ class GraphDatabase(SQLBase):
 
         @raises NotFoundError: if the given package has no entry in the database
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -2716,6 +2778,9 @@ class GraphDatabase(SQLBase):
 
         @raises NotFoundError: if the given package has no entry in the database
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -2921,7 +2986,7 @@ class GraphDatabase(SQLBase):
             > 0
         )
 
-    def get_python_cve_records(self, package_name: str, package_version: str) -> List[dict]:
+    def get_python_cve_records_all(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
@@ -2936,38 +3001,57 @@ class GraphDatabase(SQLBase):
 
         return [cve.to_dict() for cve in result]
 
-    def get_python_package_version_hashes_sha256(
-        self, package_name: str, package_version: str, index_url: str = None
+    def get_python_package_version_hashes_sha256_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
     ) -> List[str]:
-        """Get hashes for a Python package in a specified version."""
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
+        """Get all hashes for Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_hashes_sha256_all()
+        [
+            '9d6863f6c70d034b8c34b3355cb7ba7d2ad799583947265efda41fe67127c23f',
+            '8e4a1f6d89cfaadb486237acbfa24700add01da022dfcf3536e5071d21e13ee0'
+            ]
+        """
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+        )
+
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
-            query = (
-                self._session.query(PythonPackageIndex)
-                .filter(PythonPackageIndex.url == index_url)
-                .join(PythonPackageVersionEntity)
-            )
-        else:
-            query = self._session.query(PythonPackageVersionEntity)
+            query = query.filter(PythonPackageVersionEntity.index_url == index_url)
 
         query = (
-            query.filter(PythonPackageVersionEntity.package_name == package_name)
-            .filter(PythonPackageVersionEntity.package_version == package_version)
-            .join(HasArtifact)
+            query.join(HasArtifact)
             .join(PythonArtifact)
             .with_entities(PythonArtifact.artifact_hash_sha256)
-            .distinct()
         )
-        return [item[0] for item in query.all()]
 
-    def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
-        """Get hashes for a Python package per index."""
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
-        # TODO: remove  this from sources and substitute it
-        return self.get_python_package_version_hashes_sha256(package_name, package_version, None)
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return [item[0] for item in result]
 
     def is_python_package_index_enabled(self, url: str) -> bool:
         """Check if the given Python package index is enabled."""
@@ -3027,7 +3111,7 @@ class GraphDatabase(SQLBase):
                 self._session.commit()
                 return False
 
-    def python_package_index_listing(self, enabled: bool = None) -> list:
+    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, str]]:
         """Get listing of Python package indexes registered in the graph database."""
         query = self._session.query(
             PythonPackageIndex.url, PythonPackageIndex.warehouse_api_url, PythonPackageIndex.verify_ssl
@@ -3038,7 +3122,7 @@ class GraphDatabase(SQLBase):
 
         return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
 
-    def get_hardware_environments(
+    def get_hardware_environments_all(
         self,
         is_external: bool = False,
         *,
@@ -3055,7 +3139,7 @@ class GraphDatabase(SQLBase):
 
         return [model.dict() for model in result]
 
-    def get_software_environments(
+    def get_software_environments_all(
         self,
         is_external: bool = False,
         *,
@@ -3072,14 +3156,14 @@ class GraphDatabase(SQLBase):
 
         return [model.dict() for model in result]
 
-    def get_python_package_index_urls(self, enabled: bool = None) -> set:
+    def get_python_package_index_urls_all(self, enabled: bool = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
         query = self._session.query(PythonPackageIndex)
 
         if enabled is not None:
             query = query.filter(PythonPackageIndex.enabled == enabled)
 
-        return set(item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all())
+        return [item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all()]
 
     def get_python_packages_per_index(self, index_url: str, distinct: bool = False) -> Dict[str, List[str]]:
         """Retrieve listing of Python packages (solved) known to graph database instance for the given index."""
@@ -3479,6 +3563,10 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -3549,9 +3637,11 @@ class GraphDatabase(SQLBase):
             )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersion.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersion.package_version == package_version)
 
         if index_url is not None:
@@ -3568,7 +3658,7 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def get_python_package_versions(
+    def get_python_package_versions_all(
         self,
         *,
         start_offset: int = 0,
@@ -3586,7 +3676,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_versions()
+        >>> graph.get_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         query = self._construct_python_package_versions_query(
@@ -3642,6 +3732,9 @@ class GraphDatabase(SQLBase):
         index_url: str,
     ) -> Dict[str, str]:
         """Retrieve Python package metadata."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageMetadata)
             .join(PythonPackageVersion)
@@ -3958,10 +4051,10 @@ class GraphDatabase(SQLBase):
 
         return software_stack
 
-    def python_software_stack_count(
+    def get_python_software_stack_count_all(
         self,
         software_stack_type: str,
-        unique: bool = False,
+        distinct: bool = False,
     ) -> int:
         """Get number of Python software stacks available filtered by type."""
         query = (
@@ -3969,7 +4062,7 @@ class GraphDatabase(SQLBase):
             .filter(PythonSoftwareStack.software_stack_type == software_stack_type)
         )
 
-        if unique:
+        if distinct:
             return query.distinct().count()
 
         return query.count()
@@ -5018,29 +5111,16 @@ class GraphDatabase(SQLBase):
         else:
             self._session.commit()
 
-    def get_all_pi_per_framework_count(self, framework: str) -> dict:
-        """Retrieve dictionary with number of Performance Indicators per ML Framework in the graph database."""
+    def get_pi_count(self, framework: str) -> Dict[str, int]:
+        """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
         result = {}
         for pi_model in ALL_PERFORMANCE_MODELS:
             result[pi_model.__tablename__] = self._session.query(pi_model).filter_by(framework=framework).count()
 
         return result
 
-    def get_all_pi_count(self) -> dict:
-        """Retrieve dictionary mapping framework to performance indicator count (regardless of pi type)."""
-        counter = Counter()
-        for pi_model in ALL_PERFORMANCE_MODELS:
-            query_result = (
-                self._session.query(pi_model.framework, func.count(pi_model.framework))
-                .group_by(PiMatmul.framework)
-                .all()
-            )
-            counter.update(dict(query_result))
-
-        return dict(counter)
-
-    def get_number_performance_tables_records(self) -> Dict[str, int]:
-        """Retrieve dictionary mapping performance tables to records count."""
+    def get_performance_table_count(self) -> Dict[str, int]:
+        """Get dictionary mapping performance tables to records count."""
         result = {}
 
         for performance_model in ALL_PERFORMANCE_MODELS:
@@ -5048,7 +5128,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_number_main_tables_records(self) -> Dict[str, int]:
+    def get_main_table_count(self) -> Dict[str, int]:
         """Retrieve dictionary mapping main tables to records count."""
         result = {}
 
@@ -5057,7 +5137,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_number_relation_tables_records(self) -> Dict[str, int]:
+    def get_relation_table_count(self) -> Dict[str, int]:
         """Retrieve dictionary mapping relation tables to records count."""
         result = {}
 
@@ -5066,8 +5146,8 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_ml_frameworks(self) -> List[str]:
-        """Retrieve ml frameworks which has PI in Thoth database."""
+    def get_ml_frameworks_all(self) -> List[str]:
+        """Retrieve ML frameworks in Thoth database."""
         result = []
         for performance_model in ALL_PERFORMANCE_MODELS:
             query = (
