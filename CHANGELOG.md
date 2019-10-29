@@ -3643,3 +3643,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix index url key in new solvers implementation
 * Increase lines per file in Coala configuration
 * Query environment markers stored in the database
+
+## Release 0.19.13 (2019-10-29T16:14:14)
+* State maintainer and project url in setup.py
+* Issue warning on connection to the database if schema is not up2date
+* :pushpin: Automatic update of dependency boto3 from 1.10.3 to 1.10.4
+* :pushpin: Automatic update of dependency boto3 from 1.10.2 to 1.10.3
+* Query to retrieve ML frameworks names
+* Correct query to get metadata for Python Package
+* HasArtifact is linked with PythonPackageVersionEntity table
+* Revert "Symbol-API"
+* Drop unique constraint in depends_on table
+* added the registry to look for pgweb
+* added podman-compose to dev packages list
+* :pushpin: Automatic update of dependency methodtools from 0.1.1 to 0.1.2
+* Fix model assignment when syncing results of Python interpreters
+* Updated .coafile to allow for longer files
+* Coala errors
+* More verbose errors, require all parameters
+* Add api to get versioned symbols
