@@ -2970,37 +2970,46 @@ class GraphDatabase(SQLBase):
         return [cve.to_dict() for cve in result]
 
     def get_python_package_version_hashes_sha256_all(
-        self, package_name: str, package_version: str, index_url: str = None
+        self,
+        *,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        distinct: bool = False,
     ) -> List[str]:
-        """Get hashes for a Python package in a specified version."""
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
+        """Get all hashes for Python package in Thoth Database."""
+        query = (
+            self._session.query(PythonPackageVersionEntity)
+            .join(PythonPackageIndex)
+        )
+
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
-            query = (
-                self._session.query(PythonPackageIndex)
-                .filter(PythonPackageIndex.url == index_url)
-                .join(PythonPackageVersionEntity)
-            )
-        else:
-            query = self._session.query(PythonPackageVersionEntity)
+            query = query.filter(PythonPackageVersionEntity.index_url == index_url)
 
         query = (
-            query.filter(PythonPackageVersionEntity.package_name == package_name)
-            .filter(PythonPackageVersionEntity.package_version == package_version)
-            .join(HasArtifact)
+            query.join(HasArtifact)
             .join(PythonArtifact)
             .with_entities(PythonArtifact.artifact_hash_sha256)
-            .distinct()
         )
-        return [item[0] for item in query.all()]
 
-    def get_all_python_package_version_hashes_sha256(self, package_name: str, package_version: str) -> List[str]:
-        """Get hashes for a Python package per index."""
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
-        # TODO: remove  this from sources and substitute it
-        return self.get_python_package_version_hashes_sha256(package_name, package_version, None)
+        query = query.offset(start_offset).limit(count)
+
+        if distinct:
+            query = query.distinct()
+
+        result = query.all()
+
+        return [item[0] for item in result]
 
     def is_python_package_index_enabled(self, url: str) -> bool:
         """Check if the given Python package index is enabled."""
@@ -3105,14 +3114,14 @@ class GraphDatabase(SQLBase):
 
         return [model.dict() for model in result]
 
-    def get_python_package_index_urls_all(self, enabled: bool = None) -> set:
+    def get_python_package_index_urls_all(self, enabled: bool = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
         query = self._session.query(PythonPackageIndex)
 
         if enabled is not None:
             query = query.filter(PythonPackageIndex.enabled == enabled)
 
-        return set(item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all())
+        return [item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all()]
 
     def get_python_packages_per_index(self, index_url: str, distinct: bool = False) -> Dict[str, List[str]]:
         """Retrieve listing of Python packages (solved) known to graph database instance for the given index."""
