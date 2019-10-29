@@ -375,6 +375,9 @@ def sync_documents(
     if inspection_only_ceph_sync and inspection_only_graph_sync:
         raise ValueError("Parameters `inspection_only_ceph_sync' and `inspection_only_graph_sync' are disjoint")
 
+    if not graph.is_schema_up2date():
+        _LOGGER.warning("Database schema is not up to date")
+
     for document_id in document_ids or [None] * len(_HANDLERS_MAPPING):
         for document_prefix, handler in _HANDLERS_MAPPING.items():
             if document_id is None or document_id.startswith(document_prefix):
