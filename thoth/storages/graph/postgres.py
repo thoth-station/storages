@@ -322,7 +322,7 @@ class GraphDatabase(SQLBase):
 
     def get_run_software_environment_all(
         self, start_offset: int = 0, count: int = DEFAULT_COUNT, is_external: bool = False
-    ) -> list:
+    ) -> List[str]:
         """Get all software environments available for run.
 
         Examples:
@@ -335,7 +335,7 @@ class GraphDatabase(SQLBase):
 
     def get_build_software_environment_all(
         self, start_offset: int = 0, count: int = DEFAULT_COUNT
-    ) -> list:
+    ) -> List[str]:
         """Get all software environments available for build.
 
         Examples:
@@ -370,7 +370,8 @@ class GraphDatabase(SQLBase):
                 .filter(SoftwareEnvironment.environment_name == software_environment_name)
             )
 
-        query_result = (query.join(PackageExtractRun)
+        query_result = (
+            query.join(PackageExtractRun)
             .with_entities(
                 PackageExtractRun.datetime,
                 PackageExtractRun.analysis_document_id,
@@ -917,9 +918,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersion.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersion.package_version == package_version)
 
         if os_name is not None:
@@ -972,10 +975,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1008,10 +1013,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1405,6 +1412,7 @@ class GraphDatabase(SQLBase):
             )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         query = query.offset(start_offset).limit(count)
@@ -1503,10 +1511,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1529,10 +1539,12 @@ class GraphDatabase(SQLBase):
                 PythonPackageVersionEntity.python_package_index_id)
         )
 
-        if package_name:
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
 
-        if package_version:
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1583,9 +1595,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         query = query.offset(start_offset).limit(count)
@@ -1632,9 +1646,11 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if distinct:
@@ -1776,9 +1792,11 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
@@ -1961,6 +1979,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_analyzed_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
         query = (
             self._session.query(PackageAnalyzerRun)
             .join(PythonPackageVersionEntity)
@@ -2024,10 +2044,12 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
-            query = query.filter(PythonPackageVersion.package_name == package_name)
+            package_name = self.normalize_python_package_name(package_name)
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
-            query = query.filter(PythonPackageVersion.package_version == package_version)
+            package_version = self.normalize_python_package_version(package_version)
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
             query = query.filter(PythonPackageIndex.url == index_url)
@@ -2242,9 +2264,11 @@ class GraphDatabase(SQLBase):
         )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersionEntity.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
@@ -2449,6 +2473,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unanalyzed_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
         analyzed = self._construct_analyzed_python_package_versions_query(
             package_name=package_name
             )
@@ -2704,6 +2730,9 @@ class GraphDatabase(SQLBase):
 
         @raises NotFoundError: if the given package has no entry in the database
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -2749,6 +2778,9 @@ class GraphDatabase(SQLBase):
 
         @raises NotFoundError: if the given package has no entry in the database
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .filter(PythonPackageVersion.package_name == package_name)
@@ -2979,7 +3011,17 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         distinct: bool = False,
     ) -> List[str]:
-        """Get all hashes for Python package in Thoth Database."""
+        """Get all hashes for Python package in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_hashes_sha256_all()
+        [
+            '9d6863f6c70d034b8c34b3355cb7ba7d2ad799583947265efda41fe67127c23f',
+            '8e4a1f6d89cfaadb486237acbfa24700add01da022dfcf3536e5071d21e13ee0'
+            ]
+        """
         query = (
             self._session.query(PythonPackageVersionEntity)
             .join(PythonPackageIndex)
@@ -3069,7 +3111,7 @@ class GraphDatabase(SQLBase):
                 self._session.commit()
                 return False
 
-    def python_package_index_listing(self, enabled: bool = None) -> list:
+    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, str]]:
         """Get listing of Python package indexes registered in the graph database."""
         query = self._session.query(
             PythonPackageIndex.url, PythonPackageIndex.warehouse_api_url, PythonPackageIndex.verify_ssl
@@ -3521,6 +3563,10 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        package_name = self.normalize_python_package_name(package_name)
+
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -3591,9 +3637,11 @@ class GraphDatabase(SQLBase):
             )
 
         if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
             query = query.filter(PythonPackageVersion.package_name == package_name)
 
         if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersion.package_version == package_version)
 
         if index_url is not None:
@@ -3684,6 +3732,9 @@ class GraphDatabase(SQLBase):
         index_url: str,
     ) -> Dict[str, str]:
         """Retrieve Python package metadata."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageMetadata)
             .join(PythonPackageVersion)
