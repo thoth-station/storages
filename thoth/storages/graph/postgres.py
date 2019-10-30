@@ -887,12 +887,12 @@ class GraphDatabase(SQLBase):
 
     def get_error_solved_python_package_versions_count_all(
         self,
-        *,
-        unsolvable: bool = False,
-        unparseable: bool = False,
         package_name: str = None,
         package_version: str = None,
         index_url: str = None,
+        *,
+        unsolvable: bool = False,
+        unparseable: bool = False,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2588,7 +2588,7 @@ class GraphDatabase(SQLBase):
         """Get number of image analysis documents synced into graph."""
         return self._session.query(PackageExtractRun).distinct(PackageExtractRun.analysis_document_id).count()
 
-    def retrieve_dependent_packages(self, package_name: str, package_version: str = None) -> dict:
+    def retrieve_dependent_packages(self, package_name: str, package_version: str = None) -> Dict[str, List[str]]:
         """Get mapping package name to package version of packages that depend on the given package."""
         package_name = self.normalize_python_package_name(package_name)
         query = self._session.query(PythonPackageVersionEntity).filter(
@@ -3207,7 +3207,12 @@ class GraphDatabase(SQLBase):
 
         return [item[0] for item in query.with_entities(PythonPackageIndex.url).distinct().all()]
 
-    def get_python_packages_per_index(self, index_url: str, distinct: bool = False) -> Dict[str, List[str]]:
+    def get_python_package_versions_per_index(
+        self,
+        index_url: str,
+        *,
+        distinct: bool = False,
+    ) -> Dict[str, List[str]]:
         """Retrieve listing of Python packages (solved) known to graph database instance for the given index."""
         query = (
             self._session.query(PythonPackageVersion)
@@ -4143,7 +4148,8 @@ class GraphDatabase(SQLBase):
                     ]
 
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                    runtime_environment, environment_type=EnvironmentTypeEnum.RUNTIME.value,
+                    runtime_environment,
+                    environment_type=EnvironmentTypeEnum.RUNTIME.value,
                     is_external=False
                 )
 
