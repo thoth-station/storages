@@ -37,6 +37,7 @@ class Test(TestCommand):
         '--timeout=2',
         '--cov=./thoth',
         '--mypy',
+        'thoth/',
         '--capture=no',
         '--verbose',
         '-l',
@@ -83,6 +84,7 @@ setup(
     ],
     package_data={
         'thoth.storages': [
+            "py.typed",
             os.path.join('data', 'alembic.ini'),
             os.path.join('data', 'alembic', 'script.py.mako'),
             os.path.join('data', 'alembic', 'env.py'),
