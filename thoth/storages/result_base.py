@@ -30,7 +30,7 @@ class ResultStorageBase(StorageBase):
     """Adapter base for storing results."""
 
     # Type of results to distinguish them based on prefix on Ceph.
-    RESULT_TYPE = None
+    RESULT_TYPE = ""
     # Use core analyzers schema as default one, derived classes can adjust this.
     SCHEMA = RESULT_SCHEMA
 
@@ -51,8 +51,8 @@ class ResultStorageBase(StorageBase):
         explicitly.
         """
         assert (
-            self.RESULT_TYPE is not None
-        ), "Make sure you define RESULT_TYPE in derived classes to distinguish between adapter type instances."
+            self.RESULT_TYPE
+        ), "Make sure RESULT_TYPE in derived classes to distinguish between adapter type instances is non-empty."
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
         self.prefix = "{}/{}/{}".format(
