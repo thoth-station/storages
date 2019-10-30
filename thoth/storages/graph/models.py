@@ -34,9 +34,19 @@ from .models_base import BaseExtension
 from .models_base import Base
 from .models_base import get_python_package_version_index_combinations
 
+from .enums import EnvironmentTypeEnum
+from .enums import SoftwareStackTypeEnum
+from .enums import RecommendationTypeEnum
+from .enums import RequirementsFormatEnum
+from .enums import InspectionSyncStateEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
-_ENVIRONMENT_TYPE_ENUM = ENUM("RUNTIME", "BUILDTIME", name="environment_type", create_type=True)
+_ENVIRONMENT_TYPE_ENUM = ENUM(
+    EnvironmentTypeEnum.RUNTIME.value,
+    EnvironmentTypeEnum.BUILDTIME.value,
+    name="environment_type",
+    create_type=True
+    )
 
 
 class PythonPackageVersion(Base, BaseExtension):
@@ -467,7 +477,12 @@ class InspectionRun(Base, BaseExtension):
     run_requests_cpu = Column(Float, nullable=True)
     run_requests_memory = Column(Float, nullable=True)
     inspection_sync_state = Column(
-        ENUM("PENDING", "SYNCED", name="inspection_sync_state", create_type=True), nullable=False
+        ENUM(
+            InspectionSyncStateEnum.PENDING.value,
+            InspectionSyncStateEnum.SYNCED.value,
+            name="inspection_sync_state",
+            create_type=True
+        ), nullable=False
     )
 
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
@@ -519,10 +534,21 @@ class AdviserRun(Base, BaseExtension):
     debug = Column(Boolean, nullable=False)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
-    recommendation_type = Column(
-        ENUM("STABLE", "TESTING", "LATEST", name="recommendation_type", create_type=True), nullable=False
+    recommendation_type = Column(ENUM(
+        RecommendationTypeEnum.STABLE.value,
+        RecommendationTypeEnum.TESTING.value,
+        RecommendationTypeEnum.LATEST.value,
+        name="recommendation_type",
+        create_type=True
+        ),
+        nullable=False
     )
-    requirements_format = Column(ENUM("PIPENV", name="requirements_format", create_type=True), nullable=False)
+    requirements_format = Column(ENUM(
+        RequirementsFormatEnum.PIPENV.value,
+        name="requirements_format",
+        create_type=True),
+        nullable=False
+        )
 
     # Duration in seconds.
     duration = Column(Integer, nullable=True)  # XXX: nullable for now.
@@ -908,7 +934,13 @@ class PythonSoftwareStack(Base, BaseExtension):
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
-    software_stack_type = Column(ENUM("USER", "INSPECTION", "ADVISED", name="software_stack_type", create_type=True))
+    software_stack_type = Column(ENUM(
+        SoftwareStackTypeEnum.USER.value,
+        SoftwareStackTypeEnum.INSPECTION.value,
+        SoftwareStackTypeEnum.ADVISED.value,
+        name="software_stack_type",
+        create_type=True)
+        )
 
     performance_score = Column(Float, nullable=True)
     overall_score = Column(Float, nullable=True)
