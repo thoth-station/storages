@@ -3004,14 +3004,12 @@ class GraphDatabase(SQLBase):
 
         return [cve.to_dict() for cve in result]
 
-    def get_python_package_version_hashes_sha256_all(
+    def get_python_package_hashes_sha256(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: str,
+        package_version: str,
+        index_url: str,
         *,
-        start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> List[str]:
         """Get all hashes for Python package in Thoth Database.
@@ -3019,35 +3017,25 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_python_package_version_hashes_sha256_all()
+        >>> graph.get_python_package_hashes_sha256()
         [
             '9d6863f6c70d034b8c34b3355cb7ba7d2ad799583947265efda41fe67127c23f',
             '8e4a1f6d89cfaadb486237acbfa24700add01da022dfcf3536e5071d21e13ee0'
-            ]
+        ]
         """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
         query = (
             self._session.query(PythonPackageVersionEntity)
+            .filter(PythonPackageVersionEntity.package_name == package_name)
+            .filter(PythonPackageVersionEntity.package_version == package_version)
             .join(PythonPackageIndex)
-        )
-
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version is not None:
-            package_version = self.normalize_python_package_version(package_version)
-            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        if index_url is not None:
-            query = query.filter(PythonPackageIndex.url == index_url)
-
-        query = (
-            query.join(HasArtifact)
+            .filter(PythonPackageIndex.url == index_url)
+            .join(HasArtifact)
             .join(PythonArtifact)
             .with_entities(PythonArtifact.artifact_hash_sha256)
         )
-
-        query = query.offset(start_offset).limit(count)
 
         if distinct:
             query = query.distinct()
