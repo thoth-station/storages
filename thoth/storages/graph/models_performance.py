@@ -27,11 +27,9 @@ from sqlalchemy import String
 from sqlalchemy import Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
-from voluptuous import Required
-from voluptuous import Schema
 
-from thoth.storages.graph.models_base import BaseExtension
-from thoth.storages.graph.models_base import Base
+from .models_base import BaseExtension
+from .models_base import Base
 
 _LOGGER = logging.getLogger(__name__)
 
