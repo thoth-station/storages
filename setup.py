@@ -36,7 +36,7 @@ class Test(TestCommand):
         'tests/',
         '--timeout=2',
         '--cov=./thoth',
-        '--mypy',
+        # '--mypy',
         'thoth/',
         '--capture=no',
         '--verbose',
