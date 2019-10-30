@@ -228,6 +228,7 @@ class PackageExtractRun(Base, BaseExtension):
     origin = Column(String(256), nullable=True)
     debug = Column(Boolean, nullable=False, default=False)
     package_extract_error = Column(Boolean, nullable=False, default=False)
+    image_size = Column(Integer, nullable=True)
     # An image tag which was used during image analysis. As this tag can change (e.g. latest is always changing
     # on new builds), it's part of this class instead of Runtime/Buildtime environment to keep correct
     # linkage for same container images.

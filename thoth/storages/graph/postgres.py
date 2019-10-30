@@ -4495,6 +4495,7 @@ class GraphDatabase(SQLBase):
                         os_name=os_name,
                         os_version_id=os_version,
                         external_software_environment_id=software_environment.id,
+                        image_size=document["result"].get("image_size"),
                     )
 
                 else:
