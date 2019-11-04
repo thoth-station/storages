@@ -215,62 +215,6 @@ the graph cache and memory cache usage to logger (it has to have at least level
 
 These statistics will be printed once the database adapter is destructed.
 
-Graph database cache
-====================
-
-The implementation of this library also provides a cache to speed up queries to
-graph database. This cache is especially suitable for prod systems not to query
-for popular packages multiple times.
-
-The cache can be created with shipped CLI tool:
-
-.. code-block:: console
-
-  # When using version from this Git repository:
-  PYTHONPATH=. THOTH_STORAGES_GRAPH_CACHE="cache.sqlite3" pipenv run ./thoth-storages graph-cache -c ../adviser/cache_conf.yaml
-
-  # When using a version installed from PyPI:
-  THOTH_STORAGES_GRAPH_CACHE="cache.sqlite3" thoth-storages graph-cache -c ../adviser/cache_conf.yaml
-
-The command above creates a SQLite3 database which carries some of the data
-loaded from the PostgreSQL database which help resolver resolve software stacks
-faster.  The path to cache can be supplied using environment variable
-``THOTH_STORAGES_GRAPH_CACHE``. By default, the module will create an in-memory
-SQLite3 database and will not persist it onto disk. If the configuration points
-to non-existing file, an SQLite3 database will be created and persisted onto
-disk with data which were added into it based on runtime usage. This naturally
-re-uses graph cache multiple times across runs (filled with the data needed) as
-expected.
-
-Take a look at adviser repo, at ``cache_conf.yaml`` file specifically, to
-see how ``cache_conf.yaml`` file should be structured. An example could be:
-
-.. code-block:: yaml
-
-  python-packages:
-   - thoth-storages
-   - tensorflow
-
-With the configuration above, the cache will be created. This cache will hold a
-serialized dependency graph of TensorFlow and thoth-storages packages, together
-with node information to effectively construct TensorFlow's dependency graph
-for transitive queries.
-
-Note only information which should not change over time are captured in the
-cache; for example, packages which were not yet resolved during cache creation
-are not added to cache so system explicitly asks for resolution results next
-time (they might be resolved meanwhile).
-
-To enable inserts into graph cache, set
-``THOTH_STORAGES_GRAPH_CACHE_INSERTS_DISABLED`` to ``0`` (the default value of
-``1`` disables it). Disabling inserts might be benefitial in deployments where
-you want to avoid building cache (overhead needed to insert data into graph
-cache, checks of uniqueness of entries and cache index creation which in sum
-are expensive operations).
-
-To disable graph cache completely, set ``THOTH_STORAGES_GRAPH_CACHE_DISABLED``
-environment variable to ``1`` (the default value of ``0`` enables it).
-
 Creating backups from Thoth deployment
 ======================================
 
