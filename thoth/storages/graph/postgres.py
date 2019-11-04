@@ -4720,7 +4720,6 @@ class GraphDatabase(SQLBase):
                         self._session,
                         author=importlib_metadata.pop("Author", None),
                         author_email=importlib_metadata.pop("Author-email", None),
-                        classifier=importlib_metadata.pop("Classifier", None),
                         download_url=importlib_metadata.pop("Download-URL", None),
                         home_page=importlib_metadata.pop("Home-page", None),
                         keywords=importlib_metadata.pop("Keywords", None),
@@ -4731,16 +4730,41 @@ class GraphDatabase(SQLBase):
                         metadata_version=importlib_metadata.pop("Metadata-Version", None),
                         # package name
                         name=importlib_metadata.pop("Name", None),
-                        platform=importlib_metadata.pop("Platform", None),
-                        requires_dist=importlib_metadata.pop("Requires-Dist", None),
                         summary=importlib_metadata.pop("Summary", None),
                         # package version
                         version=importlib_metadata.pop("Version", None),
                         requires_python=importlib_metadata.pop("Requires-Python", None),
-                        description_content_type=importlib_metadata.pop("Description-Content-Type", None),
-                        project_url=importlib_metadata.pop("Project-URL", None),
-                        provides_extra=importlib_metadata.pop("Provides-Extra", None),
+                        description=importlib_metadata.pop("Description", None),
+                        description_content_type=importlib_metadata.pop("Description-Content-Type", None)
                     )
+
+                    # Metadata keys that are arrays
+
+                    if importlib_metadata.get("Classifier", None):
+                        for classifier in importlib_metadata["Classifier"]:
+                            python_package_classifier, _ = PythonPackageClassifier.get_or_create(
+                                self._session,
+                                classifier=classifier,
+                            )
+                            HasClassifier.get_or_create(
+                                self._session,
+                                python_package_classifier_id=python_package_classifier.id,
+                                python_package_metadata_id=package_metadata.id,
+                            )
+                        importlib_metadata.pop("Classifier", None)
+
+                    if importlib_metadata.get("Platform", None):
+                        for platform in importlib_metadata["Platform"]:
+                            python_package_platform, _ = PythonPackagePlatform.get_or_create(
+                                self._session,
+                                platform=platform,
+                            )
+                            HasPlatform.get_or_create(
+                                self._session,
+                                python_package_platform_id=python_package_platform.id,
+                                python_package_metadata_id=package_metadata.id,
+                            )
+                        importlib_metadata.pop("Platform", None)
 
                     if importlib_metadata:
                         # There can be raised PythonPackageMetadataAttributeMissing once all metadata gathered.

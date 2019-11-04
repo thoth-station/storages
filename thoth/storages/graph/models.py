@@ -371,7 +371,7 @@ class CVE(Base, BaseExtension):
     cve_id = Column(String(256), nullable=True)
     version_range = Column(String(256), nullable=True)
 
-    python_package_versions = relationship("HasVulnerability", back_populates="cve")
+    python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
 
 class PackageAnalyzerRun(Base, BaseExtension):
@@ -921,7 +921,7 @@ class HasVulnerability(Base, BaseExtension):
     cve_id = Column(Integer, ForeignKey("cve.id", ondelete="CASCADE"), primary_key=True)
 
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
-    cve = relationship("CVE", back_populates="python_package_versions")
+    cve = relationship("CVE", back_populates="python_package_version_entities")
 
 
 class PythonSoftwareStack(Base, BaseExtension):
@@ -1177,7 +1177,6 @@ class PythonPackageMetadata(Base, BaseExtension):
 
     author = Column(String(256), nullable=True)
     author_email = Column(String(256), nullable=True)
-    classifier = Column(String(256), nullable=True)
     download_url = Column(String(256), nullable=True)
     home_page = Column(String(256), nullable=True)
     keywords = Column(String(256), nullable=True)
@@ -1188,17 +1187,81 @@ class PythonPackageMetadata(Base, BaseExtension):
     metadata_version = Column(String(256), nullable=True)
     # package name
     name = Column(String(256), nullable=True)
-    platform = Column(String(256), nullable=True)
-    requires_dist = Column(String(256), nullable=True)
     summary = Column(String(256), nullable=True)
     # package version
     version = Column(String(256), nullable=True)
     requires_python = Column(String(256), nullable=True)
+    description = Column(String(256), nullable=True)
     description_content_type = Column(String(256), nullable=True)
-    project_url = Column(String(256), nullable=True)
-    provides_extra = Column(String(256), nullable=True)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
+
+    classifiers = relationship("HasClassifier", back_populates="python_package_metadata")
+    platforms = relationship("HasPlatform", back_populates="python_package_metadata")
+
+
+class HasClassifier(Base, BaseExtension):
+    """The given Python package has the given classifier in the metadata."""
+
+    __tablename__ = "has_classifier"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer,
+        ForeignKey("python_package_metadata.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    python_package_classifier_id = Column(
+        Integer,
+        ForeignKey("python_package_classifier.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="classifiers")
+    python_package_classifiers = relationship("PythonPackageClassifier", back_populates="python_packages_metadata")
+
+
+class PythonPackageClassifier(Base, BaseExtension):
+    """Classification value (part of metadata) for the Python Package."""
+
+    __tablename__ = "python_package_classifier"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    classifier = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasClassifier", back_populates="python_package_classifiers")
+
+
+class HasPlatform(Base, BaseExtension):
+    """The given Python package has the given platform in the metadata."""
+
+    __tablename__ = "has_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer,
+        ForeignKey("python_package_metadata.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    python_package_classifier_id = Column(
+        Integer,
+        ForeignKey("python_package_platform.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="platforms")
+    python_package_platforms = relationship("PythonPackagePlatform", back_populates="python_packages_metadata")
+
+
+class PythonPackagePlatform(Base, BaseExtension):
+    """Platform (part of metadata) describing an operating system supported by the Python Package."""
+
+    __tablename__ = "python_package_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    platform = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasPlatform", back_populates="python_package_platforms")
 
 
 ALL_MAIN_MODELS = frozenset(
@@ -1222,6 +1285,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonArtifact,
         PythonFileDigest,
         PythonInterpreter,
+        PythonPackageClassifier,
         PythonPackageIndex,
         PythonPackageMetadata,
         PythonPackageRequirement,
@@ -1249,6 +1313,7 @@ ALL_RELATION_MODELS = frozenset(
         FoundPythonInterpreter,
         FoundRPM,
         HasArtifact,
+        HasClassifier,
         HasSymbol,
         HasVulnerability,
         Identified,
