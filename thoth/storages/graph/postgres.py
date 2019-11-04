@@ -109,6 +109,9 @@ from collections import Counter
 
 from .sql_base import SQLBase
 from .models_base import Base
+from .enums import EnvironmentTypeEnum
+from .enums import SoftwareStackTypeEnum
+from .enums import InspectionSyncStateEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -333,7 +336,12 @@ class GraphDatabase(SQLBase):
         >>> graph.get_run_software_environment_all()
         ['quay.io/thoth-station/thoth-pylint:v0.7.0-ubi8']
         """
-        return self._do_software_environment_listing(start_offset, count, is_external, "RUNTIME")
+        return self._do_software_environment_listing(
+            start_offset,
+            count,
+            is_external,
+            EnvironmentTypeEnum.RUNTIME.value
+            )
 
     def get_build_software_environment_all(
         self, start_offset: int = 0, count: int = DEFAULT_COUNT
@@ -347,7 +355,12 @@ class GraphDatabase(SQLBase):
         ['quay.io/thoth-station/thoth-pylint:v0.7.0-ubi8']
         """
         # We do not have external/user software environment which is build environment yet.
-        return self._do_software_environment_listing(start_offset, count, False, "BUILDTIME")
+        return self._do_software_environment_listing(
+            start_offset,
+            count,
+            False,
+            EnvironmentTypeEnum.BUILDTIME.value
+            )
 
     def _do_software_environment_analyses_listing(
         self,
@@ -423,7 +436,7 @@ class GraphDatabase(SQLBase):
             count=count,
             is_external=is_external,
             convert_datetime=convert_datetime,
-            environment_type="RUNTIME",
+            environment_type=EnvironmentTypeEnum.RUNTIME.value,
         )
 
     def get_build_software_environment_analyses_all(
@@ -441,7 +454,7 @@ class GraphDatabase(SQLBase):
             count=count,
             is_external=is_external,
             convert_datetime=convert_datetime,
-            environment_type="BUILDTIME",
+            environment_type=EnvironmentTypeEnum.BUILDTIME.value,
         )
 
     def python_package_version_exists(
@@ -4106,7 +4119,7 @@ class GraphDatabase(SQLBase):
                     ]
 
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                    runtime_environment, environment_type="RUNTIME",
+                    runtime_environment, environment_type=EnvironmentTypeEnum.RUNTIME.value,
                     is_external=False
                 )
 
@@ -4114,7 +4127,7 @@ class GraphDatabase(SQLBase):
 
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                     runtime_environment,
-                    environment_type="BUILDTIME",
+                    environment_type=EnvironmentTypeEnum.BUILDTIME.value,
                     is_external=False
                 )
 
@@ -4122,7 +4135,7 @@ class GraphDatabase(SQLBase):
                 if "python" in document["specification"]:
                     # Inspection stack.
                     software_stack = self._create_python_software_stack(
-                        software_stack_type="INSPECTION",
+                        software_stack_type=SoftwareStackTypeEnum.INSPECTION.value,
                         requirements=document["specification"]["python"].get("requirements"),
                         requirements_lock=document["specification"]["python"].get("requirements_locked"),
                         software_environment=run_software_environment,
@@ -4146,11 +4159,11 @@ class GraphDatabase(SQLBase):
                         id=inspection_run.dependency_monkey_run_id,
                         inspection_document_id=inspection_document_id,
                         dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
-                        inspection_sync_state="PENDING"
+                        inspection_sync_state=InspectionSyncStateEnum.PENDING.value
                         ).on_conflict_do_update(
                             index_elements=['id'],
                             set_=dict(
-                                inspection_sync_state="SYNCED",
+                                inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
                                 inspection_document_id=inspection_document_id,
                                 datetime=document.get("created"),
                                 amun_version=None,  # TODO: propagate Amun version here which should match API version
@@ -4169,7 +4182,7 @@ class GraphDatabase(SQLBase):
                 else:
                     inspection_run, _ = InspectionRun.get_or_create(
                         self._session,
-                        inspection_sync_state="SYNCED",
+                        inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
                         inspection_document_id=inspection_document_id,
                         datetime=document.get("created"),
                         amun_version=None,  # TODO: propagate Amun version here which should match API version
@@ -4939,13 +4952,13 @@ class GraphDatabase(SQLBase):
             with self._session.begin(subtransactions=True):
                 external_hardware_info, external_run_software_environment = self._runtime_environment_conf2models(
                     runtime_environment=runtime_environment,
-                    environment_type="RUNTIME",
+                    environment_type=EnvironmentTypeEnum.RUNTIME.value,
                     is_external=True
                 )
 
                 # Input stack.
                 software_stack = self._create_python_software_stack(
-                    software_stack_type="USER",
+                    software_stack_type=SoftwareStackTypeEnum.USER.value,
                     requirements=document["result"]["input"].get("requirements"),
                     requirements_lock=document["result"]["input"].get("requirements_locked"),
                     software_environment=external_run_software_environment,
@@ -5001,7 +5014,7 @@ class GraphDatabase(SQLBase):
 
                     if result[1] and result[1].get("requirements_locked"):
                         software_stack = self._create_python_software_stack(
-                            software_stack_type="ADVISED",
+                            software_stack_type=SoftwareStackTypeEnum.ADVISED.value,
                             requirements=result[1].get("requirements"),
                             requirements_lock=result[1].get("requirements_locked"),
                             software_environment=external_run_software_environment,
@@ -5032,7 +5045,7 @@ class GraphDatabase(SQLBase):
             with self._session.begin(subtransactions=True):
                 user_input = document["result"]["input"]
                 software_stack = self._create_python_software_stack(
-                    software_stack_type="USER",
+                    software_stack_type=SoftwareStackTypeEnum.USER.value,
                     requirements=user_input.get("requirements"),
                     requirements_lock=user_input.get("requirements_locked"),
                     software_environment=None,
@@ -5065,12 +5078,12 @@ class GraphDatabase(SQLBase):
             with self._session.begin(subtransactions=True):
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
-                    environment_type="RUNTIME",
+                    environment_type=EnvironmentTypeEnum.RUNTIME.value,
                     is_external=False
                 )
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                     document["result"]["parameters"].get("runtime_environment", {}),
-                    environment_type="BUILDTIME",
+                    environment_type=EnvironmentTypeEnum.BUILDTIME.value,
                     is_external=False
                 )
                 dependency_monkey_run, _ = DependencyMonkeyRun.get_or_create(
@@ -5110,7 +5123,7 @@ class GraphDatabase(SQLBase):
                     if inspection_run is None:
                         inspection_run = InspectionRun(
                             inspection_document_id=inspection_document_id,
-                            inspection_sync_state="PENDING",
+                            inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
                             dependency_monkey_run_id=dependency_monkey_run.id,
                         )
                         self._session.add(inspection_run)
