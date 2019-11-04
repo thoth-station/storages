@@ -3667,3 +3667,23 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix model for index url in the query
 * Keep Python package tuples positional arguments
 * Issue warning if the database schema is not initialized yet in connect
+
+## Release 0.19.15 (2019-11-04T12:08:12)
+* Relax fatal error on syncing unmatched metadata
+* :pushpin: Automatic update of dependency pytest-mypy from 0.4.1 to 0.4.2
+* :pushpin: Automatic update of dependency python-dateutil from 2.8.0 to 2.8.1
+* Randomize retrievals of unanalyzed Python packages
+* Randomize retrieval of unsolved Python packages
+* Remove old pydgraph dependency
+* :pushpin: Automatic update of dependency boto3 from 1.10.7 to 1.10.8
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.34.2 to 0.35.0
+* :pushpin: Automatic update of dependency boto3 from 1.10.6 to 1.10.7
+* :pushpin: Automatic update of dependency alembic from 1.2.1 to 1.3.0
+* :pushpin: Automatic update of dependency boto3 from 1.10.5 to 1.10.6
+* Introduce enum classes for safe API
+* Turn off checking thoth module by mypy
+* Start using mypy in strict mode
+* Fix retrieval of Python digests query
+* :pushpin: Automatic update of dependency boto3 from 1.10.4 to 1.10.5
+* Update the schema
+* Sync container image size
