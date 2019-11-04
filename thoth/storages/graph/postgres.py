@@ -947,7 +947,7 @@ class GraphDatabase(SQLBase):
         *,
         distinct: bool = False,
         count: int = DEFAULT_COUNT,
-        is_count: bool = False
+        is_count: bool = False,
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
         """Retrieve unsolved packages in edge cases.
 
@@ -1491,7 +1491,8 @@ class GraphDatabase(SQLBase):
         *,
         distinct: bool = False,
         count: int = DEFAULT_COUNT,
-        is_count: bool = False
+        is_count: bool = False,
+        randomize: bool = False,
     ) -> Union[List[Tuple[str, Optional[str], Optional[str]]], int]:
         """Retrieve unsolved packages in edge cases.
 
@@ -1503,7 +1504,7 @@ class GraphDatabase(SQLBase):
         CASE 3: ('package_name', None, None)
 
         If is_count is set to true, this method returns non-negative integer representing number
-        of packages - the count parameter has no effect in that case.
+        of packages - the count and randomize parameters have no effect in that case.
         """
         case_2 = (
             self._session.query(PythonPackageVersionEntity)
@@ -1530,6 +1531,9 @@ class GraphDatabase(SQLBase):
         if is_count:
             result_2 = case_2.count()
         else:
+            if randomize:
+                case_2 = case_2.order_by(func.random())
+
             case_2 = case_2.limit(count)
             result_2 = case_2.all()
 
@@ -1560,6 +1564,9 @@ class GraphDatabase(SQLBase):
         else:
             if len(result_2) < count:
                 case_3 = case_3.limit(count - len(result_2))
+                if randomize:
+                    case_3 = case_3.order_by(func.random())
+
                 result_3 = case_3.all()
             else:
                 return result_2
@@ -1578,6 +1585,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        randomize: bool = True,
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
         """Retrieve unsolved Python package versions in Thoth Database.
 
@@ -1607,6 +1615,9 @@ class GraphDatabase(SQLBase):
             package_version = self.normalize_python_package_version(package_version)
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
+        if randomize:
+            query = query.order_by(func.random())
+
         query = query.offset(start_offset).limit(count)
 
         if distinct:
@@ -1619,7 +1630,8 @@ class GraphDatabase(SQLBase):
             unsolved = self._get_unsolved_python_package_versions_edge_cases(
                 package_name=package_name,
                 package_version=package_version,
-                count=count - len(result)
+                count=count - len(result),
+                randomize=randomize,
             )
 
         result.extend(unsolved)
