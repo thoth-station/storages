@@ -2288,6 +2288,7 @@ class GraphDatabase(SQLBase):
         start_offset: int = 0,
         count: int = DEFAULT_COUNT,
         distinct: bool = False,
+        randomize: bool = True,
     ) -> List[Tuple[str, Optional[str], str]]:
         """Retrieve unanalyzed Python package versions in Thoth Database.
 
@@ -2301,7 +2302,10 @@ class GraphDatabase(SQLBase):
             package_name=package_name,
             package_version=package_version,
             index_url=index_url,
-            )
+        )
+
+        if randomize:
+            query = query.order_by(func.random())
 
         query = query.offset(start_offset).limit(count)
 
