@@ -126,7 +126,6 @@ from ..exceptions import NotConnected
 from ..exceptions import AlreadyConnected
 from ..exceptions import DatabaseNotInitialized
 from ..exceptions import SolverNameParseError
-from ..exceptions import PythonPackageMetadataAttributeMissing
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -4715,11 +4714,12 @@ class GraphDatabase(SQLBase):
                     )
 
                     if importlib_metadata:
-                        raise PythonPackageMetadataAttributeMissing(
-                            f"No related columns for {list(importlib_metadata.keys())!r}"
-                            "found in PythonPackageMetadata table,"
-                            "cannot sync the whole solver result, schema needs to be modified."
-                            )
+                        # There can be raised PythonPackageMetadataAttributeMissing once all metadata gathered.
+                        _LOGGER.error(
+                            "Cannot sync the whole solver result: "
+                            f"No related columns for {list(importlib_metadata.keys())!r} "
+                            "found in PythonPackageMetadata table, the error is not fatal"
+                        )
 
                     python_package_version = self._create_python_package_version(
                         package_name,
