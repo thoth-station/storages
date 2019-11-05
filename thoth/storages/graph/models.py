@@ -1264,6 +1264,65 @@ class PythonPackageMetadataPlatform(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataPlatform", back_populates="python_package_metadata_platforms")
 
 
+class HasMetadataSupportedPlatform(Base, BaseExtension):
+    """The Python package has the given supported platform in the metadata."""
+
+    __tablename__ = "has_metadata_supported_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_supported_platform_id = Column(
+        Integer, ForeignKey("python_package_metadata_supported_platform.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="supported_platforms")
+    python_package_metadata_supported_platforms = relationship("PythonPackageMetadataSupportedPlatform", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataSupportedPlatform(Base, BaseExtension):
+    """Supported-Platform field (part of metadata) used in binary distributions containing a PKG-INFO file.
+
+    It is used to specify the OS and CPU for which the binary distribution was compiled.
+    """
+
+    __tablename__ = "python_package_metadata_supported_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    supported_platform = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata_supported_platforms")
+
+
+class HasMetadataRequiresDist(Base, BaseExtension):
+    """The Python package has the given required distutils in the metadata."""
+
+    __tablename__ = "has_metadata_requires_dist"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_requires_dist_id = Column(
+        Integer, ForeignKey("python_package_metadata_requires_dist.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_dists")
+    python_package_requires_dists = relationship("PythonPackageMetadataRequiresDist", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataRequiresDist(Base, BaseExtension):
+    """Distutils project field (part of metadata) required by the Python Package."""
+
+    __tablename__ = "python_package_metadata_requires_dist"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    distutils = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_requires_dists")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1289,6 +1348,8 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageMetadata,
         PythonPackageMetadataClassifier,
         PythonPackageMetadataPlatform,
+        PythonPackageMetadataRequiresDist,
+        PythonPackageMetadataSupportedPlatform,
         PythonPackageRequirement,
         PythonPackageVersion,
         PythonPackageVersionEntity,
@@ -1316,6 +1377,8 @@ ALL_RELATION_MODELS = frozenset(
         HasArtifact,
         HasMetadataClassifier,
         HasMetadataPlatform,
+        HasMetadataRequiresDist,
+        HasMetadataSupportedPlatform,
         HasSymbol,
         HasVulnerability,
         Identified,
