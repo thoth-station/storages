@@ -3766,6 +3766,7 @@ class GraphDatabase(SQLBase):
             .filter(PythonPackageVersion.package_name == package_name)
             .filter(PythonPackageVersion.package_version == package_version)
             .filter(PythonPackageIndex.url == index_url)
+            .filter(PythonPackageVersion.python_package_metadata_id.isnot(None))
         )
 
         result = query.first()
