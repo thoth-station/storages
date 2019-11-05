@@ -4684,40 +4684,61 @@ class GraphDatabase(SQLBase):
     ) -> Dict[str, Any]:
         """Syncs multi-part keys from Python Package Metadata."""
         for classifier in importlib_metadata.pop("Classifier", []):
-            python_package_classifier, _ = PythonPackageClassifier.get_or_create(
+            python_package_metadata_classifier, _ = PythonPackageMetadataClassifier.get_or_create(
                 self._session,
                 classifier=classifier,
             )
-            HasClassifier.get_or_create(
+            HasMetadataClassifier.get_or_create(
                 self._session,
-                python_package_classifier_id=python_package_classifier.id,
+                python_package_metadata_classifier_id=python_package_metadata_classifier.id,
                 python_package_metadata_id=package_metadata.id,
             )
 
         for platform in importlib_metadata.pop("Platform", []):
-            python_package_platform, _ = PythonPackagePlatform.get_or_create(
+            python_package_metadata_platform, _ = PythonPackageMetadataPlatform.get_or_create(
                 self._session,
                 platform=platform,
             )
-            HasPlatform.get_or_create(
+            HasMetadataPlatform.get_or_create(
                 self._session,
-                python_package_platform_id=python_package_platform.id,
+                python_package_platform_id=python_package_metadata_platform.id,
                 python_package_metadata_id=package_metadata.id,
             )
 
         for supported_platform in importlib_metadata.pop("Supported-Platform", []):
-            python_package_supported_platform, _ = PythonPackageSupportedPlatform.get_or_create(
+            python_package_metadata_supported_platform, _ = PythonPackageMetadataSupportedPlatform.get_or_create(
                 self._session,
                 supported_platform=supported_platform,
             )
-            HasSupportedPlatform.get_or_create(
+            HasMetadataSupportedPlatform.get_or_create(
                 self._session,
-                python_package_supported_platform_id=python_package_supported_platform.id,
+                python_package_metadata_supported_platform_id=python_package_metadata_supported_platform.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for disturils in importlib_metadata.pop("Requires-Dist", []):
+            python_package_metadata_requires_dist, _ = PythonPackageMetadataRequiresDist.get_or_create(
+                self._session,
+                disturils=disturils,
+            )
+            HasMetadataRequiresDist.get_or_create(
+                self._session,
+                python_package_metadata_requires_dist_id=python_package_metadata_requires_dist.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for dependency in importlib_metadata.pop("Requires-External", []):
+            python_package_metadata_requires_external, _ = PythonPackageMetadataRequiresExternal.get_or_create(
+                self._session,
+                dependency=dependency,
+            )
+            HasMetadataRequiresExternal.get_or_create(
+                self._session,
+                python_package_metadata_requires_external_id=python_package_metadata_requires_external.id,
                 python_package_metadata_id=package_metadata.id,
             )
 
         return importlib_metadata
-
 
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""

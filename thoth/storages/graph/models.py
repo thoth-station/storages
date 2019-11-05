@@ -1202,7 +1202,7 @@ class PythonPackageMetadata(Base, BaseExtension):
     requires_dists = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata")
     requires_externals = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata")
     project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
-    # provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
+    provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
     # # rarely used fields
     # provides_dists = relationship("HasMetadataProvidesDist", back_populates="python_package_metadata")
     # obsoletes_dists = relationship("HasMetadataObsoletesDist", back_populates="python_package_metadata")
@@ -1309,7 +1309,7 @@ class HasMetadataRequiresDist(Base, BaseExtension):
         Integer, ForeignKey("python_package_metadata_requires_dist.id", ondelete="CASCADE"), primary_key=True
     )
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_dists")
-    python_package_requires_dists = relationship("PythonPackageMetadataRequiresDist", back_populates="python_packages_metadata")
+    python_package_metadata_requires_dists = relationship("PythonPackageMetadataRequiresDist", back_populates="python_packages_metadata")
 
 
 class PythonPackageMetadataRequiresDist(Base, BaseExtension):
@@ -1320,7 +1320,7 @@ class PythonPackageMetadataRequiresDist(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
     distutils = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_requires_dists")
+    python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata_requires_dists")
 
 
 class HasMetadataRequiresExternal(Base, BaseExtension):
@@ -1337,7 +1337,7 @@ class HasMetadataRequiresExternal(Base, BaseExtension):
         Integer, ForeignKey("python_package_metadata_requires_external.id", ondelete="CASCADE"), primary_key=True
     )
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_externals")
-    python_package_requires_externals = relationship("PythonPackageMetadataRequiresExternal", back_populates="python_packages_metadata")
+    python_package_metadata_requires_externals = relationship("PythonPackageMetadataRequiresExternal", back_populates="python_packages_metadata")
 
 
 class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
@@ -1352,7 +1352,7 @@ class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
     dependency = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasMetadataRequiresExternal", back_populates="python_package_requires_externals")
+    python_packages_metadata = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata_requires_externals")
 
 
 class HasMetadataProjectUrl(Base, BaseExtension):
@@ -1369,18 +1369,48 @@ class HasMetadataProjectUrl(Base, BaseExtension):
         Integer, ForeignKey("python_package_metadata_project_url.id", ondelete="CASCADE"), primary_key=True
     )
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="project_urls")
-    python_package_project_urls = relationship("PythonPackageMetadataProjectUrl", back_populates="python_packages_metadata")
+    python_package_metadata_project_urls = relationship("PythonPackageMetadataProjectUrl", back_populates="python_packages_metadata")
 
 
 class PythonPackageMetadataProjectUrl(Base, BaseExtension):
-    """Browsable URL field (part of metadata) for the project of the Python Package and a label for it, separated by a comma."""
+    """Browsable URL (part of metadata) for the project of the Python Package and a label for it."""
 
     __tablename__ = "python_package_metadata_project_url"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     project_url = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasMetadataProjectUrl", back_populates="python_package_project_urls")
+    python_packages_metadata = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata_project_urls")
+
+class HasMetadataProvidesExtra(Base, BaseExtension):
+    """The Python package has the given optional feature in the metadata."""
+
+    __tablename__ = "has_metadata_provides_extra"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_provides_extra_id = Column(
+        Integer, ForeignKey("python_package_metadata_provides_extra.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="provides_extras")
+    python_package_metadata_provides_extras = relationship("PythonPackageMetadataProvidesExtra", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataProvidesExtra(Base, BaseExtension):
+    """Optional feature (part of metadata) for the Python Package.
+
+    May be used to make a dependency conditional on whether the optional feature has been requested.
+    """
+
+    __tablename__ = "python_package_metadata_provides_extra"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    optional_feature = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata_provides_extras")
 
 
 ALL_MAIN_MODELS = frozenset(
@@ -1409,6 +1439,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageMetadataClassifier,
         PythonPackageMetadataPlatform,
         PythonPackageMetadataProjectUrl,
+        PythonPackageMetadataProvidesExtra,
         PythonPackageMetadataRequiresDist,
         PythonPackageMetadataRequiresExternal,
         PythonPackageMetadataSupportedPlatform,
@@ -1440,6 +1471,7 @@ ALL_RELATION_MODELS = frozenset(
         HasMetadataClassifier,
         HasMetadataPlatform,
         HasMetadataProjectUrl,
+        HasMetadataProvidesExtra,
         HasMetadataRequiresDist,
         HasMetadataRequiresExternal,
         HasMetadataSupportedPlatform,
