@@ -55,6 +55,7 @@ class RequirementsFormatEnum(Enum):
 
     PIPENV = "PIPENV"
 
+
 class MetadataDistutilsTypeEnum(Enum):
     """Class for the requirements format."""
 
