@@ -499,6 +499,7 @@ class GraphDatabase(SQLBase):
             > 0
         )
 
+    @lru_cache(maxsize=256)
     def has_python_solver_error(
         self,
         package_name: str,
@@ -3017,6 +3018,7 @@ class GraphDatabase(SQLBase):
             > 0
         )
 
+    @lru_cache(maxsize=256)
     def get_python_cve_records_all(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
@@ -5191,6 +5193,8 @@ class GraphDatabase(SQLBase):
         for method, method_name in (
             (self.get_python_package_version_records, "get_python_package_version_records"),
             (self.get_depends_on, "get_depends_on"),
+            (self.has_python_solver_error, "has_python_solver_error"),
+            (self.get_python_cve_records_all, "get_python_cve_records_all"),
         ):
             stats[method_name] = dict(method.cache_info()._asdict())
 
