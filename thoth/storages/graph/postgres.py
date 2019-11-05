@@ -3025,10 +3025,12 @@ class GraphDatabase(SQLBase):
         package_version = self.normalize_python_package_version(package_version)
 
         result = (
-            self._session.query(CVE)
-            .join(CVE.python_package_versions)
+            self._session.query(PythonPackageVersionEntity)
             .filter(PythonPackageVersionEntity.package_name == package_name)
             .filter(PythonPackageVersionEntity.package_version == package_version)
+            .join(HasVulnerability)
+            .join(CVE)
+            .with_entities(CVE)
             .all()
         )
 
