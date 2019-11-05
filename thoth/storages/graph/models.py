@@ -42,11 +42,8 @@ from .enums import InspectionSyncStateEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(
-    EnvironmentTypeEnum.RUNTIME.value,
-    EnvironmentTypeEnum.BUILDTIME.value,
-    name="environment_type",
-    create_type=True
-    )
+    EnvironmentTypeEnum.RUNTIME.value, EnvironmentTypeEnum.BUILDTIME.value, name="environment_type", create_type=True
+)
 
 
 class PythonPackageVersion(Base, BaseExtension):
@@ -482,8 +479,9 @@ class InspectionRun(Base, BaseExtension):
             InspectionSyncStateEnum.PENDING.value,
             InspectionSyncStateEnum.SYNCED.value,
             name="inspection_sync_state",
-            create_type=True
-        ), nullable=False
+            create_type=True,
+        ),
+        nullable=False,
     )
 
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
@@ -535,21 +533,19 @@ class AdviserRun(Base, BaseExtension):
     debug = Column(Boolean, nullable=False)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
-    recommendation_type = Column(ENUM(
-        RecommendationTypeEnum.STABLE.value,
-        RecommendationTypeEnum.TESTING.value,
-        RecommendationTypeEnum.LATEST.value,
-        name="recommendation_type",
-        create_type=True
+    recommendation_type = Column(
+        ENUM(
+            RecommendationTypeEnum.STABLE.value,
+            RecommendationTypeEnum.TESTING.value,
+            RecommendationTypeEnum.LATEST.value,
+            name="recommendation_type",
+            create_type=True,
         ),
-        nullable=False
+        nullable=False,
     )
-    requirements_format = Column(ENUM(
-        RequirementsFormatEnum.PIPENV.value,
-        name="requirements_format",
-        create_type=True),
-        nullable=False
-        )
+    requirements_format = Column(
+        ENUM(RequirementsFormatEnum.PIPENV.value, name="requirements_format", create_type=True), nullable=False
+    )
 
     # Duration in seconds.
     duration = Column(Integer, nullable=True)  # XXX: nullable for now.
@@ -935,13 +931,15 @@ class PythonSoftwareStack(Base, BaseExtension):
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
-    software_stack_type = Column(ENUM(
-        SoftwareStackTypeEnum.USER.value,
-        SoftwareStackTypeEnum.INSPECTION.value,
-        SoftwareStackTypeEnum.ADVISED.value,
-        name="software_stack_type",
-        create_type=True)
+    software_stack_type = Column(
+        ENUM(
+            SoftwareStackTypeEnum.USER.value,
+            SoftwareStackTypeEnum.INSPECTION.value,
+            SoftwareStackTypeEnum.ADVISED.value,
+            name="software_stack_type",
+            create_type=True,
         )
+    )
 
     performance_score = Column(Float, nullable=True)
     overall_score = Column(Float, nullable=True)
@@ -1125,9 +1123,7 @@ class HasSymbol(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    software_environment_id = Column(
-        Integer, ForeignKey("software_environment.id", ondelete="CASCADE")
-    )
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"))
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
@@ -1169,7 +1165,10 @@ class DetectedSymbol(Base, BaseExtension):
 
 
 class PythonPackageMetadata(Base, BaseExtension):
-    """Metadata extracted for a Python Package."""
+    """Metadata extracted for a Python Package.
+    
+    Source: https://packaging.python.org/specifications/core-metadata/
+    """
 
     __tablename__ = "python_package_metadata"
 
@@ -1196,72 +1195,73 @@ class PythonPackageMetadata(Base, BaseExtension):
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
 
-    classifiers = relationship("HasClassifier", back_populates="python_package_metadata")
-    platforms = relationship("HasPlatform", back_populates="python_package_metadata")
+    # multi-part kyes metadata
+    classifiers = relationship("HasMetadataClassifier", back_populates="python_package_metadata")
+    platforms = relationship("HasMetadataPlatform", back_populates="python_package_metadata")
+    supported_platforms = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata")
+    requires_dists = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata")
+    requires_externals = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata")
+    # project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
+    # provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
+    # # rarely used fields
+    # provides_dists = relationship("HasMetadataProvidesDist", back_populates="python_package_metadata")
+    # obsoletes_dists = relationship("HasMetadataObsoletesDist", back_populates="python_package_metadata")
 
 
-class HasClassifier(Base, BaseExtension):
-    """The given Python package has the given classifier in the metadata."""
+class HasMetadataClassifier(Base, BaseExtension):
+    """The Python package has the given classifier in the metadata."""
 
-    __tablename__ = "has_classifier"
+    __tablename__ = "has_metadata_classifier"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
-        Integer,
-        ForeignKey("python_package_metadata.id", ondelete="CASCADE"),
-        primary_key=True
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
     )
-    python_package_classifier_id = Column(
-        Integer,
-        ForeignKey("python_package_classifier.id", ondelete="CASCADE"),
-        primary_key=True
+    python_package_metadata_classifier_id = Column(
+        Integer, ForeignKey("python_package_metadata_classifier.id", ondelete="CASCADE"), primary_key=True
     )
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="classifiers")
-    python_package_classifiers = relationship("PythonPackageClassifier", back_populates="python_packages_metadata")
+    python_package_metadata_classifiers = relationship("PythonPackageMetadataClassifier", back_populates="python_packages_metadata")
 
 
-class PythonPackageClassifier(Base, BaseExtension):
+class PythonPackageMetadataClassifier(Base, BaseExtension):
     """Classification value (part of metadata) for the Python Package."""
 
-    __tablename__ = "python_package_classifier"
+    __tablename__ = "python_package_metadata_classifier"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     classifier = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasClassifier", back_populates="python_package_classifiers")
+    python_packages_metadata = relationship("HasMetadataClassifier", back_populates="python_package_metadata_classifiers")
 
 
-class HasPlatform(Base, BaseExtension):
-    """The given Python package has the given platform in the metadata."""
+class HasMetadataPlatform(Base, BaseExtension):
+    """The Python package has the given platform in the metadata."""
 
-    __tablename__ = "has_platform"
+    __tablename__ = "has_metadata_platform"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
-        Integer,
-        ForeignKey("python_package_metadata.id", ondelete="CASCADE"),
-        primary_key=True
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
     )
-    python_package_classifier_id = Column(
-        Integer,
-        ForeignKey("python_package_platform.id", ondelete="CASCADE"),
-        primary_key=True
+    python_package_metadata_platform_id = Column(
+        Integer, ForeignKey("python_package_metadata_platform.id", ondelete="CASCADE"), primary_key=True
     )
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="platforms")
-    python_package_platforms = relationship("PythonPackagePlatform", back_populates="python_packages_metadata")
+    python_package_metadata_platforms = relationship("PythonPackageMetadataPlatform", back_populates="python_packages_metadata")
 
 
-class PythonPackagePlatform(Base, BaseExtension):
+class PythonPackageMetadataPlatform(Base, BaseExtension):
     """Platform (part of metadata) describing an operating system supported by the Python Package."""
 
-    __tablename__ = "python_package_platform"
+    __tablename__ = "python_package_metadata_platform"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     platform = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasPlatform", back_populates="python_package_platforms")
+    python_packages_metadata = relationship("HasMetadataPlatform", back_populates="python_package_metadata_platforms")
 
 
 ALL_MAIN_MODELS = frozenset(
@@ -1285,9 +1285,10 @@ ALL_MAIN_MODELS = frozenset(
         PythonArtifact,
         PythonFileDigest,
         PythonInterpreter,
-        PythonPackageClassifier,
         PythonPackageIndex,
         PythonPackageMetadata,
+        PythonPackageMetadataClassifier,
+        PythonPackageMetadataPlatform,
         PythonPackageRequirement,
         PythonPackageVersion,
         PythonPackageVersionEntity,
@@ -1313,7 +1314,8 @@ ALL_RELATION_MODELS = frozenset(
         FoundPythonInterpreter,
         FoundRPM,
         HasArtifact,
-        HasClassifier,
+        HasMetadataClassifier,
+        HasMetadataPlatform,
         HasSymbol,
         HasVulnerability,
         Identified,

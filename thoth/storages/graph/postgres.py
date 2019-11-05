@@ -4677,6 +4677,48 @@ class GraphDatabase(SQLBase):
 
         return python_package_index
 
+    def _create_multi_part_keys_metadata(
+        self,
+        importlib_metadata: Dict[str, Any],
+        package_metadata: PythonPackageMetadata
+    ) -> Dict[str, Any]:
+        """Syncs multi-part keys from Python Package Metadata."""
+        for classifier in importlib_metadata.pop("Classifier", []):
+            python_package_classifier, _ = PythonPackageClassifier.get_or_create(
+                self._session,
+                classifier=classifier,
+            )
+            HasClassifier.get_or_create(
+                self._session,
+                python_package_classifier_id=python_package_classifier.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for platform in importlib_metadata.pop("Platform", []):
+            python_package_platform, _ = PythonPackagePlatform.get_or_create(
+                self._session,
+                platform=platform,
+            )
+            HasPlatform.get_or_create(
+                self._session,
+                python_package_platform_id=python_package_platform.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for supported_platform in importlib_metadata.pop("Supported-Platform", []):
+            python_package_supported_platform, _ = PythonPackageSupportedPlatform.get_or_create(
+                self._session,
+                supported_platform=supported_platform,
+            )
+            HasSupportedPlatform.get_or_create(
+                self._session,
+                python_package_supported_platform_id=python_package_supported_platform.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        return importlib_metadata
+
+
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)
@@ -4738,33 +4780,11 @@ class GraphDatabase(SQLBase):
                         description_content_type=importlib_metadata.pop("Description-Content-Type", None)
                     )
 
-                    # Metadata keys that are arrays
-
-                    if importlib_metadata.get("Classifier", None):
-                        for classifier in importlib_metadata["Classifier"]:
-                            python_package_classifier, _ = PythonPackageClassifier.get_or_create(
-                                self._session,
-                                classifier=classifier,
-                            )
-                            HasClassifier.get_or_create(
-                                self._session,
-                                python_package_classifier_id=python_package_classifier.id,
-                                python_package_metadata_id=package_metadata.id,
-                            )
-                        importlib_metadata.pop("Classifier", None)
-
-                    if importlib_metadata.get("Platform", None):
-                        for platform in importlib_metadata["Platform"]:
-                            python_package_platform, _ = PythonPackagePlatform.get_or_create(
-                                self._session,
-                                platform=platform,
-                            )
-                            HasPlatform.get_or_create(
-                                self._session,
-                                python_package_platform_id=python_package_platform.id,
-                                python_package_metadata_id=package_metadata.id,
-                            )
-                        importlib_metadata.pop("Platform", None)
+                    # Sync Metadata keys that are arrays
+                    importlib_metadata = self._create_multi_part_keys_metadata(
+                        importlib_metadata=importlib_metadata,
+                        package_metadata=package_metadata,
+                    )
 
                     if importlib_metadata:
                         # There can be raised PythonPackageMetadataAttributeMissing once all metadata gathered.
