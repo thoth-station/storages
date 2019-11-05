@@ -3687,3 +3687,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.10.4 to 1.10.5
 * Update the schema
 * Sync container image size
+
+## Release 0.19.16 (2019-11-05T20:28:30)
+* Cache some of the query results
+* :pushpin: Automatic update of dependency python-dateutil from 2.8.1 to 2.8.0
+* :pushpin: Automatic update of dependency boto3 from 1.10.8 to 1.10.9
+* Fix query to CVE for a given python package version entity
+* Graph database cache has been removed
+* Sync documents from a local directory if requested
