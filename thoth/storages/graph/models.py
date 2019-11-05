@@ -1201,7 +1201,7 @@ class PythonPackageMetadata(Base, BaseExtension):
     supported_platforms = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata")
     requires_dists = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata")
     requires_externals = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata")
-    # project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
+    project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
     # provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
     # # rarely used fields
     # provides_dists = relationship("HasMetadataProvidesDist", back_populates="python_package_metadata")
@@ -1341,7 +1341,7 @@ class HasMetadataRequiresExternal(Base, BaseExtension):
 
 
 class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
-    """Dependency field (part of metadata) in the system that the distrbution (Python Package) is to be used.
+    """Dependency field (part of metadata) in the system that the distribution (Python package) is to be used.
 
     This field is intended to serve as a hint to downstream project maintainers,
     and has no semantics which are meaningful to the distutils distribution.
@@ -1353,6 +1353,34 @@ class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
     dependency = Column(String(256), nullable=True)
 
     python_packages_metadata = relationship("HasMetadataRequiresExternal", back_populates="python_package_requires_externals")
+
+
+class HasMetadataProjectUrl(Base, BaseExtension):
+    """The Python package has the given project URL in the metadata."""
+
+    __tablename__ = "has_metadata_project_url"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_project_url_id = Column(
+        Integer, ForeignKey("python_package_metadata_project_url.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="project_urls")
+    python_package_project_urls = relationship("PythonPackageMetadataProjectUrl", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataProjectUrl(Base, BaseExtension):
+    """Browsable URL field (part of metadata) for the project of the Python Package and a label for it, separated by a comma."""
+
+    __tablename__ = "python_package_metadata_project_url"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_url = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataProjectUrl", back_populates="python_package_project_urls")
 
 
 ALL_MAIN_MODELS = frozenset(
@@ -1380,6 +1408,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageMetadata,
         PythonPackageMetadataClassifier,
         PythonPackageMetadataPlatform,
+        PythonPackageMetadataProjectUrl,
         PythonPackageMetadataRequiresDist,
         PythonPackageMetadataRequiresExternal,
         PythonPackageMetadataSupportedPlatform,
@@ -1410,6 +1439,7 @@ ALL_RELATION_MODELS = frozenset(
         HasArtifact,
         HasMetadataClassifier,
         HasMetadataPlatform,
+        HasMetadataProjectUrl,
         HasMetadataRequiresDist,
         HasMetadataRequiresExternal,
         HasMetadataSupportedPlatform,
