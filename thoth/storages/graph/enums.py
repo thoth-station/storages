@@ -54,3 +54,11 @@ class RequirementsFormatEnum(Enum):
     """Class for the requirements format."""
 
     PIPENV = "PIPENV"
+
+class MetadataDistutilsTypeEnum(Enum):
+    """Class for the requirements format."""
+
+    REQUIRED = "REQUIRED"
+    # rarely used fields
+    PROVIDED = "PROVIDED"
+    OBSOLETE = "OBSOLETE"

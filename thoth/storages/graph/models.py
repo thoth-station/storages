@@ -39,6 +39,8 @@ from .enums import SoftwareStackTypeEnum
 from .enums import RecommendationTypeEnum
 from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
+from .enums import MetadataDistutilsTypeEnum
+
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(
@@ -1199,13 +1201,11 @@ class PythonPackageMetadata(Base, BaseExtension):
     classifiers = relationship("HasMetadataClassifier", back_populates="python_package_metadata")
     platforms = relationship("HasMetadataPlatform", back_populates="python_package_metadata")
     supported_platforms = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata")
-    requires_dists = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata")
     requires_externals = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata")
     project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
     provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
-    # # rarely used fields
-    # provides_dists = relationship("HasMetadataProvidesDist", back_populates="python_package_metadata")
-    # obsoletes_dists = relationship("HasMetadataObsoletesDist", back_populates="python_package_metadata")
+    # distutils (REQUIRED, PROVIDED, OBSOLETE)
+    distutils = relationship("HasMetadataDistutils", back_populates="python_package_metadata")
 
 
 class HasMetadataClassifier(Base, BaseExtension):
@@ -1295,32 +1295,32 @@ class PythonPackageMetadataSupportedPlatform(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata_supported_platforms")
 
 
-class HasMetadataRequiresDist(Base, BaseExtension):
-    """The Python package has the given required distutils in the metadata."""
+# class HasMetadataRequiresDist(Base, BaseExtension):
+#     """The Python package has the given required distutils in the metadata."""
 
-    __tablename__ = "has_metadata_requires_dist"
+#     __tablename__ = "has_metadata_requires_dist"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+#     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    python_package_metadata_id = Column(
-        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
-    )
-    python_package_metadata_requires_dist_id = Column(
-        Integer, ForeignKey("python_package_metadata_requires_dist.id", ondelete="CASCADE"), primary_key=True
-    )
-    python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_dists")
-    python_package_metadata_requires_dists = relationship("PythonPackageMetadataRequiresDist", back_populates="python_packages_metadata")
+#     python_package_metadata_id = Column(
+#         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata_requires_dist_id = Column(
+#         Integer, ForeignKey("python_package_metadata_requires_dist.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_dists")
+#     python_package_metadata_requires_dists = relationship("PythonPackageMetadataRequiresDist", back_populates="python_packages_metadata")
 
 
-class PythonPackageMetadataRequiresDist(Base, BaseExtension):
-    """Distutils project field (part of metadata) required by the Python Package."""
+# class PythonPackageMetadataRequiresDist(Base, BaseExtension):
+#     """Distutils (part of metadata) required by the Python Package."""
 
-    __tablename__ = "python_package_metadata_requires_dist"
+#     __tablename__ = "python_package_metadata_requires_dist"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    distutils = Column(String(256), nullable=True)
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     distutils = Column(String(256), nullable=True)
 
-    python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata_requires_dists")
+#     python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_metadata_requires_dists")
 
 
 class HasMetadataRequiresExternal(Base, BaseExtension):
@@ -1413,6 +1413,111 @@ class PythonPackageMetadataProvidesExtra(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata_provides_extras")
 
 
+# class HasMetadataProvidesDist(Base, BaseExtension):
+#     """The Python package has the given distutils in the metadata."""
+
+#     __tablename__ = "has_metadata_provides_dist"
+
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+
+#     python_package_metadata_id = Column(
+#         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata_provides_dist_id = Column(
+#         Integer, ForeignKey("python_package_metadata_provides_dist.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata = relationship("PythonPackageMetadata", back_populates="provides_dists")
+#     python_package_metadata_provides_dists = relationship("PythonPackageMetadataProvidesDist", back_populates="python_packages_metadata")
+
+
+# class PythonPackageMetadataProvidesDist(Base, BaseExtension):
+#     """Distutils (part of metadata) contained the Python Package."""
+
+#     __tablename__ = "python_package_metadata_provides_dist"
+
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     distutils = Column(String(256), nullable=True)
+
+#     python_packages_metadata = relationship("HasMetadataProvidesDist", back_populates="python_package_metadata_provides_dists")
+
+
+# class HasMetadataObsoletesDist(Base, BaseExtension):
+#     """The Python package has the given distutils in the metadata."""
+
+#     __tablename__ = "has_metadata_obsoletes_dist"
+
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+
+#     python_package_metadata_id = Column(
+#         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata_obsoletes_dist_id = Column(
+#         Integer, ForeignKey("python_package_metadata_obsoletes_dist.id", ondelete="CASCADE"), primary_key=True
+#     )
+#     python_package_metadata = relationship("PythonPackageMetadata", back_populates="obsoletes_dists")
+#     python_package_metadata_obsolete_dists = relationship("PythonPackageMetadataObsoletesDist", back_populates="python_packages_metadata")
+
+
+# class PythonPackageMetadataObsoletesDist(Base, BaseExtension):
+#     """Distutils (part of metadata) that the distribution (Python package) renders obsolete.
+
+#     This means that the two projects should not be installed at the same time.
+#     """
+
+#     __tablename__ = "python_package_metadata_obsoletes_dist"
+
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     distutils = Column(String(256), nullable=True)
+
+#     python_packages_metadata = relationship("HasMetadataObsoletesDist", back_populates="python_package_metadata_obsolete_dists")
+
+
+class HasMetadataDistutils(Base, BaseExtension):
+    """The Python package has the given distutils in the metadata."""
+
+    __tablename__ = "has_metadata_obsoletes_distutils"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_distutils_id = Column(
+        Integer, ForeignKey("python_package_metadata_distutils.id", ondelete="CASCADE"),
+    )
+
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="distutils")
+    python_package_metadata_distutils = relationship("PythonPackageMetadataDistutils", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataDistutils(Base, BaseExtension):
+    """Distutils (part of metadata).
+
+    REQUIRED: it means that the distribution (Python package) requires it.
+
+    PROVIDED: it means that the distribution (Python package) has it.
+
+    OBSOLETE: it means that the distribution (Python package) renders obsolete.
+    This means that the two projects should not be installed at the same time.
+    """
+
+    __tablename__ = "python_package_metadata_distutils"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    distutils = Column(String(256), nullable=True)
+    distutils_type = Column(
+        ENUM(
+            MetadataDistutilsTypeEnum.REQUIRED.value,
+            MetadataDistutilsTypeEnum.PROVIDED.value,
+            MetadataDistutilsTypeEnum.OBSOLETE.value,
+            name="distutils_type",
+            create_type=True,
+        )
+    )
+
+    python_packages_metadata = relationship("HasMetadataDistutils", back_populates="python_package_metadata_distutils")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1437,10 +1542,10 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageIndex,
         PythonPackageMetadata,
         PythonPackageMetadataClassifier,
+        PythonPackageMetadataDistutils,
         PythonPackageMetadataPlatform,
         PythonPackageMetadataProjectUrl,
         PythonPackageMetadataProvidesExtra,
-        PythonPackageMetadataRequiresDist,
         PythonPackageMetadataRequiresExternal,
         PythonPackageMetadataSupportedPlatform,
         PythonPackageRequirement,
@@ -1469,10 +1574,10 @@ ALL_RELATION_MODELS = frozenset(
         FoundRPM,
         HasArtifact,
         HasMetadataClassifier,
+        HasMetadataDistutils,
         HasMetadataPlatform,
         HasMetadataProjectUrl,
         HasMetadataProvidesExtra,
-        HasMetadataRequiresDist,
         HasMetadataRequiresExternal,
         HasMetadataSupportedPlatform,
         HasSymbol,
