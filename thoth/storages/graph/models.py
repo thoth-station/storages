@@ -1323,6 +1323,38 @@ class PythonPackageMetadataRequiresDist(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataRequiresDist", back_populates="python_package_requires_dists")
 
 
+class HasMetadataRequiresExternal(Base, BaseExtension):
+    """The Python package has the given dependency in the metadata."""
+
+    __tablename__ = "has_metadata_requires_external"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_requires_external_id = Column(
+        Integer, ForeignKey("python_package_metadata_requires_external.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_externals")
+    python_package_requires_externals = relationship("PythonPackageMetadataRequiresExternal", back_populates="python_packages_metadata")
+
+
+class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
+    """Dependency field (part of metadata) in the system that the distrbution (Python Package) is to be used.
+
+    This field is intended to serve as a hint to downstream project maintainers,
+    and has no semantics which are meaningful to the distutils distribution.
+    """
+
+    __tablename__ = "python_package_metadata_requires_external"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dependency = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataRequiresExternal", back_populates="python_package_requires_externals")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1349,6 +1381,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageMetadataClassifier,
         PythonPackageMetadataPlatform,
         PythonPackageMetadataRequiresDist,
+        PythonPackageMetadataRequiresExternal,
         PythonPackageMetadataSupportedPlatform,
         PythonPackageRequirement,
         PythonPackageVersion,
@@ -1378,6 +1411,7 @@ ALL_RELATION_MODELS = frozenset(
         HasMetadataClassifier,
         HasMetadataPlatform,
         HasMetadataRequiresDist,
+        HasMetadataRequiresExternal,
         HasMetadataSupportedPlatform,
         HasSymbol,
         HasVulnerability,
