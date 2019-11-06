@@ -3695,3 +3695,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix query to CVE for a given python package version entity
 * Graph database cache has been removed
 * Sync documents from a local directory if requested
+
+## Release 0.19.17 (2019-11-06T16:13:41)
+* Minor changes
+* Added MetadataDistutils, updated sync logic, schema docs, Tested syncs
+
