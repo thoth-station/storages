@@ -66,7 +66,7 @@ class ResultBaseTest(StorageBaseTest):
         assert adapter.store_document(document) == document_id
 
     def test_assertion_error(self):
-        """Test assertion error if a developer does not provide RESULT_TYPE."""
+        """Test assertion error if a developer RESULT_TYPE is empty."""
         with pytest.raises(AssertionError):
             ResultStorageBase(deployment_name=_DEPLOYMENT_NAME,prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
