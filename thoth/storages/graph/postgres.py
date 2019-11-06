@@ -52,57 +52,74 @@ from thoth.common.helpers import format_datetime
 from thoth.common.helpers import cwd
 from thoth.common import OpenShift
 
-from .models import PythonPackageVersion
-from .models import SoftwareEnvironment
-from .models import PythonPackageIndex
-from .models import PythonArtifact
-from .models import Investigated
-from .models import DependencyMonkeyRun
 from .models import AdviserRun
+from .models import CVE
+from .models import DebDependency
+from .models import DebPackageVersion
+from .models import DependencyMonkeyRun
+from .models import EcosystemSolver
+from .models import ExternalHardwareInformation
+from .models import ExternalPythonRequirementsLock
+from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
-from .models import HasArtifact
-from .models import Solved
-from .models import PythonSoftwareStack
+from .models import InspectionRun
+from .models import PackageAnalyzerRun
+from .models import PackageExtractRun
+from .models import ProvenanceCheckerRun
+from .models import PythonArtifact
+from .models import PythonFileDigest
+from .models import PythonInterpreter
+from .models import PythonPackageIndex
+from .models import PythonPackageMetadata
+from .models import PythonPackageMetadataClassifier
+from .models import PythonPackageMetadataDistutils
+from .models import PythonPackageMetadataPlatform
+from .models import PythonPackageMetadataProjectUrl
+from .models import PythonPackageMetadataProvidesExtra
+from .models import PythonPackageMetadataRequiresExternal
+from .models import PythonPackageMetadataSupportedPlatform
+from .models import PythonPackageRequirement
+from .models import PythonPackageVersion
+from .models import PythonPackageVersionEntity
 from .models import PythonRequirements
 from .models import PythonRequirementsLock
-from .models import DependsOn
-from .models import PythonPackageVersionEntity
-from .models import HasVulnerability
-from .models import PackageExtractRun
-from .models import PackageAnalyzerRun
-from .models import ProvenanceCheckerRun
-from .models import InspectionRun
-from .models import EcosystemSolver
-from .models import PythonPackageRequirement
-from .models import PythonDependencyMonkeyRequirements
-from .models import RPMRequirement
+from .models import PythonSoftwareStack
 from .models import RPMPackageVersion
-from .models import DebReplaces
-from .models import DebPackageVersion
-from .models import FoundDeb
-from .models import DebDependency
+from .models import RPMRequirement
+from .models import SoftwareEnvironment
+from .models import VersionedSymbol
+from .models import ALL_MAIN_MODELS
+
+from .models import Advised
 from .models import DebDepends
 from .models import DebPreDepends
-from .models import RPMRequires
-from .models import Identified
-from .models import PythonFileDigest
+from .models import DebReplaces
+from .models import DependsOn
+from .models import DetectedSymbol
+from .models import FoundDeb
 from .models import FoundPythonFile
-from .models import PythonInterpreter
 from .models import FoundPythonInterpreter
 from .models import FoundRPM
-from .models import Advised
-from .models import VersionedSymbol
-from .models import RequiresSymbol
-from .models import IncludedFile
-from .models import InvestigatedFile
+from .models import HasArtifact
+from .models import HasMetadataClassifier
+from .models import HasMetadataDistutils
+from .models import HasMetadataPlatform
+from .models import HasMetadataProjectUrl
+from .models import HasMetadataProvidesExtra
+from .models import HasMetadataRequiresExternal
+from .models import HasMetadataSupportedPlatform
 from .models import HasSymbol
-from .models import DetectedSymbol
-from .models import CVE
-from .models import ExternalHardwareInformation
-from .models import ExternalSoftwareEnvironment
-from .models import ExternalPythonRequirementsLock
-from .models import PythonPackageMetadata
-from .models import ALL_MAIN_MODELS, ALL_RELATION_MODELS
+from .models import HasVulnerability
+from .models import Identified
+from .models import IncludedFile
+from .models import Investigated
+from .models import InvestigatedFile
+from .models import PythonDependencyMonkeyRequirements
+from .models import RequiresSymbol
+from .models import RPMRequires
+from .models import Solved
+from .models import ALL_RELATION_MODELS
+
 from .models_performance import PiMatmul
 from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
 from collections import Counter
@@ -112,6 +129,7 @@ from .models_base import Base
 from .enums import EnvironmentTypeEnum
 from .enums import SoftwareStackTypeEnum
 from .enums import InspectionSyncStateEnum
+from .enums import MetadataDistutilsTypeEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -129,6 +147,7 @@ from ..exceptions import NotConnected
 from ..exceptions import AlreadyConnected
 from ..exceptions import DatabaseNotInitialized
 from ..exceptions import SolverNameParseError
+from ..exceptions import DistutilsKeyNotKnown
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -4678,6 +4697,107 @@ class GraphDatabase(SQLBase):
 
         return python_package_index
 
+    def _create_multi_part_keys_metadata(
+        self,
+        importlib_metadata: Dict[str, Any],
+        package_metadata: PythonPackageMetadata
+    ) -> Dict[str, Any]:
+        """Sync multi-part keys from Python Package Metadata."""
+        for classifier in importlib_metadata.pop("Classifier", []):
+            python_package_metadata_classifier, _ = PythonPackageMetadataClassifier.get_or_create(
+                self._session,
+                classifier=classifier,
+            )
+            HasMetadataClassifier.get_or_create(
+                self._session,
+                python_package_metadata_classifier_id=python_package_metadata_classifier.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for platform in importlib_metadata.pop("Platform", []):
+            python_package_metadata_platform, _ = PythonPackageMetadataPlatform.get_or_create(
+                self._session,
+                platform=platform,
+            )
+            HasMetadataPlatform.get_or_create(
+                self._session,
+                python_package_metadata_platform_id=python_package_metadata_platform.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for supported_platform in importlib_metadata.pop("Supported-Platform", []):
+            python_package_metadata_supported_platform, _ = PythonPackageMetadataSupportedPlatform.get_or_create(
+                self._session,
+                supported_platform=supported_platform,
+            )
+            HasMetadataSupportedPlatform.get_or_create(
+                self._session,
+                python_package_metadata_supported_platform_id=python_package_metadata_supported_platform.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for dependency in importlib_metadata.pop("Requires-External", []):
+            python_package_metadata_requires_external, _ = PythonPackageMetadataRequiresExternal.get_or_create(
+                self._session,
+                dependency=dependency,
+            )
+            HasMetadataRequiresExternal.get_or_create(
+                self._session,
+                python_package_metadata_requires_external_id=python_package_metadata_requires_external.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for project_url in importlib_metadata.pop("Project-URL", []):
+            python_package_metadata_project_url, _ = PythonPackageMetadataProjectUrl.get_or_create(
+                self._session,
+                project_url=project_url,
+            )
+            HasMetadataProjectUrl.get_or_create(
+                self._session,
+                python_package_metadata_project_url_id=python_package_metadata_project_url.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for project_url in importlib_metadata.pop("Provides-Extra", []):
+            python_package_metadata_provides_extra, _ = PythonPackageMetadataProvidesExtra.get_or_create(
+                self._session,
+                project_url=project_url,
+            )
+            HasMetadataProvidesExtra.get_or_create(
+                self._session,
+                python_package_metadata_provides_extra_id=python_package_metadata_provides_extra.id,
+                python_package_metadata_id=package_metadata.id,
+            )
+
+        for dist_key in ["Requires-Dist", "Provides-Dist", "Obsoletes-Dist"]:
+            if "Requires-Dist":
+                distutils_type = MetadataDistutilsTypeEnum.REQUIRED.value
+
+            elif "Provides-Dist":
+                distutils_type = MetadataDistutilsTypeEnum.PROVIDED.value
+
+            elif "Obsoletes-Dist":
+                distutils_type = MetadataDistutilsTypeEnum.OBSOLETE.value
+            else:
+                raise DistutilsKeyNotKnown(
+                        f"No distutils key registered for {dist_key!r} "
+                        )
+
+            for distutils in importlib_metadata.pop(dist_key, []):
+                python_package_metadata_distutils, _ = PythonPackageMetadataDistutils.get_or_create(
+                    self._session,
+                    distutils=distutils,
+                    distutils_type=distutils_type
+                )
+
+                HasMetadataDistutils.get_or_create(
+                    self._session,
+                    python_package_metadata_distutils_id=python_package_metadata_distutils.id,
+                    python_package_metadata_id=package_metadata.id,
+                )
+
+        return importlib_metadata
+
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)
@@ -4721,7 +4841,6 @@ class GraphDatabase(SQLBase):
                         self._session,
                         author=importlib_metadata.pop("Author", None),
                         author_email=importlib_metadata.pop("Author-email", None),
-                        classifier=importlib_metadata.pop("Classifier", None),
                         download_url=importlib_metadata.pop("Download-URL", None),
                         home_page=importlib_metadata.pop("Home-page", None),
                         keywords=importlib_metadata.pop("Keywords", None),
@@ -4732,15 +4851,18 @@ class GraphDatabase(SQLBase):
                         metadata_version=importlib_metadata.pop("Metadata-Version", None),
                         # package name
                         name=importlib_metadata.pop("Name", None),
-                        platform=importlib_metadata.pop("Platform", None),
-                        requires_dist=importlib_metadata.pop("Requires-Dist", None),
                         summary=importlib_metadata.pop("Summary", None),
                         # package version
                         version=importlib_metadata.pop("Version", None),
                         requires_python=importlib_metadata.pop("Requires-Python", None),
-                        description_content_type=importlib_metadata.pop("Description-Content-Type", None),
-                        project_url=importlib_metadata.pop("Project-URL", None),
-                        provides_extra=importlib_metadata.pop("Provides-Extra", None),
+                        description=importlib_metadata.pop("Description", None),
+                        description_content_type=importlib_metadata.pop("Description-Content-Type", None)
+                    )
+
+                    # Sync Metadata keys that are arrays
+                    importlib_metadata = self._create_multi_part_keys_metadata(
+                        importlib_metadata=importlib_metadata,
+                        package_metadata=package_metadata,
                     )
 
                     if importlib_metadata:

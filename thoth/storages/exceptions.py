@@ -76,3 +76,7 @@ class SolverNotRun(ThothStorageException):
 
 class PythonPackageMetadataAttributeMissing(ThothStorageException):
     """Raised if a Python Package metadata attribute is not included in the class attributes."""
+
+
+class DistutilsKeyNotKnown(ThothStorageException):
+    """Raised if a distutils in Python Package metadata is not known."""

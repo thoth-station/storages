@@ -39,14 +39,13 @@ from .enums import SoftwareStackTypeEnum
 from .enums import RecommendationTypeEnum
 from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
+from .enums import MetadataDistutilsTypeEnum
+
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(
-    EnvironmentTypeEnum.RUNTIME.value,
-    EnvironmentTypeEnum.BUILDTIME.value,
-    name="environment_type",
-    create_type=True
-    )
+    EnvironmentTypeEnum.RUNTIME.value, EnvironmentTypeEnum.BUILDTIME.value, name="environment_type", create_type=True
+)
 
 
 class PythonPackageVersion(Base, BaseExtension):
@@ -154,8 +153,8 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     python_package_versions = relationship("PythonPackageVersion", back_populates="entity")
     python_artifacts = relationship("HasArtifact", back_populates="python_package_version_entity")
     python_software_stacks = relationship(
-        "ExternalPythonRequirementsLock",
-        back_populates="python_package_version_entity")
+        "ExternalPythonRequirementsLock", back_populates="python_package_version_entity"
+    )
 
     __table_args__ = (
         UniqueConstraint("package_name", "package_version", "python_package_index_id"),
@@ -371,7 +370,7 @@ class CVE(Base, BaseExtension):
     cve_id = Column(String(256), nullable=True)
     version_range = Column(String(256), nullable=True)
 
-    python_package_versions = relationship("HasVulnerability", back_populates="cve")
+    python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
 
 class PackageAnalyzerRun(Base, BaseExtension):
@@ -482,8 +481,9 @@ class InspectionRun(Base, BaseExtension):
             InspectionSyncStateEnum.PENDING.value,
             InspectionSyncStateEnum.SYNCED.value,
             name="inspection_sync_state",
-            create_type=True
-        ), nullable=False
+            create_type=True,
+        ),
+        nullable=False,
     )
 
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
@@ -535,21 +535,19 @@ class AdviserRun(Base, BaseExtension):
     debug = Column(Boolean, nullable=False)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
-    recommendation_type = Column(ENUM(
-        RecommendationTypeEnum.STABLE.value,
-        RecommendationTypeEnum.TESTING.value,
-        RecommendationTypeEnum.LATEST.value,
-        name="recommendation_type",
-        create_type=True
+    recommendation_type = Column(
+        ENUM(
+            RecommendationTypeEnum.STABLE.value,
+            RecommendationTypeEnum.TESTING.value,
+            RecommendationTypeEnum.LATEST.value,
+            name="recommendation_type",
+            create_type=True,
         ),
-        nullable=False
+        nullable=False,
     )
-    requirements_format = Column(ENUM(
-        RequirementsFormatEnum.PIPENV.value,
-        name="requirements_format",
-        create_type=True),
-        nullable=False
-        )
+    requirements_format = Column(
+        ENUM(RequirementsFormatEnum.PIPENV.value, name="requirements_format", create_type=True), nullable=False
+    )
 
     # Duration in seconds.
     duration = Column(Integer, nullable=True)  # XXX: nullable for now.
@@ -921,7 +919,7 @@ class HasVulnerability(Base, BaseExtension):
     cve_id = Column(Integer, ForeignKey("cve.id", ondelete="CASCADE"), primary_key=True)
 
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
-    cve = relationship("CVE", back_populates="python_package_versions")
+    cve = relationship("CVE", back_populates="python_package_version_entities")
 
 
 class PythonSoftwareStack(Base, BaseExtension):
@@ -935,13 +933,15 @@ class PythonSoftwareStack(Base, BaseExtension):
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
-    software_stack_type = Column(ENUM(
-        SoftwareStackTypeEnum.USER.value,
-        SoftwareStackTypeEnum.INSPECTION.value,
-        SoftwareStackTypeEnum.ADVISED.value,
-        name="software_stack_type",
-        create_type=True)
+    software_stack_type = Column(
+        ENUM(
+            SoftwareStackTypeEnum.USER.value,
+            SoftwareStackTypeEnum.INSPECTION.value,
+            SoftwareStackTypeEnum.ADVISED.value,
+            name="software_stack_type",
+            create_type=True,
         )
+    )
 
     performance_score = Column(Float, nullable=True)
     overall_score = Column(Float, nullable=True)
@@ -1125,9 +1125,7 @@ class HasSymbol(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    software_environment_id = Column(
-        Integer, ForeignKey("software_environment.id", ondelete="CASCADE")
-    )
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"))
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
@@ -1169,7 +1167,10 @@ class DetectedSymbol(Base, BaseExtension):
 
 
 class PythonPackageMetadata(Base, BaseExtension):
-    """Metadata extracted for a Python Package."""
+    """Metadata extracted for a Python Package.
+
+    Source: https://packaging.python.org/specifications/core-metadata/
+    """
 
     __tablename__ = "python_package_metadata"
 
@@ -1177,7 +1178,6 @@ class PythonPackageMetadata(Base, BaseExtension):
 
     author = Column(String(256), nullable=True)
     author_email = Column(String(256), nullable=True)
-    classifier = Column(String(256), nullable=True)
     download_url = Column(String(256), nullable=True)
     home_page = Column(String(256), nullable=True)
     keywords = Column(String(256), nullable=True)
@@ -1188,17 +1188,272 @@ class PythonPackageMetadata(Base, BaseExtension):
     metadata_version = Column(String(256), nullable=True)
     # package name
     name = Column(String(256), nullable=True)
-    platform = Column(String(256), nullable=True)
-    requires_dist = Column(String(256), nullable=True)
     summary = Column(String(256), nullable=True)
     # package version
     version = Column(String(256), nullable=True)
     requires_python = Column(String(256), nullable=True)
+    description = Column(String(256), nullable=True)
     description_content_type = Column(String(256), nullable=True)
-    project_url = Column(String(256), nullable=True)
-    provides_extra = Column(String(256), nullable=True)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
+
+    # multi-part kyes metadata
+    classifiers = relationship("HasMetadataClassifier", back_populates="python_package_metadata")
+    platforms = relationship("HasMetadataPlatform", back_populates="python_package_metadata")
+    supported_platforms = relationship("HasMetadataSupportedPlatform", back_populates="python_package_metadata")
+    requires_externals = relationship("HasMetadataRequiresExternal", back_populates="python_package_metadata")
+    project_urls = relationship("HasMetadataProjectUrl", back_populates="python_package_metadata")
+    provides_extras = relationship("HasMetadataProvidesExtra", back_populates="python_package_metadata")
+    # distutils (REQUIRED, PROVIDED, OBSOLETE)
+    distutils = relationship("HasMetadataDistutils", back_populates="python_package_metadata")
+
+
+class HasMetadataClassifier(Base, BaseExtension):
+    """The Python package has the given classifier in the metadata."""
+
+    __tablename__ = "has_metadata_classifier"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_classifier_id = Column(
+        Integer, ForeignKey("python_package_metadata_classifier.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="classifiers")
+    python_package_metadata_classifiers = relationship(
+        "PythonPackageMetadataClassifier", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataClassifier(Base, BaseExtension):
+    """Classification value (part of metadata) for the Python Package."""
+
+    __tablename__ = "python_package_metadata_classifier"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    classifier = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship(
+        "HasMetadataClassifier", back_populates="python_package_metadata_classifiers"
+    )
+
+
+class HasMetadataPlatform(Base, BaseExtension):
+    """The Python package has the given platform in the metadata."""
+
+    __tablename__ = "has_metadata_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_platform_id = Column(
+        Integer, ForeignKey("python_package_metadata_platform.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="platforms")
+    python_package_metadata_platforms = relationship(
+        "PythonPackageMetadataPlatform", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataPlatform(Base, BaseExtension):
+    """Platform (part of metadata) describing an operating system supported by the Python Package."""
+
+    __tablename__ = "python_package_metadata_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    platform = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship("HasMetadataPlatform", back_populates="python_package_metadata_platforms")
+
+
+class HasMetadataSupportedPlatform(Base, BaseExtension):
+    """The Python package has the given supported platform in the metadata."""
+
+    __tablename__ = "has_metadata_supported_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_supported_platform_id = Column(
+        Integer, ForeignKey("python_package_metadata_supported_platform.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="supported_platforms")
+    python_package_metadata_supported_platforms = relationship(
+        "PythonPackageMetadataSupportedPlatform", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataSupportedPlatform(Base, BaseExtension):
+    """Supported-Platform field (part of metadata) used in binary distributions containing a PKG-INFO file.
+
+    It is used to specify the OS and CPU for which the binary distribution was compiled.
+    """
+
+    __tablename__ = "python_package_metadata_supported_platform"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    supported_platform = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship(
+        "HasMetadataSupportedPlatform", back_populates="python_package_metadata_supported_platforms"
+    )
+
+
+class HasMetadataRequiresExternal(Base, BaseExtension):
+    """The Python package has the given dependency in the metadata."""
+
+    __tablename__ = "has_metadata_requires_external"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_requires_external_id = Column(
+        Integer, ForeignKey("python_package_metadata_requires_external.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="requires_externals")
+    python_package_metadata_requires_externals = relationship(
+        "PythonPackageMetadataRequiresExternal", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
+    """Dependency field (part of metadata) in the system that the distribution (Python package) is to be used.
+
+    This field is intended to serve as a hint to downstream project maintainers,
+    and has no semantics which are meaningful to the distutils distribution.
+    """
+
+    __tablename__ = "python_package_metadata_requires_external"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dependency = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship(
+        "HasMetadataRequiresExternal", back_populates="python_package_metadata_requires_externals"
+    )
+
+
+class HasMetadataProjectUrl(Base, BaseExtension):
+    """The Python package has the given project URL in the metadata."""
+
+    __tablename__ = "has_metadata_project_url"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_project_url_id = Column(
+        Integer, ForeignKey("python_package_metadata_project_url.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="project_urls")
+    python_package_metadata_project_urls = relationship(
+        "PythonPackageMetadataProjectUrl", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataProjectUrl(Base, BaseExtension):
+    """Browsable URL (part of metadata) for the project of the Python Package and a label for it."""
+
+    __tablename__ = "python_package_metadata_project_url"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    project_url = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship(
+        "HasMetadataProjectUrl", back_populates="python_package_metadata_project_urls"
+    )
+
+
+class HasMetadataProvidesExtra(Base, BaseExtension):
+    """The Python package has the given optional feature in the metadata."""
+
+    __tablename__ = "has_metadata_provides_extra"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_provides_extra_id = Column(
+        Integer, ForeignKey("python_package_metadata_provides_extra.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="provides_extras")
+    python_package_metadata_provides_extras = relationship(
+        "PythonPackageMetadataProvidesExtra", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataProvidesExtra(Base, BaseExtension):
+    """Optional feature (part of metadata) for the Python Package.
+
+    May be used to make a dependency conditional on whether the optional feature has been requested.
+    """
+
+    __tablename__ = "python_package_metadata_provides_extra"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    optional_feature = Column(String(256), nullable=True)
+
+    python_packages_metadata = relationship(
+        "HasMetadataProvidesExtra", back_populates="python_package_metadata_provides_extras"
+    )
+
+
+class HasMetadataDistutils(Base, BaseExtension):
+    """The Python package has the given distutils in the metadata."""
+
+    __tablename__ = "has_metadata_distutils"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    python_package_metadata_id = Column(
+        Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_metadata_distutils_id = Column(
+        Integer, ForeignKey("python_package_metadata_distutils.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    python_package_metadata = relationship("PythonPackageMetadata", back_populates="distutils")
+    python_package_metadata_distutils = relationship(
+        "PythonPackageMetadataDistutils", back_populates="python_packages_metadata"
+    )
+
+
+class PythonPackageMetadataDistutils(Base, BaseExtension):
+    """Distutils (part of metadata).
+
+    REQUIRED: it means that the distribution (Python package) requires it.
+
+    PROVIDED: it means that the distribution (Python package) has it.
+
+    OBSOLETE: it means that the distribution (Python package) renders obsolete.
+    This means that the two projects should not be installed at the same time.
+    """
+
+    __tablename__ = "python_package_metadata_distutils"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    distutils = Column(String(256), nullable=True)
+    distutils_type = Column(
+        ENUM(
+            MetadataDistutilsTypeEnum.REQUIRED.value,
+            MetadataDistutilsTypeEnum.PROVIDED.value,
+            MetadataDistutilsTypeEnum.OBSOLETE.value,
+            name="distutils_type",
+            create_type=True,
+        )
+    )
+
+    python_packages_metadata = relationship("HasMetadataDistutils", back_populates="python_package_metadata_distutils")
 
 
 ALL_MAIN_MODELS = frozenset(
@@ -1207,8 +1462,6 @@ ALL_MAIN_MODELS = frozenset(
         CVE,
         DebDependency,
         DebPackageVersion,
-        DebPreDepends,
-        DebReplaces,
         DependencyMonkeyRun,
         EcosystemSolver,
         ExternalHardwareInformation,
@@ -1224,6 +1477,13 @@ ALL_MAIN_MODELS = frozenset(
         PythonInterpreter,
         PythonPackageIndex,
         PythonPackageMetadata,
+        PythonPackageMetadataClassifier,
+        PythonPackageMetadataDistutils,
+        PythonPackageMetadataPlatform,
+        PythonPackageMetadataProjectUrl,
+        PythonPackageMetadataProvidesExtra,
+        PythonPackageMetadataRequiresExternal,
+        PythonPackageMetadataSupportedPlatform,
         PythonPackageRequirement,
         PythonPackageVersion,
         PythonPackageVersionEntity,
@@ -1239,6 +1499,7 @@ ALL_MAIN_MODELS = frozenset(
 
 ALL_RELATION_MODELS = frozenset(
     (
+        Advised,
         DebDepends,
         DebPreDepends,
         DebReplaces,
@@ -1249,6 +1510,13 @@ ALL_RELATION_MODELS = frozenset(
         FoundPythonInterpreter,
         FoundRPM,
         HasArtifact,
+        HasMetadataClassifier,
+        HasMetadataDistutils,
+        HasMetadataPlatform,
+        HasMetadataProjectUrl,
+        HasMetadataProvidesExtra,
+        HasMetadataRequiresExternal,
+        HasMetadataSupportedPlatform,
         HasSymbol,
         HasVulnerability,
         Identified,
