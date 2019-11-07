@@ -3892,61 +3892,41 @@ class GraphDatabase(SQLBase):
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
         hardware = runtime_environment.get("hardware", {})
+        os = runtime_environment.get("operating_system", {})
+
         if is_external:
-            hardware_information, _ = ExternalHardwareInformation.get_or_create(
-                self._session,
-                cpu_vendor=hardware.get("cpu_vendor"),
-                cpu_model=hardware.get("cpu_model"),
-                cpu_cores=hardware.get("cpu_cores"),
-                cpu_model_name=hardware.get("cpu_model_name"),
-                cpu_family=hardware.get("cpu_family"),
-                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
-                gpu_model_name=hardware.get("gpu_model_name"),
-                gpu_vendor=hardware.get("gpu_vendor"),
-                gpu_cores=hardware.get("gpu_cores"),
-                gpu_memory_size=hardware.get("gpu_memory_size"),
-                ram_size=hardware.get("ram_size")
-            )
-
-            software_environment, _ = ExternalSoftwareEnvironment.get_or_create(
-                self._session,
-                environment_name=runtime_environment.get("environment_name"),
-                python_version=runtime_environment.get("python_version"),
-                image_name=None,
-                image_sha=None,
-                os_name=runtime_environment["operating_system"].get("name"),
-                os_version=runtime_environment["operating_system"].get("version"),
-                cuda_version=runtime_environment.get("cuda_version"),
-                environment_type=environment_type
-            )
-
+            hardware_information_type = ExternalHardwareInformation
+            software_environment_type = ExternalSoftwareEnvironment
         else:
-            hardware_information, _ = HardwareInformation.get_or_create(
-                self._session,
-                cpu_vendor=hardware.get("cpu_vendor"),
-                cpu_model=hardware.get("cpu_model"),
-                cpu_cores=hardware.get("cpu_cores"),
-                cpu_model_name=hardware.get("cpu_model_name"),
-                cpu_family=hardware.get("cpu_family"),
-                cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
-                gpu_model_name=hardware.get("gpu_model_name"),
-                gpu_vendor=hardware.get("gpu_vendor"),
-                gpu_cores=hardware.get("gpu_cores"),
-                gpu_memory_size=hardware.get("gpu_memory_size"),
-                ram_size=hardware.get("ram_size")
-            )
+            hardware_information_type = HardwareInformation
+            software_environment_type = SoftwareEnvironment
 
-            software_environment, _ = SoftwareEnvironment.get_or_create(
-                self._session,
-                environment_name=runtime_environment.get("environment_name"),
-                python_version=runtime_environment.get("python_version"),
-                image_name=None,
-                image_sha=None,
-                os_name=runtime_environment["operating_system"].get("name"),
-                os_version=runtime_environment["operating_system"].get("version"),
-                cuda_version=runtime_environment.get("cuda_version"),
-                environment_type=environment_type
-            )
+        hardware_information, _ = hardware_information_type.get_or_create(
+            self._session,
+            cpu_vendor=hardware.get("cpu_vendor"),
+            cpu_model=hardware.get("cpu_model"),
+            cpu_cores=hardware.get("cpu_cores"),
+            cpu_model_name=hardware.get("cpu_model_name"),
+            cpu_family=hardware.get("cpu_family"),
+            cpu_physical_cpus=hardware.get("cpu_physical_cpus"),
+            gpu_model_name=hardware.get("gpu_model_name"),
+            gpu_vendor=hardware.get("gpu_vendor"),
+            gpu_cores=hardware.get("gpu_cores"),
+            gpu_memory_size=hardware.get("gpu_memory_size"),
+            ram_size=hardware.get("ram_size")
+        )
+
+        software_environment, _ = software_environment_type.get_or_create(
+            self._session,
+            environment_name=runtime_environment.get("name"),
+            python_version=runtime_environment.get("python_version"),
+            image_name=None,
+            image_sha=None,
+            os_name=os.get("name"),
+            os_version=os.get("version"),
+            cuda_version=runtime_environment.get("cuda_version"),
+            environment_type=environment_type
+        )
 
         return hardware_information, software_environment
 
@@ -4134,18 +4114,7 @@ class GraphDatabase(SQLBase):
                 run_memory = run_memory / (1024 ** 3)
                 build_memory = build_memory / (1024 ** 3)
 
-                # TODO: Change Amun API to obtain consistent result as Adviser and Dependency Monkey
-                runtime_environment = {}
-                runtime_environment["cuda_version"] = None
-                runtime_environment["hardware"] = document["specification"]["run"]["requests"]["hardware"]
-                runtime_environment["name"] = None
-                runtime_environment["operating_system"] = {
-                    "name": document["job_log"]["os_release"]["id"],
-                    "version": document["job_log"]["os_release"]["version_id"]
-                }
-                runtime_environment["python_version"] = document["specification"]["python"]["requirements"]["requires"][
-                    "python_version"
-                    ]
+                runtime_environment = document["job_log"]["runtime_environment"]
 
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                     runtime_environment,
