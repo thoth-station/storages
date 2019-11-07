@@ -5076,7 +5076,7 @@ class GraphDatabase(SQLBase):
         parameters = document["result"]["parameters"]
         cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
         origin = (cli_arguments.get("metadata") or {}).get("origin")
-        runtime_environment = document["result"]["parameters"]["runtime_environment"]
+        runtime_environment = parameters["project"].get("runtime_environment")
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
@@ -5092,8 +5092,8 @@ class GraphDatabase(SQLBase):
                 # Input stack.
                 software_stack = self._create_python_software_stack(
                     software_stack_type=SoftwareStackTypeEnum.USER.value,
-                    requirements=document["result"]["input"].get("requirements"),
-                    requirements_lock=document["result"]["input"].get("requirements_locked"),
+                    requirements=parameters["project"].get("requirements"),
+                    requirements_lock=parameters["project"].get("requirements_locked"),
                     software_environment=external_run_software_environment,
                     performance_score=None,
                     overall_score=None,
@@ -5176,11 +5176,11 @@ class GraphDatabase(SQLBase):
 
         try:
             with self._session.begin(subtransactions=True):
-                user_input = document["result"]["input"]
+                parameters = document["result"]["parameters"]
                 software_stack = self._create_python_software_stack(
                     software_stack_type=SoftwareStackTypeEnum.USER.value,
-                    requirements=user_input.get("requirements"),
-                    requirements_lock=user_input.get("requirements_locked"),
+                    requirements=parameters["project"].get("requirements"),
+                    requirements_lock=parameters["project"].get("requirements_locked"),
                     software_environment=None,
                     performance_score=None,
                     overall_score=None,
@@ -5209,13 +5209,14 @@ class GraphDatabase(SQLBase):
         """Sync reports of dependency monkey runs."""
         try:
             with self._session.begin(subtransactions=True):
+                parameters = document["result"]["parameters"]
                 run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                    document["result"]["parameters"].get("runtime_environment", {}),
+                    parameters["project"].get("runtime_environment", {}),
                     environment_type=EnvironmentTypeEnum.RUNTIME.value,
                     is_external=False
                 )
                 build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
-                    document["result"]["parameters"].get("runtime_environment", {}),
+                    parameters["project"].get("runtime_environment", {}),
                     environment_type=EnvironmentTypeEnum.BUILDTIME.value,
                     is_external=False
                 )
@@ -5225,10 +5226,10 @@ class GraphDatabase(SQLBase):
                     datetime=document["metadata"]["datetime"],
                     dependency_monkey_name=document["metadata"]["analyzer"],
                     dependency_monkey_version=document["metadata"]["analyzer_version"],
-                    seed=document["result"]["parameters"].get("seed"),
-                    decision=document["result"]["parameters"].get("decision_type"),
-                    count=document["result"]["parameters"].get("count"),
-                    limit_latest_versions=document["result"]["parameters"].get("limit_latest_versions"),
+                    seed=parameters.get("seed"),
+                    decision=parameters.get("decision_type"),
+                    count=parameters.get("count"),
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
                     debug=document["metadata"]["arguments"]["thoth-adviser"]["verbose"],
                     dependency_monkey_error=document["result"]["error"],
                     duration=document["metadata"].get("duration"),
@@ -5239,7 +5240,7 @@ class GraphDatabase(SQLBase):
                 )
 
                 python_package_requirements = self._create_python_package_requirement(
-                    document["result"]["parameters"]["requirements"]
+                    parameters["project"].get("requirements")
                 )
                 for python_package_requirement in python_package_requirements:
                     PythonDependencyMonkeyRequirements.get_or_create(
