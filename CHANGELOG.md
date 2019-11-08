@@ -3700,3 +3700,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Minor changes
 * Added MetadataDistutils, updated sync logic, schema docs, Tested syncs
 
+
+## Release 0.19.18 (2019-11-08T16:26:18)
+* Correct attribute for metadata Provides-Extra
+* Fix bug in checking for dist key
+* :pushpin: Automatic update of dependency thoth-python from 0.6.5 to 0.7.1
+* :pushpin: Automatic update of dependency boto3 from 1.10.12 to 1.10.13
+
