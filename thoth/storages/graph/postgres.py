@@ -4733,10 +4733,10 @@ class GraphDatabase(SQLBase):
                 python_package_metadata_id=package_metadata.id,
             )
 
-        for project_url in importlib_metadata.pop("Provides-Extra", []):
+        for optional_feature in importlib_metadata.pop("Provides-Extra", []):
             python_package_metadata_provides_extra, _ = PythonPackageMetadataProvidesExtra.get_or_create(
                 self._session,
-                project_url=project_url,
+                optional_feature=optional_feature,
             )
             HasMetadataProvidesExtra.get_or_create(
                 self._session,
