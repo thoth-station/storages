@@ -4744,14 +4744,12 @@ class GraphDatabase(SQLBase):
                 python_package_metadata_id=package_metadata.id,
             )
 
-        for dist_key in ["Requires-Dist", "Provides-Dist", "Obsoletes-Dist"]:
-            if "Requires-Dist":
+        for dist_key in ("Requires-Dist", "Provides-Dist", "Obsoletes-Dist"):
+            if dist_key == "Requires-Dist":
                 distutils_type = MetadataDistutilsTypeEnum.REQUIRED.value
-
-            elif "Provides-Dist":
+            elif dist_key == "Provides-Dist":
                 distutils_type = MetadataDistutilsTypeEnum.PROVIDED.value
-
-            elif "Obsoletes-Dist":
+            elif dist_key == "Obsoletes-Dist":
                 distutils_type = MetadataDistutilsTypeEnum.OBSOLETE.value
             else:
                 raise DistutilsKeyNotKnown(
