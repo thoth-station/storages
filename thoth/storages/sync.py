@@ -506,7 +506,13 @@ def sync_documents(
                         is_local=is_local,
                     )
                 else:
-                    stats_change = handler(to_sync_document_id, force=force, graceful=graceful, graph=graph)
+                    stats_change = handler(
+                        to_sync_document_id,
+                        force=force,
+                        graceful=graceful,
+                        graph=graph,
+                        is_local=is_local
+                    )
 
                 stats[document_prefix] = tuple(map(sum, zip(stats[document_prefix], stats_change)))
                 if document_id is not None:
