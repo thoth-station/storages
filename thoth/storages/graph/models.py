@@ -1180,7 +1180,7 @@ class PythonPackageMetadata(Base, BaseExtension):
     author_email = Column(String(256), nullable=True)
     download_url = Column(String(256), nullable=True)
     home_page = Column(String(256), nullable=True)
-    keywords = Column(String(256), nullable=True)
+    keywords = Column(String(512), nullable=True)
     # package licence
     license = Column(String(256), nullable=True)
     maintainer = Column(String(256), nullable=True)
