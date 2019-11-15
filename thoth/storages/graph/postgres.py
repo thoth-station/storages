@@ -190,6 +190,19 @@ class GraphDatabase(SQLBase):
         # We do not use connection pool, but directly talk to the database.
         self._engine = create_engine(self.construct_connection_string(), echo=echo, pool_pre_ping=True)
         self._session = sessionmaker(bind=self._engine)()
+        try:
+            self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
+            self._session = sessionmaker(bind=self._engine)()
+        except Exception:
+            # Drop engine and session in case of any connection issues so is_connected behaves correctly.
+            if self._engine:
+                try:
+                    self._engine.dispose()
+                except Exception:
+                    pass
+            self._engine = None
+            self._session = None
+            raise
 
         try:
             if not self.is_schema_up2date():
