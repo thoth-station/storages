@@ -248,7 +248,7 @@ class GraphDatabase(SQLBase):
 
             _LOGGER.debug("Current library revision heads: %r", revision_heads)
             _LOGGER.debug("Current database heads: %r", database_heads)
-            return revision_heads == revision_heads
+            return database_heads == revision_heads
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
