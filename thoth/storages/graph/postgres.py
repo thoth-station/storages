@@ -5041,7 +5041,7 @@ class GraphDatabase(SQLBase):
 
             result = result + query.all()
 
-        return list(set(result))
+        return list(set([r[0] for r in result]))
 
     def stats(self) -> dict:
         """Get statistics for this adapter."""
