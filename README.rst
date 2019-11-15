@@ -249,6 +249,17 @@ prerequisite for this is to have access to the running container (edit rights).
   password: <type password "postgres" here>
   <logs will show up>
 
+You can ignore error messages related to an owner error like this:
+
+.. code-block:: console
+
+  STATEMENT:  ALTER TABLE public.python_software_stack OWNER TO thoth;
+  ERROR:  role "thoth" does not exist
+
+The PostgreSQL container uses user "postgres" by default which is different from the one
+run in the cluster ("thoth"). The role assignment will simply not be created but data
+will be available.
+
 Syncing results of jobs run in the cluster
 ==========================================
 
