@@ -944,12 +944,8 @@ class GraphDatabase(SQLBase):
     ) -> Query:
         """Construct solved query to retrive unsolved packages, the query is not executed."""
         query = (
-            self._session.query(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version
-                )
-            .join(PythonPackageIndex)
-            )
+            self._session.query(PythonPackageVersion)
+            .join(PythonPackageIndex))
 
         if index_url is not None:
             query = query.filter(PythonPackageIndex.url == index_url)
@@ -972,105 +968,6 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageVersion.python_version == python_version)
 
         return query
-
-    def _get_unsolved_python_package_versions_count_edge_cases(
-        self,
-        package_name: str = None,
-        package_version: str = None,
-        *,
-        distinct: bool = False,
-        count: int = DEFAULT_COUNT,
-        is_count: bool = False,
-    ) -> List[Tuple[str, Optional[str], Optional[str]]]:
-        """Retrieve unsolved packages in edge cases.
-
-        Edge cases:
-        CASE 1: ('package_name', None, 'index_url')
-
-        CASE 2: ('package_name', 'package_version', None)
-
-        CASE 3: ('package_name', None, None)
-        """
-        case_2 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.package_version.isnot(None),
-                PythonPackageVersionEntity.python_package_index_id.is_(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id,
-                func.count(
-                    tuple_(
-                        PythonPackageVersionEntity.package_name,
-                        PythonPackageVersionEntity.package_version,
-                        PythonPackageVersionEntity.python_package_index_id)
-                        ))
-            .group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version is not None:
-            package_version = self.normalize_python_package_version(package_version)
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        if distinct:
-            case_2 = case_2.distinct()
-
-        if is_count:
-            result_2 = case_2.count()
-        else:
-            case_2 = case_2.limit(count)
-            result_2 = case_2.all()
-
-        case_3 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.package_version.is_(None),
-                PythonPackageVersionEntity.python_package_index_id.is_(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id,
-                func.count(
-                    tuple_(
-                        PythonPackageVersionEntity.package_name,
-                        PythonPackageVersionEntity.package_version,
-                        PythonPackageVersionEntity.python_package_index_id)
-                        ))
-            .group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version is not None:
-            package_version = self.normalize_python_package_version(package_version)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        if distinct:
-            case_3 = case_3.distinct()
-
-        if is_count:
-            result_3 = case_3.count()
-        else:
-            if len(result_2) < count:
-                case_3 = case_3.limit(count - len(result_2))
-                result_3 = case_3.all()
-            else:
-                return result_2
-
-        return result_2 + result_3
 
     def get_unsolved_python_packages_all(
         self,
@@ -1096,18 +993,16 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
         query = (
             self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
-            )
+            ).join(PythonPackageIndex)
             .with_entities(PythonPackageVersionEntity.package_name, PythonPackageIndex.url)
         )
 
@@ -1117,13 +1012,6 @@ class GraphDatabase(SQLBase):
             query = query.distinct()
 
         result = query.all()
-
-        if len(result) < count:
-
-            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
-
-            for unsolved_tuple in unsolved:
-                result.append((unsolved_tuple[0], unsolved_tuple[1]))
 
         return result
 
@@ -1141,19 +1029,17 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
 
         query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
+            self._session.query(PythonPackageVersionEntity.id)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
-            )
+            ).join(PythonPackageIndex)
             .with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1186,11 +1072,7 @@ class GraphDatabase(SQLBase):
 
         result = query.count()
 
-        unsolved = self._get_unsolved_python_package_versions_count_edge_cases(is_count=True)
-
-        total_count = result + unsolved
-
-        return total_count
+        return result
 
     def get_unsolved_python_packages_all_versions(
         self,
@@ -1225,11 +1107,7 @@ class GraphDatabase(SQLBase):
 
         query_result = {}
 
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
-
-        for item in result + unsolved:
+        for item in result:
             if item[0] not in query_result:
                 query_result[item[0]] = []
             query_result[item[0]].append((item[1], item[2]))
@@ -1260,19 +1138,17 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
 
         query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
+            self._session.query(PythonPackageVersionEntity.id)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
-            )
+            ).join(PythonPackageIndex)
             .with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1296,13 +1172,9 @@ class GraphDatabase(SQLBase):
 
         result = query.all()
 
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
-
         query_result = {}
 
-        for item in itertools.chain(result, unsolved):
+        for item in result:
             if (item[0], item[1], item[2]) not in query_result:
                 query_result[(item[0], item[1], item[2])] = item[3]
             else:
@@ -1336,20 +1208,19 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
 
         query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
-            .filter(PythonPackageIndex.url == index_url)
+            self._session.query(PythonPackageVersionEntity.id)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
             )
+            .join(PythonPackageIndex)
+            .filter(PythonPackageIndex.url == index_url)
             .with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1366,9 +1237,6 @@ class GraphDatabase(SQLBase):
                 PythonPackageIndex.url)
             )
 
-        if index_url is not None:
-            query = query.filter(PythonPackageIndex.url == index_url)
-
         query = query.offset(start_offset).limit(count)
 
         if distinct:
@@ -1376,14 +1244,10 @@ class GraphDatabase(SQLBase):
 
         result = query.all()
 
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
-
         query_result = {}
         query_result[index_url] = {}
 
-        for item in itertools.chain(result, unsolved):
+        for item in result:
             if item[2] == index_url:
                 if (item[0], item[1]) not in query_result[index_url].keys():
                     query_result[index_url][(item[0], item[1])] = item[3]
@@ -1418,20 +1282,22 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
+
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
 
         query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
-            .filter(PythonPackageVersionEntity.package_name == package_name)
+            self._session.query(PythonPackageVersionEntity.id)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
             )
+            .join(PythonPackageIndex)
+            .filter(PythonPackageVersionEntity.package_name == package_name)
             .with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
@@ -1448,10 +1314,6 @@ class GraphDatabase(SQLBase):
                 PythonPackageIndex.url)
             )
 
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
-
         query = query.offset(start_offset).limit(count)
 
         if distinct:
@@ -1459,13 +1321,9 @@ class GraphDatabase(SQLBase):
 
         result = query.all()
 
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_count_edge_cases(count=count - len(result))
-
         query_result = {}
 
-        for item in itertools.chain(result, unsolved):
+        for item in result:
             if item[1] not in query_result:
                 query_result[item[1]] = {}
                 query_result[item[1]][item[2]] = item[3]
@@ -1497,114 +1355,19 @@ class GraphDatabase(SQLBase):
             python_version=python_version
         )
 
-        subquery = solved.subquery()
+        subquery = solved.with_entities(PythonPackageVersion.entity_id).subquery()
+
         query = (
-            self._session.query(PythonPackageVersionEntity)
-            .join(PythonPackageIndex)
+            self._session.query(PythonPackageVersionEntity.id)
             .filter(
                 tuple_(
-                    PythonPackageVersionEntity.package_name,
-                    PythonPackageVersionEntity.package_version)
+                    PythonPackageVersionEntity.id)
                 .notin_(
                     subquery
                 )
-            )
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url)
-        )
+            ))
 
         return query
-
-    def _get_unsolved_python_package_versions_edge_cases(
-        self,
-        package_name: str = None,
-        package_version: str = None,
-        *,
-        distinct: bool = False,
-        count: int = DEFAULT_COUNT,
-        is_count: bool = False,
-        randomize: bool = False,
-    ) -> Union[List[Tuple[str, Optional[str], Optional[str]]], int]:
-        """Retrieve unsolved packages in edge cases.
-
-        Edge cases:
-        CASE 1: ('package_name', None, 'index_url') (ALREADY INCLUDED in general function)
-
-        CASE 2: ('package_name', 'package_version', None)
-
-        CASE 3: ('package_name', None, None)
-
-        If is_count is set to true, this method returns non-negative integer representing number
-        of packages - the count and randomize parameters have no effect in that case.
-        """
-        case_2 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.package_version.isnot(None),
-                PythonPackageVersionEntity.python_package_index_id.is_(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version is not None:
-            package_version = self.normalize_python_package_version(package_version)
-            case_2 = case_2.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        if distinct:
-            case_2 = case_2.distinct()
-
-        if is_count:
-            result_2 = case_2.count()
-        else:
-            if randomize:
-                case_2 = case_2.order_by(func.random())
-
-            case_2 = case_2.limit(count)
-            result_2 = case_2.all()
-
-        case_3 = (
-            self._session.query(PythonPackageVersionEntity)
-            .filter(
-                PythonPackageVersionEntity.package_version.is_(None),
-                PythonPackageVersionEntity.python_package_index_id.is_(None))
-            .with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageVersionEntity.python_package_index_id)
-        )
-
-        if package_name is not None:
-            package_name = self.normalize_python_package_name(package_name)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_name == package_name)
-
-        if package_version is not None:
-            package_version = self.normalize_python_package_version(package_version)
-            case_3 = case_3.filter(PythonPackageVersionEntity.package_version == package_version)
-
-        if distinct:
-            case_3 = case_3.distinct()
-
-        if is_count:
-            result_3 = case_3.count()
-        else:
-            if len(result_2) < count:
-                case_3 = case_3.limit(count - len(result_2))
-                if randomize:
-                    case_3 = case_3.order_by(func.random())
-
-                result_3 = case_3.all()
-            else:
-                return result_2
-
-        return result_2 + result_3
 
     def get_unsolved_python_package_versions_all(
         self,
@@ -1637,6 +1400,11 @@ class GraphDatabase(SQLBase):
             python_version=python_version
             )
 
+        query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+
         if index_url is not None:
             query = query.filter(PythonPackageIndex.url == index_url)
 
@@ -1657,17 +1425,6 @@ class GraphDatabase(SQLBase):
             query = query.distinct()
 
         result = query.all()
-
-        unsolved = []
-        if len(result) < count:
-            unsolved = self._get_unsolved_python_package_versions_edge_cases(
-                package_name=package_name,
-                package_version=package_version,
-                count=count - len(result),
-                randomize=randomize,
-            )
-
-        result.extend(unsolved)
 
         return result
 
@@ -1692,6 +1449,11 @@ class GraphDatabase(SQLBase):
             python_version=python_version
             )
 
+        query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url)
+
         if index_url is not None:
             query = query.filter(PythonPackageIndex.url == index_url)
 
@@ -1708,15 +1470,7 @@ class GraphDatabase(SQLBase):
 
         result = query.count()
 
-        # Sum with unsolved edge cases.
-        unsolved = self._get_unsolved_python_package_versions_edge_cases(
-            package_name=package_name,
-            package_version=package_version,
-            distinct=distinct,
-            is_count=True
-        )
-
-        return result + unsolved
+        return result
 
     # Analyzed packages
 
