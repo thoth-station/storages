@@ -45,4 +45,4 @@ from .sync import sync_solver_documents
 
 
 __name__ = "thoth-storages"
-__version__ = "0.19.19"
+__version__ = "0.19.20"
