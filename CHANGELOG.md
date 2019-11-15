@@ -3707,3 +3707,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency thoth-python from 0.6.5 to 0.7.1
 * :pushpin: Automatic update of dependency boto3 from 1.10.12 to 1.10.13
 
+
+## Release 0.19.19 (2019-11-12T12:36:34)
+* Fix wrong propagation of is_local flag
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.10 to 1.3.11
+* :pushpin: Automatic update of dependency boto3 from 1.10.14 to 1.10.15
+* Increase character length for keywords metadata
+* :pushpin: Automatic update of dependency boto3 from 1.10.13 to 1.10.14
