@@ -3714,3 +3714,16 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.10.14 to 1.10.15
 * Increase character length for keywords metadata
 * :pushpin: Automatic update of dependency boto3 from 1.10.13 to 1.10.14
+
+## Release 0.19.20 (2019-11-15T12:25:44)
+* Adjust output query for metric
+* Introduce ping method
+* :pushpin: Automatic update of dependency pytest from 5.2.2 to 5.2.3
+* :pushpin: Automatic update of dependency boto3 from 1.10.17 to 1.10.18
+* Optimized/Improved query to retrieve unsolved Python Packages
+* :pushpin: Automatic update of dependency thoth-common from 0.9.15 to 0.9.16
+* Fix schema check
+* :pushpin: Automatic update of dependency boto3 from 1.10.16 to 1.10.17
+* State ignoring a role assignment in docs
+* :pushpin: Automatic update of dependency alembic from 1.3.0 to 1.3.1
+* :pushpin: Automatic update of dependency thoth-common from 0.9.14 to 0.9.15
