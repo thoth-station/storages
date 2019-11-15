@@ -200,6 +200,10 @@ class GraphDatabase(SQLBase):
         except DatabaseNotInitialized as exc:
             _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
 
+    def ping(self) -> None:
+        """Check database connection with a minimal overhead."""
+        self._session.execute("SELECT 1")
+
     def initialize_schema(self):
         """Initialize schema of database."""
         import thoth.storages
