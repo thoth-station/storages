@@ -41,7 +41,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.pool import NullPool
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.functions import create_database
 from sqlalchemy_utils.functions import database_exists
@@ -189,8 +188,22 @@ class GraphDatabase(SQLBase):
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         # We do not use connection pool, but directly talk to the database.
-        self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
+        self._engine = create_engine(self.construct_connection_string(), echo=echo, pool_pre_ping=True)
         self._session = sessionmaker(bind=self._engine)()
+        try:
+            self._engine = create_engine(self.construct_connection_string(), echo=echo, poolclass=NullPool)
+            self._session = sessionmaker(bind=self._engine)()
+        except Exception:
+            # Drop engine and session in case of any connection issues so is_connected behaves correctly.
+            if self._engine:
+                try:
+                    self._engine.dispose()
+                except Exception as exc:
+                    _LOGGER.warning("Failed to dispose engine: %s", str(exc))
+                    pass
+            self._engine = None
+            self._session = None
+            raise
 
         try:
             if not self.is_schema_up2date():
@@ -199,10 +212,6 @@ class GraphDatabase(SQLBase):
                 )
         except DatabaseNotInitialized as exc:
             _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
-
-    def ping(self) -> None:
-        """Check database connection with a minimal overhead."""
-        self._session.execute("SELECT 1")
 
     def initialize_schema(self):
         """Initialize schema of database."""
