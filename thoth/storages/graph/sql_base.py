@@ -19,10 +19,13 @@
 
 import attr
 import abc
+import logging
 
 from sqlalchemy.engine import Engine
 
 from ..exceptions import NotConnected
+
+_LOGGER = logging.getLogger(__name__)
 
 
 @attr.s(slots=True)
@@ -50,7 +53,11 @@ class SQLBase:
         if self._session is not None:
             self._session = None
 
-        # self._engine.dispose()
+        try:
+            self._engine.dispose()
+        except Exception as exc:
+            _LOGGER.warning("Failed to dispose engine: %s", str(exc))
+            pass
         self._engine = None
 
     @abc.abstractmethod

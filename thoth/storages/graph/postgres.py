@@ -198,7 +198,8 @@ class GraphDatabase(SQLBase):
             if self._engine:
                 try:
                     self._engine.dispose()
-                except Exception:
+                except Exception as exc:
+                    _LOGGER.warning("Failed to dispose engine: %s", str(exc))
                     pass
             self._engine = None
             self._session = None
