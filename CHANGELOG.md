@@ -3735,3 +3735,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Dispose engine on disconnect
 * Dispose engine on connect issues
 * Use default pooling from sqlalchemy
+
+## Release 0.19.22 (2019-11-18T15:41:20)
+* Use same version as in the cluster
