@@ -3727,3 +3727,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * State ignoring a role assignment in docs
 * :pushpin: Automatic update of dependency alembic from 1.3.0 to 1.3.1
 * :pushpin: Automatic update of dependency thoth-common from 0.9.14 to 0.9.15
+
+## Release 0.19.21 (2019-11-18T09:33:24)
+* :pushpin: Automatic update of dependency pytest from 5.2.3 to 5.2.4
+* :pushpin: Automatic update of dependency boto3 from 1.10.18 to 1.10.19
+* Fix wrong rebase
+* Dispose engine on disconnect
+* Dispose engine on connect issues
+* Use default pooling from sqlalchemy
