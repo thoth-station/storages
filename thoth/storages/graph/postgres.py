@@ -251,7 +251,8 @@ class GraphDatabase(SQLBase):
         with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
             alembic_cfg = config.Config("alembic.ini")
             directory = script.ScriptDirectory.from_config(alembic_cfg)
-            context = migration.MigrationContext.configure(self._engine)
+            connection = self._engine.connect()
+            context = migration.MigrationContext.configure(connection)
 
             database_heads = set(context.get_current_heads())
             if not database_heads:
