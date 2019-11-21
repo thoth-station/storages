@@ -4175,7 +4175,6 @@ class GraphDatabase(SQLBase):
 
     @staticmethod
     def _python_sync_analysis_result(
-        self,
         session: Session,
         package_extract_run: PackageExtractRun,
         document: dict,
