@@ -3738,3 +3738,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.19.22 (2019-11-18T15:41:20)
 * Use same version as in the cluster
+
+## Release 0.19.23 (2019-11-21T17:26:34)
+* Remove self to make method static
+* Use context manager for handling sessions
+* :pushpin: Automatic update of dependency boto3 from 1.10.22 to 1.10.23
+* :pushpin: Automatic update of dependency boto3 from 1.10.21 to 1.10.22
+* :pushpin: Automatic update of dependency pytest from 5.2.4 to 5.3.0
+* :pushpin: Automatic update of dependency boto3 from 1.10.20 to 1.10.21
+* :pushpin: Automatic update of dependency boto3 from 1.10.19 to 1.10.20
+* Fix warning for migration configuration check
+* Correct output of queries
