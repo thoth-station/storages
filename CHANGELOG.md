@@ -3749,3 +3749,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.10.19 to 1.10.20
 * Fix warning for migration configuration check
 * Correct output of queries
+
+## Release 0.19.24 (2019-11-22T17:44:38)
+* Fix referencing store if is_local is set
+* Add ability to sync documents based on absolute path
+* :pushpin: Automatic update of dependency boto3 from 1.10.24 to 1.10.25
+* :pushpin: Automatic update of dependency boto3 from 1.10.23 to 1.10.24
