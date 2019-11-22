@@ -4679,8 +4679,51 @@ class GraphDatabase(SQLBase):
 
                 inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
 
-    def get_pi_count(self, component: str) -> Dict[str, int]:
-        """Get dictionary with number of Performance Indicators per type for the PI component selected."""
+    def get_python_package_required_symbols(
+        self, package_name: str, package_version: str, index_url: str
+    ) -> Optional[List[str]]:
+        """Get required symbols for a Python package in a specified version."""
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion)
+
+            query = (
+                query.filter(PythonPackageVersion.package_name == package_name)
+                .filter(PythonPackageVersion.package_version == package_version)
+                .join((HasArtifact, PythonPackageVersionEntity.python_artifacts))
+                .join((PythonArtifact, HasArtifact.python_artifact))
+                .with_entities(PythonArtifact.versioned_symbols)
+            )
+
+            return query.first()   # If query result is empty returns None
+
+
+    def get_image_symbols(
+        self,
+        os_name: str,
+        os_version: str,
+        cuda_version: str,
+        python_version: str
+    ) -> Optional[List[str]]:
+        """Get symbols associated with a given image."""
+
+        with self._session_scope() as session:
+            query = (
+                session.query(PackageExtractRun)
+                .filter(PackageExtractRun.os_name == os_name)
+                .filter(PackageExtractRun.os_version == os_version)
+                .filter(PackageExtractRun.python_version == python_version)
+                .filter(PackageExtractRun.cuda_version == cuda_version)
+                .with_entities(
+                    PackageExtractRun.versioned_symbols
+                ))
+            
+            return query.first()   # If query result is empty returns None
+
+    def get_pi_count(self, framework: str) -> Dict[str, int]:
+        """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
         result = {}
         with self._session_scope() as session:
             for pi_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
