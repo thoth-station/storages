@@ -4632,7 +4632,7 @@ class GraphDatabase(SQLBase):
 
                 if importlib_metadata:
                     # There can be raised PythonPackageMetadataAttributeMissing once all metadata gathered.
-                    _LOGGER.error(
+                    _LOGGER.warning(
                         "Cannot sync the whole solver result: "
                         f"No related columns for {list(importlib_metadata.keys())!r} "
                         "found in PythonPackageMetadata table, the error is not fatal"
