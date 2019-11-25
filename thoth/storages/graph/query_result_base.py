@@ -19,6 +19,8 @@
 
 import logging
 
+from typing import List, Dict, Optional, Union, Tuple
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -27,8 +29,8 @@ class QueryResult:
 
     def __init__(
         self,
-        result: dict,
-        count: int
+        result: Union[List, Dict],
+        count: Optional[int] = None
     ):
         """Query result initialization."""
         self._result = result
@@ -43,3 +45,53 @@ class QueryResult:
     def count(self):
         """Query count result."""
         return self._count
+
+    def count_per_package(self) -> Dict[Tuple[str, str, str], int]:
+        """Query result count per package."""
+        query_result = {}
+        for item in self._result:
+            if (item[0], item[1], item[2]) not in query_result:
+                query_result[(item[0], item[1], item[2])] = item[3]
+            else:
+                query_result[(item[0], item[1], item[2])] += item[3]
+
+        return query_result
+
+    def count_per_index(self, index_url) -> Dict[str, Dict[Tuple[str, str], int]]:
+        """Query result count per index."""
+        query_result = {
+            index_url: {}
+            }
+        for item in self._result:
+            if item[2] == index_url:
+                if (item[0], item[1]) not in query_result[index_url].keys():
+                    query_result[index_url][(item[0], item[1])] = item[3]
+                else:
+                    query_result[index_url][(item[0], item[1])] += item[3]
+
+        return query_result
+
+    def count_per_version(self) -> Dict[str, Dict[str, int]]:
+        """Query result count per version."""
+        query_result = {}
+        for item in self._result:
+            if item[1] not in query_result:
+                query_result[item[1]] = {}
+                query_result[item[1]][item[2]] = item[3]
+            else:
+                if item[2] not in query_result[item[1]]:
+                    query_result[item[1]][item[2]] = item[3]
+                else:
+                    query_result[item[1]][item[2]] += item[3]
+
+        return query_result
+
+    def group_by_package_name(self) -> Dict[str, List[Tuple[str, str]]]:
+        """Query result group by package name."""
+        query_result = {}
+        for item in self._result:
+            if item[0] not in query_result:
+                query_result[item[0]] = []
+            query_result[item[0]].append((item[1], item[2]))
+
+        return query_result
