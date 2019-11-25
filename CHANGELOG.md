@@ -3727,3 +3727,31 @@ Starting with this release we have a Zuul-CI pipeline that:
 * State ignoring a role assignment in docs
 * :pushpin: Automatic update of dependency alembic from 1.3.0 to 1.3.1
 * :pushpin: Automatic update of dependency thoth-common from 0.9.14 to 0.9.15
+
+## Release 0.19.21 (2019-11-18T09:33:24)
+* :pushpin: Automatic update of dependency pytest from 5.2.3 to 5.2.4
+* :pushpin: Automatic update of dependency boto3 from 1.10.18 to 1.10.19
+* Fix wrong rebase
+* Dispose engine on disconnect
+* Dispose engine on connect issues
+* Use default pooling from sqlalchemy
+
+## Release 0.19.22 (2019-11-18T15:41:20)
+* Use same version as in the cluster
+
+## Release 0.19.23 (2019-11-21T17:26:34)
+* Remove self to make method static
+* Use context manager for handling sessions
+* :pushpin: Automatic update of dependency boto3 from 1.10.22 to 1.10.23
+* :pushpin: Automatic update of dependency boto3 from 1.10.21 to 1.10.22
+* :pushpin: Automatic update of dependency pytest from 5.2.4 to 5.3.0
+* :pushpin: Automatic update of dependency boto3 from 1.10.20 to 1.10.21
+* :pushpin: Automatic update of dependency boto3 from 1.10.19 to 1.10.20
+* Fix warning for migration configuration check
+* Correct output of queries
+
+## Release 0.19.24 (2019-11-22T17:44:38)
+* Fix referencing store if is_local is set
+* Add ability to sync documents based on absolute path
+* :pushpin: Automatic update of dependency boto3 from 1.10.24 to 1.10.25
+* :pushpin: Automatic update of dependency boto3 from 1.10.23 to 1.10.24

@@ -19,6 +19,7 @@
 
 import logging
 import json
+import os
 from pathlib import Path
 from typing import Dict
 from typing import Tuple
@@ -69,17 +70,17 @@ def sync_adviser_documents(
     for document_id in document_ids or adviser_store.get_document_listing():
         processed += 1
 
-        if force or not graph.adviser_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing adviser document from {adviser_store.ceph.host} " f"with id {document_id!r} to graph"
-            )
-
+        if force or not graph.adviser_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        "Syncing adviser document from %r with id %r to graph",
+                        adviser_store.ceph.host,
+                        document_id
+                    )
                     document = adviser_store.retrieve_document(document_id)
 
                 graph.sync_adviser_result(document)
@@ -121,15 +122,17 @@ def sync_solver_documents(
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in document_ids or solver_store.get_document_listing():
         processed += 1
-        if force or not graph.solver_document_id_exist(document_id):
-            _LOGGER.info(f"Syncing solver document from {solver_store.ceph.host} " f"with id {document_id!r} to graph")
-
+        if force or not graph.solver_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        "Syncing solver document from %r with id %r to graph",
+                        solver_store.ceph.host,
+                        document_id
+                    )
                     document = solver_store.retrieve_document(document_id)
 
                 graph.sync_solver_result(document)
@@ -172,17 +175,17 @@ def sync_analysis_documents(
     for document_id in document_ids or analysis_store.get_document_listing():
         processed += 1
 
-        if force or not graph.analysis_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing analysis document from {analysis_store.ceph.host} " f"with id {document_id!r} to graph"
-            )
-
+        if force or not graph.analysis_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        "Syncing analysis document from %r with id %r to graph",
+                        analysis_store.ceph.host,
+                        document_id,
+                    )
                     document = analysis_store.retrieve_document(document_id)
 
                 graph.sync_analysis_result(document)
@@ -225,18 +228,17 @@ def sync_package_analysis_documents(
     for document_id in document_ids or package_analysis_store.get_document_listing():
         processed += 1
 
-        if force or not graph.package_analysis_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing package analysis document from {package_analysis_store.ceph.host} "
-                f"with id {document_id!r} to graph"
-            )
-
+        if force or not graph.package_analysis_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        "Syncing package analysis document from %r with id %r to graph",
+                        package_analysis_store.ceph.host,
+                        document_id,
+                    )
                     document = package_analysis_store.retrieve_document(document_id)
 
                 graph.sync_package_analysis_result(document)
@@ -279,18 +281,17 @@ def sync_provenance_checker_documents(
     for document_id in document_ids or provenance_check_store.get_document_listing():
         processed += 1
 
-        if force or not graph.provenance_checker_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing provenance-checker document from {provenance_check_store.ceph.host} "
-                f"with id {document_id!r} to graph"
-            )
-
+        if force or not graph.provenance_checker_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        "Syncing provenance-checker document from %r with id %r to graph",
+                        provenance_check_store.ceph.host,
+                        document_id,
+                    )
                     document = provenance_check_store.retrieve_document(document_id)
 
                 graph.sync_provenance_checker_result(document)
@@ -333,18 +334,17 @@ def sync_dependency_monkey_documents(
     for document_id in document_ids or dependency_monkey_reports_store.get_document_listing():
         processed += 1
 
-        if force or not graph.dependency_monkey_document_id_exist(document_id):
-            _LOGGER.info(
-                f"Syncing dependency monkey report document from {dependency_monkey_reports_store.ceph.host} "
-                f"with id {document_id!r} to graph"
-            )
-
+        if force or not graph.dependency_monkey_document_id_exist(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
                     document = json.loads(Path(document_id).read_text())
                 else:
-                    _LOGGER.debug("Loading document from a remote Ceph: %r", document_id)
+                    _LOGGER.info(
+                        f"Syncing dependency monkey report document from %r with id %r to graph",
+                        dependency_monkey_reports_store.ceph.host,
+                        document_id,
+                    )
                     document = dependency_monkey_reports_store.retrieve_document(document_id)
 
                 graph.sync_dependency_monkey_result(document)
@@ -484,7 +484,8 @@ def sync_documents(
 
     for document_id in document_ids or [None] * len(_HANDLERS_MAPPING):
         for document_prefix, handler in _HANDLERS_MAPPING.items():
-            if document_id is None or document_id.startswith(document_prefix):
+            # Basename for local syncs, document_id should not have slash otherwise.
+            if document_id is None or os.path.basename(document_id).startswith(document_prefix):
                 to_sync_document_id = [document_id] if document_id is not None else None
                 if handler == sync_inspection_documents:
                     # A special case with additional arguments to obtain results from Amun API.

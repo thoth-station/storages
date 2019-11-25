@@ -63,3 +63,10 @@ class MetadataDistutilsTypeEnum(Enum):
     # rarely used fields
     PROVIDED = "PROVIDED"
     OBSOLETE = "OBSOLETE"
+
+
+class QuerySortTypeEnum(Enum):
+    """Class for the requirements format."""
+
+    PACKAGE_NAME = "package_name"
+    PACKAGE_VERSION = "package_version"

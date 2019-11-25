@@ -80,3 +80,7 @@ class PythonPackageMetadataAttributeMissing(ThothStorageException):
 
 class DistutilsKeyNotKnown(ThothStorageException):
     """Raised if a distutils in Python Package metadata is not known."""
+
+
+class SortTypeQueryError(ThothStorageException):
+    """Raised if a sort key used in a query is not known."""

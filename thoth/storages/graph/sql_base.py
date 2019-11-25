@@ -33,7 +33,7 @@ class SQLBase:
     """A base class for implementing SQL based databases using SQLAlchemy."""
 
     _engine = attr.ib(type=Engine, default=None)
-    _session = attr.ib(default=None)
+    _sessionmaker = attr.ib(default=None)
 
     _DECLARATIVE_BASE = None
 
@@ -50,8 +50,8 @@ class SQLBase:
         if not self.is_connected():
             raise NotConnected("Cannot disconnect, the adapter is not connected")
 
-        if self._session is not None:
-            self._session = None
+        if self._sessionmaker is not None:
+            self._sessionmaker = None
 
         try:
             self._engine.dispose()
