@@ -50,7 +50,6 @@ from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
-from thoth.common.helpers import cwd
 from thoth.common import OpenShift
 
 from .models import AdviserRun
@@ -240,12 +239,15 @@ class GraphDatabase(SQLBase):
         if not database_exists(self._engine.url):
             create_database(self._engine.url)
 
-        # Change directory to data dir as that's where alembic configuration sits in and refers revisions.
-        with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
-            alembic_cfg = config.Config("alembic.ini")
-            # Overwrite URL based on deployment configuration.
-            alembic_cfg.set_main_option('sqlalchemy.url', self.construct_connection_string())
-            command.upgrade(alembic_cfg, "head")
+        alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        # Overwrite URL based on deployment configuration.
+        alembic_cfg.set_main_option("sqlalchemy.url", self.construct_connection_string())
+        alembic_cfg.set_section_option(
+            'alembic',
+            'script_location',
+            os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic")
+        )
+        command.upgrade(alembic_cfg, "head")
 
     def drop_all(self):
         """Drop all content stored in the database."""
@@ -263,21 +265,20 @@ class GraphDatabase(SQLBase):
         if not self.is_connected():
             raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
-        with cwd(os.path.join(os.path.dirname(thoth.storages.__file__), "data")):
-            alembic_cfg = config.Config("alembic.ini")
-            directory = script.ScriptDirectory.from_config(alembic_cfg)
-            connection = self._engine.connect()
-            context = migration.MigrationContext.configure(connection)
+        alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        directory = script.ScriptDirectory.from_config(alembic_cfg)
+        connection = self._engine.connect()
+        context = migration.MigrationContext.configure(connection)
 
-            database_heads = set(context.get_current_heads())
-            if not database_heads:
-                raise DatabaseNotInitialized("Database is not initialized yet")
+        database_heads = set(context.get_current_heads())
+        if not database_heads:
+            raise DatabaseNotInitialized("Database is not initialized yet")
 
-            revision_heads = set(directory.get_heads())
+        revision_heads = set(directory.get_heads())
 
-            _LOGGER.debug("Current library revision heads: %r", revision_heads)
-            _LOGGER.debug("Current database heads: %r", database_heads)
-            return database_heads == revision_heads
+        _LOGGER.debug("Current library revision heads: %r", revision_heads)
+        _LOGGER.debug("Current database heads: %r", database_heads)
+        return database_heads == revision_heads
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
