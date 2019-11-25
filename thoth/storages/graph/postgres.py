@@ -4173,8 +4173,8 @@ class GraphDatabase(SQLBase):
                     versioned_symbol_id=versioned_symbol.id
                 )
 
-    @staticmethod
     def _python_sync_analysis_result(
+        self,
         session: Session,
         package_extract_run: PackageExtractRun,
         document: dict,
