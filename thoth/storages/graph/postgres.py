@@ -127,10 +127,12 @@ from collections import Counter
 
 from .sql_base import SQLBase
 from .models_base import Base
+from .query_result_base import QueryResult
 from .enums import EnvironmentTypeEnum
 from .enums import SoftwareStackTypeEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
+from .enums import QuerySortTypeEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -149,6 +151,7 @@ from ..exceptions import AlreadyConnected
 from ..exceptions import DatabaseNotInitialized
 from ..exceptions import SolverNameParseError
 from ..exceptions import DistutilsKeyNotKnown
+from ..exceptions import SortTypeQueryError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -3287,7 +3290,8 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
-    ) -> Dict[str, int]:
+        sort_by: QuerySortTypeEnum = None
+    ) -> QueryResult:
         """Retrieve number of versions per Python package name in Thoth Database.
 
         Examples:
@@ -3318,13 +3322,24 @@ class GraphDatabase(SQLBase):
             if python_version is not None:
                 query = query.filter(PythonPackageVersion.python_version == python_version)
 
+            if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_NAME:
+                query = query.order_by(PythonPackageVersion.package_name)
+
+            group_count = query.count()
+
             query = query.offset(start_offset).limit(count)
 
             if distinct:
                 query = query.distinct()
 
             result = query.all()
-            return {item[0]: item[1] for item in result}
+
+            if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_VERSION:
+                raise SortTypeQueryError("To be implemented.")  # TODO: To be implemented
+
+            output = QueryResult(result={item[0]: item[1] for item in result}, count=group_count)
+
+            return output
 
     def get_python_package_versions_count_per_index(
         self,
@@ -5016,7 +5031,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             for performance_model in ALL_PERFORMANCE_MODELS:
-                result[performance_model.__tablename__] = session.query(performance_model).count()
+                result[performance_model.__tablename__] = session.query(func.count(performance_model.id)).scalar()
 
         return result
 
@@ -5026,7 +5041,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             for main_model in ALL_MAIN_MODELS:
-                result[main_model.__tablename__] = session.query(main_model).count()
+                result[main_model.__tablename__] = session.query(func.count(main_model.id)).scalar()
 
         return result
 
@@ -5036,7 +5051,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             for relation_model in ALL_RELATION_MODELS:
-                result[relation_model.__tablename__] = session.query(relation_model).count()
+                result[relation_model.__tablename__] = session.query(relation_model.id).count()
 
         return result
 
