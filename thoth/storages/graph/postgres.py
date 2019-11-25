@@ -1506,6 +1506,124 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+
+    def get_unsolved_python_package_versions_count_all2(
+        self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve unsolved Python package versions number in Thoth Database."""
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
+            )
+
+            if index_url is not None:
+                query = query.filter(PythonPackageIndex.url == index_url)
+
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query = query.filter(PythonPackageVersion.package_name == package_name)
+
+            if package_version is not None:
+                package_version = self.normalize_python_package_version(package_version)
+                query = query.filter(PythonPackageVersion.package_version == package_version)
+
+            if os_name is not None:
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version is not None:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version is not None:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            query = self._construct_unsolved_python_package_versions_query(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version
+            )
+
+            query = query.join(PythonPackageIndex).with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url
+            )
+
+            if index_url is not None:
+                query = query.filter(PythonPackageIndex.url == index_url)
+
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+            if package_version is not None:
+                package_version = self.normalize_python_package_version(package_version)
+                query = query.filter(PythonPackageVersionEntity.package_version == package_version)
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
+
+
+    def get_unsolved_python_package_versions_count_all3(
+        self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        *,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve unsolved Python package versions number in Thoth Database."""
+        with self._session_scope() as session:
+            query = self._construct_unsolved_python_package_versions_query(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version
+            )
+
+            query = query.join(PythonPackageIndex).with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url
+            )
+
+            if index_url is not None:
+                query = query.filter(PythonPackageIndex.url == index_url)
+
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+            if package_version is not None:
+                package_version = self.normalize_python_package_version(package_version)
+                query = query.filter(PythonPackageVersionEntity.package_version == package_version)
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
+
+
     def get_analyzed_python_packages_all(
         self,
         *,
