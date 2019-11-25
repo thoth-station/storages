@@ -4284,8 +4284,8 @@ class GraphDatabase(SQLBase):
         environment_type = environment_type.upper()
         origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
-        os_name = document["result"]["operating-system"]["name"]
-        os_version = document["result"]["operating-system"]["version_id"]
+        os_name = document["result"].get("operating-system", {}).get("name")
+        os_version = document["result"].get("operating-system", {}).get("version_id")
 
         # Check if it comes from a User
         is_external = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("is_external", True)
