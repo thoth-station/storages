@@ -20,7 +20,6 @@
 import logging
 import json
 import os
-from pathlib import Path
 from typing import Dict
 from typing import Tuple
 from typing import List
@@ -74,7 +73,8 @@ def sync_adviser_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         "Syncing adviser document from %r with id %r to graph",
@@ -126,7 +126,8 @@ def sync_solver_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         "Syncing solver document from %r with id %r to graph",
@@ -179,7 +180,8 @@ def sync_analysis_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         "Syncing analysis document from %r with id %r to graph",
@@ -232,7 +234,8 @@ def sync_package_analysis_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         "Syncing package analysis document from %r with id %r to graph",
@@ -285,7 +288,8 @@ def sync_provenance_checker_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         "Syncing provenance-checker document from %r with id %r to graph",
@@ -338,7 +342,8 @@ def sync_dependency_monkey_documents(
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    document = json.loads(Path(document_id).read_text())
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
                         f"Syncing dependency monkey report document from %r with id %r to graph",
