@@ -1,13 +1,14 @@
 - project:
     check:
-      queue: thoth-station/core
+      queue: thoth-station/storages
       jobs:
         - thoth-coala
         - thoth-pytest
     gate:
-      queue: thoth-station/core
+      queue: thoth-station/storages
       jobs:
         - thoth-coala
+        - thoth-pytest
     release:
       jobs:
         - upload-pypi-sesheta
@@ -18,7 +19,43 @@
               cluster: "paas.psi.redhat.com"
               namespace: "thoth-test-core"
               buildConfigName: "user-api"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "management-api"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "metrics-exporter"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "adviser"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "init-job"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "graph-sync-job"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "graph-refresh-job"
+        - trigger-build:
+            vars:
+              cluster: "paas.psi.redhat.com"
+              namespace: "thoth-test-core"
+              buildConfigName: "package-releases-job"
     kebechet-auto-gate:
-      queue: thoth-station/core
+      queue: thoth-station/storages
       jobs:
         - thoth-coala
+        - thoth-pytest
