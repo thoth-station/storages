@@ -84,3 +84,7 @@ class DistutilsKeyNotKnown(ThothStorageException):
 
 class SortTypeQueryError(ThothStorageException):
     """Raised if a sort key used in a query is not known."""
+
+
+class NoDocumentIdError(ThothStorageException):
+    """Raised if document id is not found in the document."""
