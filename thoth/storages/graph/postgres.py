@@ -4889,7 +4889,7 @@ class GraphDatabase(SQLBase):
             )
 
             # Output stacks - advised stacks
-            for idx, result in enumerate(document["result"]["report"]):
+            for idx, result in enumerate(document["result"].get("report", [])):
                 if len(result) != 3:
                     _LOGGER.warning("Omitting stack as no output Pipfile.lock was provided")
                     continue
