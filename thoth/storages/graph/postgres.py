@@ -266,6 +266,11 @@ class GraphDatabase(SQLBase):
             raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        alembic_cfg.set_section_option(
+            'alembic',
+            'script_location',
+            os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic")
+        )
         directory = script.ScriptDirectory.from_config(alembic_cfg)
         connection = self._engine.connect()
         context = migration.MigrationContext.configure(connection)
