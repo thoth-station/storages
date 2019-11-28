@@ -2610,6 +2610,7 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
+    @lru_cache(maxsize=1024)
     def get_python_environment_marker_evaluation_result(
         self,
         package_name: str,
@@ -5083,6 +5084,7 @@ class GraphDatabase(SQLBase):
         for method, method_name in (
             (self.get_python_package_version_records, "get_python_package_version_records"),
             (self.get_depends_on, "get_depends_on"),
+            (self.get_python_environment_marker_evaluation_result, "get_python_environment_marker_evaluation_result"),
             (self.has_python_solver_error, "has_python_solver_error"),
             (self.get_python_cve_records_all, "get_python_cve_records_all"),
         ):
