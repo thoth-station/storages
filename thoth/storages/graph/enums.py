@@ -68,5 +68,6 @@ class MetadataDistutilsTypeEnum(Enum):
 class QuerySortTypeEnum(Enum):
     """Class for the requirements format."""
 
-    PACKAGE_NAME = "package_name"
-    PACKAGE_VERSION = "package_version"
+    PACKAGE_NAME = 0
+    PACKAGE_VERSION_NUMBER = 1
+    PACKAGE_RELEASE = 2

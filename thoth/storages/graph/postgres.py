@@ -152,7 +152,7 @@ from ..exceptions import AlreadyConnected
 from ..exceptions import DatabaseNotInitialized
 from ..exceptions import SolverNameParseError
 from ..exceptions import DistutilsKeyNotKnown
-from ..exceptions import SortTypeQueryError
+from ..exceptions import SortTypeQueryUnavailable
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -2951,18 +2951,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None
     ) -> Query:
         """Construct query for Python packages functions, the query is not executed."""
-        query = (
-            session.query(PythonPackageVersion)
-            .join(PythonPackageIndex)
-            .group_by(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url)
-            .with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url)
-        )
+        query = session.query(PythonPackageVersion)
 
         if os_name is not None:
             query = query.filter(PythonPackageVersion.os_name == os_name)
@@ -2992,6 +2981,18 @@ class GraphDatabase(SQLBase):
                 python_version=python_version
             )
 
+            query = (
+                query.join(PythonPackageIndex)
+                .group_by(
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url)
+                .with_entities(
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url)
+            )
+
             if distinct:
                 query = query.distinct()
 
@@ -2999,6 +3000,7 @@ class GraphDatabase(SQLBase):
 
     def get_python_packages_all_versions(
         self,
+        package_name: str = None,
         *,
         start_offset: int = 0,
         count: int = DEFAULT_COUNT,
@@ -3006,6 +3008,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        sort_by: QuerySortTypeEnum = None
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve Python package versions per package in Thoth Database.
 
@@ -3023,14 +3026,56 @@ class GraphDatabase(SQLBase):
                 python_version=python_version
             )
 
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query = query.filter(PythonPackageVersion.package_name == package_name)
+
+            query = (
+                query.join(PythonPackageIndex)
+                .group_by(
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url)
+                .with_entities(
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url)
+            )
+
             query = query.offset(start_offset).limit(count)
 
             if distinct:
                 query = query.distinct()
 
-            query_result = query.all()
+            result = query.all()
 
-            return self._group_by_package_name(result=result)
+            formatted_result = self._group_by_package_name(result=result)
+
+            if package_name is not None:
+                sorted_result = {}
+                if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_RELEASE:
+                    sorted_result[package_name] = sorted(
+                                formatted_result[package_name],
+                                key=lambda v: PackageVersion.parse_semantic_version(v[0]),
+                                reverse=True)
+                    return sorted_result
+                else:
+                    raise SortTypeQueryUnavailable(f"{sort_by} type not provided for this query.")
+
+            if sort_by and not package_name:
+                if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_RELEASE:
+                    _LOGGER.warning(
+                            "%r is used only if package_name is provided for this query.",
+                            sort_by,
+                        )
+                else:
+                    _LOGGER.warning(
+                            "%r sort type is not available for this query. "
+                            "Moreover sort_by can be used only if package name is provided to this query.",
+                            sort_by,
+                        )
+
+            return formatted_result
 
     def get_python_package_versions_count(
         self,
@@ -3129,8 +3174,15 @@ class GraphDatabase(SQLBase):
             if python_version is not None:
                 query = query.filter(PythonPackageVersion.python_version == python_version)
 
-            if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_NAME:
-                query = query.order_by(PythonPackageVersion.package_name)
+            if sort_by:
+                if sort_by == QuerySortTypeEnum.PACKAGE_NAME:
+                    query = query.order_by(PythonPackageVersion.package_name)
+
+                elif sort_by and sort_by == QuerySortTypeEnum.PACKAGE_VERSION_NUMBER:
+                    query = query.order_by(func.count(
+                            PythonPackageVersion.package_version).desc())
+                else:
+                    raise SortTypeQueryUnavailable(f"{sort_by} type not provided for this query.")
 
             group_count = query.count()
 
@@ -3141,10 +3193,7 @@ class GraphDatabase(SQLBase):
 
             result = query.all()
 
-            if sort_by and sort_by == QuerySortTypeEnum.PACKAGE_VERSION:
-                raise SortTypeQueryError("To be implemented.")  # TODO: To be implemented
-
-            output = PythonQueryResult(result={item[0]: item[1] for item in result}, count=group_count)
+            output = QueryResult(result=[{item[0]: item[1]} for item in result], count=group_count)
 
             return output
 
