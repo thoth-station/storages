@@ -3377,6 +3377,22 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+    def get_classifiers_python_package_version_metadata(
+        self,
+        package_metadata_id: int,
+    ) -> List[str]:
+        """Retrieve classifiers metadata for Python package metadata."""
+        with self._session_scope() as session:
+            query = (
+                session.query(HasMetadataClassifier)
+                .filter(HasMetadataClassifier.python_package_metadata_id == package_metadata_id)
+                .join(PythonPackageMetadataClassifier)
+            ).with_entities(
+                PythonPackageMetadataClassifier
+            )
+
+            return [c.to_dict()["classifier"] for c in query.all()]
+
     def get_python_package_version_metadata(
         self,
         package_name: str,
@@ -3389,13 +3405,20 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             query = (
-                session.query(PythonPackageMetadata)
-                .join(PythonPackageVersion)
+                session.query(PythonPackageVersion)
+                .filter(exists().where(
+                    and_(
+                        PythonPackageVersion.package_name == package_name,
+                        PythonPackageVersion.package_version == package_version,
+                        PythonPackageVersion.python_package_metadata_id.isnot(None)
+                        )
+                    )
+                )
                 .join(PythonPackageIndex)
-                .filter(PythonPackageVersion.package_name == package_name)
-                .filter(PythonPackageVersion.package_version == package_version)
                 .filter(PythonPackageIndex.url == index_url)
-                .filter(PythonPackageVersion.python_package_metadata_id.isnot(None))
+                .join(PythonPackageMetadata)
+            ).with_entities(
+                PythonPackageMetadata
             )
 
             result = query.first()
@@ -3403,7 +3426,10 @@ class GraphDatabase(SQLBase):
             if result is None:
                 raise NotFoundError(f"No record found for {package_name!r}, {package_version!r}, {index_url!r}")
 
-            return result.to_dict()
+            formatted_result = result.to_dict()
+            formatted_result["classifiers"] = self.get_classifiers_python_package_version_metadata(result.id)
+
+            return formatted_result
 
     def _create_python_package_requirement(
         self,
