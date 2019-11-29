@@ -24,6 +24,7 @@ from sqlalchemy import String
 from sqlalchemy import Float
 from sqlalchemy import DateTime
 from sqlalchemy import Boolean
+from sqlalchemy import Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 
@@ -1176,24 +1177,24 @@ class PythonPackageMetadata(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    author = Column(String(256), nullable=True)
-    author_email = Column(String(256), nullable=True)
-    download_url = Column(String(256), nullable=True)
-    home_page = Column(String(256), nullable=True)
-    keywords = Column(String(512), nullable=True)
+    author = Column(Text, nullable=True)
+    author_email = Column(Text, nullable=True)
+    download_url = Column(Text, nullable=True)
+    home_page = Column(Text, nullable=True)
+    keywords = Column(Text, nullable=True)
     # package licence
-    license = Column(String(256), nullable=True)
-    maintainer = Column(String(256), nullable=True)
-    maintainer_email = Column(String(256), nullable=True)
-    metadata_version = Column(String(256), nullable=True)
+    license = Column(Text, nullable=True)
+    maintainer = Column(Text, nullable=True)
+    maintainer_email = Column(Text, nullable=True)
+    metadata_version = Column(Text, nullable=True)
     # package name
-    name = Column(String(256), nullable=True)
-    summary = Column(String(256), nullable=True)
+    name = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
     # package version
-    version = Column(String(256), nullable=True)
-    requires_python = Column(String(256), nullable=True)
-    description = Column(String(256), nullable=True)
-    description_content_type = Column(String(256), nullable=True)
+    version = Column(Text, nullable=True)
+    requires_python = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    description_content_type = Column(Text, nullable=True)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="python_package_metadata")
 
@@ -1233,7 +1234,7 @@ class PythonPackageMetadataClassifier(Base, BaseExtension):
     __tablename__ = "python_package_metadata_classifier"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    classifier = Column(String(256), nullable=True)
+    classifier = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataClassifier", back_populates="python_package_metadata_classifiers"
@@ -1265,7 +1266,7 @@ class PythonPackageMetadataPlatform(Base, BaseExtension):
     __tablename__ = "python_package_metadata_platform"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    platform = Column(String(256), nullable=True)
+    platform = Column(Text, nullable=True)
 
     python_packages_metadata = relationship("HasMetadataPlatform", back_populates="python_package_metadata_platforms")
 
@@ -1298,7 +1299,7 @@ class PythonPackageMetadataSupportedPlatform(Base, BaseExtension):
     __tablename__ = "python_package_metadata_supported_platform"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    supported_platform = Column(String(256), nullable=True)
+    supported_platform = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataSupportedPlatform", back_populates="python_package_metadata_supported_platforms"
@@ -1334,7 +1335,7 @@ class PythonPackageMetadataRequiresExternal(Base, BaseExtension):
     __tablename__ = "python_package_metadata_requires_external"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    dependency = Column(String(256), nullable=True)
+    dependency = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataRequiresExternal", back_populates="python_package_metadata_requires_externals"
@@ -1366,7 +1367,7 @@ class PythonPackageMetadataProjectUrl(Base, BaseExtension):
     __tablename__ = "python_package_metadata_project_url"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    project_url = Column(String(256), nullable=True)
+    project_url = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataProjectUrl", back_populates="python_package_metadata_project_urls"
@@ -1401,7 +1402,7 @@ class PythonPackageMetadataProvidesExtra(Base, BaseExtension):
     __tablename__ = "python_package_metadata_provides_extra"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    optional_feature = Column(String(256), nullable=True)
+    optional_feature = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataProvidesExtra", back_populates="python_package_metadata_provides_extras"
@@ -1442,7 +1443,7 @@ class PythonPackageMetadataDistutils(Base, BaseExtension):
     __tablename__ = "python_package_metadata_distutils"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    distutils = Column(String(256), nullable=True)
+    distutils = Column(Text, nullable=True)
     distutils_type = Column(
         ENUM(
             MetadataDistutilsTypeEnum.REQUIRED.value,
