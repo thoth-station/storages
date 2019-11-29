@@ -165,6 +165,23 @@ class GraphDatabase(SQLBase):
     _DECLARATIVE_BASE = Base
     DEFAULT_COUNT = 100
 
+    _MULTI_VALUE_KEY_PYTHON_PACKAGE_METADATA_MAP = {
+        "classifier": [HasMetadataClassifier, PythonPackageMetadataClassifier, "classifier"],
+        "platform": [HasMetadataPlatform, PythonPackageMetadataPlatform, "platform"],
+        "supported_platform": [
+            HasMetadataSupportedPlatform,
+            PythonPackageMetadataSupportedPlatform,
+            "supported_platform"
+            ],
+        "requires_external": [
+            HasMetadataRequiresExternal,
+            PythonPackageMetadataRequiresExternal,
+            "requires_external"
+            ],
+        "project_url": [HasMetadataProjectUrl, PythonPackageMetadataProjectUrl, "project_url"],
+        "provides_extra": [HasMetadataProvidesExtra, PythonPackageMetadataProvidesExtra, "optional_feature"],
+    }
+
     def __del__(self) -> None:
         """Destruct adapter object."""
         if int(bool(os.getenv("THOTH_STORAGES_LOG_STATS", 0))):
@@ -3377,37 +3394,49 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
-    def get_classifiers_python_package_version_metadata(
+    def _get_multi_values_key_python_package_version_metadata(
         self,
         python_package_metadata_id: int,
-    ) -> List[str]:
-        """Retrieve classifiers metadata for Python package metadata."""
+    ) -> Dict[str, Optional[List[str]]]:
+        """Retrieve multi values key metadata for Python package metadata."""
         with self._session_scope() as session:
-            query = (
-                session.query(HasMetadataClassifier)
-                .filter(HasMetadataClassifier.python_package_metadata_id == python_package_metadata_id)
-                .join(PythonPackageMetadataClassifier)
-            ).with_entities(
-                PythonPackageMetadataClassifier
-            )
+            multi_value_results = {}
+            for key, tables in self._MULTI_VALUE_KEY_PYTHON_PACKAGE_METADATA_MAP.items():
+                query = (
+                    session.query(tables[0])
+                    .filter(tables[0].python_package_metadata_id == python_package_metadata_id)
+                    .join(tables[1])
+                ).with_entities(
+                    tables[1]
+                )
+                multi_value_results[key] = [getattr(v, tables[2]) for v in query.all()]
 
-            return [c.to_dict()["classifier"] for c in query.all()]
+            distutils_result = dict([(key, []) for key in ["requires_dist", "provides_dist", "obsolete_dist"]])
+            multi_value_results.update(distutils_result)
 
-    def get_platforms_python_package_version_metadata(
-        self,
-        python_package_metadata_id: int,
-    ) -> List[str]:
-        """Retrieve platforms metadata for Python package metadata."""
-        with self._session_scope() as session:
-            query = (
-                session.query(HasMetadataPlatform)
-                .filter(HasMetadataPlatform.python_package_metadata_id == python_package_metadata_id)
-                .join(PythonPackageMetadataPlatform)
-            ).with_entities(
-                PythonPackageMetadataPlatform
-            )
+            d_query = (
+                    session.query(HasMetadataDistutils)
+                    .filter(HasMetadataDistutils.python_package_metadata_id == python_package_metadata_id)
+                    .join(PythonPackageMetadataDistutils)
+                ).with_entities(
+                    PythonPackageMetadataDistutils
+                )
 
-            return [c.to_dict()["platform"] for c in query.all()]
+            for distutil in d_query.all():
+                distutil_dict = distutil.to_dict()
+                if distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.REQUIRED.value:
+                    multi_value_results["requires_dist"].append(distutil_dict["distutils"])
+
+                elif distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.PROVIDED.value:
+                    multi_value_results["provides_dist"].append(distutil_dict["distutils"])
+
+                elif distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.OBSOLETE.value:
+                    multi_value_results["obsolete_dist"].append(distutil_dict["distutils"])
+
+                else:
+                    _LOGGER.warning("Distutils type not registered in Thoth.")
+
+            return multi_value_results
 
     def get_python_package_version_metadata(
         self,
@@ -3422,19 +3451,18 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
-                .filter(exists().where(
+                .filter(
                     and_(
                         PythonPackageVersion.package_name == package_name,
                         PythonPackageVersion.package_version == package_version,
                         PythonPackageVersion.python_package_metadata_id.isnot(None)
                         )
                     )
-                )
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(PythonPackageMetadata)
             ).with_entities(
-                PythonPackageMetadata
+                PythonPackageMetadata,
             )
 
             result = query.first()
@@ -3443,8 +3471,7 @@ class GraphDatabase(SQLBase):
                 raise NotFoundError(f"No record found for {package_name!r}, {package_version!r}, {index_url!r}")
 
             formatted_result = result.to_dict()
-            formatted_result["classifier"] = self.get_classifiers_python_package_version_metadata(result.id)
-            formatted_result["platform"] = self.get_platforms_python_package_version_metadata(result.id)
+            formatted_result.update(self._get_multi_values_key_python_package_version_metadata(result.id))
 
             return formatted_result
 
