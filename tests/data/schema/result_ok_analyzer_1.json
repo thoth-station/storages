@@ -29,7 +29,8 @@
       }
     },
     "duration": 32,
-    "hostname": "fridex-thoth-package-extract-tensorflow-serving-s2i-d2gsr",
+    "hostname": "localhost",
+    "document_id": "fridex-thoth-package-extract-tensorflow-serving-s2i",
     "python": {
       "api_version": 1013,
       "implementation_name": "cpython",

@@ -67,6 +67,7 @@ METADATA_SCHEMA = Schema(
         Required("distribution"): DISTRIBUTION_SCHEMA,
         Required("duration"): int,
         Required("hostname"): str,
+        Required("document_id"): str,
         Required("python"): PYTHON_SCHEMA,
         Required("timestamp"): int,
     }

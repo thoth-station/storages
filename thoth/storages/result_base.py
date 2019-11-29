@@ -24,6 +24,7 @@ from .base import StorageBase
 from .ceph import CephStore
 from .result_schema import RESULT_SCHEMA
 from .exceptions import SchemaError
+from .exceptions import NoDocumentIdError
 
 
 class ResultStorageBase(StorageBase):
@@ -69,7 +70,11 @@ class ResultStorageBase(StorageBase):
         # Note we need to return job id here - the last part delimited by dash
         # is used for specifying pod that runs for the given job. We need job
         # id to be returned (remove pod specific part).
-        return document["metadata"]["hostname"].rsplit("-", maxsplit=1)[0]
+        document_id = document["metadata"].get("document_id")
+        if not document_id:
+            raise NoDocumentIdError("No document id is present in metadata")
+
+        return document_id
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""

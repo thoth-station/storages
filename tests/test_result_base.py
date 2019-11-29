@@ -51,8 +51,8 @@ class ResultBaseTest(StorageBaseTest):
     """The Base Class for Result Tests."""
     def test_get_document_id(self):
         # Make sure we pick document id from right place.
-        document = {'metadata': {'hostname': 'localhost'}}
-        assert ResultStorageBase.get_document_id(document) == 'localhost'
+        document = {'metadata': {'document_id': 'foo'}}
+        assert ResultStorageBase.get_document_id(document) == 'foo'
 
     @pytest.mark.parametrize('document,document_id', StorageBaseTest.get_all_results())
     def test_store_document(self, adapter, document, document_id):
