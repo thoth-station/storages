@@ -3379,19 +3379,35 @@ class GraphDatabase(SQLBase):
 
     def get_classifiers_python_package_version_metadata(
         self,
-        package_metadata_id: int,
+        python_package_metadata_id: int,
     ) -> List[str]:
         """Retrieve classifiers metadata for Python package metadata."""
         with self._session_scope() as session:
             query = (
                 session.query(HasMetadataClassifier)
-                .filter(HasMetadataClassifier.python_package_metadata_id == package_metadata_id)
+                .filter(HasMetadataClassifier.python_package_metadata_id == python_package_metadata_id)
                 .join(PythonPackageMetadataClassifier)
             ).with_entities(
                 PythonPackageMetadataClassifier
             )
 
             return [c.to_dict()["classifier"] for c in query.all()]
+
+    def get_platforms_python_package_version_metadata(
+        self,
+        python_package_metadata_id: int,
+    ) -> List[str]:
+        """Retrieve platforms metadata for Python package metadata."""
+        with self._session_scope() as session:
+            query = (
+                session.query(HasMetadataPlatform)
+                .filter(HasMetadataPlatform.python_package_metadata_id == python_package_metadata_id)
+                .join(PythonPackageMetadataPlatform)
+            ).with_entities(
+                PythonPackageMetadataPlatform
+            )
+
+            return [c.to_dict()["platform"] for c in query.all()]
 
     def get_python_package_version_metadata(
         self,
@@ -3427,7 +3443,8 @@ class GraphDatabase(SQLBase):
                 raise NotFoundError(f"No record found for {package_name!r}, {package_version!r}, {index_url!r}")
 
             formatted_result = result.to_dict()
-            formatted_result["classifiers"] = self.get_classifiers_python_package_version_metadata(result.id)
+            formatted_result["classifier"] = self.get_classifiers_python_package_version_metadata(result.id)
+            formatted_result["platform"] = self.get_platforms_python_package_version_metadata(result.id)
 
             return formatted_result
 
