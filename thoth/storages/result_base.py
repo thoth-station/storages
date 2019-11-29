@@ -99,6 +99,11 @@ class ResultStorageBase(StorageBase):
         self.ceph.store_document(document, document_id)
         return document_id
 
+    def store_file(self, backup_file_path: str, backup_file_id: str) -> str:
+        """Store the given file in Ceph."""
+        self.ceph.store_file(backup_file_path, backup_file_id)
+        return backup_file_id
+
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a document from Ceph by its id."""
         return self.ceph.retrieve_document(document_id)
