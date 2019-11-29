@@ -3755,3 +3755,28 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add ability to sync documents based on absolute path
 * :pushpin: Automatic update of dependency boto3 from 1.10.24 to 1.10.25
 * :pushpin: Automatic update of dependency boto3 from 1.10.23 to 1.10.24
+
+## Release 0.19.25 (2019-11-29T11:33:33)
+* Adjust tests to the new implementation
+* Increase characters metadata in keywords and summary metadata
+* Optimized Solved quries with error
+* Optimize Analyzed Python Packages queries
+* Optimnize unsolved queries
+* Optimize queries
+* :pushpin: Automatic update of dependency thoth-common from 0.9.16 to 0.9.17
+* Cache environment marker evaluation result
+* :package: store database backup to ceph storage
+* Fix Issue #1308 not iterable
+* Fix alembic configuration instantiation issues
+* Gather document id from document_id field
+* :pushpin: Automatic dependency re-locking
+* :pushpin: Automatic update of dependency pytest from 5.3.0 to 5.3.1
+* Use open instead of pathlib to adress PV in-cluster issues
+* :pushpin: Automatic update of dependency boto3 from 1.10.26 to 1.10.27
+* Make library thread safe
+* Issue warning instead of error
+* Introduced sorting type in queries
+* :pushpin: Automatic update of dependency sqlalchemy-stubs from 0.2 to 0.3
+* Fix wrong staticmethod
+* :pushpin: Automatic update of dependency boto3 from 1.10.25 to 1.10.26
+* :green_heart: added more builds that need to be triggered
