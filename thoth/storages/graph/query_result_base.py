@@ -19,16 +19,18 @@
 
 import logging
 
+from typing import List, Dict, Any, Optional, Union, Tuple
+
 _LOGGER = logging.getLogger(__name__)
 
 
-class QueryResult:
-    """Class for managing queries' results."""
+class PythonQueryResult:
+    """Class for managing queries' results for Python Packages."""
 
     def __init__(
         self,
-        result: dict,
-        count: int
+        result: Union[List, Dict[str, Any]],
+        count: Optional[int] = None
     ):
         """Query result initialization."""
         self._result = result
