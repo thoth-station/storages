@@ -28,7 +28,8 @@
       }
     },
     "duration": 12,
-    "hostname": "fridex-thoth-solver-fc26-thoth-solver-fc26-222k6",
+    "document_id": "fridex-thoth-solver-fc26-thoth-solver-fc26",
+    "hostname": "localhost",
     "python": {
       "api_version": 1013,
       "implementation_name": "cpython",
