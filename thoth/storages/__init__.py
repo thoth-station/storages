@@ -28,6 +28,7 @@ from .buildlogs_analyses_cache import BuildLogsAnalysesCacheStore
 from .ceph import CephStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
+from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
