@@ -2942,8 +2942,8 @@ class GraphDatabase(SQLBase):
 
             return query.all()
 
+    @staticmethod
     def _construct_python_packages_query(
-        self,
         session: Session,
         *,
         os_name: str = None,
