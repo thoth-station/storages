@@ -242,6 +242,7 @@ class GraphDatabase(SQLBase):
             create_database(self._engine.url)
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        alembic_cfg.attributes['configure_logger'] = True
         # Overwrite URL based on deployment configuration.
         alembic_cfg.set_main_option("sqlalchemy.url", self.construct_connection_string())
         alembic_cfg.set_section_option(
@@ -268,6 +269,7 @@ class GraphDatabase(SQLBase):
             raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        alembic_cfg.attributes['configure_logger'] = False
         alembic_cfg.set_section_option(
             'alembic',
             'script_location',
