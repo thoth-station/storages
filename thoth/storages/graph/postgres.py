@@ -4510,9 +4510,10 @@ class GraphDatabase(SQLBase):
                     solver_info,
                 )
 
-                # Sync to PPV table only packages that are provided, regardless solving errors.
+                # Sync to PPV table only packages that are provided, regardless solving errors. The default
+                # value of True is due to legacy thoth-solver output.
                 python_package_version_id = None
-                if error_info.get("is_provided", True):
+                if error_info.get("is_provided_package_version", True):
                     python_package_version_id = self._create_python_package_version(
                         session,
                         package_name,
