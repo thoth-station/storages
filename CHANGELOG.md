@@ -3780,3 +3780,24 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix wrong staticmethod
 * :pushpin: Automatic update of dependency boto3 from 1.10.25 to 1.10.26
 * :green_heart: added more builds that need to be triggered
+
+## Release 0.19.26 (2019-12-05T20:48:02)
+* Add Google Analytics
+* Adjust testsuite
+* Provide OS release schema
+* Adjust default is_provided value
+* Rename flag to is_provided_package_version
+* Change Sphinx theme
+* :pushpin: Automatic update of dependency thoth-common from 0.9.20 to 0.9.21
+* :pushpin: Automatic update of dependency boto3 from 1.10.32 to 1.10.33
+* :pushpin: Automatic update of dependency thoth-common from 0.9.19 to 0.9.20
+* :pushpin: Automatic update of dependency boto3 from 1.10.31 to 1.10.32
+* :pushpin: Automatic update of dependency boto3 from 1.10.30 to 1.10.31
+* Make some log info optional
+* Correct staticmethod
+* :pushpin: Automatic update of dependency boto3 from 1.10.29 to 1.10.30
+* :pushpin: Automatic update of dependency pyyaml from 5.1.2 to 5.2
+* :pushpin: Automatic update of dependency boto3 from 1.10.28 to 1.10.29
+* Create index for get_depends_on query
+* Do not sync package errors if the given package is not provided
+* :pushpin: Automatic update of dependency thoth-common from 0.9.17 to 0.9.19
