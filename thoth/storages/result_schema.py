@@ -18,6 +18,7 @@
 """Schema definition for analyzer results."""
 
 from voluptuous import Required
+from voluptuous import Optional
 from voluptuous import Schema
 
 from thoth.common import parse_datetime
@@ -56,6 +57,21 @@ DISTRIBUTION_SCHEMA = Schema(
     }
 )
 
+OS_RELEASE_SCHEMA = Schema(
+    {
+        Optional("redhat_bugzilla_product"): str,
+        Optional("redhat_bugzilla_product_version"): str,
+        Optional("redhat_support_product"): str,
+        Optional("redhat_support_product_version"): str,
+        Required("id"): str,
+        Required("name"): str,
+        Required("platform_id"): str,
+        Required("variant_id"): str,
+        Required("version_id"): str,
+        Required("version"): str,
+    }
+)
+
 
 # Metadata about results produced by analyzers.
 METADATA_SCHEMA = Schema(
@@ -69,6 +85,7 @@ METADATA_SCHEMA = Schema(
         Required("hostname"): str,
         Required("document_id"): str,
         Required("python"): PYTHON_SCHEMA,
+        Required("os_release"): OS_RELEASE_SCHEMA,
         Required("timestamp"): int,
     }
 )
