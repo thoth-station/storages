@@ -38,5 +38,17 @@
       "releaselevel": "final",
       "serial": 0
     },
+    "os_release": {
+      "id": "fedora",
+      "name": "Fedora",
+      "platform_id": "platform:f30",
+      "redhat_bugzilla_product": "Fedora",
+      "redhat_bugzilla_product_version": "30",
+      "redhat_support_product": "Fedora",
+      "redhat_support_product_version": "30",
+      "variant_id": "workstation",
+      "version": "30 (Workstation Edition)",
+      "version_id": "30"
+    },
     "timestamp": 1539686050
 }
