@@ -4511,27 +4511,32 @@ class GraphDatabase(SQLBase):
                     index_url,
                     solver_info,
                 )
-                python_package_version = self._create_python_package_version(
-                    session,
-                    package_name,
-                    package_version,
-                    os_name=ecosystem_solver.os_name,
-                    os_version=ecosystem_solver.os_version,
-                    python_version=ecosystem_solver.python_version,
-                    index_url=index_url,
-                )
+
+                # Sync to PPV table only packages that are provided, regardless solving errors. The default
+                # value of True is due to legacy thoth-solver output.
+                python_package_version_id = None
+                if error_info.get("is_provided_package_version", True):
+                    python_package_version_id = self._create_python_package_version(
+                        session,
+                        package_name,
+                        package_version,
+                        os_name=ecosystem_solver.os_name,
+                        os_version=ecosystem_solver.os_version,
+                        python_version=ecosystem_solver.python_version,
+                        index_url=index_url,
+                    ).id
 
                 solved, _ = Solved.get_or_create(
                     session,
                     datetime=solver_datetime,
                     document_id=solver_document_id,
-                    version_id=python_package_version.id,
+                    version_id=python_package_version_id,
                     ecosystem_solver=ecosystem_solver,
                     duration=solver_duration,
                     error=True,
                     error_unparseable=False,
                     error_unsolvable=False,
-                    is_provided=error_info.get("is_provided"),
+                    is_provided=python_package_version_id is not None,
                 )
 
             for unsolvable in document["result"]["unresolved"]:
