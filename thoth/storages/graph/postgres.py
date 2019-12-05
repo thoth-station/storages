@@ -4534,7 +4534,7 @@ class GraphDatabase(SQLBase):
                     error=True,
                     error_unparseable=False,
                     error_unsolvable=False,
-                    is_provided=error_info.get("is_provided"),
+                    is_provided=python_package_version_id is not None,
                 )
 
             for unsolvable in document["result"]["unresolved"]:
