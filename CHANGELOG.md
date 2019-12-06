@@ -3801,3 +3801,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create index for get_depends_on query
 * Do not sync package errors if the given package is not provided
 * :pushpin: Automatic update of dependency thoth-common from 0.9.17 to 0.9.19
+
+## Release 0.19.27 (2019-12-06T10:22:57)
+* UBI:8 has optional variant_id
+* :pushpin: Automatic update of dependency boto3 from 1.10.33 to 1.10.34
