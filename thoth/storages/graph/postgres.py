@@ -2677,6 +2677,7 @@ class GraphDatabase(SQLBase):
                 .join(HasVulnerability)
                 .join(CVE)
                 .with_entities(CVE)
+                .distinct()
                 .all()
             )
 
