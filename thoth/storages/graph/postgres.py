@@ -4638,10 +4638,14 @@ class GraphDatabase(SQLBase):
         parameters = document["result"]["parameters"]
         cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
         origin = (cli_arguments.get("metadata") or {}).get("origin")
+        is_s2i = (cli_arguments.get("metadata") or {}).get("is_s2i")
         runtime_environment = parameters["project"].get("runtime_environment")
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
+
+        if is_s2i is None:
+            _LOGGER.warning("No s2i flag stated in the adviser result %r", adviser_document_id)
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             external_hardware_info, external_run_software_environment = self._runtime_environment_conf2models(
@@ -4678,6 +4682,7 @@ class GraphDatabase(SQLBase):
                 limit=parameters["limit"],
                 limit_latest_versions=parameters.get("limit_latest_versions"),
                 origin=origin,
+                is_s2i=is_s2i,
                 recommendation_type=parameters["recommendation_type"].upper(),
                 requirements_format=parameters["requirements_format"].upper(),
                 external_hardware_information_id=external_hardware_info.id,
