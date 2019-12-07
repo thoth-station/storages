@@ -369,8 +369,9 @@ class CVE(Base, BaseExtension):
 
     advisory = Column(String(16384), nullable=True)
     cve_name = Column(String(256), nullable=True)
-    cve_id = Column(String(256), nullable=True)
+    cve_id = Column(String(256), nullable=False, unique=True)
     version_range = Column(String(256), nullable=True)
+    aggregated_at = Column(DateTime, nullable=True)
 
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
@@ -534,6 +535,7 @@ class AdviserRun(Base, BaseExtension):
     count = Column(Integer, nullable=True)
     limit = Column(Integer, nullable=True)
     origin = Column(String(256), nullable=True)
+    is_s2i = Column(Boolean, nullable=True)
     debug = Column(Boolean, nullable=False)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
