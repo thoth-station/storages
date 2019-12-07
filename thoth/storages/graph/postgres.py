@@ -31,6 +31,7 @@ from typing import Union
 from typing import Any
 from collections import deque
 from contextlib import contextmanager
+from datetime import datetime
 
 import attr
 from methodtools import lru_cache
@@ -3847,26 +3848,35 @@ class GraphDatabase(SQLBase):
         version_range: str,
         advisory: str,
         cve: str = None,
-    ) -> Tuple[CVE, bool]:
+    ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         with self._session_scope() as session, session.begin(subtransactions=True):
-            cve, _ = CVE.get_or_create(
-                session, cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve
-            )
-            index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
-            entity, _ = PythonPackageVersionEntity.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=index.id,
-            )
-            _, existed = HasVulnerability.get_or_create(
-                session, cve_id=cve.id, python_package_version_entity_id=entity.id
-            )
+            if session.query(exists().where(CVE.cve_id == record_id)).scalar():
+                return True
+            else:
+                cve_instance = CVE(
+                    advisory=advisory,
+                    cve_name=cve,
+                    cve_id=record_id,
+                    version_range=version_range,
+                    aggregated_at=datetime.utcnow(),
+                )
+                session.add(cve_instance)
 
-            return cve, existed
+                index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
+                entity, _ = PythonPackageVersionEntity.get_or_create(
+                    session,
+                    package_name=package_name,
+                    package_version=package_version,
+                    python_package_index_id=index.id,
+                )
+                HasVulnerability.get_or_create(
+                    session, cve_id=cve_instance.id, python_package_version_entity_id=entity.id
+                )
+
+                return False
 
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
@@ -4629,10 +4639,14 @@ class GraphDatabase(SQLBase):
         parameters = document["result"]["parameters"]
         cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
         origin = (cli_arguments.get("metadata") or {}).get("origin")
+        is_s2i = (cli_arguments.get("metadata") or {}).get("is_s2i")
         runtime_environment = parameters["project"].get("runtime_environment")
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
+
+        if is_s2i is None:
+            _LOGGER.warning("No s2i flag stated in the adviser result %r", adviser_document_id)
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             external_hardware_info, external_run_software_environment = self._runtime_environment_conf2models(
@@ -4669,6 +4683,7 @@ class GraphDatabase(SQLBase):
                 limit=parameters["limit"],
                 limit_latest_versions=parameters.get("limit_latest_versions"),
                 origin=origin,
+                is_s2i=is_s2i,
                 recommendation_type=parameters["recommendation_type"].upper(),
                 requirements_format=parameters["requirements_format"].upper(),
                 external_hardware_information_id=external_hardware_info.id,
