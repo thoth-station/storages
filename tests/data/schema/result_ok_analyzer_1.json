@@ -40,6 +40,7 @@
       "releaselevel": "final",
       "serial": 0
     },
+    "thoth_deployment_name": "thoth-prod",
     "os_release": {
       "id": "fedora",
       "name": "Fedora",

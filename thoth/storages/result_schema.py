@@ -81,11 +81,12 @@ METADATA_SCHEMA = Schema(
         Required("arguments"): dict,
         Required("datetime"): Datetime(),
         Required("distribution"): DISTRIBUTION_SCHEMA,
+        Required("document_id"): str,
         Required("duration"): int,
         Required("hostname"): str,
-        Required("document_id"): str,
-        Required("python"): PYTHON_SCHEMA,
         Required("os_release"): OS_RELEASE_SCHEMA,
+        Required("python"): PYTHON_SCHEMA,
+        Required("thoth_deployment_name"): str,
         Required("timestamp"): int,
     }
 )
