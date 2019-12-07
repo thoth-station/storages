@@ -31,6 +31,7 @@ from typing import Union
 from typing import Any
 from collections import deque
 from contextlib import contextmanager
+from datetime import datetime
 
 import attr
 from methodtools import lru_cache
@@ -3846,26 +3847,35 @@ class GraphDatabase(SQLBase):
         version_range: str,
         advisory: str,
         cve: str = None,
-    ) -> Tuple[CVE, bool]:
+    ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         with self._session_scope() as session, session.begin(subtransactions=True):
-            cve, _ = CVE.get_or_create(
-                session, cve_id=record_id, version_range=version_range, advisory=advisory, cve_name=cve
-            )
-            index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
-            entity, _ = PythonPackageVersionEntity.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=index.id,
-            )
-            _, existed = HasVulnerability.get_or_create(
-                session, cve_id=cve.id, python_package_version_entity_id=entity.id
-            )
+            if session.query(exists().where(CVE.cve_id == record_id)).scalar():
+                return True
+            else:
+                cve_instance = CVE(
+                    advisory=advisory,
+                    cve_name=cve,
+                    cve_id=record_id,
+                    version_range=version_range,
+                    aggregated_at=datetime.utcnow(),
+                )
+                session.add(cve_instance)
 
-            return cve, existed
+                index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
+                entity, _ = PythonPackageVersionEntity.get_or_create(
+                    session,
+                    package_name=package_name,
+                    package_version=package_version,
+                    python_package_index_id=index.id,
+                )
+                HasVulnerability.get_or_create(
+                    session, cve_id=cve_instance.id, python_package_version_entity_id=entity.id
+                )
+
+                return False
 
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
