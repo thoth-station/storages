@@ -535,6 +535,7 @@ class AdviserRun(Base, BaseExtension):
     count = Column(Integer, nullable=True)
     limit = Column(Integer, nullable=True)
     origin = Column(String(256), nullable=True)
+    is_s2i = Column(Boolean, nullable=True)
     debug = Column(Boolean, nullable=False)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
