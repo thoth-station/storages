@@ -4,14 +4,14 @@ Thoth Storages
 This library provides a library called `thoth-storages
 <https://pypi.org/project/thoth-storages>`_ used in project `Thoth
 <https://thoth-station.ninja>`_.  The library exposes core queries and methods
-for PostgreSQL database as well as adapters for manipulating with Ceph via its
-S3 compatible API.
+for `PostgreSQL database <https://www.postgresql.org/>`_ as well as adapters
+for manipulating with `Ceph <https://ceph.io/>`_ via its S3 compatible API.
 
 Installation and Usage
 ======================
 
-The library can be installed via pip or Pipenv from
-`PyPI <https://pypi.org/project/thoth-storages>`_:
+The library can be installed via pip or Pipenv from `PyPI
+<https://pypi.org/project/thoth-storages>`_:
 
 .. code-block:: console
 
@@ -20,7 +20,7 @@ The library can be installed via pip or Pipenv from
 The library does not provide any CLI, it is rather a low level library
 supporting other parts of Thoth.
 
-You can run prepared testsuite via the following command:
+You can run prepared test-suite via the following command:
 
 .. code-block:: console
 
@@ -33,7 +33,7 @@ You can run prepared testsuite via the following command:
 Running PostgreSQL locally
 ==========================
 
-You can use `docker-compose.yaml` present in this repository to run a local
+You can use ``docker-compose.yaml`` present in this repository to run a local
 PostgreSQL instance, (make sure you installed `podman-compose
 <https://github.com/containers/podman-compose>`_):
 
@@ -42,19 +42,21 @@ PostgreSQL instance, (make sure you installed `podman-compose
   $ podman-compose up
 
 After running the command above, you should be able to access a local
-PostgreSQL instance at `localhost:5432`. This is also the default configuration
-for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST`
-explicitly. The default configuration uses database named `postgres` which can
-be accessed using `postgres` user and `postgres` password (SSL is disabled).
+PostgreSQL instance at ``localhost:5432``. This is also the default
+configuration for PostgreSQL's adapter - you don't need to provide
+``GRAPH_SERVICE_HOST`` explicitly. The default configuration uses database
+named ``postgres`` which can be accessed using ``postgres`` user and
+``postgres`` password (SSL is disabled).
 
-The provided `docker-compose.yaml` has also `PGweb
-<https://sosedoff.github.io/pgweb/>` enabled for to have an UI for the database
-content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
+The provided ``docker-compose.yaml`` has also `PGweb
+<https://sosedoff.github.io/pgweb/>`_ enabled for to have an UI for the
+database content. To access it visit `http://localhost:8081/
+<http://localhost:8081>`_.
 
 The provided `docker-compose.yaml` does not use any volume. After you
 containers restart, the content will not be available anymore.
 
-If you would like to experiment with PostgreSQL programatically, you can use
+If you would like to experiment with PostgreSQL programmatically, you can use
 the following code snippet as a starting point:
 
 .. code-block:: python
@@ -81,7 +83,7 @@ database in a deployment.
 
 Alembic uses incremental version control, where each migration is versioned and
 states how to migrate from previous state of database to the desired next state
-- these versions are present in `alembic/versions` directory and are
+- these versions are present in ``alembic/versions`` directory and are
 automatically generated with procedure described bellow.
 
 If you make any changes, follow the following steps which will generate version
@@ -116,9 +118,9 @@ for you:
 
     $ git add thoth/storages/data/alembic/versions/
 
-* In a deployment, use Management API and its `/graph/initialize` endpoint to
+* In a deployment, use Management API and its ``/graph/initialize`` endpoint to
    propagate database schema changes in deployment (Management API has to have
-   recent schema changes present which are populated with new `thoth-storages`
+   recent schema changes present which are populated with new ``thoth-storages``
    releases).
 
 * If running locally and you would like to propagate changes, run the following
@@ -128,7 +130,8 @@ for you:
 
     $ PYTHONPATH=. pipenv run alembic upgrade head
 
-  If you would like to update schema programmatically run the following Python code:
+  If you would like to update schema programmatically run the following Python
+  code:
 
   .. code-block:: python
 
@@ -154,7 +157,6 @@ The command above will produce 2 images named ``schema.png`` and
 ``schema_cache.png``. The first PNG file shows schema for the main PostgreSQL
 instance and the latter one, as the name suggests, shows how cache schema looks
 like.
-
 
 If the command above fails with the following exception:
 
@@ -182,10 +184,11 @@ and hardware configuration. Please follow instructions on how to create a
 performance script shown in the `README of performance repo
 <https://github.com/thoth-station/performance>`_.
 
-To create relevant models, adjust `thoth/storages/graph/models_performance.py`
-file and add your model. Describe parameters (reported in `@parameters` section
-of performance indicator result) and result (reported in `@result`). The name
-of class should match `name` which is reported by performance indicator run.
+To create relevant models, adjust
+``thoth/storages/graph/models_performance.py`` file and add your model.
+Describe parameters (reported in ``@parameters`` section of performance
+indicator result) and result (reported in ``@result``). The name of class
+should match ``name`` which is reported by performance indicator run.
 
 .. code-block:: python
 
@@ -209,18 +212,18 @@ Online debugging of queries
 You can print to logger all the queries that are performed to a PostgreSQL
 instance. To do so, set the following environment variable:
 
-.. code-block::
+.. code-block:: console
 
   export THOTH_STORAGES_DEBUG_QUERIES=1
 
 Online debugging of queries
 ===========================
 
-You can print information about PostgreSQL adapter together with statisics on
+You can print information about PostgreSQL adapter together with statistics on
 the graph cache and memory cache usage to logger (it has to have at least level
-`INFO` set). To do so, set the following environment variable:
+``INFO`` set). To do so, set the following environment variable:
 
-.. code-block::
+.. code-block:: console
 
   export THOTH_STORAGES_LOG_STATS=1
 
@@ -229,12 +232,12 @@ These statistics will be printed once the database adapter is destructed.
 Creating backups from Thoth deployment
 ======================================
 
-You can use `pg_dump` and `psql` utilities to create dumps and restore the
+You can use ``pg_dump`` and ``psql`` utilities to create dumps and restore the
 database content from dumps. This tool is pre-installed in the container image
 which is running PostgreSQL so the only thing you need to do is execute
-`pg_dump` in Thoth's deployment in a PostgreSQL container to create a dump, use
-`oc cp` to retrieve dump (or directly use `oc exec` and create the dump from
-the cluster) and subsequently `psql` to restore the database content. The
+``pg_dump`` in Thoth's deployment in a PostgreSQL container to create a dump, use
+``oc cp`` to retrieve dump (or directly use ``oc exec`` and create the dump from
+the cluster) and subsequently ``psql`` to restore the database content. The
 prerequisite for this is to have access to the running container (edit rights).
 
 .. code-block:: console
@@ -290,4 +293,3 @@ maps prefix of the document id to the handler (function) which is responsible
 for syncing data into the knowledge base (please mind signatures of existing
 syncing funcions to automatically integrate with ``sync_documents`` function
 which is called from ``graph-sync-job``).
-
