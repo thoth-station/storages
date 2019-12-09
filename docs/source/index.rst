@@ -10,6 +10,7 @@ Knowledge graph schema
 Crossroad
 =========
 
+* `Documentation for thamos <../thamos>`_
 * `Documentation for thoth-adviser <../adviser>`_
 * `Documentation for thoth-analyzer <../analyzer>`_
 * `Documentation for thoth-common <../common>`_
