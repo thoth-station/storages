@@ -33,19 +33,29 @@ You can run prepared testsuite via the following command:
 Running PostgreSQL locally
 ==========================
 
-You can use `docker-compose.yaml` present in this repository to run a local PostgreSQL instance, (make sure you installed `podman-compose <https://github.com/containers/podman-compose>`_):
+You can use `docker-compose.yaml` present in this repository to run a local
+PostgreSQL instance, (make sure you installed `podman-compose
+<https://github.com/containers/podman-compose>`_):
 
 .. code-block:: console
 
   $ podman-compose up
 
-After running the command above, you should be able to access a local PostgreSQL instance at `localhost:5432`. This is also the default configuration for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST` explicitly. The default configuration uses database named `postgres` which can be accessed using `postgres` user and `postgres` password (SSL is disabled).
+After running the command above, you should be able to access a local
+PostgreSQL instance at `localhost:5432`. This is also the default configuration
+for PostgreSQL's adapter - you don't need to provide `GRAPH_SERVICE_HOST`
+explicitly. The default configuration uses database named `postgres` which can
+be accessed using `postgres` user and `postgres` password (SSL is disabled).
 
-The provided `docker-compose.yaml` has also PGweb enabled for to have an UI for the database content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
+The provided `docker-compose.yaml` has also `PGweb
+<https://sosedoff.github.io/pgweb/>` enabled for to have an UI for the database
+content. To access it visit `http://localhost:8081/ <http://localhost:8081>`_.
 
-The provided `docker-compose.yaml` does not use any volume. After you containers restart, the content will not be available anymore.
+The provided `docker-compose.yaml` does not use any volume. After you
+containers restart, the content will not be available anymore.
 
-If you would like to experiment with PostgreSQL programatically, you can use the following code snippet as a starting point:
+If you would like to experiment with PostgreSQL programatically, you can use
+the following code snippet as a starting point:
 
 .. code-block:: python
 
@@ -70,9 +80,9 @@ automatically detect what has changed and how to adjust already existing
 database in a deployment.
 
 Alembic uses incremental version control, where each migration is versioned and
-states how to migrate from previous state of database to the desired next state - these
-versions are present in `alembic/versions` directory and are automatically
-generated with procedure described bellow.
+states how to migrate from previous state of database to the desired next state
+- these versions are present in `alembic/versions` directory and are
+automatically generated with procedure described bellow.
 
 If you make any changes, follow the following steps which will generate version
 for you:
@@ -102,7 +112,6 @@ for you:
 4. Make sure generated migrations are part of your pull request so changes are
    propagated to deployments:
 
-
   .. code-block:: console
 
     $ git add thoth/storages/data/alembic/versions/
@@ -118,7 +127,6 @@ for you:
 
     $ PYTHONPATH=. pipenv run alembic upgrade head
 
-
   If you would like to update schema programmatically run the following Python code:
 
   .. code-block:: python
@@ -132,7 +140,8 @@ for you:
 Generate schema images
 ======================
 
-You can use shipped CLI ``thoth-storages`` to automatically generate schema images out of the current models:
+You can use shipped CLI ``thoth-storages`` to automatically generate schema
+images out of the current models:
 
 .. code-block:: console
 
@@ -172,10 +181,10 @@ and hardware configuration. Please follow instructions on how to create a
 performance script shown in the `README of performance repo
 <https://github.com/thoth-station/performance>`_.
 
-To create relevant models, adjust `thoth/storages/graph/models_performance.py` file
-and add your model. Describe parameters (reported in `@parameters` section of
-performance indicator result) and result (reported in `@result`). The name of
-class should match `name` which is reported by performance indicator run.
+To create relevant models, adjust `thoth/storages/graph/models_performance.py`
+file and add your model. Describe parameters (reported in `@parameters` section
+of performance indicator result) and result (reported in `@result`). The name
+of class should match `name` which is reported by performance indicator run.
 
 .. code-block:: python
 
@@ -190,13 +199,14 @@ class should match `name` which is reported by performance indicator run.
       elapsed = Column(Float, nullable=False)
       rate = Column(Float, nullable=False)
 
-All the models use `SQLAchemy <https://www.sqlalchemy.org/>`_.
-See `docs <https://docs.sqlalchemy.org/>`_ for more info.
+All the models use `SQLAchemy <https://www.sqlalchemy.org/>`_.  See `docs
+<https://docs.sqlalchemy.org/>`_ for more info.
 
 Online debugging of queries
 ===========================
 
-You can print to logger all the queries that are performed to a PostgreSQL instance. To do so, set the following environment variable:
+You can print to logger all the queries that are performed to a PostgreSQL
+instance. To do so, set the following environment variable:
 
 .. code-block::
 
@@ -218,12 +228,12 @@ These statistics will be printed once the database adapter is destructed.
 Creating backups from Thoth deployment
 ======================================
 
-You can use `pg_dump` and `psql` utilities to create dumps and restore
-the database content from dumps. This tool is pre-installed in the container image
+You can use `pg_dump` and `psql` utilities to create dumps and restore the
+database content from dumps. This tool is pre-installed in the container image
 which is running PostgreSQL so the only thing you need to do is execute
 `pg_dump` in Thoth's deployment in a PostgreSQL container to create a dump, use
-`oc cp` to retrieve dump (or directly use `oc exec` and create the dump from the
-cluster) and subsequently `psql` to restore the database content. The
+`oc cp` to retrieve dump (or directly use `oc exec` and create the dump from
+the cluster) and subsequently `psql` to restore the database content. The
 prerequisite for this is to have access to the running container (edit rights).
 
 .. code-block:: console
@@ -256,9 +266,9 @@ You can ignore error messages related to an owner error like this:
   STATEMENT:  ALTER TABLE public.python_software_stack OWNER TO thoth;
   ERROR:  role "thoth" does not exist
 
-The PostgreSQL container uses user "postgres" by default which is different from the one
-run in the cluster ("thoth"). The role assignment will simply not be created but data
-will be available.
+The PostgreSQL container uses user "postgres" by default which is different
+from the one run in the cluster ("thoth"). The role assignment will simply not
+be created but data will be available.
 
 Syncing results of jobs run in the cluster
 ==========================================
