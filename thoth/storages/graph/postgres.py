@@ -165,6 +165,23 @@ class GraphDatabase(SQLBase):
     _DECLARATIVE_BASE = Base
     DEFAULT_COUNT = 100
 
+    _MULTI_VALUE_KEY_PYTHON_PACKAGE_METADATA_MAP = {
+        "classifier": [HasMetadataClassifier, PythonPackageMetadataClassifier, "classifier"],
+        "platform": [HasMetadataPlatform, PythonPackageMetadataPlatform, "platform"],
+        "supported_platform": [
+            HasMetadataSupportedPlatform,
+            PythonPackageMetadataSupportedPlatform,
+            "supported_platform"
+            ],
+        "requires_external": [
+            HasMetadataRequiresExternal,
+            PythonPackageMetadataRequiresExternal,
+            "requires_external"
+            ],
+        "project_url": [HasMetadataProjectUrl, PythonPackageMetadataProjectUrl, "project_url"],
+        "provides_extra": [HasMetadataProvidesExtra, PythonPackageMetadataProvidesExtra, "optional_feature"],
+    }
+
     def __del__(self) -> None:
         """Destruct adapter object."""
         if int(bool(os.getenv("THOTH_STORAGES_LOG_STATS", 0))):
@@ -3377,6 +3394,50 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+    def _get_multi_values_key_python_package_version_metadata(
+        self,
+        python_package_metadata_id: int,
+    ) -> Dict[str, Optional[List[str]]]:
+        """Retrieve multi values key metadata for Python package metadata."""
+        with self._session_scope() as session:
+            multi_value_results = {}
+            for key, tables in self._MULTI_VALUE_KEY_PYTHON_PACKAGE_METADATA_MAP.items():
+                query = (
+                    session.query(tables[0])
+                    .filter(tables[0].python_package_metadata_id == python_package_metadata_id)
+                    .join(tables[1])
+                ).with_entities(
+                    tables[1]
+                )
+                multi_value_results[key] = [getattr(v, tables[2]) for v in query.all()]
+
+            distutils_result = dict([(key, []) for key in ["requires_dist", "provides_dist", "obsolete_dist"]])
+            multi_value_results.update(distutils_result)
+
+            d_query = (
+                    session.query(HasMetadataDistutils)
+                    .filter(HasMetadataDistutils.python_package_metadata_id == python_package_metadata_id)
+                    .join(PythonPackageMetadataDistutils)
+                ).with_entities(
+                    PythonPackageMetadataDistutils
+                )
+
+            for distutil in d_query.all():
+                distutil_dict = distutil.to_dict()
+                if distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.REQUIRED.value:
+                    multi_value_results["requires_dist"].append(distutil_dict["distutils"])
+
+                elif distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.PROVIDED.value:
+                    multi_value_results["provides_dist"].append(distutil_dict["distutils"])
+
+                elif distutil_dict['distutils_type'] == MetadataDistutilsTypeEnum.OBSOLETE.value:
+                    multi_value_results["obsolete_dist"].append(distutil_dict["distutils"])
+
+                else:
+                    _LOGGER.warning("Distutils type not registered in Thoth.")
+
+            return multi_value_results
+
     def get_python_package_version_metadata(
         self,
         package_name: str,
@@ -3389,13 +3450,19 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             query = (
-                session.query(PythonPackageMetadata)
-                .join(PythonPackageVersion)
+                session.query(PythonPackageVersion)
+                .filter(
+                    and_(
+                        PythonPackageVersion.package_name == package_name,
+                        PythonPackageVersion.package_version == package_version,
+                        PythonPackageVersion.python_package_metadata_id.isnot(None)
+                        )
+                    )
                 .join(PythonPackageIndex)
-                .filter(PythonPackageVersion.package_name == package_name)
-                .filter(PythonPackageVersion.package_version == package_version)
                 .filter(PythonPackageIndex.url == index_url)
-                .filter(PythonPackageVersion.python_package_metadata_id.isnot(None))
+                .join(PythonPackageMetadata)
+            ).with_entities(
+                PythonPackageMetadata,
             )
 
             result = query.first()
@@ -3403,7 +3470,10 @@ class GraphDatabase(SQLBase):
             if result is None:
                 raise NotFoundError(f"No record found for {package_name!r}, {package_version!r}, {index_url!r}")
 
-            return result.to_dict()
+            formatted_result = result.to_dict()
+            formatted_result.update(self._get_multi_values_key_python_package_version_metadata(result.id))
+
+            return formatted_result
 
     def _create_python_package_requirement(
         self,
