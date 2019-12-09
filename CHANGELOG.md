@@ -3805,3 +3805,18 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.19.27 (2019-12-06T10:22:57)
 * UBI:8 has optional variant_id
 * :pushpin: Automatic update of dependency boto3 from 1.10.33 to 1.10.34
+
+## Release 0.19.28 (2019-12-09T12:05:30)
+* Add Thamos documentation
+* Document automatic graph-backup job
+* More formatting changes
+* Minor docs reformatting
+* Show database schema
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.35.0 to 0.36.0
+* Provide is_s2i flag for adviser runs
+* Point documentation to other libraries
+* Add aggregated_at column to CVE
+* Select distinct CVEs
+* Remove duplicate entry
+* Adjust tests to new metadata
+* Add deployment name to the result schema
