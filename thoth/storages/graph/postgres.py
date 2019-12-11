@@ -1416,6 +1416,11 @@ class GraphDatabase(SQLBase):
                     PythonPackageIndex.url)
                     )
 
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
             return query.all()
 
     def get_unsolved_python_package_versions_count_all(
@@ -1448,6 +1453,9 @@ class GraphDatabase(SQLBase):
                     PythonPackageVersionEntity.package_version,
                     PythonPackageIndex.url)
                     )
+
+            if distinct:
+                query = query.distinct()
 
             return query.count()
 
