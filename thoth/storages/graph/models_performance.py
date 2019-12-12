@@ -37,12 +37,12 @@ _LOGGER = logging.getLogger(__name__)
 class PerformanceIndicatorBase:
     """A base class for implementing performance indicators."""
 
-    # ML framework used for the performance indicator.
-    framework = Column(String(256), nullable=True)
+    # Component used for the performance indicator.
+    component = Column(String(256), nullable=False)
 
     # Origin from where the performance indicator was obtained. In case of Git repo,
     # it holds Git repo URL, in case of URL it holds URL to the script.
-    origin = Column(String(256), nullable=True)
+    origin = Column(String(256), nullable=False)
 
     # Reference of the script, in case of Git repo it holds commit SHA, in case of URL it carries
     # SHA256 of the script which was used to test the performance with (performance indicator script).
@@ -80,10 +80,6 @@ class PerformanceIndicatorBase:
     ) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
-        framework = inspection_document["job_log"]["stdout"].get("framework")
-        if not framework:
-            _LOGGER.warning("No machine learning framework specified in performance indicator %r", cls.__name__)
-
         overall_score = inspection_document["job_log"]["stdout"].get("overall_score")
         if overall_score is None:
             _LOGGER.warning("No overall score detected in performance indicator %r", overall_score)
@@ -92,7 +88,7 @@ class PerformanceIndicatorBase:
             cls.get_or_create,
             session,
             inspection_run_id=inspection_run_id,
-            framework=framework,
+            component=inspection_document["job_log"]["stdout"].get("component"),
             origin=inspection_document["specification"]["script"],
             version=inspection_document["job_log"]["stdout"].get("version")
             or inspection_document["job_log"]["script_sha256"],
@@ -253,8 +249,79 @@ class PiConv2D(Base, BaseExtension, PerformanceIndicatorBase):
     rate = Column(Float, nullable=False)
 
 
-# ALL_PERFORMANCE_MODELS = frozenset((ObservedPerformance, PiMatmul, PiConv1D, PiConv2D))
-ALL_PERFORMANCE_MODELS = frozenset((PiMatmul, PiConv1D, PiConv2D))
+class PiPyBench(Base, BaseExtension, PerformanceIndicatorBase):
+    """A class for representing Pybench results for Python Interpreter."""
 
+    __tablename__ = "pi_pybench"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_run_id = Column(Integer, ForeignKey("inspection_run.id"), nullable=False)
+    inspection_run = relationship("InspectionRun", back_populates="pybench_perf_indicators")
+
+    # Number of rounds used for each function.
+    rounds = Column(Integer, nullable=False)
+
+    # Average results for each function
+    built_in_function_calls_average = Column(Float, nullable=False)
+    built_in_method_lookup_average = Column(Float, nullable=False)
+    compare_floats_average = Column(Float, nullable=False)
+    compare_floats_integers_average = Column(Float, nullable=False)
+    compare_integers_average = Column(Float, nullable=False)
+    compare_interned_strings_average = Column(Float, nullable=False)
+    compare_longs_average = Column(Float, nullable=False)
+    compare_strings_average = Column(Float, nullable=False)
+    compare_unicode_average = Column(Float, nullable=False)
+    concat_strings_average = Column(Float, nullable=False)
+    concat_unicode_average = Column(Float, nullable=False)
+    create_instances_average = Column(Float, nullable=False)
+    create_new_instances_average = Column(Float, nullable=False)
+    create_strings_with_concat_average = Column(Float, nullable=False)
+    create_unicode_with_concat_average = Column(Float, nullable=False)
+    dict_creation_average = Column(Float, nullable=False)
+    dict_with_float_keys_average = Column(Float, nullable=False)
+    dict_with_integer_keys_average = Column(Float, nullable=False)
+    dict_with_string_keys_average = Column(Float, nullable=False)
+    for_loops_average = Column(Float, nullable=False)
+    if_then_else_average = Column(Float, nullable=False)
+    list_slicing_average = Column(Float, nullable=False)
+    nested_for_loops_average = Column(Float, nullable=False)
+    normal_class_attribute_average = Column(Float, nullable=False)
+    normal_instance_attribute_average = Column(Float, nullable=False)
+    python_function_calls_average = Column(Float, nullable=False)
+    python_method_calls_average = Column(Float, nullable=False)
+    recursion_average = Column(Float, nullable=False)
+    second_import_average = Column(Float, nullable=False)
+    second_package_import_average = Column(Float, nullable=False)
+    second_submodule_import_average = Column(Float, nullable=False)
+    simple_complex_arithmetic_average = Column(Float, nullable=False)
+    simple_dict_manipulation_average = Column(Float, nullable=False)
+    simple_float_arithmetic_average = Column(Float, nullable=False)
+    simple_int_float_arithmetic_average = Column(Float, nullable=False)
+    simple_integer_arithmetic_average = Column(Float, nullable=False)
+    simple_list_manipulation_average = Column(Float, nullable=False)
+    simple_long_arithmetic_average = Column(Float, nullable=False)
+    small_lists_average = Column(Float, nullable=False)
+    small_tuples_average = Column(Float, nullable=False)
+    special_class_attribute_average = Column(Float, nullable=False)
+    special_instance_attribute_average = Column(Float, nullable=False)
+    string_mappings_average = Column(Float, nullable=False)
+    string_predicates_average = Column(Float, nullable=False)
+    string_slicing_average = Column(Float, nullable=False)
+    try_except_average = Column(Float, nullable=False)
+    try_raise_except_average = Column(Float, nullable=False)
+    tuple_slicing_average = Column(Float, nullable=False)
+    unicode_mappings_average = Column(Float, nullable=False)
+    unicode_predicates_average = Column(Float, nullable=False)
+    unicode_properties_average = Column(Float, nullable=False)
+    unicode_slicing_average = Column(Float, nullable=False)
+
+    # Total average results
+    totals_average = Column(Float, nullable=False)
+
+
+PERFORMANCE_MODELS_ML_FRAMEWORKS = frozenset((PiMatmul, PiConv1D, PiConv2D))
+
+ALL_PERFORMANCE_MODELS = frozenset((PiMatmul, PiConv1D, PiConv2D, PiPyBench))
 
 PERFORMANCE_MODEL_BY_NAME = {model_class.__name__: model_class for model_class in ALL_PERFORMANCE_MODELS}

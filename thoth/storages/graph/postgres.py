@@ -123,8 +123,9 @@ from .models import RPMRequires
 from .models import Solved
 from .models import ALL_RELATION_MODELS
 
-from .models_performance import PiMatmul
-from .models_performance import ALL_PERFORMANCE_MODELS, PERFORMANCE_MODEL_BY_NAME
+from .models_performance import PERFORMANCE_MODEL_BY_NAME, ALL_PERFORMANCE_MODELS
+from .models_performance import PERFORMANCE_MODELS_ML_FRAMEWORKS
+
 from collections import Counter
 
 from .sql_base import SQLBase
@@ -3565,6 +3566,7 @@ class GraphDatabase(SQLBase):
                         os_version=os_version,
                         python_version=python_version,
                         index_url=package.index.url if package.index else None,
+                        python_package_metadata_id=python_package_version.python_package_metadata_id,
                         sync_only_entity=sync_only_entity,
                     ))
                 else:
@@ -3672,7 +3674,7 @@ class GraphDatabase(SQLBase):
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
-        metadata: PythonPackageMetadata = None,
+        python_package_metadata_id: int = None,
         sync_only_entity: bool = False,
     ) -> PythonPackageVersion:
         """Create a Python package version.
@@ -3705,7 +3707,7 @@ class GraphDatabase(SQLBase):
                 os_version=os_version,
                 python_version=python_version,
                 entity_id=entity.id,
-                python_package_metadata_id=metadata.id if metadata else None
+                python_package_metadata_id=python_package_metadata_id
             )
 
         if sync_only_entity:
@@ -3723,7 +3725,7 @@ class GraphDatabase(SQLBase):
         *,
         performance_score: float = None,
         overall_score: float = None,
-        sync_only_entity: bool = False
+        is_external: bool = False
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
         software_stack, _ = PythonSoftwareStack.get_or_create(
@@ -3743,32 +3745,23 @@ class GraphDatabase(SQLBase):
                 )
 
         if requirements_lock is not None:
-            if sync_only_entity:
-                python_package_versions_entities = self._create_python_packages_pipfile(
-                    session,
-                    requirements_lock,
-                    software_environment=software_environment,
-                    sync_only_entity=sync_only_entity
-                )
-                for python_package_version_entity in python_package_versions_entities:
-                    ExternalPythonRequirementsLock.get_or_create(
-                        session,
-                        python_software_stack_id=software_stack.id,
-                        python_package_version_entity_id=python_package_version_entity.id,
-                    )
+            if is_external:
+                python_requirement_lock = ExternalPythonRequirementsLock
             else:
-                python_package_versions = self._create_python_packages_pipfile(
+                python_requirement_lock = PythonRequirementsLock
+
+            python_package_versions = self._create_python_packages_pipfile(
+                session,
+                requirements_lock,
+                software_environment=software_environment,
+                sync_only_entity=is_external
+            )
+            for python_package_version in python_package_versions:
+                python_requirement_lock.get_or_create(
                     session,
-                    requirements_lock,
-                    software_environment=software_environment,
-                    sync_only_entity=sync_only_entity
+                    python_software_stack_id=software_stack.id,
+                    python_package_version_id=python_package_version.id,
                 )
-                for python_package_version in python_package_versions:
-                    PythonRequirementsLock.get_or_create(
-                        session,
-                        python_software_stack_id=software_stack.id,
-                        python_package_version_id=python_package_version.id,
-                    )
 
         return software_stack
 
@@ -3900,16 +3893,6 @@ class GraphDatabase(SQLBase):
                     raise PerformanceIndicatorNotRegistered(
                         f"No performance indicator registered for name {performance_indicator_name!r}"
                     )
-                framework = document["job_log"]["stdout"].get("framework")
-                if not framework:
-                    _LOGGER.warning(
-                        "No machine learning framework specified in performance indicator %r",
-                        performance_indicator_name,
-                    )
-
-                overall_score = document["job_log"]["stdout"].get("overall_score")
-                if overall_score is None:
-                    _LOGGER.warning("No overall score detected in performance indicator %r", overall_score)
 
                 performance_indicator, _ = performance_model_class.create_from_report(
                     session,
@@ -4104,7 +4087,7 @@ class GraphDatabase(SQLBase):
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
                 index_url=None,
-                sync_only_entity=True
+                sync_only_entity=document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["is_external"]
             )
 
             Identified.get_or_create(
@@ -4532,7 +4515,7 @@ class GraphDatabase(SQLBase):
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
                     index_url=index_url,
-                    metadata=package_metadata
+                    metadata=package_metadata.id
                 )
 
                 for sha256 in python_package_info["sha256"]:
@@ -4916,8 +4899,8 @@ class GraphDatabase(SQLBase):
         """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
         result = {}
         with self._session_scope() as session:
-            for pi_model in ALL_PERFORMANCE_MODELS:
-                result[pi_model.__tablename__] = session.query(pi_model).filter_by(framework=framework).count()
+            for pi_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
+                result[pi_model.__tablename__] = session.query(pi_model).filter_by(component=component).count()
 
         return result
 
@@ -4955,10 +4938,10 @@ class GraphDatabase(SQLBase):
         """Retrieve ML frameworks in Thoth database."""
         result = []
         with self._session_scope() as session:
-            for performance_model in ALL_PERFORMANCE_MODELS:
+            for performance_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
                 query = (
                     session.query(performance_model)
-                    .with_entities(performance_model.framework)
+                    .with_entities(performance_model.component)
                     .distinct()
                 )
 

@@ -517,6 +517,7 @@ class InspectionRun(Base, BaseExtension):
     matmul_perf_indicators = relationship("PiMatmul", back_populates="inspection_run")
     conv1d_perf_indicators = relationship("PiConv1D", back_populates="inspection_run")
     conv2d_perf_indicators = relationship("PiConv2D", back_populates="inspection_run")
+    pybench_perf_indicators = relationship("PiPyBench", back_populates="inspection_run")
 
 
 class AdviserRun(Base, BaseExtension):
