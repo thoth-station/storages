@@ -88,3 +88,7 @@ class SortTypeQueryError(ThothStorageException):
 
 class NoDocumentIdError(ThothStorageException):
     """Raised if document id is not found in the document."""
+
+
+class CudaVersionDoesNotMatch(ThothStorageException):
+    """Raised if the cuda versions from txt file and nvcc command is different."""
