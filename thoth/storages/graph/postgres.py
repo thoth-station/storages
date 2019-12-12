@@ -154,6 +154,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import SolverNameParseError
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
+from ..exceptions import CudaVersionDoesNotMatch
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -4163,6 +4164,12 @@ class GraphDatabase(SQLBase):
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
         os_name = document["result"]["operating-system"]["name"]
         os_version = document["result"]["operating-system"]["version_id"]
+        cuda_version = document["result"]["cuda-version"]["nvcc_version"]
+        if cuda_version != document["result"]["cuda-version"]["/usr/local/cuda/version.txt"]:
+            raise CudaVersionDoesNotMatch(
+                f"Cuda version detected by nvcc {cuda_version!r} is different from the one found in "
+                f"/usr/local/cuda/version.txt {document["result"]["cuda-version"]["/usr/local/cuda/version.txt"]!r}"
+            )
 
         # Check if it comes from a User
         is_external = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("is_external", True)
@@ -4189,7 +4196,7 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
-                cuda_version=None,  # TODO: find CUDA version
+                cuda_version=cuda_version,
                 environment_type=environment_type
             )
 
