@@ -4164,11 +4164,12 @@ class GraphDatabase(SQLBase):
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
         os_name = document["result"]["operating-system"]["name"]
         os_version = document["result"]["operating-system"]["version_id"]
-        cuda_version = document["result"]["cuda-version"]["nvcc_version"]
-        if cuda_version != document["result"]["cuda-version"]["/usr/local/cuda/version.txt"]:
+        cuda_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
+        if cuda_version != document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None):
             raise CudaVersionDoesNotMatch(
                 f"Cuda version detected by nvcc {cuda_version!r} is different from the one found in "
-                f"/usr/local/cuda/version.txt {document["result"]["cuda-version"]["/usr/local/cuda/version.txt"]!r}"
+                f"/usr/local/cuda/version.txt "
+                f"{document['result'].get('cuda-version', {}).get('/usr/local/cuda/version.txt', None)!r}"
             )
 
         # Check if it comes from a User
