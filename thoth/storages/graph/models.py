@@ -188,8 +188,6 @@ class DependsOn(Base, BaseExtension):
     version = relationship("PythonPackageVersion", back_populates="dependencies")
 
     __table_args__ = (
-        Index("depends_on_idx", "entity_id", "version_id", "version_range"),
-        Index("depends_on_version_range_idx", "entity_id", "version_id", "version_range"),
         Index("depends_on_version_id_idx", "version_id"),
     )
 
