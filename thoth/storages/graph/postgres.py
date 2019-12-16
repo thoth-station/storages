@@ -575,7 +575,7 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    @lru_cache(maxsize=256)
+    @lru_cache(maxsize=4096)
     def has_python_solver_error(
         self,
         package_name: str,
