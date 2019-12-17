@@ -2690,7 +2690,7 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    @lru_cache(maxsize=256)
+    @lru_cache(maxsize=4096)
     def get_python_cve_records_all(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
