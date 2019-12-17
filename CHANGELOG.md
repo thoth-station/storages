@@ -3820,3 +3820,23 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Remove duplicate entry
 * Adjust tests to new metadata
 * Add deployment name to the result schema
+
+## Release 0.19.29 (2019-12-17T13:14:08)
+* Increment solver error cache
+* :pushpin: Automatic update of dependency alembic from 1.3.1 to 1.3.2
+* :pushpin: Automatic update of dependency boto3 from 1.10.39 to 1.10.40
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.11 to 1.3.12
+* Increase cache for caching solver errors
+* Introduce PyBench PI table and adjust sync logic for inspection
+* Remove unused indexes in depends_on table
+* :pushpin: Automatic update of dependency pytest from 5.3.1 to 5.3.2
+* :pushpin: Automatic update of dependency boto3 from 1.10.38 to 1.10.39
+* :pushpin: Automatic update of dependency thoth-common from 0.9.21 to 0.9.22
+* :pushpin: Automatic update of dependency boto3 from 1.10.35 to 1.10.38
+* Fix Automatic Update Failure
+* Sync cuda version
+* Add missing filter
+* :pushpin: Automatic update of dependency boto3 from 1.10.34 to 1.10.35
+* Generalize function to retrieve multi values key metadata
+* Add platforms
+* WIP: Adjust Python Package Metadata query
