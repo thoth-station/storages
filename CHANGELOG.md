@@ -3840,3 +3840,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Generalize function to retrieve multi values key metadata
 * Add platforms
 * WIP: Adjust Python Package Metadata query
+
+## Release 0.19.30 (2019-12-17T14:45:54)
+* Release of version 0.19.29
+* Increment solver error cache
