@@ -70,8 +70,3 @@ class SQLBase:
             raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
 
         self._DECLARATIVE_BASE.metadata.drop_all(self._engine)
-
-    def __del__(self) -> None:
-        """Disconnect properly on object destruction."""
-        if self.is_connected():
-            self.disconnect()
