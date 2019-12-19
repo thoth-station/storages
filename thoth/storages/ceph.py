@@ -78,6 +78,10 @@ class CephStore(StorageBase):
         response = self._s3.Object(self.bucket, f"{self.prefix}{object_key}").put(**put_kwargs)
         return response
 
+    def delete(self, object_key: str) -> None:
+        """Delete the given object from Ceph."""
+        self._s3.Object(self.bucket, f"{self.prefix}{object_key}").delete()
+
     def store_document(self, document: dict, document_id: str) -> dict:
         """Store a document (dict) onto Ceph."""
         blob = self.dict2blob(document)
