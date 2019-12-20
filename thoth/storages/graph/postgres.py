@@ -190,8 +190,6 @@ class GraphDatabase(SQLBase):
             stats = self.stats()
             _LOGGER.info("Graph adapter statistics:\n%s", json.dumps(stats, indent=2))
 
-        super().__del__()
-
     @staticmethod
     def construct_connection_string() -> str:
         """Construct a connection string needed to connect to database."""
