@@ -182,7 +182,7 @@ class DependsOn(Base, BaseExtension):
     version_range = Column(String(128))
     marker = Column(String(256), nullable=True)
     extra = Column(String(256), nullable=True)
-    marker_evaluation_result = Column(Boolean, nullable=True)
+    marker_evaluation_result = Column(Boolean, nullable=False)
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
