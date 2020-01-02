@@ -4459,7 +4459,7 @@ class GraphDatabase(SQLBase):
             for python_package_info in document["result"]["tree"]:
                 # Normalized in `_create_python_package_version'.
                 package_name = python_package_info["package_name"]
-                package_version = python_package_info["package_version"]
+                package_version = python_package_info["package_version_requested"]
                 index_url = python_package_info["index_url"]
                 importlib_metadata = python_package_info['importlib_metadata']["metadata"]
 
