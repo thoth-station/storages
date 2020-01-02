@@ -3844,3 +3844,21 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.19.30 (2019-12-17T14:45:54)
 * Release of version 0.19.29
 * Increment solver error cache
+
+## Release 0.20.0 (2020-01-02T10:14:17)
+* Sync package version requested rather than package version reported
+* Optimize marker evaluation result query for adviser
+* :pushpin: Automatic update of dependency boto3 from 1.10.44 to 1.10.45
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.0 to 0.36.1
+* :pushpin: Automatic update of dependency python-dateutil from 2.8.0 to 2.8.1
+* :pushpin: Automatic update of dependency boto3 from 1.10.43 to 1.10.44
+* Do not show alembic info on configure_logger
+* :pushpin: Automatic update of dependency boto3 from 1.10.42 to 1.10.43
+* Super has no __del__
+* Do not dispose engine in destructor
+* Log number of dumps maintained
+* Adjust names of parameters to respect their semantics
+* Implement rotation of backups
+* Fixes in reStructuredText in README file
+* :pushpin: Automatic update of dependency boto3 from 1.10.41 to 1.10.42
+* :pushpin: Automatic update of dependency boto3 from 1.10.40 to 1.10.41
