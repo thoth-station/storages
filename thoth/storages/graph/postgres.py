@@ -2450,7 +2450,6 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
-    @lru_cache(maxsize=1024)
     def get_python_environment_marker_evaluation_result(
         self,
         package_name: str,
@@ -2511,6 +2510,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         extras: FrozenSet[Optional[str]] = None,
+        marker_evaluation_result: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Get dependencies for the given Python package respecting environment and extras.
 
@@ -2558,6 +2558,9 @@ class GraphDatabase(SQLBase):
             if extras:
                 # We cannot use in_ here as sqlalchemy does not support None in the list.
                 query = query.filter(or_(*(DependsOn.extra == i for i in extras)))
+
+            if marker_evaluation_result is not None:
+                query = query.filter(DependsOn.marker_evaluation_result == marker_evaluation_result)
 
             dependencies = (
                 query
@@ -4573,7 +4576,7 @@ class GraphDatabase(SQLBase):
                                 version_range=dependency.get("required_version") or "*",
                                 marker=dependency.get("marker"),
                                 extra=dependency["extra"][0] if dependency.get("extra") else None,
-                                marker_evaluation_result=dependency.get("marker_evaluation_result"),
+                                marker_evaluation_result=dependency.get("marker_evaluation_result", True),
                             )
 
             for error_info in document["result"]["errors"]:
@@ -4954,7 +4957,6 @@ class GraphDatabase(SQLBase):
         for method, method_name in (
             (self.get_python_package_version_records, "get_python_package_version_records"),
             (self.get_depends_on, "get_depends_on"),
-            (self.get_python_environment_marker_evaluation_result, "get_python_environment_marker_evaluation_result"),
             (self.has_python_solver_error, "has_python_solver_error"),
             (self.get_python_cve_records_all, "get_python_cve_records_all"),
         ):
