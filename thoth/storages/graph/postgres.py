@@ -4516,7 +4516,7 @@ class GraphDatabase(SQLBase):
                     os_version=ecosystem_solver.os_version,
                     python_version=ecosystem_solver.python_version,
                     index_url=index_url,
-                    metadata=package_metadata.id
+                    python_package_metadata_id=package_metadata.id,
                 )
 
                 for sha256 in python_package_info["sha256"]:
