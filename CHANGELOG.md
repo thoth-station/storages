@@ -3867,3 +3867,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :sparkles: added a PR template
 * Fix keyword argument passing
 * :pushpin: Automatic update of dependency boto3 from 1.10.45 to 1.10.46
+
+## Release 0.20.2 (2020-01-03T14:03:40)
+* Happy new year!
+* Remove string size limitations from depends_on table
