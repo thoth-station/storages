@@ -3862,3 +3862,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fixes in reStructuredText in README file
 * :pushpin: Automatic update of dependency boto3 from 1.10.41 to 1.10.42
 * :pushpin: Automatic update of dependency boto3 from 1.10.40 to 1.10.41
+
+## Release 0.20.1 (2020-01-03T10:44:00)
+* :sparkles: added a PR template
+* Fix keyword argument passing
+* :pushpin: Automatic update of dependency boto3 from 1.10.45 to 1.10.46
