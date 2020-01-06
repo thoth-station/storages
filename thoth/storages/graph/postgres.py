@@ -4621,7 +4621,7 @@ class GraphDatabase(SQLBase):
                 )
 
             for unsolvable in document["result"]["unresolved"]:
-                if not unsolvable["version_spec"].startswith("=="):
+                if not unsolvable["version_spec"].startswith("==="):
                     # No resolution can be performed so no identifier is captured, report warning and continue.
                     # We would like to capture this especially when there are
                     # packages in ecosystem that we cannot find (e.g. not configured private index
@@ -4633,7 +4633,7 @@ class GraphDatabase(SQLBase):
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
                 index_url = unsolvable.get("index_url") or unsolvable["index"]
-                package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("=="):])
+                package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("==="):])
 
                 _LOGGER.info(
                     "Syncing unsolvable package %r in version %r from %r found by solver %r",
@@ -4665,7 +4665,7 @@ class GraphDatabase(SQLBase):
                 )
 
             for unparsed in document["result"]["unparsed"]:
-                parts = unparsed["requirement"].rsplit("==", maxsplit=1)
+                parts = unparsed["requirement"].rsplit("===", maxsplit=1)
                 if len(parts) != 2:
                     # This request did not come from graph-refresh job as there is not pinned version.
                     _LOGGER.warning(
