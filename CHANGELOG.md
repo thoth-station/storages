@@ -3874,3 +3874,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.20.3 (2020-01-06T10:03:33)
 * Fix syncs in versions
+
+## Release 0.20.4 (2020-01-06T13:33:55)
+* Fix wrong argument name propagated
