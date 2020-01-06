@@ -3871,3 +3871,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.20.2 (2020-01-03T14:03:40)
 * Happy new year!
 * Remove string size limitations from depends_on table
+
+## Release 0.20.3 (2020-01-06T10:03:33)
+* Fix syncs in versions
