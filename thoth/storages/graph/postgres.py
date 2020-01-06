@@ -4735,7 +4735,7 @@ class GraphDatabase(SQLBase):
                 software_environment=external_run_software_environment,
                 performance_score=None,
                 overall_score=None,
-                sync_only_entity=True
+                is_external=True,
             )
 
             adviser_run, _ = AdviserRun.get_or_create(
