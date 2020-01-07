@@ -7,7 +7,7 @@
 - [ ] Yes
 - [ ] No
 
-## This should yiuld a new module release
+## This should yield a new module release
 
 - [ ] Yes
 - [ ] No
