@@ -3888,3 +3888,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency pytest-timeout from 1.3.3 to 1.3.4
 * :pushpin: Automatic update of dependency pyyaml from 5.2 to 5.3
 * :pushpin: Automatic update of dependency boto3 from 1.10.46 to 1.10.47
+
+## Release 0.20.6 (2020-01-07T19:25:30)
+* Fix syncing external software environments coming from adviser
+* Release of version 0.20.5
