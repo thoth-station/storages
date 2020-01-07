@@ -3877,3 +3877,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.20.4 (2020-01-06T13:33:55)
 * Fix wrong argument name propagated
+
+## Release 0.20.5 (2020-01-07T15:23:43)
+* Adjust model performance for inspection output
+* Correct key from inspection output
+* correct typo
+* Missing randomize
+* Adjust to follow naming convention
+* Introduce software environment specific queries
+* :pushpin: Automatic update of dependency pytest-timeout from 1.3.3 to 1.3.4
+* :pushpin: Automatic update of dependency pyyaml from 5.2 to 5.3
+* :pushpin: Automatic update of dependency boto3 from 1.10.46 to 1.10.47
