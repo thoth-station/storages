@@ -573,6 +573,35 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
+    def solved_software_environment_exists(self, os_name: str, os_version: str, python_version: str) -> bool:
+        """Check if there are any solved packages for the given software environment."""
+        with self._session_scope() as session:
+            result = session.query(
+                session.query(PythonPackageVersion)
+                .filter(
+                    PythonPackageVersion.os_name == os_name,
+                    PythonPackageVersion.os_version == os_version,
+                    PythonPackageVersion.python_version == python_version,
+                )
+                .exists()
+            ).scalar()
+
+            return result
+
+    def get_solved_software_environment_configurations(self) -> List[Dict[str, str]]:
+        """Retrieve software environment configurations used to solve Python packages."""
+        with self._session_scope() as session:
+            result = (
+                session.query(PythonPackageVersion)
+                .with_entities(
+                    PythonPackageVersion.os_name, PythonPackageVersion.os_version, PythonPackageVersion.python_version
+                )
+                .distinct()
+                .all()
+            )
+
+            return [{"os_name": i[0], "os_version": i[1], "python_version": i[2]} for i in result]
+
     @lru_cache(maxsize=4096)
     def has_python_solver_error(
         self,
