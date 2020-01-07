@@ -80,7 +80,7 @@ class PerformanceIndicatorBase:
     ) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
-        overall_score = inspection_document["job_log"]["stdout"].get("overall_score")
+        overall_score = inspection_document["log"]["stdout"].get("overall_score")
         if overall_score is None:
             _LOGGER.warning("No overall score detected in performance indicator %r", overall_score)
 
@@ -88,28 +88,28 @@ class PerformanceIndicatorBase:
             cls.get_or_create,
             session,
             inspection_run_id=inspection_run_id,
-            component=inspection_document["job_log"]["stdout"].get("component"),
+            component=inspection_document["log"]["stdout"].get("component"),
             origin=inspection_document["specification"]["script"],
-            version=inspection_document["job_log"]["stdout"].get("version")
-            or inspection_document["job_log"]["script_sha256"],
+            version=inspection_document["log"]["stdout"].get("version")
+            or inspection_document["log"]["script_sha256"],
             overall_score=overall_score,
-            exit_code=inspection_document["job_log"].get("exit_code"),
-            ru_utime=inspection_document["job_log"].get("usage", {}).get("ru_utime"),
-            ru_stime=inspection_document["job_log"].get("usage", {}).get("ru_stime"),
-            ru_maxrss=inspection_document["job_log"].get("usage", {}).get("ru_maxrss"),
-            ru_ixrss=inspection_document["job_log"].get("usage", {}).get("ru_ixrss"),
-            ru_idrss=inspection_document["job_log"].get("usage", {}).get("ru_idrss"),
-            ru_isrss=inspection_document["job_log"].get("usage", {}).get("ru_isrss"),
-            ru_minflt=inspection_document["job_log"].get("usage", {}).get("ru_minflt"),
-            ru_majflt=inspection_document["job_log"].get("usage", {}).get("ru_majflt"),
-            ru_nswap=inspection_document["job_log"].get("usage", {}).get("ru_nswap"),
-            ru_inblock=inspection_document["job_log"].get("usage", {}).get("ru_inblock"),
-            ru_oublock=inspection_document["job_log"].get("usage", {}).get("ru_oublock"),
-            ru_msgsnd=inspection_document["job_log"].get("usage", {}).get("ru_msgsnd"),
-            ru_msgrcv=inspection_document["job_log"].get("usage", {}).get("ru_msgrcv"),
-            ru_nsignals=inspection_document["job_log"].get("usage", {}).get("ru_nsignals"),
-            ru_nvcsw=inspection_document["job_log"].get("usage", {}).get("ru_nvcsw"),
-            ru_nivcsw=inspection_document["job_log"].get("usage", {}).get("ru_nivcsw"),
+            exit_code=inspection_document["log"].get("exit_code"),
+            ru_utime=inspection_document["log"].get("usage", {}).get("ru_utime"),
+            ru_stime=inspection_document["log"].get("usage", {}).get("ru_stime"),
+            ru_maxrss=inspection_document["log"].get("usage", {}).get("ru_maxrss"),
+            ru_ixrss=inspection_document["log"].get("usage", {}).get("ru_ixrss"),
+            ru_idrss=inspection_document["log"].get("usage", {}).get("ru_idrss"),
+            ru_isrss=inspection_document["log"].get("usage", {}).get("ru_isrss"),
+            ru_minflt=inspection_document["log"].get("usage", {}).get("ru_minflt"),
+            ru_majflt=inspection_document["log"].get("usage", {}).get("ru_majflt"),
+            ru_nswap=inspection_document["log"].get("usage", {}).get("ru_nswap"),
+            ru_inblock=inspection_document["log"].get("usage", {}).get("ru_inblock"),
+            ru_oublock=inspection_document["log"].get("usage", {}).get("ru_oublock"),
+            ru_msgsnd=inspection_document["log"].get("usage", {}).get("ru_msgsnd"),
+            ru_msgrcv=inspection_document["log"].get("usage", {}).get("ru_msgrcv"),
+            ru_nsignals=inspection_document["log"].get("usage", {}).get("ru_nsignals"),
+            ru_nvcsw=inspection_document["og"].get("usage", {}).get("ru_nvcsw"),
+            ru_nivcsw=inspection_document["log"].get("usage", {}).get("ru_nivcsw"),
         )
 
         return cls.from_report(inspection_document, partial_model)
@@ -118,10 +118,10 @@ class PerformanceIndicatorBase:
     def from_report(cls, inspection_document: dict, partial_model: type(partial)) -> "PerformanceIndicatorBase":
         """Create model from the inspection report respecting parameters and result reported by the indicator."""
         kwargs = {}
-        for parameter, parameter_value in inspection_document["job_log"]["stdout"]["@parameters"].items():
+        for parameter, parameter_value in inspection_document["log"]["stdout"]["@parameters"].items():
             kwargs[parameter] = parameter_value
 
-        for result_name, result_value in inspection_document["job_log"]["stdout"]["@result"].items():
+        for result_name, result_value in inspection_document["log"]["stdout"]["@result"].items():
             if result_name in kwargs:
                 raise ValueError("Collision in result name and parameter name")
 
