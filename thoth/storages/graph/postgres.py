@@ -588,7 +588,7 @@ class GraphDatabase(SQLBase):
 
             return result
 
-    def get_solved_software_environment_configurations(self) -> List[Dict[str, str]]:
+    def get_solved_python_package_versions_software_environment_all(self) -> List[Dict[str, str]]:
         """Retrieve software environment configurations used to solve Python packages."""
         with self._session_scope() as session:
             result = (
