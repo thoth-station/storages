@@ -1445,6 +1445,9 @@ class GraphDatabase(SQLBase):
                     PythonPackageIndex.url)
                     )
 
+            if randomize:
+                query = query.order_by(func.random())
+
             query = query.offset(start_offset).limit(count)
 
             if distinct:
