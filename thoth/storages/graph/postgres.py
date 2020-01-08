@@ -638,7 +638,7 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(Solved)
-                .order_by(desc(Solved.id))
+                .order_by(desc(Solved.datetime))
                 .with_entities(Solved.error)
             )
 
