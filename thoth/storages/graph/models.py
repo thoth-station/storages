@@ -924,6 +924,10 @@ class HasVulnerability(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_version_entities")
 
+    __table_args__ = tuple([
+        Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id"),
+    ])
+
 
 class PythonSoftwareStack(Base, BaseExtension):
     """A Python software stack definition."""
