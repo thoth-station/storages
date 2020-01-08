@@ -3778,23 +3778,24 @@ class GraphDatabase(SQLBase):
                 )
 
         if requirements_lock is not None:
-            if is_external:
-                python_requirement_lock = ExternalPythonRequirementsLock
-            else:
-                python_requirement_lock = PythonRequirementsLock
-
             python_package_versions = self._create_python_packages_pipfile(
-                session,
-                requirements_lock,
-                software_environment=software_environment,
-                sync_only_entity=is_external
+                session, requirements_lock, software_environment=software_environment, sync_only_entity=is_external
             )
-            for python_package_version in python_package_versions:
-                python_requirement_lock.get_or_create(
-                    session,
-                    python_software_stack_id=software_stack.id,
-                    python_package_version_id=python_package_version.id,
-                )
+
+            if is_external:
+                for python_package_version_entity in python_package_versions:
+                    ExternalPythonRequirementsLock.get_or_create(
+                        session,
+                        python_software_stack_id=software_stack.id,
+                        python_package_version_entity_id=python_package_version_entity.id,
+                    )
+            else:
+                for python_package_version in python_package_versions:
+                    PythonRequirementsLock.get_or_create(
+                        session,
+                        python_software_stack_id=software_stack.id,
+                        python_package_version_id=python_package_version.id,
+                    )
 
         return software_stack
 
