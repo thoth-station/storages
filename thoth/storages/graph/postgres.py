@@ -4963,7 +4963,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             for relation_model in ALL_RELATION_MODELS:
-                result[relation_model.__tablename__] = session.query(relation_model.id).count()
+                result[relation_model.__tablename__] = session.query(relation_model).count()
 
         return result
 
