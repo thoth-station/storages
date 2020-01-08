@@ -3605,7 +3605,7 @@ class GraphDatabase(SQLBase):
                 else:
                     raise SolverNotRun(
                         f"Trying to sync package {package.name!r} in version {package.locked_version!r} "
-                        f"not solved by {os_name!r}-{os_version!r}-{python_version!r}"
+                        f"not solved by solver-{os_name}-{os_version}-{python_version}"
                         )
 
             return result
@@ -4796,18 +4796,11 @@ class GraphDatabase(SQLBase):
             )
 
             # Output stacks - advised stacks
-            for idx, result in enumerate(document["result"].get("report", [])):
-                if len(result) != 3:
-                    _LOGGER.warning("Omitting stack as no output Pipfile.lock was provided")
-                    continue
-
-                # result[0] is score report
-                # result[1]["requirements"] is Pipfile
-                # result[1]["requirements_locked"] is Pipfile.lock
-                # result[2] is overall score
+            for idx, product in enumerate(document["result"].get("report", {}).get("products", [])):
+                print(idx)
                 performance_score = None
-                overall_score = result[2]
-                for entry in result[0] or []:
+                overall_score = product["score"]
+                for entry in product.get("justification", []):
                     if "performance_score" in entry:
                         if performance_score is not None:
                             _LOGGER.error(
@@ -4817,12 +4810,12 @@ class GraphDatabase(SQLBase):
                             )
                         performance_score = entry["performance_score"]
 
-                if result[1] and result[1].get("requirements_locked"):
+                if product.get("project", {}).get("requirements_locked"):
                     software_stack = self._create_python_software_stack(
                         session,
                         software_stack_type=SoftwareStackTypeEnum.ADVISED.value,
-                        requirements=result[1].get("requirements"),
-                        requirements_lock=result[1].get("requirements_locked"),
+                        requirements=product["project"]["requirements"],
+                        requirements_lock=product["project"]["requirements_locked"],
                         software_environment=external_run_software_environment,
                         performance_score=performance_score,
                         overall_score=overall_score,
