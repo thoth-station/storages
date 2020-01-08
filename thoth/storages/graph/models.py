@@ -122,9 +122,7 @@ class Solved(Base, BaseExtension):
     ecosystem_solver = relationship("EcosystemSolver", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="solvers")
 
-    __table_args__ = (
-        Index("solver_document_id_idx", "document_id"),
-    )
+    __table_args__ = (Index("solver_document_id_idx", "document_id"),)
 
 
 class PythonPackageVersionEntity(Base, BaseExtension):
@@ -182,9 +180,7 @@ class DependsOn(Base, BaseExtension):
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
 
-    __table_args__ = (
-        Index("depends_on_version_id_idx", "version_id"),
-    )
+    __table_args__ = (Index("depends_on_version_id_idx", "version_id"),)
 
 
 class EcosystemSolver(Base, BaseExtension):
@@ -581,7 +577,9 @@ class Advised(Base, BaseExtension):
     __tablename__ = "advised"
 
     adviser_run_id = Column(Integer, ForeignKey("adviser_run.id", ondelete="CASCADE"), primary_key=True)
-    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True)
+    python_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
 
     adviser_run = relationship("AdviserRun", back_populates="advised_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="advised_by")
@@ -897,9 +895,9 @@ class HasVulnerability(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_version_entities")
 
-    __table_args__ = tuple([
-        Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id"),
-    ])
+    __table_args__ = tuple(
+        [Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id")]
+    )
 
 
 class PythonSoftwareStack(Base, BaseExtension):
@@ -1099,7 +1097,9 @@ class HasSymbol(Base, BaseExtension):
 
     __tablename__ = "has_symbol"
 
-    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True)
+    software_environment_id = Column(
+        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
+    )
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
