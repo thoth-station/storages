@@ -4699,28 +4699,32 @@ class GraphDatabase(SQLBase):
 
             return query.first()   # If query result is empty returns None
 
-
     def get_image_symbols(
         self,
         os_name: str,
         os_version: str,
+        python_version: str,
+        *,
         cuda_version: str,
-        python_version: str
     ) -> Optional[List[str]]:
         """Get symbols associated with a given image."""
-
         with self._session_scope() as session:
             query = (
                 session.query(PackageExtractRun)
                 .filter(PackageExtractRun.os_name == os_name)
                 .filter(PackageExtractRun.os_version == os_version)
                 .filter(PackageExtractRun.python_version == python_version)
-                .filter(PackageExtractRun.cuda_version == cuda_version)
                 .with_entities(
                     PackageExtractRun.versioned_symbols
                 ))
-            
-            return query.first()   # If query result is empty returns None
+
+            if cuda_version:
+                query = query.filter(PackageExtractRun.cuda_version == cuda_version)
+
+            query = query.with_entities(PackageExtractRun.versioned_symbols)
+
+            # If query result is empty returns None
+            return query.first()
 
     def get_pi_count(self, framework: str) -> Dict[str, int]:
         """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
