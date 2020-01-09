@@ -3892,3 +3892,15 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.20.6 (2020-01-07T19:25:30)
 * Fix syncing external software environments coming from adviser
 * Release of version 0.20.5
+
+## Release 0.21.0 (2020-01-09T22:11:05)
+* :pushpin: Automatic update of dependency thoth-python from 0.9.0 to 0.9.1
+* :pushpin: Automatic update of dependency boto3 from 1.10.48 to 1.10.49
+* Use datetime to sort results
+* Do not use id when counting tables
+* Fix advised software stack sync
+* :pushpin: Automatic update of dependency thoth-python from 0.8.0 to 0.9.0
+* Format using black
+* Drop id columns on relation tables
+* Create index for CVE step to omit sequence scan
+* :pushpin: Automatic update of dependency boto3 from 1.10.47 to 1.10.48
