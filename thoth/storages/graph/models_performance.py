@@ -194,7 +194,7 @@ class PiConv1D(Base, BaseExtension, PerformanceIndicatorBase):
     strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = Column(String(256), nullable=False)
+    padding = Column(Integer, nullable=False)
 
     # Elapsed seconds.
     elapsed = Column(Float, nullable=False)
@@ -240,7 +240,7 @@ class PiConv2D(Base, BaseExtension, PerformanceIndicatorBase):
     strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = Column(String(256), nullable=False)
+    padding = Column(Integer, nullable=False)
 
     # Elapsed seconds.
     elapsed = Column(Float, nullable=False)
