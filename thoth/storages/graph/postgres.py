@@ -4907,7 +4907,8 @@ class GraphDatabase(SQLBase):
                     dependency_monkey_run_id=dependency_monkey_run.id,
                 )
 
-            for inspection_document_id in document["result"]["output"]:
+            for entry in document["result"]["report"]["responses"]:
+                inspection_document_id = entry["response"]
                 inspection_run = session.query(InspectionRun).filter(
                     InspectionRun.inspection_document_id == inspection_document_id
                 ).first()
