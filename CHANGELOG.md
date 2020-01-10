@@ -3911,3 +3911,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Adjust syncing logic of Dependency Monkey documents based on the current output
 * Correct inspection sync key
 * :pushpin: Automatic update of dependency amun from 0.2.7 to 0.3.0
+
+## Release 0.21.2 (2020-01-10T13:56:29)
+* Release of version 0.21.1
+* :pushpin: Automatic update of dependency thoth-common from 0.9.23 to 0.9.24
+* Fix parameter name for syncing provenance-checker documents
+* Provide environment variable marker flag when retrieving transitive deps
