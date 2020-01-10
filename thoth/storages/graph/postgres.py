@@ -2359,6 +2359,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         extras: FrozenSet[Optional[str]] = None,
+        marker_evaluation_result: Optional[bool] = None,
     ) -> List[
         Tuple[
             Tuple[str, str, str],
@@ -2410,6 +2411,7 @@ class GraphDatabase(SQLBase):
                     os_version=configuration["os_version"],
                     python_version=configuration["python_version"],
                     extras=extras,
+                    marker_evaluation_result=marker_evaluation_result,
                 )
 
                 for dependency_name, dependency_version in itertools.chain(*dependencies.values()):
