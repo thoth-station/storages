@@ -3830,7 +3830,7 @@ class GraphDatabase(SQLBase):
             run_memory = run_memory / (1024 ** 3)
             build_memory = build_memory / (1024 ** 3)
 
-            runtime_environment = document["log"]["runtime_environment"]
+            runtime_environment = document["job_log"]["runtime_environment"]
 
             run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                 session,
@@ -3917,10 +3917,10 @@ class GraphDatabase(SQLBase):
 
             if document["specification"].get("script"):  # We have run an inspection job.
 
-                if not document["log"]["stdout"]:
+                if not document["job_log"]["stdout"]:
                     raise ValueError("No values provided for inspection output %r", inspection_document_id)
 
-                performance_indicator_name = document["log"]["stdout"].get("name")
+                performance_indicator_name = document["job_log"]["stdout"].get("name")
                 performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
 
                 if not performance_model_class:
