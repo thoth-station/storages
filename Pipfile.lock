@@ -42,11 +42,11 @@
         },
         "amun": {
             "hashes": [
-                "sha256:05cc96ff6caee7e8b36ca379e434e6f831145c88f2fc2ea860ff49d2e3d8d0bf",
-                "sha256:dd50865ecf3eed2e53c8f7376ac36c87079e7ba01c6053cd6aa7afa1cbe4065a"
+                "sha256:78730ac705ed0355e817c615626631c5d7118f678c0370662e3b5fd4de1ac8b3",
+                "sha256:9bc4e562305e045393a74f34bffee5a4b87d94fcb02d8a23a69112dbf80b3cbf"
             ],
             "index": "pypi",
-            "version": "==0.2.7"
+            "version": "==0.3.0"
         },
         "argo-workflows": {
             "hashes": [
