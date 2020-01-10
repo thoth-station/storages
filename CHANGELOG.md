@@ -3904,3 +3904,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Drop id columns on relation tables
 * Create index for CVE step to omit sequence scan
 * :pushpin: Automatic update of dependency boto3 from 1.10.47 to 1.10.48
+
+## Release 0.21.1 (2020-01-10T12:03:05)
+* Fix parameter name for syncing provenance-checker documents
+* Provide environment variable marker flag when retrieving transitive deps
+* Adjust syncing logic of Dependency Monkey documents based on the current output
+* Correct inspection sync key
+* :pushpin: Automatic update of dependency amun from 0.2.7 to 0.3.0
