@@ -3917,3 +3917,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency thoth-common from 0.9.23 to 0.9.24
 * Fix parameter name for syncing provenance-checker documents
 * Provide environment variable marker flag when retrieving transitive deps
+
+## Release 0.21.3 (2020-01-10T19:14:53)
+* Adjust datatype for conv PI to sync inspection results
