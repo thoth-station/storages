@@ -4847,7 +4847,7 @@ class GraphDatabase(SQLBase):
                 software_environment=None,
                 performance_score=None,
                 overall_score=None,
-                sync_only_entity=True
+                is_external=True,
             )
 
             provenance_checker_run, _ = ProvenanceCheckerRun.get_or_create(
