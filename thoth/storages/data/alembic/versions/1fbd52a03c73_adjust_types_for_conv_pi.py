@@ -21,11 +21,13 @@ def upgrade():
     op.alter_column('pi_conv1d', 'padding',
                existing_type=sa.VARCHAR(length=256),
                type_=sa.Integer(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='padding::integer')
     op.alter_column('pi_conv2d', 'padding',
                existing_type=sa.VARCHAR(length=256),
                type_=sa.Integer(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='padding::integer')
     # ### end Alembic commands ###
 
 
