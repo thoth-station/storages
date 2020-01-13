@@ -3920,3 +3920,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.21.3 (2020-01-10T19:14:53)
 * Adjust datatype for conv PI to sync inspection results
+
+## Release 0.21.4 (2020-01-13T09:26:49)
+* Query for index_url before creating index
+* Introduce a query for retrieving Python package entity names
+* :pushpin: Automatic update of dependency boto3 from 1.10.50 to 1.11.0
