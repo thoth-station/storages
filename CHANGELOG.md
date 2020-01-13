@@ -3929,3 +3929,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.21.5 (2020-01-13T11:28:50)
 * Alembic didn't create correct change in schema
 * Consider only enabled indexes in unsolved queries
+
+## Release 0.21.6 (2020-01-13T21:21:13)
+* Fix query for enabled index
+* :pushpin: Automatic update of dependency thoth-common from 0.9.24 to 0.9.25
