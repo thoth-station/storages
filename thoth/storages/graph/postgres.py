@@ -1126,7 +1126,10 @@ class GraphDatabase(SQLBase):
             session.query(PythonPackageVersionEntity)
             .filter(
                 PythonPackageVersionEntity.package_version.isnot(None),
-                PythonPackageIndex.url.isnot(None)))
+                PythonPackageIndex.url.isnot(None),
+                PythonPackageIndex.enabled.is_(True),
+            )
+        )
 
         if package_name is not None:
             package_name = self.normalize_python_package_name(package_name)
