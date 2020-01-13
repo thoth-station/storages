@@ -3925,3 +3925,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Query for index_url before creating index
 * Introduce a query for retrieving Python package entity names
 * :pushpin: Automatic update of dependency boto3 from 1.10.50 to 1.11.0
+
+## Release 0.21.5 (2020-01-13T11:28:50)
+* Alembic didn't create correct change in schema
+* Consider only enabled indexes in unsolved queries
