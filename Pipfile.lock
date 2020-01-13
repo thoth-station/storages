@@ -569,11 +569,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:3fd4827951809955f2c0247b6d7ee430b244924b910c220039976cb6193f61cb",
-                "sha256:a57d3e05b7d9aced43d2072d0b233251a7b9bab7520db1fb32f6770823d87ad9"
+                "sha256:3b069ebc698494559555c523d591db375b9b17617ce72cf3d7c6e554bde47fd2",
+                "sha256:49a89a3a44807155f6a07c664d69ec8d0db4e8e15dc88d6de9b3d889cf41516d"
             ],
             "index": "pypi",
-            "version": "==0.9.24"
+            "version": "==0.9.25"
         },
         "thoth-python": {
             "hashes": [
@@ -793,10 +793,10 @@
         },
         "cfn-lint": {
             "hashes": [
-                "sha256:5449313b5f176024bd5fd6ebe69ce986a2d9b8a9d6a147b2d442c8d9fa99a6c5",
-                "sha256:55cd5fa150db7e6109bb2a659f7de0096ffec893a628ad1b1db9d87170f60021"
+                "sha256:384c37d239579c7b9f61a3aaadb92ebe81f37cd6ee6a161485401179af6c7a44",
+                "sha256:5d021752ecadb695d8165e47f7f1442b48b3e27102e8385b25a2936e0d3d1eab"
             ],
-            "version": "==0.26.2"
+            "version": "==0.26.3"
         },
         "chardet": {
             "hashes": [
