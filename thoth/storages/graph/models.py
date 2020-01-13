@@ -145,6 +145,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
 
     versions = relationship("DependsOn", back_populates="entity")
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
+    build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
     # inspection_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
@@ -361,13 +362,34 @@ class CVE(Base, BaseExtension):
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
 
+class BuildLogAnalyzerRun(Base, BaseExtension):
+    """A class representing a single buildlogs-analyzer (build log analysis) run."""
+
+    __tablename__ = "build_log_analyzer_run"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    build_log_analyzer_name = Column(Text, nullable=True)
+    build_log_analyzer_version = Column(Text, nullable=True)
+    build_log_analysis_document_id = Column(Text, nullable=False)
+    datetime = Column(DateTime, nullable=False)
+    debug = Column(Boolean, nullable=False, default=False)
+    build_log_analyzer_error_reason = Column(Text, nullable=True)
+    duration = Column(Integer, nullable=True)
+    input_python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE")
+    )
+
+    input_python_package_version_entity = relationship(
+        "PythonPackageVersionEntity", back_populates="build_log_analyzer_runs"
+    )
+
+
 class PackageAnalyzerRun(Base, BaseExtension):
     """A class representing a single package-analyzer (package analysis) run."""
 
     __tablename__ = "package_analyzer_run"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-
     package_analyzer_name = Column(String(256), nullable=True)
     package_analyzer_version = Column(String(256), nullable=True)
     package_analysis_document_id = Column(String(256), nullable=False)
@@ -1419,6 +1441,7 @@ class PythonPackageMetadataDistutils(Base, BaseExtension):
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
+        BuildLogAnalyzerRun,
         CVE,
         DebDependency,
         DebPackageVersion,
