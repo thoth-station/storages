@@ -2796,7 +2796,7 @@ class GraphDatabase(SQLBase):
             if result is None:
                 raise NotFoundError(f"No records for Python package index with URL {url!r} found")
 
-            return result
+            return result[0]
 
     def set_python_package_index_state(self, url: str, *, enabled: bool) -> None:
         """Enable or disable Python package index."""
