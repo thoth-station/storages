@@ -121,7 +121,10 @@ class Solved(Base, BaseExtension):
     ecosystem_solver = relationship("EcosystemSolver", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="solvers")
 
-    __table_args__ = (Index("solver_document_id_idx", "document_id"),)
+    __table_args__ = (
+        Index("solver_document_id_idx", "document_id"),
+        Index("solved_version_id_idx", "version_id"),
+    )
 
 
 class PythonPackageVersionEntity(Base, BaseExtension):
