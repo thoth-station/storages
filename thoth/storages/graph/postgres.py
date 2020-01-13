@@ -2916,7 +2916,7 @@ class GraphDatabase(SQLBase):
         *,
         distinct: bool = False,
     ) -> int:
-        """Retrieve All Python packages in Thoth Database."""
+        """Retrieve number of all Python packages in Thoth Database."""
         with self._session_scope() as session:
             query = session.query(PythonPackageVersionEntity)
 
@@ -2924,6 +2924,14 @@ class GraphDatabase(SQLBase):
                 query = query.distinct()
 
             return query.count()
+
+    def get_python_package_version_entities_names_all(
+        self,
+    ) -> List[str]:
+        """Retrieve names of Python package entities in the Thoth's knowledge base."""
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersionEntity.package_name)
+            return query.distinct().all()
 
     def get_python_package_names_all(
         self,
