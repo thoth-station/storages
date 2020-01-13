@@ -78,12 +78,11 @@ class PythonPackageVersion(Base, BaseExtension):
     python_software_stacks = relationship("PythonRequirementsLock", back_populates="python_package_version")
 
     __table_args__ = tuple(
-        get_python_package_version_index_combinations(index_as_property=False)
+        get_python_package_version_index_combinations()
         + [
             UniqueConstraint(
                 "package_name", "package_version", "python_package_index_id", "os_name", "os_version", "python_version"
             ),
-            Index("python_package_version_idx", "package_name", "package_version", "python_package_index_id"),
         ]
     )
 
