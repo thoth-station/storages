@@ -569,11 +569,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:3b069ebc698494559555c523d591db375b9b17617ce72cf3d7c6e554bde47fd2",
-                "sha256:49a89a3a44807155f6a07c664d69ec8d0db4e8e15dc88d6de9b3d889cf41516d"
+                "sha256:5e815438983f73e2258af12997209a247a22c7a877bc439d2ca84b5ad954a456",
+                "sha256:8a0d4e2a871866b63ef56f6155be6d79abb690dbf13caef2d08e52fbed4fc496"
             ],
             "index": "pypi",
-            "version": "==0.9.25"
+            "version": "==0.9.26"
         },
         "thoth-python": {
             "hashes": [
@@ -699,9 +699,9 @@
         },
         "aws-sam-translator": {
             "hashes": [
-                "sha256:a62f31ac81a9f36a89ba61b147c5df5819e73af3562859711191354d86836326"
+                "sha256:4dc5af8a3392c8b03c7cfcbc078a1bea430ac5ff2938ed039f9a982343912ecf"
             ],
-            "version": "==1.19.1"
+            "version": "==1.20.0"
         },
         "aws-xray-sdk": {
             "hashes": [
@@ -1736,10 +1736,10 @@
         },
         "zipp": {
             "hashes": [
-                "sha256:3718b1cbcd963c7d4c5511a8240812904164b7f381b647143a89d3b98f9bcd8e",
-                "sha256:f06903e9f1f43b12d371004b4ac7b06ab39a44adc747266928ae6debfa7b3335"
+                "sha256:8dda78f06bd1674bd8720df8a50bb47b6e1233c503a4eed8e7810686bde37656",
+                "sha256:d38fbe01bbf7a3593a32bc35a9c4453c32bc42b98c377f9bff7e9f8da157786c"
             ],
-            "version": "==0.6.0"
+            "version": "==1.0.0"
         }
     }
 }
