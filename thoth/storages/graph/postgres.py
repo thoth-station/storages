@@ -157,6 +157,27 @@ from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
 
+
+# Name of environment variables are long
+# intentionally - you should adjust them only if
+# you know what do you do.
+_HAS_PYTHON_SOLVER_ERROR_CACHE_SIZE = int(os.getenv(
+    "THOTH_STORAGE_HAS_PYTHON_SOLVER_ERROR_CACHE_SIZE",
+    4096,
+))
+_GET_PYTHON_PACKAGE_VERSION_RECORDS_CACHE_SIZE = int(os.getenv(
+    "THOTH_STORAGE_GET_PYTHON_PACKAGE_VERSION_RECORDS_CACHE_SIZE",
+    16384,
+))
+_GET_DEPENDS_ON_CACHE_SIZE = int(os.getenv(
+    "THOTH_STORAGE_GET_DEPENDS_ON_CACHE_SIZE",
+    8192,
+))
+_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE = int(os.getenv(
+    "THOTH_STORAGE_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE",
+    4096,
+))
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -602,7 +623,7 @@ class GraphDatabase(SQLBase):
 
             return [{"os_name": i[0], "os_version": i[1], "python_version": i[2]} for i in result]
 
-    @lru_cache(maxsize=4096)
+    @lru_cache(maxsize=_HAS_PYTHON_SOLVER_ERROR_CACHE_SIZE)
     def has_python_solver_error(
         self,
         package_name: str,
@@ -2290,7 +2311,7 @@ class GraphDatabase(SQLBase):
 
             return result
 
-    @lru_cache(maxsize=16384)
+    @lru_cache(maxsize=_GET_PYTHON_PACKAGE_VERSION_RECORDS_CACHE_SIZE)
     def get_python_package_version_records(
         self,
         package_name: str,
@@ -2536,7 +2557,7 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
-    @lru_cache(maxsize=8192)
+    @lru_cache(maxsize=_GET_DEPENDS_ON_CACHE_SIZE)
     def get_depends_on(
         self,
         package_name: str,
@@ -2728,7 +2749,7 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    @lru_cache(maxsize=4096)
+    @lru_cache(maxsize=_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE)
     def get_python_cve_records_all(self, package_name: str, package_version: str) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
