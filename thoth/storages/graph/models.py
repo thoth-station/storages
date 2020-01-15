@@ -100,6 +100,11 @@ class HasArtifact(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="python_package_version_entities")
 
+    __table_args__ = (
+        Index("has_artifact_python_package_version_entity_id", "python_package_version_entity_id"),
+        Index("has_artifact_python_artifact_id", "python_artifact_id"),
+    )
+
 
 class Solved(Base, BaseExtension):
     """A solver solved a package-version."""
