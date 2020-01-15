@@ -3933,3 +3933,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.21.6 (2020-01-13T21:21:13)
 * Fix query for enabled index
 * :pushpin: Automatic update of dependency thoth-common from 0.9.24 to 0.9.25
+
+## Release 0.21.7 (2020-01-15T19:55:45)
+* Introduce a way to parametrize memory cache size
+* Create index for has_artifact table
+* :pushpin: Automatic update of dependency boto3 from 1.11.1 to 1.11.2
+* :pushpin: Automatic update of dependency thoth-common from 0.9.25 to 0.9.26
+* Add index for solved table - it optimizes the has_solver_error query in adviser
+* Adjust index for PPV combinations
