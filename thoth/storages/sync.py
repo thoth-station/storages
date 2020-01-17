@@ -77,9 +77,7 @@ def sync_adviser_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing adviser document from %r with id %r to graph",
-                        adviser_store.ceph.host,
-                        document_id
+                        "Syncing adviser document from %r with id %r to graph", adviser_store.ceph.host, document_id
                     )
                     document = adviser_store.retrieve_document(document_id)
 
@@ -130,9 +128,7 @@ def sync_solver_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing solver document from %r with id %r to graph",
-                        solver_store.ceph.host,
-                        document_id
+                        "Syncing solver document from %r with id %r to graph", solver_store.ceph.host, document_id
                     )
                     document = solver_store.retrieve_document(document_id)
 
@@ -184,9 +180,7 @@ def sync_analysis_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing analysis document from %r with id %r to graph",
-                        analysis_store.ceph.host,
-                        document_id,
+                        "Syncing analysis document from %r with id %r to graph", analysis_store.ceph.host, document_id
                     )
                     document = analysis_store.retrieve_document(document_id)
 
@@ -380,9 +374,7 @@ def sync_inspection_documents(
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
     if is_local:
-        raise NotImplementedError(
-            "Cannot sync inspection documents from a local file"
-        )
+        raise NotImplementedError("Cannot sync inspection documents from a local file")
 
     if only_graph_sync and only_ceph_sync:
         raise ValueError("At least one of Ceph or Graph should be performed")
@@ -513,11 +505,7 @@ def sync_documents(
                     )
                 else:
                     stats_change = handler(
-                        to_sync_document_id,
-                        force=force,
-                        graceful=graceful,
-                        graph=graph,
-                        is_local=is_local
+                        to_sync_document_id, force=force, graceful=graceful, graph=graph, is_local=is_local
                     )
 
                 stats[document_prefix] = tuple(map(sum, zip(stats[document_prefix], stats_change)))
