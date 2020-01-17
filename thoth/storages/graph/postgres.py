@@ -321,7 +321,16 @@ class GraphDatabase(SQLBase):
         return PackageVersion.normalize_python_package_version(package_version)
 
     @staticmethod
-    def parse_python_solver_name(solver_name: str) -> dict:
+    def normalize_os_version(os_name: Optional[str], os_version: Optional[str]) -> Optional[str]:
+        """Normalize operating system version based on operating system used."""
+        if os_name is None or os_version is None or os_name.lower() != "rhel":
+            return os_version
+
+        # Discard any minor release, if present.
+        return os_version.split(".", maxsplit=1)[0]
+
+    @classmethod
+    def parse_python_solver_name(cls, solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
         if solver_name.startswith("solver-"):
             solver_identifiers = solver_name[len("solver-"):]
@@ -344,7 +353,11 @@ class GraphDatabase(SQLBase):
             )
 
         python_version = ".".join(list(python_version))
-        return {"os_name": parts[0], "os_version": parts[1], "python_version": python_version}
+        return {
+            "os_name": parts[0],
+            "os_version": cls.normalize_os_version(parts[0], parts[1]),
+            "python_version": python_version
+        }
 
     def get_analysis_metadata(self, analysis_document_id: str) -> Dict[str, Any]:
         """Get metadata stored for the given analysis document.
@@ -570,6 +583,7 @@ class GraphDatabase(SQLBase):
 
     def solved_software_environment_exists(self, os_name: str, os_version: str, python_version: str) -> bool:
         """Check if there are any solved packages for the given software environment."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             result = session.query(
                 session.query(PythonPackageVersion)
@@ -611,6 +625,7 @@ class GraphDatabase(SQLBase):
         """Retrieve information whether the given package has any solver error."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
             query = (
@@ -717,6 +732,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_packages_all()
         [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         return self.__class__.get_python_packages_all(**locals())
 
     def _construct_solved_python_packages_query(
@@ -731,6 +747,7 @@ class GraphDatabase(SQLBase):
         self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
     ) -> int:
         """Retrieve number of solved Python package versions in Thoth Database."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_solved_python_packages_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -759,6 +776,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_packages_all_versions()
         {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_solved_python_packages_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -797,6 +815,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_package_versions_count()
         {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         return self.__class__.get_python_package_versions_count(**locals())
 
     def get_solved_python_package_versions_count_per_index(
@@ -818,6 +837,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         return self.__class__.get_python_package_versions_count_per_index(**locals())
 
     def get_solved_python_package_versions_count_per_version(
@@ -839,6 +859,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         return self.__class__.get_python_package_versions_count_per_version(**locals())
 
     def _construct_solved_python_package_versions_query(
@@ -876,6 +897,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_solved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_solved_python_package_versions_query(
                 session,
@@ -906,6 +928,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve solved Python package versions number in Thoth Database."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_solved_python_package_versions_query(
                 session,
@@ -997,6 +1020,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_error_solved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         if unsolvable is True and unparseable is True:
             raise ValueError("Cannot query for unparseable and unsolvable at the same time")
 
@@ -1042,6 +1066,7 @@ class GraphDatabase(SQLBase):
         if unsolvable=True -> get_unsolvable_python_package_versions_count_all
         if unparseable=True -> get_unparseable_python_package_versions_count_all
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         if unsolvable is True and unparseable is True:
             raise ValueError("Cannot query for unparseable and unsolvable at the same time")
 
@@ -1131,6 +1156,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_packages_all()
         [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1165,6 +1191,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_packages_all_versions()
         {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1211,6 +1238,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count()
         {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1319,6 +1347,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1380,6 +1409,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1419,6 +1449,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve unsolved Python package versions number in Thoth Database."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -2118,6 +2149,7 @@ class GraphDatabase(SQLBase):
         """Get records for the given package regardless of index_url."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
             query = session.query(PythonPackageVersion).filter_by(
@@ -2202,6 +2234,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         result = []
         initial_stack_entry = (extras, package_name, package_version, index_url)
@@ -2274,6 +2307,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
             result = (
@@ -2324,6 +2358,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
             result = (
@@ -2380,6 +2415,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         package_requested = locals()
         package_requested.pop("self")
@@ -2726,6 +2762,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_packages_names_all()
         ['regex', 'tensorflow']
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
 
@@ -2762,6 +2799,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_packages_all()
         [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -2814,6 +2852,7 @@ class GraphDatabase(SQLBase):
         self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
     ) -> int:
         """Retrieve number of versions per Python package in Thoth Database."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_packages_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -2842,6 +2881,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_packages_all_versions()
         {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_packages_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -2874,6 +2914,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_count()
         {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -2932,6 +2973,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_all_count()
         {'setuptools': 988, 'pip': 211, 'termcolor': 14, 'six': 42}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -2987,6 +3029,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -3041,6 +3084,7 @@ class GraphDatabase(SQLBase):
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
         package_name = self.normalize_python_package_name(package_name)
+        os_version = self.normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
             query = (
@@ -3145,6 +3189,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_versions_query(
                 session,
@@ -3175,6 +3220,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve Python package versions number in Thoth Database."""
+        os_version = self.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_versions_query(
                 session,
@@ -3892,7 +3938,7 @@ class GraphDatabase(SQLBase):
         origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
         os_name = document["result"]["operating-system"]["name"]
-        os_version = document["result"]["operating-system"]["version_id"]
+        os_version = self.normalize_os_version(os_name, document["result"]["operating-system"]["version_id"])
         cuda_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
         if cuda_version != document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None):
             raise CudaVersionDoesNotMatch(
