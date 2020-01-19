@@ -2751,7 +2751,7 @@ class GraphDatabase(SQLBase):
             query = session.query(PythonPackageVersionEntity.package_name)
             return query.distinct().all()
 
-    def get_python_package_names_all(
+    def get_python_package_version_names_all(
         self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
     ) -> List[str]:
         """Retrieve names of Python Packages known by Thoth.
