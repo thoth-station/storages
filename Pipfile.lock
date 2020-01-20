@@ -575,11 +575,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:120de30be4bebe890fbca56c4ff11765296f25ed92c738aaf8707d53f4afc364",
-                "sha256:fb324c6ec5ac0ddcd8c367eb25e8e8d8c425c7b8825e4df4f2ce5849a7e3e168"
+                "sha256:74e97d1d1aa8b55ddf58b3cff3783499903b2e870c0a521864e9f09ad49ce4ab",
+                "sha256:a18a5eb57fabf3d82a762e4a95e6c050c447a341e28aaf1c8278c9377bcb8367"
             ],
             "index": "pypi",
-            "version": "==0.9.28"
+            "version": "==0.9.29"
         },
         "thoth-python": {
             "hashes": [
@@ -699,9 +699,9 @@
         },
         "autopep8": {
             "hashes": [
-                "sha256:4d8eec30cc81bc5617dbf1218201d770dc35629363547f17577c61683ccfb3ee"
+                "sha256:0f592a0447acea0c2b0a9602be1e4e3d86db52badd2e3c84f0193bfd89fd3a43"
             ],
-            "version": "==1.4.4"
+            "version": "==1.5"
         },
         "aws-sam-translator": {
             "hashes": [
@@ -799,10 +799,10 @@
         },
         "cfn-lint": {
             "hashes": [
-                "sha256:384c37d239579c7b9f61a3aaadb92ebe81f37cd6ee6a161485401179af6c7a44",
-                "sha256:5d021752ecadb695d8165e47f7f1442b48b3e27102e8385b25a2936e0d3d1eab"
+                "sha256:301e93317150b2df7e35a609d571f2676e50f26eb5047c8281670095abbfa63f",
+                "sha256:5713b5aabe00921381e5a922434a52eb3f56085f25eab27f9057a790aabb1c6e"
             ],
-            "version": "==0.26.3"
+            "version": "==0.27.0"
         },
         "chardet": {
             "hashes": [
@@ -1742,10 +1742,10 @@
         },
         "zipp": {
             "hashes": [
-                "sha256:8dda78f06bd1674bd8720df8a50bb47b6e1233c503a4eed8e7810686bde37656",
-                "sha256:d38fbe01bbf7a3593a32bc35a9c4453c32bc42b98c377f9bff7e9f8da157786c"
+                "sha256:57147f6b0403b59f33fd357f169f860e031303415aeb7d04ede4839d23905ab8",
+                "sha256:7ae5ccaca427bafa9760ac3cd8f8c244bfc259794b5b6bb9db4dda2241575d09"
             ],
-            "version": "==1.0.0"
+            "version": "==2.0.0"
         }
     }
 }
