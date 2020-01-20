@@ -4634,8 +4634,8 @@ class GraphDatabase(SQLBase):
 
                 inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
 
-    def get_pi_count(self, framework: str) -> Dict[str, int]:
-        """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
+    def get_pi_count(self, component: str) -> Dict[str, int]:
+        """Get dictionary with number of Performance Indicators per type for the PI component selected."""
         result = {}
         with self._session_scope() as session:
             for pi_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
@@ -4673,8 +4673,8 @@ class GraphDatabase(SQLBase):
 
         return result
 
-    def get_ml_frameworks_all(self) -> List[str]:
-        """Retrieve ML frameworks in Thoth database."""
+    def get_pi_component_all(self) -> List[str]:
+        """Retrieve pi components in Thoth database."""
         result = []
         with self._session_scope() as session:
             for performance_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
