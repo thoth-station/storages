@@ -3886,7 +3886,7 @@ class GraphDatabase(SQLBase):
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
                 index_url=None,
-                sync_only_entity=document["metadata"]["arguments"]["thoth-package-extract"]["metadata"]["is_external"],
+                sync_only_entity=True,
             )
 
             Identified.get_or_create(
