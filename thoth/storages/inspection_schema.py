@@ -27,7 +27,7 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
         Required("base"): str,
         Required("build"): dict,
-        Required("environment"): dict,
+        Required("environment"): list,
         Required("files"): list,
         Required("identifier"): str,
         Required("packages"): list,
