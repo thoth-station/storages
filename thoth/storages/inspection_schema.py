@@ -27,13 +27,15 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
         Required("base"): str,
         Required("build"): dict,
+        Required("environment"): dict,
         Required("files"): list,
-        Required("packages"): list,
-        Required("python_packages"): list,
         Required("identifier"): str,
+        Required("packages"): list,
         Required("python"): dict,
+        Required("python_packages"): list,
         Required("run"): dict,
         Required("script"): str,
+        Required("update"): bool,
     }
 )
 
