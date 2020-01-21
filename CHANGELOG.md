@@ -3941,3 +3941,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency thoth-common from 0.9.25 to 0.9.26
 * Add index for solved table - it optimizes the has_solver_error query in adviser
 * Adjust index for PPV combinations
+
+## Release 0.21.8 (2020-01-21T00:14:12)
+* :pushpin: Automatic update of dependency boto3 from 1.11.5 to 1.11.6
+* :pushpin: Automatic update of dependency pytest from 5.3.3 to 5.3.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.28 to 0.9.29
+* Adjust parameter in query for PI
+* Correct datatype
+* Add missing key to sync inspections
+* Set Packages Extract flag is_external to True always
+* Missing change in query name to follow created standards
+* :pushpin: Automatic update of dependency boto3 from 1.11.4 to 1.11.5
+* :pushpin: Automatic update of dependency pytest from 5.3.2 to 5.3.3
+* :pushpin: Automatic update of dependency amun from 0.3.2 to 0.3.3
+* Normalize OS version by discarding any minor release in RHEL release string
+* :pushpin: Automatic update of dependency boto3 from 1.11.3 to 1.11.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.26 to 0.9.28
+* :sweat_smile: Auto pip and black formatting
+* :pushpin: Automatic update of dependency amun from 0.3.1 to 0.3.2
+* :pushpin: Automatic update of dependency boto3 from 1.11.2 to 1.11.3
