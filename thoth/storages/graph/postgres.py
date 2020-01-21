@@ -56,6 +56,7 @@ from thoth.common.helpers import format_datetime
 from thoth.common import OpenShift
 
 from .models import AdviserRun
+from .models import BuildLogAnalyzerRun
 from .models import CVE
 from .models import DebDependency
 from .models import DebPackageVersion
@@ -138,6 +139,7 @@ from .enums import MetadataDistutilsTypeEnum
 from .enums import QuerySortTypeEnum
 
 from ..analyses import AnalysisResultsStore
+from ..buildlogs_analyses import BuildLogsAnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
 from ..inspections import InspectionResultsStore
@@ -356,7 +358,7 @@ class GraphDatabase(SQLBase):
         return {
             "os_name": parts[0],
             "os_version": cls.normalize_os_version(parts[0], parts[1]),
-            "python_version": python_version
+            "python_version": python_version,
         }
 
     def get_analysis_metadata(self, analysis_document_id: str) -> Dict[str, Any]:
@@ -2538,6 +2540,16 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
+    def build_log_analysis_document_id_exist(self, build_log_analysis_document_id: str) -> bool:
+        """Check if there is a build log analysis document record with the given id."""
+        with self._session_scope() as session:
+            return (
+                session.query(BuildLogAnalyzerRun)
+                .filter(BuildLogAnalyzerRun.build_log_analysis_document_id == build_log_analysis_document_id)
+                .count()
+                > 0
+            )
+
     def package_analysis_document_id_exist(self, package_analysis_document_id: str) -> bool:
         """Check if there is a package analysis document record with the given id."""
         with self._session_scope() as session:
@@ -4008,6 +4020,39 @@ class GraphDatabase(SQLBase):
                 session, package_extract_run, document, software_environment, is_external=is_external
             )
             self._python_interpreters_sync_analysis_result(session, package_extract_run, document, software_environment)
+
+    def sync_build_log_analysis_result(self, document: dict) -> None:
+        """Sync the given build log analysis result to the graph database."""
+        build_log_analysis_document_id = BuildLogsAnalysisResultsStore.get_document_id(document)
+        package_name = document["result"]["build_breaker"]["target"]
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = document["result"]["build_breaker"]["version_specified"]
+        package_version = self.normalize_python_package_version(package_version)
+
+        _LOGGER.info(
+            "Syncing package analysis for package %r in version %r from %r", package_name, package_version, index_url
+        )
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            python_package_index = self._get_or_create_python_package_index(
+                session, index_url=index_url, only_if_enabled=False
+            )
+            python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=python_package_index.id,
+            )
+            build_log_analyzer_run, _ = BuildLogAnalyzerRun.get_or_create(
+                session,
+                build_log_analyzer_name=document["metadata"]["analyzer"],
+                build_log_analyzer_version=document["metadata"]["analyzer_version"],
+                build_log_analysis_document_id=build_log_analysis_document_id,
+                datetime=document["metadata"]["datetime"],
+                debug=document["metadata"]["arguments"]["thoth-build-analyzer"]["verbose"],
+                build_log_analyzer_error_reason=document["result"]["build_breaker"]["reason"]["msg"],
+                duration=document["metadata"].get("duration"),
+                input_python_package_version_entity_id=python_package_version_entity.id,
+            )
 
     def sync_package_analysis_result(self, document: dict) -> None:
         """Sync the given package analysis result to the graph database."""
