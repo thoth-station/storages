@@ -3967,3 +3967,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency pytest from 5.3.3 to 5.3.4
 * :pushpin: Automatic update of dependency thoth-common from 0.9.28 to 0.9.29
 * Adjust parameter in query for PI
+
+## Release 0.21.10 (2020-01-21T14:48:25)
+* Make keys Optional
+* :pushpin: Automatic update of dependency amun from 0.3.3 to 0.3.4
