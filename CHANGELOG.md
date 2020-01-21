@@ -3960,3 +3960,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :sweat_smile: Auto pip and black formatting
 * :pushpin: Automatic update of dependency amun from 0.3.1 to 0.3.2
 * :pushpin: Automatic update of dependency boto3 from 1.11.2 to 1.11.3
+
+## Release 0.21.9 (2020-01-21T02:05:51)
+* Release of version 0.21.8
+* :pushpin: Automatic update of dependency boto3 from 1.11.5 to 1.11.6
+* :pushpin: Automatic update of dependency pytest from 5.3.3 to 5.3.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.28 to 0.9.29
+* Adjust parameter in query for PI
