@@ -42,11 +42,11 @@
         },
         "amun": {
             "hashes": [
-                "sha256:e7b48138b93ff8e596bf5c15a6bdfcde9aa9657b52ce33c69afbb527ed1e1b7b",
-                "sha256:f18936efe15135e1949ea886eb78191bcb397fca32a35193365fc28d98d2cb0a"
+                "sha256:7b36f255a914c40ab12ee571d7324d344748919f220fe0eb750de8b1df81809b",
+                "sha256:a6c8b63b04a72d9c27149a771e6f90ec0c43563121e33ebd0c386088aaf1640d"
             ],
             "index": "pypi",
-            "version": "==0.3.4"
+            "version": "==0.3.5"
         },
         "argo-workflows": {
             "hashes": [
@@ -334,10 +334,10 @@
         },
         "pexpect": {
             "hashes": [
-                "sha256:2094eefdfcf37a1fdbfb9aa090862c1a4878e5c7e0e7e7088bdb511c558e5cd1",
-                "sha256:9e2c1fd0e6ee3a49b28f95d4b33bc389c89b20af6a1255906e90ff1262ce62eb"
+                "sha256:0b48a55dcb3c05f3329815901ea4fc1537514d6ba867a152b581d69ae3710937",
+                "sha256:fc65a43959d153d0114afe13997d439c22823a27cefceb5ff35c2178c6784c0c"
             ],
-            "version": "==4.7.0"
+            "version": "==4.8.0"
         },
         "psycopg2-binary": {
             "hashes": [
