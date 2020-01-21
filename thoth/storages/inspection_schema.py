@@ -17,7 +17,7 @@
 
 """Schema definition for inspection results."""
 
-from voluptuous import Required
+from voluptuous import Required, Optional
 from voluptuous import Schema
 from .result_schema import Datetime
 
@@ -26,16 +26,16 @@ from .result_schema import Datetime
 INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
         Required("base"): str,
-        Required("build"): dict,
-        Required("environment"): list,
-        Required("files"): list,
-        Required("identifier"): str,
-        Required("packages"): list,
-        Required("python"): dict,
-        Required("python_packages"): list,
-        Required("run"): dict,
-        Required("script"): str,
-        Required("update"): bool,
+        Optional("build"): dict,
+        Optional("environment"): list,
+        Optional("files"): list,
+        Optional("identifier"): str,
+        Optional("packages"): list,
+        Optional("python"): dict,
+        Optional("python_packages"): list,
+        Optional("run"): dict,
+        Optional("script"): str,
+        Optional("update"): bool,
     }
 )
 
