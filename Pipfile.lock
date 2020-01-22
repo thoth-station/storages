@@ -35,10 +35,10 @@
         },
         "alembic": {
             "hashes": [
-                "sha256:3b0cb1948833e062f4048992fbc97ecfaaaac24aaa0d83a1202a99fb58af8c6d"
+                "sha256:d412982920653db6e5a44bfd13b1d0db5685cbaaccaf226195749c706e1e862a"
             ],
             "index": "pypi",
-            "version": "==1.3.2"
+            "version": "==1.3.3"
         },
         "amun": {
             "hashes": [
@@ -166,10 +166,10 @@
         },
         "google-auth": {
             "hashes": [
-                "sha256:053bd396de4a8e83bfd27d0606645735cf68cfe88ec166655efd823f2969a9ee",
-                "sha256:abc459495de01c46bbf37ee8d22e6ae9232b3c2e09cfa5f1122b1645603b5def"
+                "sha256:10f280c56f58af54e88bae0471bd2a406e43144883f85b5bc6870fe3d766c0fd",
+                "sha256:6c8f31b395be315e1db5a7d9fba2ea9fb6b5e75c7d5b53478a8b40871b495c44"
             ],
-            "version": "==1.10.1"
+            "version": "==1.10.2"
         },
         "idna": {
             "hashes": [
