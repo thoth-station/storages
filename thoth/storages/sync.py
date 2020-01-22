@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # thoth-storages
-# Copyright(C) 2018, 2019 Fridolin Pokorny
+# Copyright(C) 2018, 2019, 2020 Fridolin Pokorny
 #
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ from amun import has_inspection_job
 
 from .solvers import SolverResultsStore
 from .analyses import AnalysisResultsStore
+from .buildlogs_analyses import BuildLogsAnalysisResultsStore
 from .package_analyses import PackageAnalysisResultsStore
 from .advisers import AdvisersResultsStore
 from .inspections import InspectionResultsStore
@@ -77,9 +78,7 @@ def sync_adviser_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing adviser document from %r with id %r to graph",
-                        adviser_store.ceph.host,
-                        document_id
+                        "Syncing adviser document from %r with id %r to graph", adviser_store.ceph.host, document_id
                     )
                     document = adviser_store.retrieve_document(document_id)
 
@@ -130,9 +129,7 @@ def sync_solver_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing solver document from %r with id %r to graph",
-                        solver_store.ceph.host,
-                        document_id
+                        "Syncing solver document from %r with id %r to graph", solver_store.ceph.host, document_id
                     )
                     document = solver_store.retrieve_document(document_id)
 
@@ -184,9 +181,7 @@ def sync_analysis_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing analysis document from %r with id %r to graph",
-                        analysis_store.ceph.host,
-                        document_id,
+                        "Syncing analysis document from %r with id %r to graph", analysis_store.ceph.host, document_id
                     )
                     document = analysis_store.retrieve_document(document_id)
 
@@ -200,6 +195,61 @@ def sync_analysis_documents(
                 failed += 1
         else:
             _LOGGER.info(f"Sync of analysis document with id {document_id!r} skipped - already synced")
+            skipped += 1
+
+    return processed, synced, skipped, failed
+
+
+def sync_build_log_analysis_documents(
+    document_ids: Optional[List[str]] = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: Optional[GraphDatabase] = None,
+    is_local: bool = False,
+) -> tuple:
+    """Sync build log analysis documents into graph."""
+    if is_local and not document_ids:
+        raise ValueError(
+            "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
+        )
+
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
+
+    if not is_local:
+        build_log_analysis_store = BuildLogsAnalysisResultsStore()
+        build_log_analysis_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for document_id in document_ids or buildlog_analysis_store.get_document_listing():
+        processed += 1
+
+        if force or not graph.build_log_analysis_document_id_exist(os.path.basename(document_id)):
+            try:
+                if is_local:
+                    _LOGGER.debug("Loading document from a local file: %r", document_id)
+                    with open(document_id, "r") as document_file:
+                        document = json.loads(document_file.read())
+                else:
+                    _LOGGER.info(
+                        "Syncing build log analysis document from %r with id %r to graph",
+                        build_log_analysis_store.ceph.host,
+                        document_id,
+                    )
+                    document = build_log_analysis_store.retrieve_document(document_id)
+                # Analysis results with no information are not required
+                if document["result"]["build_breaker"]:
+                    graph.sync_build_log_analysis_result(document)
+                    synced += 1
+            except Exception:
+                if not graceful:
+                    raise
+
+                _LOGGER.exception("Failed to sync build log analysis result with document id %r", document_id)
+                failed += 1
+        else:
+            _LOGGER.info("Sync of build log analysis document with id %r skipped - already synced", document_id)
             skipped += 1
 
     return processed, synced, skipped, failed
@@ -380,9 +430,7 @@ def sync_inspection_documents(
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
     if is_local:
-        raise NotImplementedError(
-            "Cannot sync inspection documents from a local file"
-        )
+        raise NotImplementedError("Cannot sync inspection documents from a local file")
 
     if only_graph_sync and only_ceph_sync:
         raise ValueError("At least one of Ceph or Graph should be performed")
@@ -456,12 +504,13 @@ def sync_inspection_documents(
 
 _HANDLERS_MAPPING = {
     "adviser": sync_adviser_documents,
-    "solver": sync_solver_documents,
-    "package-extract": sync_analysis_documents,
-    "package-analyzer": sync_package_analysis_documents,
-    "provenance-checker": sync_provenance_checker_documents,
+    "build-report": sync_build_log_analysis_documents,
     "dependency-monkey": sync_dependency_monkey_documents,
     "inspection": sync_inspection_documents,
+    "package-analyzer": sync_package_analysis_documents,
+    "package-extract": sync_analysis_documents,
+    "provenance-checker": sync_provenance_checker_documents,
+    "solver": sync_solver_documents,
 }
 
 
@@ -513,11 +562,7 @@ def sync_documents(
                     )
                 else:
                     stats_change = handler(
-                        to_sync_document_id,
-                        force=force,
-                        graceful=graceful,
-                        graph=graph,
-                        is_local=is_local
+                        to_sync_document_id, force=force, graceful=graceful, graph=graph, is_local=is_local
                     )
 
                 stats[document_prefix] = tuple(map(sum, zip(stats[document_prefix], stats_change)))

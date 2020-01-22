@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # thoth-storages
-# Copyright(C) 2019 Fridolin Pokorny
+# Copyright(C) 2019, 2020 Fridolin Pokorny
 #
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
@@ -194,7 +194,7 @@ class PiConv1D(Base, BaseExtension, PerformanceIndicatorBase):
     strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = Column(String(256), nullable=False)
+    padding = Column(Integer, nullable=False)
 
     # Elapsed seconds.
     elapsed = Column(Float, nullable=False)
@@ -240,7 +240,7 @@ class PiConv2D(Base, BaseExtension, PerformanceIndicatorBase):
     strides = Column(Integer, nullable=False)
 
     # Padding
-    padding = Column(String(256), nullable=False)
+    padding = Column(Integer, nullable=False)
 
     # Elapsed seconds.
     elapsed = Column(Float, nullable=False)

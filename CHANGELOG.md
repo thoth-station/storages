@@ -3862,3 +3862,112 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fixes in reStructuredText in README file
 * :pushpin: Automatic update of dependency boto3 from 1.10.41 to 1.10.42
 * :pushpin: Automatic update of dependency boto3 from 1.10.40 to 1.10.41
+
+## Release 0.20.1 (2020-01-03T10:44:00)
+* :sparkles: added a PR template
+* Fix keyword argument passing
+* :pushpin: Automatic update of dependency boto3 from 1.10.45 to 1.10.46
+
+## Release 0.20.2 (2020-01-03T14:03:40)
+* Happy new year!
+* Remove string size limitations from depends_on table
+
+## Release 0.20.3 (2020-01-06T10:03:33)
+* Fix syncs in versions
+
+## Release 0.20.4 (2020-01-06T13:33:55)
+* Fix wrong argument name propagated
+
+## Release 0.20.5 (2020-01-07T15:23:43)
+* Adjust model performance for inspection output
+* Correct key from inspection output
+* correct typo
+* Missing randomize
+* Adjust to follow naming convention
+* Introduce software environment specific queries
+* :pushpin: Automatic update of dependency pytest-timeout from 1.3.3 to 1.3.4
+* :pushpin: Automatic update of dependency pyyaml from 5.2 to 5.3
+* :pushpin: Automatic update of dependency boto3 from 1.10.46 to 1.10.47
+
+## Release 0.20.6 (2020-01-07T19:25:30)
+* Fix syncing external software environments coming from adviser
+* Release of version 0.20.5
+
+## Release 0.21.0 (2020-01-09T22:11:05)
+* :pushpin: Automatic update of dependency thoth-python from 0.9.0 to 0.9.1
+* :pushpin: Automatic update of dependency boto3 from 1.10.48 to 1.10.49
+* Use datetime to sort results
+* Do not use id when counting tables
+* Fix advised software stack sync
+* :pushpin: Automatic update of dependency thoth-python from 0.8.0 to 0.9.0
+* Format using black
+* Drop id columns on relation tables
+* Create index for CVE step to omit sequence scan
+* :pushpin: Automatic update of dependency boto3 from 1.10.47 to 1.10.48
+
+## Release 0.21.1 (2020-01-10T12:03:05)
+* Fix parameter name for syncing provenance-checker documents
+* Provide environment variable marker flag when retrieving transitive deps
+* Adjust syncing logic of Dependency Monkey documents based on the current output
+* Correct inspection sync key
+* :pushpin: Automatic update of dependency amun from 0.2.7 to 0.3.0
+
+## Release 0.21.2 (2020-01-10T13:56:29)
+* Release of version 0.21.1
+* :pushpin: Automatic update of dependency thoth-common from 0.9.23 to 0.9.24
+* Fix parameter name for syncing provenance-checker documents
+* Provide environment variable marker flag when retrieving transitive deps
+
+## Release 0.21.3 (2020-01-10T19:14:53)
+* Adjust datatype for conv PI to sync inspection results
+
+## Release 0.21.4 (2020-01-13T09:26:49)
+* Query for index_url before creating index
+* Introduce a query for retrieving Python package entity names
+* :pushpin: Automatic update of dependency boto3 from 1.10.50 to 1.11.0
+
+## Release 0.21.5 (2020-01-13T11:28:50)
+* Alembic didn't create correct change in schema
+* Consider only enabled indexes in unsolved queries
+
+## Release 0.21.6 (2020-01-13T21:21:13)
+* Fix query for enabled index
+* :pushpin: Automatic update of dependency thoth-common from 0.9.24 to 0.9.25
+
+## Release 0.21.7 (2020-01-15T19:55:45)
+* Introduce a way to parametrize memory cache size
+* Create index for has_artifact table
+* :pushpin: Automatic update of dependency boto3 from 1.11.1 to 1.11.2
+* :pushpin: Automatic update of dependency thoth-common from 0.9.25 to 0.9.26
+* Add index for solved table - it optimizes the has_solver_error query in adviser
+* Adjust index for PPV combinations
+
+## Release 0.21.8 (2020-01-21T00:14:12)
+* :pushpin: Automatic update of dependency boto3 from 1.11.5 to 1.11.6
+* :pushpin: Automatic update of dependency pytest from 5.3.3 to 5.3.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.28 to 0.9.29
+* Adjust parameter in query for PI
+* Correct datatype
+* Add missing key to sync inspections
+* Set Packages Extract flag is_external to True always
+* Missing change in query name to follow created standards
+* :pushpin: Automatic update of dependency boto3 from 1.11.4 to 1.11.5
+* :pushpin: Automatic update of dependency pytest from 5.3.2 to 5.3.3
+* :pushpin: Automatic update of dependency amun from 0.3.2 to 0.3.3
+* Normalize OS version by discarding any minor release in RHEL release string
+* :pushpin: Automatic update of dependency boto3 from 1.11.3 to 1.11.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.26 to 0.9.28
+* :sweat_smile: Auto pip and black formatting
+* :pushpin: Automatic update of dependency amun from 0.3.1 to 0.3.2
+* :pushpin: Automatic update of dependency boto3 from 1.11.2 to 1.11.3
+
+## Release 0.21.9 (2020-01-21T02:05:51)
+* Release of version 0.21.8
+* :pushpin: Automatic update of dependency boto3 from 1.11.5 to 1.11.6
+* :pushpin: Automatic update of dependency pytest from 5.3.3 to 5.3.4
+* :pushpin: Automatic update of dependency thoth-common from 0.9.28 to 0.9.29
+* Adjust parameter in query for PI
+
+## Release 0.21.10 (2020-01-21T14:48:25)
+* Make keys Optional
+* :pushpin: Automatic update of dependency amun from 0.3.3 to 0.3.4

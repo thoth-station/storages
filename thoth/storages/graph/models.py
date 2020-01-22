@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # thoth-storages
-# Copyright(C) 2019 Fridolin Pokorny
+# Copyright(C) 2019, 2020 Fridolin Pokorny
 #
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,12 +78,11 @@ class PythonPackageVersion(Base, BaseExtension):
     python_software_stacks = relationship("PythonRequirementsLock", back_populates="python_package_version")
 
     __table_args__ = tuple(
-        get_python_package_version_index_combinations(index_as_property=False)
+        get_python_package_version_index_combinations()
         + [
             UniqueConstraint(
                 "package_name", "package_version", "python_package_index_id", "os_name", "os_version", "python_version"
-            ),
-            Index("python_package_version_idx", "package_name", "package_version", "python_package_index_id"),
+            )
         ]
     )
 
@@ -93,8 +92,6 @@ class HasArtifact(Base, BaseExtension):
 
     __tablename__ = "has_artifact"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_package_version_entity_id = Column(
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
@@ -103,13 +100,17 @@ class HasArtifact(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="python_artifacts")
     python_artifact = relationship("PythonArtifact", back_populates="python_package_version_entities")
 
+    __table_args__ = (
+        Index("has_artifact_python_package_version_entity_id", "python_package_version_entity_id"),
+        Index("has_artifact_python_artifact_id", "python_artifact_id"),
+    )
+
 
 class Solved(Base, BaseExtension):
     """A solver solved a package-version."""
 
     __tablename__ = "solved"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     datetime = Column(DateTime(timezone=False), nullable=False)
     document_id = Column(String(128), nullable=False)
     duration = Column(Integer, nullable=True)  # nullable for now...
@@ -125,9 +126,7 @@ class Solved(Base, BaseExtension):
     ecosystem_solver = relationship("EcosystemSolver", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="solvers")
 
-    __table_args__ = (
-        Index("solver_document_id_idx", "document_id"),
-    )
+    __table_args__ = (Index("solver_document_id_idx", "document_id"), Index("solved_version_id_idx", "version_id"))
 
 
 class PythonPackageVersionEntity(Base, BaseExtension):
@@ -146,6 +145,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
 
     versions = relationship("DependsOn", back_populates="entity")
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
+    build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
     # inspection_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
@@ -174,22 +174,18 @@ class DependsOn(Base, BaseExtension):
 
     __tablename__ = "depends_on"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     entity_id = Column(Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True)
     version_id = Column(Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True)
 
     version_range = Column(String(128))
-    marker = Column(String(256), nullable=True)
-    extra = Column(String(256), nullable=True)
+    marker = Column(Text, nullable=True)
+    extra = Column(Text, nullable=True)
     marker_evaluation_result = Column(Boolean, nullable=False)
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
 
-    __table_args__ = (
-        Index("depends_on_version_id_idx", "version_id"),
-    )
+    __table_args__ = (Index("depends_on_version_id_idx", "version_id"),)
 
 
 class EcosystemSolver(Base, BaseExtension):
@@ -272,8 +268,6 @@ class FoundPythonFile(Base, BaseExtension):
 
     __tablename__ = "found_python_file"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     file = Column(String(256), nullable=False)
 
     python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
@@ -302,8 +296,6 @@ class FoundPythonInterpreter(Base, BaseExtension):
 
     __tablename__ = "found_python_interpreter"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_interpreter_id = Column(Integer, ForeignKey("python_interpreter.id", ondelete="CASCADE"), primary_key=True)
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
 
@@ -316,8 +308,6 @@ class FoundRPM(Base, BaseExtension):
 
     __tablename__ = "found_rpm"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id", ondelete="CASCADE"), primary_key=True)
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
 
@@ -329,8 +319,6 @@ class FoundDeb(Base, BaseExtension):
     """State a package extract run found a Debian package."""
 
     __tablename__ = "found_deb"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
@@ -374,13 +362,34 @@ class CVE(Base, BaseExtension):
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
 
+class BuildLogAnalyzerRun(Base, BaseExtension):
+    """A class representing a single buildlogs-analyzer (build log analysis) run."""
+
+    __tablename__ = "build_log_analyzer_run"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    build_log_analyzer_name = Column(Text, nullable=True)
+    build_log_analyzer_version = Column(Text, nullable=True)
+    build_log_analysis_document_id = Column(Text, nullable=False)
+    datetime = Column(DateTime, nullable=False)
+    debug = Column(Boolean, nullable=False, default=False)
+    build_log_analyzer_error_reason = Column(Text, nullable=True)
+    duration = Column(Integer, nullable=True)
+    input_python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE")
+    )
+
+    input_python_package_version_entity = relationship(
+        "PythonPackageVersionEntity", back_populates="build_log_analyzer_runs"
+    )
+
+
 class PackageAnalyzerRun(Base, BaseExtension):
     """A class representing a single package-analyzer (package analysis) run."""
 
     __tablename__ = "package_analyzer_run"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-
     package_analyzer_name = Column(String(256), nullable=True)
     package_analyzer_version = Column(String(256), nullable=True)
     package_analysis_document_id = Column(String(256), nullable=False)
@@ -421,8 +430,6 @@ class InvestigatedFile(Base, BaseExtension):
 
     __tablename__ = "investigated_file"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     package_analyzer_run_id = Column(
         Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
     )
@@ -436,8 +443,6 @@ class Investigated(Base, BaseExtension):
     """A record about investigated Python artifact by a package analyzer."""
 
     __tablename__ = "investigated"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     package_analyzer_run_id = Column(
         Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
@@ -597,10 +602,10 @@ class Advised(Base, BaseExtension):
 
     __tablename__ = "advised"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id", ondelete="CASCADE"))
-    python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
+    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id", ondelete="CASCADE"), primary_key=True)
+    python_software_stack_id = Column(
+        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"), primary_key=True
+    )
 
     adviser_run = relationship("AdviserRun", back_populates="advised_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="advised_by")
@@ -785,8 +790,6 @@ class RPMRequires(Base, BaseExtension):
 
     __tablename__ = "rpm_requires"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     rpm_package_version_id = Column(Integer, ForeignKey("rpm_package_version.id", ondelete="CASCADE"), primary_key=True)
     rpm_requirement_id = Column(Integer, ForeignKey("rpm_requirement.id", ondelete="CASCADE"), primary_key=True)
 
@@ -882,8 +885,6 @@ class IncludedFile(Base, BaseExtension):
 
     __tablename__ = "included_file"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     file = Column(String(256), nullable=False)
 
     python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
@@ -897,8 +898,6 @@ class Identified(Base, BaseExtension):
     """A relation representing a Python package version identified by a package-extract run."""
 
     __tablename__ = "identified"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
     python_package_version_entity_id = Column(
@@ -914,8 +913,6 @@ class HasVulnerability(Base, BaseExtension):
 
     __tablename__ = "has_vulnerability"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_package_version_entity_id = Column(
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
@@ -923,6 +920,10 @@ class HasVulnerability(Base, BaseExtension):
 
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_version_entities")
+
+    __table_args__ = tuple(
+        [Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id")]
+    )
 
 
 class PythonSoftwareStack(Base, BaseExtension):
@@ -1067,8 +1068,6 @@ class DebPreDepends(Base, BaseExtension):
 
     __tablename__ = "deb_pre_depends"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id", ondelete="CASCADE"), primary_key=True)
     deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
 
@@ -1081,8 +1080,6 @@ class DebReplaces(Base, BaseExtension):
     """A relation of a deb package capturing package replacement.."""
 
     __tablename__ = "deb_replaces"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     deb_dependency_id = Column(Integer, ForeignKey("deb_dependency.id", ondelete="CASCADE"), primary_key=True)
     deb_package_version_id = Column(Integer, ForeignKey("deb_package_version.id", ondelete="CASCADE"), primary_key=True)
@@ -1126,10 +1123,10 @@ class HasSymbol(Base, BaseExtension):
 
     __tablename__ = "has_symbol"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
-    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
-    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"))
+    software_environment_id = Column(
+        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
+    )
+    versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="software_environments")
@@ -1146,8 +1143,6 @@ class RequiresSymbol(Base, BaseExtension):
 
     __tablename__ = "requires_symbol"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
@@ -1159,8 +1154,6 @@ class DetectedSymbol(Base, BaseExtension):
     """A relation stating a package extract run detected a symbol."""
 
     __tablename__ = "detected_symbol"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     package_extract_run_id = Column(Integer, ForeignKey("package_extract_run.id", ondelete="CASCADE"), primary_key=True)
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
@@ -1216,8 +1209,6 @@ class HasMetadataClassifier(Base, BaseExtension):
 
     __tablename__ = "has_metadata_classifier"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
     )
@@ -1248,8 +1239,6 @@ class HasMetadataPlatform(Base, BaseExtension):
 
     __tablename__ = "has_metadata_platform"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
     )
@@ -1277,8 +1266,6 @@ class HasMetadataSupportedPlatform(Base, BaseExtension):
     """The Python package has the given supported platform in the metadata."""
 
     __tablename__ = "has_metadata_supported_platform"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
@@ -1312,8 +1299,6 @@ class HasMetadataRequiresExternal(Base, BaseExtension):
     """The Python package has the given dependency in the metadata."""
 
     __tablename__ = "has_metadata_requires_external"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
@@ -1349,8 +1334,6 @@ class HasMetadataProjectUrl(Base, BaseExtension):
 
     __tablename__ = "has_metadata_project_url"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
     )
@@ -1380,8 +1363,6 @@ class HasMetadataProvidesExtra(Base, BaseExtension):
     """The Python package has the given optional feature in the metadata."""
 
     __tablename__ = "has_metadata_provides_extra"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
@@ -1415,8 +1396,6 @@ class HasMetadataDistutils(Base, BaseExtension):
     """The Python package has the given distutils in the metadata."""
 
     __tablename__ = "has_metadata_distutils"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
 
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), primary_key=True
@@ -1462,6 +1441,7 @@ class PythonPackageMetadataDistutils(Base, BaseExtension):
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
+        BuildLogAnalyzerRun,
         CVE,
         DebDependency,
         DebPackageVersion,

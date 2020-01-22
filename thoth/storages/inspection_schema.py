@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # thoth-storages
-# Copyright(C) 2019 Fridolin Pokorny, Francesco Murdaca
+# Copyright(C) 2019, 2020 Fridolin Pokorny, Francesco Murdaca
 #
 # This program is free software: you can redistribute it and / or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 """Schema definition for inspection results."""
 
-from voluptuous import Required
+from voluptuous import Required, Optional
 from voluptuous import Schema
 from .result_schema import Datetime
 
@@ -26,14 +26,16 @@ from .result_schema import Datetime
 INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
         Required("base"): str,
-        Required("build"): dict,
-        Required("files"): list,
-        Required("packages"): list,
-        Required("python_packages"): list,
-        Required("identifier"): str,
-        Required("python"): dict,
-        Required("run"): dict,
-        Required("script"): str,
+        Optional("build"): dict,
+        Optional("environment"): list,
+        Optional("files"): list,
+        Optional("identifier"): str,
+        Optional("packages"): list,
+        Optional("python"): dict,
+        Optional("python_packages"): list,
+        Optional("run"): dict,
+        Optional("script"): str,
+        Optional("update"): bool,
     }
 )
 
