@@ -49,6 +49,8 @@ INSPECTION_JOB_LOG_SCHEMA = Schema(
         Required("stderr"): str,
         Required("stdout"): dict,
         Required("usage"): dict,
+        Required("os_release"): dict,
+        Optional("runtime_environment"): dict,
     }
 )
 
