@@ -3971,3 +3971,15 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.21.10 (2020-01-21T14:48:25)
 * Make keys Optional
 * :pushpin: Automatic update of dependency amun from 0.3.3 to 0.3.4
+
+## Release 0.21.11 (2020-01-27T11:22:03)
+* Add missing keys to inspection schema validation
+* :pushpin: Automatic update of dependency boto3 from 1.11.8 to 1.11.9
+* :pushpin: Automatic update of dependency boto3 from 1.11.7 to 1.11.8
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.12 to 1.3.13
+* :pushpin: Automatic update of dependency alembic from 1.3.2 to 1.3.3
+* new GitHub templates
+* added some files to gitignore
+* :pushpin: Automatic update of dependency boto3 from 1.11.6 to 1.11.7
+* :pushpin: Automatic update of dependency amun from 0.3.4 to 0.3.5
+* Added build log analysis result observations to graph database
