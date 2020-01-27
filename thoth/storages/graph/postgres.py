@@ -2706,7 +2706,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             result = session.query(hardware_environment).offset(start_offset).limit(count).all()
-            return [model.dict() for model in result]
+            return [model.to_dict() for model in result]
 
     def get_software_environments_all(
         self, is_external: bool = False, *, start_offset: int = 0, count: int = DEFAULT_COUNT
@@ -2719,7 +2719,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             result = session.query(software_environment).offset(start_offset).limit(count).all()
-            return [model.dict() for model in result]
+            return [model.to_dict() for model in result]
 
     def get_python_package_index_urls_all(self, enabled: bool = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
@@ -2906,7 +2906,7 @@ class GraphDatabase(SQLBase):
 
             query_result = query.all()
 
-            return self._group_by_package_name(result=result)
+            return self._group_by_package_name(result=query_result)
 
     def get_python_package_versions_count(
         self,
@@ -4681,53 +4681,81 @@ class GraphDatabase(SQLBase):
 
     def get_python_package_required_symbols(
         self, package_name: str, package_version: str, index_url: str
-    ) -> Optional[List[str]]:
+    ) -> List[str]:
         """Get required symbols for a Python package in a specified version."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
 
         with self._session_scope() as session:
-            query = session.query(PythonPackageVersion)
+            query = session.query(PythonPackageVersionEntity)
 
             query = (
-                query.filter(PythonPackageVersion.package_name == package_name)
-                .filter(PythonPackageVersion.package_version == package_version)
-                .join((HasArtifact, PythonPackageVersionEntity.python_artifacts))
-                .join((PythonArtifact, HasArtifact.python_artifact))
-                .with_entities(PythonArtifact.versioned_symbols)
+                query.join(
+                    HasArtifact,
+                    PythonPackageVersionEntity.id == HasArtifact.python_package_version_entity_id
+                )
+                .outerjoin(
+                    RequiresSymbol,
+                    RequiresSymbol.python_artifact_id == HasArtifact.python_artifact_id
+                )
+                .join(
+                    PythonPackageIndex,
+                    PythonPackageIndex.id == PythonPackageVersionEntity.python_package_index_id
+                )
+                .outerjoin(
+                    VersionedSymbol,
+                    RequiresSymbol.versioned_symbol_id == VersionedSymbol.id
+                )
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+                .filter(PythonPackageVersionEntity.package_version == package_version)
+                .filter(PythonPackageIndex.url == index_url)
+                .with_entities(VersionedSymbol.symbol)
             )
 
-            return query.first()   # If query result is empty returns None
+            # Query returns list of single tuples
+            # NOTE: can be empty even if request is valid
+            to_return = [i[0] for i in query.all()]
+            _LOGGER.debug("The package requires the following symbols: %r", str(to_return))
+            return [i[0] for i in query.all()]
 
-    def get_image_symbols(
+    def get_analyzed_image_symbols_all(
         self,
         os_name: str,
         os_version: str,
-        python_version: str,
         *,
-        cuda_version: str,
-    ) -> Optional[List[str]]:
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+    ) -> List[str]:
         """Get symbols associated with a given image."""
         with self._session_scope() as session:
             query = (
                 session.query(PackageExtractRun)
-                .filter(PackageExtractRun.os_name == os_name)
-                .filter(PackageExtractRun.os_version == os_version)
-                .filter(PackageExtractRun.python_version == python_version)
-                .with_entities(
-                    PackageExtractRun.versioned_symbols
-                ))
+                .join(
+                    ExternalSoftwareEnvironment,
+                    PackageExtractRun.external_software_environment_id == ExternalSoftwareEnvironment.id
+                )
+                .join(
+                    HasSymbol,
+                    PackageExtractRun.external_software_environment_id == HasSymbol.external_software_environment_id
+                )
+                .join(
+                    VersionedSymbol,
+                    HasSymbol.versioned_symbol_id == VersionedSymbol.id
+                )
+                .filter(PackageExtractRun.os_id == os_name)
+                .filter(PackageExtractRun.os_version_id == os_version)
+                .filter(ExternalSoftwareEnvironment.cuda_version == cuda_version)
+                .filter(ExternalSoftwareEnvironment.python_version == python_version)
+                .with_entities(VersionedSymbol.symbol)
+            )
 
-            if cuda_version:
-                query = query.filter(PackageExtractRun.cuda_version == cuda_version)
+            # Query returns list of single tuples (empty if bad request)
+            to_return = [i[0] for i in query.all()]
+            _LOGGER.debug("The image has the following symbols: %r", str(to_return))
+            return [i[0] for i in query.all()]
 
-            query = query.with_entities(PackageExtractRun.versioned_symbols)
-
-            # If query result is empty returns None
-            return query.first()
-
-    def get_pi_count(self, framework: str) -> Dict[str, int]:
-        """Get dictionary with number of Performance Indicators per type for the ML Framework selected."""
+    def get_pi_count(self, component: str) -> Dict[str, int]:
+        """Get dictionary with number of Performance Indicators per type for the PI component selected."""
         result = {}
         with self._session_scope() as session:
             for pi_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
