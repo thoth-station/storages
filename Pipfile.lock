@@ -42,11 +42,11 @@
         },
         "amun": {
             "hashes": [
-                "sha256:bd87b082b893b8151a69ed34e68a4da6fd6957ecb0c242b55982bde43884ec8f",
-                "sha256:ddf8b23438451b88caff3a14826b6433bb1efbebaa55d5a2c3185034e11e67d1"
+                "sha256:37b2b0aea7a474d8a53e2170338a86a835150986dd1011f895b7e2f0ba2e6e16",
+                "sha256:87a4f3350a82700977975ccfc367804863edc247a612ee09109227c6adaab08b"
             ],
             "index": "pypi",
-            "version": "==0.3.6"
+            "version": "==0.3.7"
         },
         "argo-workflows": {
             "hashes": [
@@ -187,10 +187,10 @@
         },
         "jinja2": {
             "hashes": [
-                "sha256:74320bb91f31270f9551d46522e33af46a80c3d619f4a4bf42b3164d30b5911f",
-                "sha256:9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de"
+                "sha256:6e7a3c2934694d59ad334c93dd1b6c96699cf24c53fdb8ec848ac6b23e685734",
+                "sha256:d6609ae5ec3d56212ca7d802eda654eaf2310000816ce815361041465b108be4"
             ],
-            "version": "==2.10.3"
+            "version": "==2.11.0"
         },
         "jmespath": {
             "hashes": [
@@ -1081,10 +1081,10 @@
         },
         "jinja2": {
             "hashes": [
-                "sha256:74320bb91f31270f9551d46522e33af46a80c3d619f4a4bf42b3164d30b5911f",
-                "sha256:9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de"
+                "sha256:6e7a3c2934694d59ad334c93dd1b6c96699cf24c53fdb8ec848ac6b23e685734",
+                "sha256:d6609ae5ec3d56212ca7d802eda654eaf2310000816ce815361041465b108be4"
             ],
-            "version": "==2.10.3"
+            "version": "==2.11.0"
         },
         "jmespath": {
             "hashes": [
