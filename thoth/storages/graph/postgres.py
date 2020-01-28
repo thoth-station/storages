@@ -3502,7 +3502,7 @@ class GraphDatabase(SQLBase):
         self,
         session: Session,
         package_name: str,
-        package_version: str,
+        package_version: Union[str, None],
         index_url: Union[str, None],
         *,
         os_name: Union[str, None],
@@ -3510,19 +3510,18 @@ class GraphDatabase(SQLBase):
         python_version: Union[str, None],
         python_package_metadata_id: int = None,
         sync_only_entity: bool = False,
-    ) -> PythonPackageVersion:
+    ) -> Union[PythonPackageVersion, PythonPackageVersionEntity]:
         """Create a Python package version.
 
         Make sure it is properly mirrored with a Python package entity and connected to a Python package index.
         """
         package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+
         index = None
         if index_url is not None:
             index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
-
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
 
         entity, _ = PythonPackageVersionEntity.get_or_create(
             session,
@@ -3531,21 +3530,20 @@ class GraphDatabase(SQLBase):
             python_package_index_id=index.id if index else None,
         )
 
-        if not sync_only_entity:
-            python_package_version, _ = PythonPackageVersion.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=index.id if index else None,
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-                entity_id=entity.id,
-                python_package_metadata_id=python_package_metadata_id,
-            )
-
         if sync_only_entity:
             return entity
+
+        python_package_version, _ = PythonPackageVersion.get_or_create(
+            session,
+            package_name=package_name,
+            package_version=package_version,
+            python_package_index_id=index.id if index else None,
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+            entity_id=entity.id,
+            python_package_metadata_id=python_package_metadata_id,
+        )
 
         return python_package_version
 
@@ -4581,6 +4579,19 @@ class GraphDatabase(SQLBase):
                     Advised.get_or_create(
                         session, adviser_run_id=adviser_run.id, python_software_stack_id=software_stack.id
                     )
+
+            # Mark down packages that were not solved if adviser run failed.
+            for unresolved in document["result"].get("report", {}).get("_ERROR_DETAILS", {}).get("unresolved", []):
+                self._create_python_package_version(
+                    session,
+                    package_name=unresolved,
+                    package_version=None,
+                    index_url=None,
+                    os_name=None,
+                    os_version=None,
+                    python_version=None,
+                    sync_only_entity=True,
+                )
 
     def sync_provenance_checker_result(self, document: dict) -> None:
         """Sync provenance checker results into graph database."""
