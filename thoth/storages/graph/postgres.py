@@ -4027,18 +4027,10 @@ class GraphDatabase(SQLBase):
         package_version = document["result"]["build_breaker"]["version_specified"]
         package_version = self.normalize_python_package_version(package_version)
 
-        _LOGGER.info(
-            "Syncing package analysis for package %r in version %r from %r", package_name, package_version, index_url
-        )
+        _LOGGER.info("Syncing package analysis for package %r in version %r", package_name, package_version)
         with self._session_scope() as session, session.begin(subtransactions=True):
-            python_package_index = self._get_or_create_python_package_index(
-                session, index_url=index_url, only_if_enabled=False
-            )
             python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=python_package_index.id,
+                session, package_name=package_name, package_version=package_version
             )
             build_log_analyzer_run, _ = BuildLogAnalyzerRun.get_or_create(
                 session,
