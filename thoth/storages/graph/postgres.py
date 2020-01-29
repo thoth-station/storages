@@ -4687,10 +4687,9 @@ class GraphDatabase(SQLBase):
         package_version = self.normalize_python_package_version(package_version)
 
         with self._session_scope() as session:
-            query = session.query(PythonPackageVersionEntity)
-
             query = (
-                query.filter(PythonPackageVersionEntity.package_name == package_name)
+                session.query(PythonPackageVersionEntity)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
                 .filter(PythonPackageVersionEntity.package_version == package_version)
                 .join(
                     PythonPackageIndex,
