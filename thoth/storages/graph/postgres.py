@@ -2906,7 +2906,7 @@ class GraphDatabase(SQLBase):
 
             query_result = query.all()
 
-            return self._group_by_package_name(result=result)
+            return self._group_by_package_name(result=query_result)
 
     def get_python_package_versions_count(
         self,
