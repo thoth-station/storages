@@ -2706,7 +2706,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             result = session.query(hardware_environment).offset(start_offset).limit(count).all()
-            return [model.dict() for model in result]
+            return [model.to_dict() for model in result]
 
     def get_software_environments_all(
         self, is_external: bool = False, *, start_offset: int = 0, count: int = DEFAULT_COUNT
@@ -2719,7 +2719,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             result = session.query(software_environment).offset(start_offset).limit(count).all()
-            return [model.dict() for model in result]
+            return [model.to_dict() for model in result]
 
     def get_python_package_index_urls_all(self, enabled: bool = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
