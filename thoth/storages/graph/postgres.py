@@ -4694,7 +4694,7 @@ class GraphDatabase(SQLBase):
                     HasArtifact,
                     PythonPackageVersionEntity.id == HasArtifact.python_package_version_entity_id
                 )
-                .outerjoin(
+                .join(
                     RequiresSymbol,
                     RequiresSymbol.python_artifact_id == HasArtifact.python_artifact_id
                 )
@@ -4702,7 +4702,7 @@ class GraphDatabase(SQLBase):
                     PythonPackageIndex,
                     PythonPackageIndex.id == PythonPackageVersionEntity.python_package_index_id
                 )
-                .outerjoin(
+                .join(
                     VersionedSymbol,
                     RequiresSymbol.versioned_symbol_id == VersionedSymbol.id
                 )
