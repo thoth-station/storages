@@ -4690,7 +4690,14 @@ class GraphDatabase(SQLBase):
             query = session.query(PythonPackageVersionEntity)
 
             query = (
-                query.join(
+                query.filter(PythonPackageVersionEntity.package_name == package_name)
+                .filter(PythonPackageVersionEntity.package_version == package_version)
+                .join(
+                    PythonPackageIndex,
+                    PythonPackageIndex.id == PythonPackageVersionEntity.python_package_index_id
+                )
+                .filter(PythonPackageIndex.url == index_url)
+                .join(
                     HasArtifact,
                     PythonPackageVersionEntity.id == HasArtifact.python_package_version_entity_id
                 )
@@ -4699,16 +4706,9 @@ class GraphDatabase(SQLBase):
                     RequiresSymbol.python_artifact_id == HasArtifact.python_artifact_id
                 )
                 .join(
-                    PythonPackageIndex,
-                    PythonPackageIndex.id == PythonPackageVersionEntity.python_package_index_id
-                )
-                .join(
                     VersionedSymbol,
                     RequiresSymbol.versioned_symbol_id == VersionedSymbol.id
                 )
-                .filter(PythonPackageVersionEntity.package_name == package_name)
-                .filter(PythonPackageVersionEntity.package_version == package_version)
-                .filter(PythonPackageIndex.url == index_url)
                 .with_entities(VersionedSymbol.symbol)
             )
 
@@ -4730,10 +4730,14 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = (
                 session.query(PackageExtractRun)
+                .filter(PackageExtractRun.os_id == os_name)
+                .filter(PackageExtractRun.os_version_id == os_version)
                 .join(
                     ExternalSoftwareEnvironment,
                     PackageExtractRun.external_software_environment_id == ExternalSoftwareEnvironment.id
                 )
+                .filter(ExternalSoftwareEnvironment.cuda_version == cuda_version)
+                .filter(ExternalSoftwareEnvironment.python_version == python_version)
                 .join(
                     HasSymbol,
                     PackageExtractRun.external_software_environment_id == HasSymbol.external_software_environment_id
@@ -4742,10 +4746,6 @@ class GraphDatabase(SQLBase):
                     VersionedSymbol,
                     HasSymbol.versioned_symbol_id == VersionedSymbol.id
                 )
-                .filter(PackageExtractRun.os_id == os_name)
-                .filter(PackageExtractRun.os_version_id == os_version)
-                .filter(ExternalSoftwareEnvironment.cuda_version == cuda_version)
-                .filter(ExternalSoftwareEnvironment.python_version == python_version)
                 .with_entities(VersionedSymbol.symbol)
             )
 
