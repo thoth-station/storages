@@ -169,6 +169,10 @@ _GET_PYTHON_PACKAGE_VERSION_RECORDS_CACHE_SIZE = int(
 )
 _GET_DEPENDS_ON_CACHE_SIZE = int(os.getenv("THOTH_STORAGE_GET_DEPENDS_ON_CACHE_SIZE", 8192))
 _GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE = int(os.getenv("THOTH_STORAGE_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE", 4096))
+_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(os.getenv(
+    "THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE",
+    4096
+))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -4679,6 +4683,7 @@ class GraphDatabase(SQLBase):
 
                 inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
 
+    @lru_cache(maxsize=_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE)
     def get_python_package_required_symbols(
         self, package_name: str, package_version: str, index_url: str
     ) -> List[str]:
@@ -4691,30 +4696,16 @@ class GraphDatabase(SQLBase):
                 session.query(PythonPackageVersionEntity)
                 .filter(PythonPackageVersionEntity.package_name == package_name)
                 .filter(PythonPackageVersionEntity.package_version == package_version)
-                .join(
-                    PythonPackageIndex,
-                    PythonPackageIndex.id == PythonPackageVersionEntity.python_package_index_id
-                )
+                .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
-                .join(
-                    HasArtifact,
-                    PythonPackageVersionEntity.id == HasArtifact.python_package_version_entity_id
-                )
-                .join(
-                    RequiresSymbol,
-                    RequiresSymbol.python_artifact_id == HasArtifact.python_artifact_id
-                )
-                .join(
-                    VersionedSymbol,
-                    RequiresSymbol.versioned_symbol_id == VersionedSymbol.id
-                )
+                .join(HasArtifact)
+                .join(RequiresSymbol)
+                .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
             )
 
             # Query returns list of single tuples
             # NOTE: can be empty even if request is valid
-            to_return = [i[0] for i in query.all()]
-            _LOGGER.debug("The package requires the following symbols: %r", str(to_return))
             return [i[0] for i in query.all()]
 
     def get_analyzed_image_symbols_all(
@@ -4731,26 +4722,15 @@ class GraphDatabase(SQLBase):
                 session.query(PackageExtractRun)
                 .filter(PackageExtractRun.os_id == os_name)
                 .filter(PackageExtractRun.os_version_id == os_version)
-                .join(
-                    ExternalSoftwareEnvironment,
-                    PackageExtractRun.external_software_environment_id == ExternalSoftwareEnvironment.id
-                )
+                .join(ExternalSoftwareEnvironment)
                 .filter(ExternalSoftwareEnvironment.cuda_version == cuda_version)
                 .filter(ExternalSoftwareEnvironment.python_version == python_version)
-                .join(
-                    HasSymbol,
-                    PackageExtractRun.external_software_environment_id == HasSymbol.external_software_environment_id
-                )
-                .join(
-                    VersionedSymbol,
-                    HasSymbol.versioned_symbol_id == VersionedSymbol.id
-                )
+                .join(HasSymbol)
+                .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
             )
 
             # Query returns list of single tuples (empty if bad request)
-            to_return = [i[0] for i in query.all()]
-            _LOGGER.debug("The image has the following symbols: %r", str(to_return))
             return [i[0] for i in query.all()]
 
     def get_pi_count(self, component: str) -> Dict[str, int]:
@@ -4812,6 +4792,7 @@ class GraphDatabase(SQLBase):
             (self.get_depends_on, "get_depends_on"),
             (self.has_python_solver_error, "has_python_solver_error"),
             (self.get_python_cve_records_all, "get_python_cve_records_all"),
+            (self.get_python_package_required_symbols, "get_python_package_required_symbols"),
         ):
             stats[method_name] = dict(method.cache_info()._asdict())
 
