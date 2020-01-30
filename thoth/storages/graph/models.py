@@ -162,11 +162,11 @@ class PythonPackageVersionEntity(Base, BaseExtension):
         Index(
             "python_package_version_entity_idx",
             "package_name",
-            "id",
             "package_version",
             "python_package_index_id",
             unique=True,
         ),
+        Index("id_idx", "id", unique=True)
     )
 
 
