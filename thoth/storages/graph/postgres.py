@@ -36,6 +36,7 @@ from datetime import datetime
 import attr
 from methodtools import lru_cache
 from sqlalchemy import create_engine
+from sqlalchemy import text
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import exists
@@ -4032,18 +4033,10 @@ class GraphDatabase(SQLBase):
         package_version = document["result"]["build_breaker"]["version_specified"]
         package_version = self.normalize_python_package_version(package_version)
 
-        _LOGGER.info(
-            "Syncing package analysis for package %r in version %r from %r", package_name, package_version, index_url
-        )
+        _LOGGER.info("Syncing package analysis for package %r in version %r", package_name, package_version)
         with self._session_scope() as session, session.begin(subtransactions=True):
-            python_package_index = self._get_or_create_python_package_index(
-                session, index_url=index_url, only_if_enabled=False
-            )
             python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=python_package_index.id,
+                session, package_name=package_name, package_version=package_version
             )
             build_log_analyzer_run, _ = BuildLogAnalyzerRun.get_or_create(
                 session,
@@ -4793,3 +4786,136 @@ class GraphDatabase(SQLBase):
             stats[method_name] = dict(method.cache_info()._asdict())
 
         return {"memory_cache_info": stats}
+
+    def get_bloat_data(self) -> dict:
+        """Get bloat data."""
+        # Reference: https://raw.githubusercontent.com/pgexperts/pgx_scripts/master/bloat/table_bloat_check.sql
+
+        # define some constants for sizes of things
+        # for reference down the query and easy maintenance
+        constants = "SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 8 AS ma"
+
+        # screen out table who have attributes
+        # which dont have stats, such as JSON
+        no_stats = """SELECT table_schema, table_name,
+                n_live_tup::numeric as est_rows,
+                pg_table_size(relid)::numeric as table_size
+            FROM information_schema.columns
+                JOIN pg_stat_user_tables as psut
+                ON table_schema = psut.schemaname
+                AND table_name = psut.relname
+                LEFT OUTER JOIN pg_stats
+                ON table_schema = pg_stats.schemaname
+                    AND table_name = pg_stats.tablename
+                    AND column_name = attname
+            WHERE attname IS NULL
+                AND table_schema NOT IN ('pg_catalog', 'information_schema')
+            GROUP BY table_schema, table_name, relid, n_live_tup"""
+
+        # calculate null header sizes
+        # omitting tables which dont have complete stats
+        # and attributes which aren't visible
+        null_headers = """SELECT
+                hdr+1+(sum(case when null_frac <> 0 THEN 1 else 0 END)/8) as nullhdr,
+                SUM((1-null_frac)*avg_width) as datawidth,
+                MAX(null_frac) as maxfracsum,
+                schemaname,
+                tablename,
+                hdr, ma, bs
+            FROM pg_stats CROSS JOIN constants
+                LEFT OUTER JOIN no_stats
+                    ON schemaname = no_stats.table_schema
+                    AND tablename = no_stats.table_name
+            WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+                AND no_stats.table_name IS NULL
+                AND EXISTS ( SELECT 1
+                    FROM information_schema.columns
+                        WHERE schemaname = columns.table_schema
+                            AND tablename = columns.table_name )
+            GROUP BY schemaname, tablename, hdr, ma, bs"""
+
+        # estimate header and row size
+        data_headers = """SELECT
+                ma, bs, hdr, schemaname, tablename,
+                (datawidth+(hdr+ma-(case when hdr%ma=0 THEN ma ELSE hdr%ma END)))::numeric AS datahdr,
+                (maxfracsum*(nullhdr+ma-(case when nullhdr%ma=0 THEN ma ELSE nullhdr%ma END))) AS nullhdr2
+            FROM null_headers"""
+
+        # make estimates of how large the table should be
+        # based on row and page size
+        table_estimates = """SELECT schemaname, tablename, bs,
+                reltuples::numeric as est_rows, relpages * bs as table_bytes,
+            CEIL((reltuples*
+                    (datahdr + nullhdr2 + 4 + ma -
+                        (CASE WHEN datahdr%ma=0
+                            THEN ma ELSE datahdr%ma END)
+                        )/(bs-20))) * bs AS expected_bytes,
+                reltoastrelid
+            FROM data_headers
+                JOIN pg_class ON tablename = relname
+                JOIN pg_namespace ON relnamespace = pg_namespace.oid
+                    AND schemaname = nspname
+            WHERE pg_class.relkind = 'r'"""
+
+        # add in estimated TOAST table sizes
+        # estimate based on 4 toast tuples per page because we dont have
+        # anything better.  also append the no_data tables
+        estimates_with_toast = """SELECT schemaname, tablename,
+                TRUE as can_estimate,
+                est_rows,
+                table_bytes + ( coalesce(toast.relpages, 0) * bs ) as table_bytes,
+                expected_bytes + ( ceil( coalesce(toast.reltuples, 0) / 4 ) * bs ) as expected_bytes
+            FROM table_estimates LEFT OUTER JOIN pg_class as toast
+                ON table_estimates.reltoastrelid = toast.oid
+                    AND toast.relkind = 't'"""
+
+        # add some extra metadata to the table data and calculations to be reused
+        # including whether we cant estimate it or whether we think it might be compressed
+        table_estimates_plus = """SELECT current_database() as databasename,
+                    schemaname, tablename, can_estimate,
+                    est_rows,
+                    CASE WHEN table_bytes > 0
+                        THEN table_bytes::NUMERIC
+                        ELSE NULL::NUMERIC END
+                        AS table_bytes,
+                    CASE WHEN expected_bytes > 0
+                        THEN expected_bytes::NUMERIC
+                        ELSE NULL::NUMERIC END
+                            AS expected_bytes,
+                    CASE WHEN expected_bytes > 0 AND table_bytes > 0
+                        AND expected_bytes <= table_bytes
+                        THEN (table_bytes - expected_bytes)::NUMERIC
+                        ELSE 0::NUMERIC END AS bloat_bytes
+            FROM estimates_with_toast
+            UNION ALL
+            SELECT current_database() as databasename,
+                table_schema, table_name, FALSE,
+                est_rows, table_size,
+                NULL::NUMERIC, NULL::NUMERIC
+            FROM no_stats"""
+
+        # do final math calculations and formatting
+        bloat_data = """SELECT current_database() as databasename,
+            schemaname, tablename, can_estimate,
+            table_bytes, round(table_bytes/(1024^2)::NUMERIC,3) as table_mb,
+            expected_bytes, round(expected_bytes/(1024^2)::NUMERIC,3) as expected_mb,
+            round(bloat_bytes*100/table_bytes) as pct_bloat,
+            round(bloat_bytes/(1024::NUMERIC^2),2) as mb_bloat,
+            table_bytes, expected_bytes, est_rows
+        FROM table_estimates_plus"""
+
+        with self._session_scope() as session:
+            resultproxy = session.execute(
+                f"WITH constants AS ({constants}),\
+                no_stats AS ({no_stats}),\
+                null_headers AS ({null_headers}),\
+                data_headers AS ({data_headers}),\
+                table_estimates AS ({table_estimates}),\
+                estimates_with_toast AS ({estimates_with_toast}),\
+                table_estimates_plus AS ({table_estimates_plus}) " + bloat_data)
+
+            result = [{column: value for column, value in rowproxy.items()} for rowproxy in resultproxy]
+
+        bloat_data = [table for table in result if table['pct_bloat'] is not None or table['mb_bloat'] is not None]
+
+        return bloat_data
