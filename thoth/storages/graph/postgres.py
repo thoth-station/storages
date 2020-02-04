@@ -169,10 +169,9 @@ _GET_PYTHON_PACKAGE_VERSION_RECORDS_CACHE_SIZE = int(
 )
 _GET_DEPENDS_ON_CACHE_SIZE = int(os.getenv("THOTH_STORAGE_GET_DEPENDS_ON_CACHE_SIZE", 8192))
 _GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE = int(os.getenv("THOTH_STORAGE_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE", 4096))
-_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(os.getenv(
-    "THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE",
-    4096
-))
+_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(
+    os.getenv("THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE", 4096)
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -4684,9 +4683,7 @@ class GraphDatabase(SQLBase):
                 inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
 
     @lru_cache(maxsize=_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE)
-    def get_python_package_required_symbols(
-        self, package_name: str, package_version: str, index_url: str
-    ) -> List[str]:
+    def get_python_package_required_symbols(self, package_name: str, package_version: str, index_url: str) -> List[str]:
         """Get required symbols for a Python package in a specified version."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
@@ -4694,14 +4691,17 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersionEntity)
-                .filter(PythonPackageVersionEntity.package_name == package_name)
-                .filter(PythonPackageVersionEntity.package_version == package_version)
+                .filter(PythonPackageVersionEntity.package_name == self.normalize_python_package_name(package_name))
+                .filter(
+                    PythonPackageVersionEntity.package_version == self.normalize_python_package_version(package_version)
+                )
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(HasArtifact)
                 .join(RequiresSymbol)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
+                .distinct(VersionedSymbol.symbol)
             )
 
             # Query returns list of single tuples
@@ -4709,25 +4709,21 @@ class GraphDatabase(SQLBase):
             return [i[0] for i in query.all()]
 
     def get_analyzed_image_symbols_all(
-        self,
-        os_name: str,
-        os_version: str,
-        *,
-        python_version: Optional[str] = None,
-        cuda_version: Optional[str] = None,
+        self, os_name: str, os_version: str, *, python_version: Optional[str] = None, cuda_version: Optional[str] = None
     ) -> List[str]:
         """Get symbols associated with a given image."""
         with self._session_scope() as session:
             query = (
                 session.query(PackageExtractRun)
                 .filter(PackageExtractRun.os_id == os_name)
-                .filter(PackageExtractRun.os_version_id == os_version)
+                .filter(PackageExtractRun.os_version_id == self.normalize_os_version(os_name, os_version))
                 .join(SoftwareEnvironment)
                 .filter(SoftwareEnvironment.cuda_version == cuda_version)
                 .filter(SoftwareEnvironment.python_version == python_version)
                 .join(HasSymbol)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
+                .distinct(VersionedSymbol.symbol)
             )
 
             # Query returns list of single tuples (empty if bad request)

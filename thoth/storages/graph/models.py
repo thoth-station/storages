@@ -265,7 +265,7 @@ class PackageExtractRun(Base, BaseExtension):
 
     __table_args__ = (
         Index("os_id_idx", "os_id"),
-        Index("os_version_id_idx", "os_id"),
+        Index("os_version_id_idx", "os_version_id"),
     )
 
 
