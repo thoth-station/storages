@@ -11,7 +11,7 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.attributes.get('configure_logger', True):
+if config.attributes.get('configure_logger', False):
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here

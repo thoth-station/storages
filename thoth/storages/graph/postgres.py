@@ -3418,9 +3418,8 @@ class GraphDatabase(SQLBase):
 
             return result
 
-    @staticmethod
     def _runtime_environment_conf2models(
-        session: Session, runtime_environment: dict, environment_type: str, is_external: bool
+        self, session: Session, runtime_environment: dict, environment_type: str, is_external: bool
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
         hardware = runtime_environment.get("hardware", {})
@@ -3455,7 +3454,7 @@ class GraphDatabase(SQLBase):
             image_name=None,
             image_sha=None,
             os_name=os.get("name"),
-            os_version=os.get("version"),
+            os_version=self.normalize_os_version(os.get("name"), os.get("version")),
             cuda_version=runtime_environment.get("cuda_version"),
             environment_type=environment_type,
         )
@@ -3951,7 +3950,7 @@ class GraphDatabase(SQLBase):
         environment_type = environment_type.upper()
         origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
-        os_name = document["result"]["operating-system"]["name"]
+        os_name = document["result"]["operating-system"]["id"]
         os_version = self.normalize_os_version(os_name, document["result"]["operating-system"]["version_id"])
         cuda_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
         if cuda_version != document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None):
@@ -4718,10 +4717,9 @@ class GraphDatabase(SQLBase):
         """Get symbols associated with a given image."""
         with self._session_scope() as session:
             query = (
-                session.query(PackageExtractRun)
-                .filter(PackageExtractRun.os_id == os_name)
-                .filter(PackageExtractRun.os_version_id == self.normalize_os_version(os_name, os_version))
-                .join(SoftwareEnvironment)
+                session.query(SoftwareEnvironment)
+                .filter(SoftwareEnvironment.os_name == os_name)
+                .filter(SoftwareEnvironment.os_version == self.normalize_os_version(os_name, os_version))
                 .filter(SoftwareEnvironment.cuda_version == cuda_version)
                 .filter(SoftwareEnvironment.python_version == python_version)
                 .join(HasSymbol)
