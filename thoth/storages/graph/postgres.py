@@ -4690,6 +4690,7 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(HasArtifact)
+                .join(PythonArtifact)
                 .join(RequiresSymbol)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
