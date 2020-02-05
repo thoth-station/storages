@@ -166,7 +166,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
             "python_package_index_id",
             unique=True,
         ),
-        Index("id_idx", "id", unique=True)
+        Index("python_package_version_entity_id_idx", "id", unique=True)
     )
 
 
@@ -261,11 +261,6 @@ class PackageExtractRun(Base, BaseExtension):
 
     external_software_environment = relationship(
         "ExternalSoftwareEnvironment", back_populates="external_package_extract_runs"
-    )
-
-    __table_args__ = (
-        Index("os_id_idx", "os_id"),
-        Index("os_version_id_idx", "os_version_id"),
     )
 
 
@@ -927,8 +922,8 @@ class HasVulnerability(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_version_entities")
 
-    __table_args__ = tuple(
-        [Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id")]
+    __table_args__ = (
+        Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id"),
     )
 
 
@@ -1123,7 +1118,9 @@ class VersionedSymbol(Base, BaseExtension):
     software_environments = relationship("HasSymbol", back_populates="versioned_symbol")
     python_artifacts = relationship("RequiresSymbol", back_populates="versioned_symbol")
 
-    __table_args__ = tuple([Index("id_idx", "id", unique=True,)])
+    __table_args__ = (
+        Index("versioned_symbol_id_idx", "id", unique=True,),
+    )
 
 
 class HasSymbol(Base, BaseExtension):
@@ -1157,7 +1154,9 @@ class RequiresSymbol(Base, BaseExtension):
     python_artifact = relationship("PythonArtifact", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="python_artifacts")
 
-    __table_args__ = tuple([Index("python_artifact_id_idx", "python_artifact_id")])
+    __table_args__ = (
+        Index("requires_symbol_python_artifact_id_idx", "python_artifact_id"),
+    )
 
 
 class DetectedSymbol(Base, BaseExtension):
