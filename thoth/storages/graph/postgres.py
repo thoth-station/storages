@@ -3418,9 +3418,8 @@ class GraphDatabase(SQLBase):
 
             return result
 
-    @staticmethod
     def _runtime_environment_conf2models(
-        session: Session, runtime_environment: dict, environment_type: str, is_external: bool
+        self, session: Session, runtime_environment: dict, environment_type: str, is_external: bool
     ) -> Tuple[HardwareInformation, SoftwareEnvironment]:
         """Create models out of runtime environment configuration."""
         hardware = runtime_environment.get("hardware", {})
@@ -3455,7 +3454,7 @@ class GraphDatabase(SQLBase):
             image_name=None,
             image_sha=None,
             os_name=os.get("name"),
-            os_version=os.get("version"),
+            os_version=self.normalize_os_version(os.get("name"), os.get("version")),
             cuda_version=runtime_environment.get("cuda_version"),
             environment_type=environment_type,
         )
