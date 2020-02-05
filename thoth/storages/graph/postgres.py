@@ -3953,7 +3953,7 @@ class GraphDatabase(SQLBase):
         environment_type = environment_type.upper()
         origin = document["metadata"]["arguments"]["thoth-package-extract"]["metadata"].get("origin")
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
-        os_name = document["result"]["operating-system"]["name"]
+        os_name = document["result"]["operating-system"]["id"]
         os_version = self.normalize_os_version(os_name, document["result"]["operating-system"]["version_id"])
         cuda_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
         if cuda_version != document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None):
