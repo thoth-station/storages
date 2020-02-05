@@ -4704,7 +4704,7 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(HasArtifact)
-                .join(RequiresSymbol)
+                .join(RequiresSymbol, HasArtifact.python_artifact_id == RequiresSymbol.python_artifact_id)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
                 .distinct(VersionedSymbol.symbol)
