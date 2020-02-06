@@ -581,11 +581,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:9167fd5147783204ab1e43879a8f43b24a2e5022287e7704e1086be85dfc7f94",
-                "sha256:c354170f25ba11562a3857129e9fb6f015a3201a7e69dabbe8405449180d225f"
+                "sha256:855e34122315f3b4b64edcb2682af8e39da59c97edc90518bc17511d85c93d8b",
+                "sha256:efd2a0b74eac2352c35928f43209928913408aa5e355eea7dafe896daaf4cc6c"
             ],
             "index": "pypi",
-            "version": "==0.10.2"
+            "version": "==0.10.3"
         },
         "thoth-python": {
             "hashes": [
@@ -965,10 +965,10 @@
         },
         "docker": {
             "hashes": [
-                "sha256:6e06c5e70ba4fad73e35f00c55a895a448398f3ada7faae072e2bb01348bafc1",
-                "sha256:8f93775b8bdae3a2df6bc9a5312cce564cade58d6555f2c2570165a1270cd8a7"
+                "sha256:1c2ddb7a047b2599d1faec00889561316c674f7099427b9c51e8cb804114b553",
+                "sha256:ddae66620ab5f4bce769f64bcd7934f880c8abe6aa50986298db56735d0f722e"
             ],
-            "version": "==4.1.0"
+            "version": "==4.2.0"
         },
         "docopt": {
             "hashes": [
