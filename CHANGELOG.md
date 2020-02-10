@@ -3983,3 +3983,43 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.11.6 to 1.11.7
 * :pushpin: Automatic update of dependency amun from 0.3.4 to 0.3.5
 * Added build log analysis result observations to graph database
+
+## Release 0.22.0 (2020-02-09T18:24:46)
+* :pushpin: Automatic update of dependency boto3 from 1.11.12 to 1.11.13
+* :pushpin: Automatic update of dependency thoth-common from 0.10.4 to 0.10.5
+* :pushpin: Automatic update of dependency boto3 from 1.11.11 to 1.11.12
+* :pushpin: Automatic update of dependency thoth-common from 0.10.3 to 0.10.4
+* :pushpin: Automatic update of dependency thoth-common from 0.10.2 to 0.10.3
+* :pushpin: Automatic update of dependency boto3 from 1.11.10 to 1.11.11
+* Sync missing packages if adviser failed due to unknown dependencies
+* Avoid one join in the query
+* Fix package symbols query
+* Set default to False to reduce logging
+* Fix inspection syncing for RHEL
+* Fix index creation for symbols queries
+* Fix OS name synced in container image analysis
+* No need to query for package extract run - software environment can be directly used
+* :pushpin: Automatic update of dependency alembic from 1.3.3 to 1.4.0
+* :pushpin: Automatic update of dependency boto3 from 1.11.9 to 1.11.10
+* normalize, distinct, fix index
+* Alembic update
+* Change from externalsoftware environment, and uncouple id index
+* Move cache to storage level
+* Add indexes to improve abi queries
+* Filter early
+* outer join causing none values
+* Refactor query for retrieving symbols in an image
+* Make cuda version optional
+* Simplified API functions
+* Created query to monitor bloat data
+* :pushpin: Automatic update of dependency thoth-common from 0.10.1 to 0.10.2
+* :pushpin: Automatic update of dependency thoth-common from 0.10.0 to 0.10.1
+* :pushpin: Automatic update of dependency pytest from 5.3.4 to 5.3.5
+* Fix reference to variable
+* Fix method call to serialize models
+* :pushpin: Automatic update of dependency thoth-common from 0.9.31 to 0.10.0
+* Fixed missing index issue
+* :pushpin: Automatic update of dependency amun from 0.3.7 to 0.3.8
+* :pushpin: Automatic update of dependency amun from 0.3.6 to 0.3.7
+* :pushpin: Automatic update of dependency thoth-common from 0.9.30 to 0.9.31
+* :pushpin: Automatic update of dependency amun from 0.3.5 to 0.3.6
