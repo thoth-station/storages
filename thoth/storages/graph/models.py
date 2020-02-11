@@ -469,21 +469,24 @@ class PythonFileDigest(Base, BaseExtension):
 
     __table_args__ = (UniqueConstraint("sha256"), Index("sha256_idx", "sha256", unique=True))
 
+class InspectionBatch(Base, BaseExtension):
 
-class InspectionRun(Base, BaseExtension):
-    """A class representing a single inspection."""
-
-    __tablename__ = "inspection_run"
+    __tablename__ = "inspection_batch"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    inspection_document_id = Column(Text, nullable=False, unique=True)
+    batch_name = Column(Text, nullable=True)
+    batch_size = Column(Integer, nullable=False, default=1)
+
     datetime = Column(DateTime, nullable=True)
-    amun_version = Column(Text, nullable=True)
-    build_requests_cpu = Column(Float, nullable=True)
-    build_requests_memory = Column(Float, nullable=True)
-    run_requests_cpu = Column(Float, nullable=True)
-    run_requests_memory = Column(Float, nullable=True)
+
+    dependency_monkey_run_id = Column(
+        Integer, ForeignKey("dependency_monkey_run.id", ondelete="CASCADE"), nullable=True
+    )
+
+    inspection_document_id = Column(Text, nullable=False, unique=True)
+    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
+
     inspection_sync_state = Column(
         ENUM(
             InspectionSyncStateEnum.PENDING.value,
@@ -494,38 +497,66 @@ class InspectionRun(Base, BaseExtension):
         nullable=False,
     )
 
-    build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
-    run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
-    build_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
-    run_software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
-    dependency_monkey_run_id = Column(
-        Integer, ForeignKey("dependency_monkey_run.id", ondelete="CASCADE"), nullable=True
+    amun_version = Column(Text, nullable=True)
+
+    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="inspection_batches")
+
+    inspection_build = relationship("InspectionBuild", back_populates="inspection_batch")
+    inspection_runs = relationship("InspectionRun", order_by="InspectionRun.id", back_populates="inspection_batch")
+    inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_batches")
+
+class InspectionBuild(Base, BaseExtension):
+
+    __tablename__ = "inspection_build"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_document_id = Column(Text, ForeignKey("inspection_batch.inspection_document_id"))
+
+    requests_cpu = Column(Float, nullable=True)
+    requests_memory = Column(Float, nullable=True)
+
+    hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+
+    hardware_information = relationship(
+        "HardwareInformation", back_populates="inspection_build", foreign_keys=[hardware_information_id]
+    )
+    software_environment = relationship(
+        "SoftwareEnvironment", back_populates="inspection_build", foreign_keys=[software_environment_id]
     )
 
-    build_hardware_information = relationship(
-        "HardwareInformation", back_populates="inspection_runs_build", foreign_keys=[build_hardware_information_id]
-    )
-    run_hardware_information = relationship(
-        "HardwareInformation", back_populates="inspection_runs_run", foreign_keys=[run_hardware_information_id]
+    inspection_batch = relationship("InspectionBatch", back_populates="inspection_build", uselist=False)
+
+class InspectionRun(Base, BaseExtension):
+    """A class representing a single inspection."""
+
+    __tablename__ = "inspection_run"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    inspection_document_id = Column(Text, ForeignKey("inspection_batch.inspection_document_id"))
+
+    requests_cpu = Column(Float, nullable=True)
+    requests_memory = Column(Float, nullable=True)
+
+    hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
+
+    hardware_information = relationship(
+        "HardwareInformation", back_populates="inspection_run", foreign_keys=[hardware_information_id]
     )
 
-    build_software_environment = relationship(
-        "SoftwareEnvironment", back_populates="inspection_runs_build", foreign_keys=[build_software_environment_id]
+    software_environment = relationship(
+        "SoftwareEnvironment", back_populates="inspection_run", foreign_keys=[software_environment_id]
     )
-    run_software_environment = relationship(
-        "SoftwareEnvironment", back_populates="inspection_runs_run", foreign_keys=[run_software_environment_id]
-    )
-
-    dependency_monkey_run = relationship("DependencyMonkeyRun", back_populates="inspection_runs")
-
-    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
-    inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
 
     matmul_perf_indicators = relationship("PiMatmul", back_populates="inspection_run")
     conv1d_perf_indicators = relationship("PiConv1D", back_populates="inspection_run")
     conv2d_perf_indicators = relationship("PiConv2D", back_populates="inspection_run")
     pybench_perf_indicators = relationship("PiPyBench", back_populates="inspection_run")
 
+    inspection_batch = relationship("InspectionBatch", back_populates="inspection_runs")
 
 class AdviserRun(Base, BaseExtension):
     """A class representing a single adviser run."""
@@ -655,7 +686,7 @@ class DependencyMonkeyRun(Base, BaseExtension):
     run_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
 
-    inspection_runs = relationship("InspectionRun", back_populates="dependency_monkey_run")
+    inspection_batches = relationship("InspectionBatch", back_populates="dependency_monkey_run")
     python_package_requirements = relationship(
         "PythonDependencyMonkeyRequirements", back_populates="dependency_monkey_run"
     )
@@ -698,15 +729,15 @@ class HardwareInformation(Base, BaseExtension):
 
     ram_size = Column(Integer, nullable=True)
 
-    inspection_runs_run = relationship(
+    inspection_run = relationship(
         "InspectionRun",
-        back_populates="run_hardware_information",
-        foreign_keys="InspectionRun.run_hardware_information_id",
+        back_populates="hardware_information",
+        foreign_keys="InspectionRun.hardware_information_id",
     )
-    inspection_runs_build = relationship(
-        "InspectionRun",
-        back_populates="build_hardware_information",
-        foreign_keys="InspectionRun.build_hardware_information_id",
+    inspection_build = relationship(
+        "InspectionBuild",
+        back_populates="hardware_information",
+        foreign_keys="InspectionBuild.hardware_information_id",
     )
     dependency_monkey_runs_run = relationship(
         "DependencyMonkeyRun",
@@ -854,15 +885,15 @@ class SoftwareEnvironment(Base, BaseExtension):
         back_populates="build_software_environment",
         foreign_keys="DependencyMonkeyRun.build_software_environment_id",
     )
-    inspection_runs_run = relationship(
+    inspection_run = relationship(
         "InspectionRun",
-        back_populates="run_software_environment",
-        foreign_keys="InspectionRun.build_software_environment_id",
+        back_populates="software_environment",
+        foreign_keys="InspectionRun.software_environment_id",
     )
-    inspection_runs_build = relationship(
-        "InspectionRun",
-        back_populates="build_software_environment",
-        foreign_keys="InspectionRun.run_software_environment_id",
+    inspection_build = relationship(
+        "InspectionBuild",
+        back_populates="software_environment",
+        foreign_keys="InspectionBuild.software_environment_id",
     )
 
     package_extract_runs = relationship("PackageExtractRun", back_populates="software_environment")
@@ -953,7 +984,7 @@ class PythonSoftwareStack(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    inspection_runs = relationship("InspectionRun", back_populates="inspection_software_stack")
+    inspection_batches = relationship("InspectionBatch", back_populates="inspection_software_stack")
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
@@ -1479,6 +1510,8 @@ ALL_MAIN_MODELS = frozenset(
         ExternalPythonRequirementsLock,
         ExternalSoftwareEnvironment,
         HardwareInformation,
+        InspectionBatch,
+        InspectionBuild,
         InspectionRun,
         PackageAnalyzerRun,
         PackageExtractRun,
