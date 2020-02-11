@@ -98,7 +98,7 @@ def generate_schema(schema_file: str, include=None, include_performance_models=T
     if include:
         desc_models = [
             m for m in all_models
-            if any(re.search(p, m.__name__) for p in include)
+            if any(re.fullmatch(p, m.__name__) for p in include)
         ]
     else:
         desc_models = all_models
