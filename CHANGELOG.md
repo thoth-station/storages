@@ -4023,3 +4023,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency amun from 0.3.6 to 0.3.7
 * :pushpin: Automatic update of dependency thoth-common from 0.9.30 to 0.9.31
 * :pushpin: Automatic update of dependency amun from 0.3.5 to 0.3.6
+
+## Release 0.22.1 (2020-02-12T14:53:29)
+* Add check in sync when report is not provided by Adviser
+* :pushpin: Automatic update of dependency boto3 from 1.11.14 to 1.11.15
+* Include models using `fullmatch` instead of `search`
+* Added option to exclude models from generated schema
+* :pushpin: Automatic update of dependency boto3 from 1.11.13 to 1.11.14
+* Update .thoth.yaml
