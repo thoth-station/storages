@@ -4550,6 +4550,12 @@ class GraphDatabase(SQLBase):
             )
 
             # Output stacks - advised stacks
+            if not document["result"].get("report", {}):
+                _LOGGER.warning(
+                    "No report found in %r", adviser_document_id
+                )
+                return
+
             for idx, product in enumerate(document["result"].get("report", {}).get("products", [])):
                 print(idx)
                 performance_score = None
