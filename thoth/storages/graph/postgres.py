@@ -403,7 +403,7 @@ class GraphDatabase(SQLBase):
             }
 
     def _do_software_environment_listing(
-        self, start_offset: int, count: int, is_external: bool, environment_type: str
+        self, start_offset: int, count: Optional[int], is_external: bool, environment_type: str
     ) -> List[str]:
         """Perform actual query to software environments."""
         if is_external:
@@ -423,7 +423,7 @@ class GraphDatabase(SQLBase):
             return [item[0] for item in result]
 
     def get_run_software_environment_all(
-        self, start_offset: int = 0, count: int = DEFAULT_COUNT, is_external: bool = False
+        self, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, is_external: bool = False
     ) -> List[str]:
         """Get all software environments available for run.
 
@@ -437,7 +437,9 @@ class GraphDatabase(SQLBase):
             start_offset, count, is_external, EnvironmentTypeEnum.RUNTIME.value
         )
 
-    def get_build_software_environment_all(self, start_offset: int = 0, count: int = DEFAULT_COUNT) -> List[str]:
+    def get_build_software_environment_all(
+        self, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
+    ) -> List[str]:
         """Get all software environments available for build.
 
         Examples:
@@ -453,7 +455,7 @@ class GraphDatabase(SQLBase):
         self,
         software_environment_name: str,
         start_offset: int,
-        count: int,
+        count: Optional[int],
         convert_datetime: bool,
         is_external: bool,
         environment_type: str,
@@ -498,7 +500,7 @@ class GraphDatabase(SQLBase):
         self,
         run_software_environment_name: str,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_external: bool = False,
     ) -> List[dict]:
@@ -528,7 +530,7 @@ class GraphDatabase(SQLBase):
         self,
         build_software_environment_name: str,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         convert_datetime: bool = True,
         is_external: bool = False,
     ) -> List[dict]:
@@ -724,7 +726,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -768,7 +770,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -807,7 +809,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -829,7 +831,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -851,7 +853,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -889,7 +891,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1009,7 +1011,7 @@ class GraphDatabase(SQLBase):
         unsolvable: bool = False,
         unparseable: bool = False,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1151,7 +1153,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> List[Tuple[str, Optional[str]]]:
         """Retrieve unsolved Python package with index in Thoth Database.
@@ -1186,7 +1188,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve unsolved Python package versions per package in Thoth Database.
@@ -1233,7 +1235,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
         """Retrieve number of unsolved versions per Python package in Thoth Database.
@@ -1288,7 +1290,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Retrieve number of unsolved Python package versions per index url in Thoth Database.
@@ -1339,7 +1341,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1400,7 +1402,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -1502,7 +1504,7 @@ class GraphDatabase(SQLBase):
         return query
 
     def get_analyzed_python_packages_all(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> List[Tuple[str, str]]:
         """Retrieve analyzed Python package with index in Thoth Database.
 
@@ -1527,7 +1529,7 @@ class GraphDatabase(SQLBase):
             return query.all()
 
     def get_analyzed_python_packages_all_versions(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve analyzed Python package versions per package in Thoth Database.
 
@@ -1561,7 +1563,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve analyzed Python package versions in Thoth Database.
@@ -1611,7 +1613,7 @@ class GraphDatabase(SQLBase):
             return query.count()
 
     def get_analyzed_python_package_versions_count(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[Tuple[str, str, str], int]:
         """Retrieve number of versions per analyzed Python package in Thoth Database.
 
@@ -1655,7 +1657,7 @@ class GraphDatabase(SQLBase):
             return self._count_per_package(result=result)
 
     def get_analyzed_python_package_versions_count_per_index(
-        self, index_url: str, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, index_url: str, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Retrieve number of analyzed Python package versions per index url in Thoth Database.
 
@@ -1699,7 +1701,7 @@ class GraphDatabase(SQLBase):
             return self._count_per_index(result=result, index_url=index_url)
 
     def get_analyzed_python_package_versions_count_per_version(
-        self, package_name: str, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, package_name: str, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of analyzed Python package versions per index url in Thoth Database.
 
@@ -1777,7 +1779,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve analyzed Python package versions with error in Thoth Database.
@@ -1854,7 +1856,7 @@ class GraphDatabase(SQLBase):
         return query
 
     def get_unanalyzed_python_packages_all(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> List[Tuple[str, str]]:
         """Retrieve unanalyzed Python package with index in Thoth Database.
 
@@ -1879,7 +1881,7 @@ class GraphDatabase(SQLBase):
             return query.all()
 
     def get_unanalyzed_python_packages_all_versions(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve unanalyzed Python package versions per package in Thoth Database.
 
@@ -1914,7 +1916,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
         randomize: bool = True,
     ) -> List[Tuple[str, Optional[str], str]]:
@@ -1968,7 +1970,7 @@ class GraphDatabase(SQLBase):
             return query.count()
 
     def get_unanalyzed_python_package_versions_count(
-        self, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[Tuple[str, str, str], int]:
         """Retrieve number of versions per unanalyzed Python package in Thoth Database.
 
@@ -2012,7 +2014,7 @@ class GraphDatabase(SQLBase):
             return self._count_per_package(result=result)
 
     def get_unanalyzed_python_package_versions_count_per_index(
-        self, index_url: str, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, index_url: str, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Retrieve number of unanalyzed Python package versions per index url in Thoth Database.
 
@@ -2056,7 +2058,7 @@ class GraphDatabase(SQLBase):
             return self._count_per_index(result=result, index_url=index_url)
 
     def get_unanalyzed_python_package_versions_count_per_version(
-        self, package_name: str, *, start_offset: int = 0, count: int = DEFAULT_COUNT, distinct: bool = False
+        self, package_name: str, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT, distinct: bool = False
     ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of unanalyzed Python package versions per index url in Thoth Database.
 
@@ -2700,7 +2702,7 @@ class GraphDatabase(SQLBase):
             return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
 
     def get_hardware_environments_all(
-        self, is_external: bool = False, *, start_offset: int = 0, count: int = DEFAULT_COUNT
+        self, is_external: bool = False, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
     ) -> List[Dict]:
         """Get hardware environments (external or internal) registered in the graph database."""
         if is_external:
@@ -2713,7 +2715,7 @@ class GraphDatabase(SQLBase):
             return [model.to_dict() for model in result]
 
     def get_software_environments_all(
-        self, is_external: bool = False, *, start_offset: int = 0, count: int = DEFAULT_COUNT
+        self, is_external: bool = False, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database."""
         if is_external:
@@ -2801,7 +2803,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2883,7 +2885,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2916,7 +2918,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -2974,7 +2976,7 @@ class GraphDatabase(SQLBase):
         self,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -3031,7 +3033,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -3085,7 +3087,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
@@ -3191,7 +3193,7 @@ class GraphDatabase(SQLBase):
         index_url: str = None,
         *,
         start_offset: int = 0,
-        count: int = DEFAULT_COUNT,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
