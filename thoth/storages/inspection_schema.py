@@ -26,11 +26,14 @@ from .result_schema import Datetime
 INSPECTION_SPECIFICATION_SCHEMA = Schema(
     {
         Required("base"): str,
+        Optional("allowed_failures"): int,
+        Optional("batch_size", default=1): int,
         Optional("build"): dict,
         Optional("environment"): list,
         Optional("files"): list,
         Optional("identifier"): str,
         Optional("packages"): list,
+        Optional("parallelism", default=1): int,
         Optional("python"): dict,
         Optional("python_packages"): list,
         Optional("run"): dict,
@@ -40,8 +43,8 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
 )
 
 
-# Metadata about job_log produced by inspections.
-INSPECTION_JOB_LOG_SCHEMA = Schema(
+# Metadata about a single pod log produced by inspection run.
+INSPECTION_POD_LOG_SCHEMA = Schema(
     {
         Required("exit_code"): int,
         Required("hwinfo"): dict,
@@ -54,12 +57,16 @@ INSPECTION_JOB_LOG_SCHEMA = Schema(
     }
 )
 
+# Metadata about logs produced by inspection job.
+INSPECTION_JOB_LOGS_SCHEMA = Schema([INSPECTION_POD_LOG_SCHEMA])
+
 
 # Metadata about status produced by inspections.
 INSPECTION_STATUS_SCHEMA = Schema(
     {
         Required("build"): dict,
         Required("job"): dict,
+        Required("workflow"): dict,
     }
 )
 
@@ -70,7 +77,7 @@ INSPECTION_SCHEMA = Schema(
         Required("specification"): INSPECTION_SPECIFICATION_SCHEMA,
         Required("created"): str,
         Required("build_log"): str,
-        Required("job_log"): INSPECTION_JOB_LOG_SCHEMA,
+        Required("job_logs"): INSPECTION_JOB_LOGS_SCHEMA,
         Required("inspection_id"): str,
         Required("status"): INSPECTION_STATUS_SCHEMA,
     }
