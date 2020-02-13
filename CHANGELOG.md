@@ -4031,3 +4031,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Added option to exclude models from generated schema
 * :pushpin: Automatic update of dependency boto3 from 1.11.13 to 1.11.14
 * Update .thoth.yaml
+
+## Release 0.22.2 (2020-02-13T08:23:28)
+* :pushpin: Automatic update of dependency boto3 from 1.11.15 to 1.11.16
+* :pushpin: Automatic update of dependency thoth-common from 0.10.5 to 0.10.6
+* All counts optional
