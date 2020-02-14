@@ -469,6 +469,7 @@ class PythonFileDigest(Base, BaseExtension):
 
     __table_args__ = (UniqueConstraint("sha256"), Index("sha256_idx", "sha256", unique=True))
 
+
 class InspectionBatch(Base, BaseExtension):
     """A class representing a batch of inspection runs."""
 
@@ -503,6 +504,7 @@ class InspectionBatch(Base, BaseExtension):
     inspection_build = relationship("InspectionBuild", back_populates="inspection_batch")
     inspection_runs = relationship("InspectionRun", order_by="InspectionRun.id", back_populates="inspection_batch")
 
+
 class InspectionBuild(Base, BaseExtension):
     """A class representing an inspection build."""
 
@@ -526,6 +528,7 @@ class InspectionBuild(Base, BaseExtension):
     )
 
     inspection_batch = relationship("InspectionBatch", back_populates="inspection_build", uselist=False)
+
 
 class InspectionRun(Base, BaseExtension):
     """A class representing a single inspection."""
@@ -559,6 +562,7 @@ class InspectionRun(Base, BaseExtension):
     inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
 
     inspection_batch = relationship("InspectionBatch", back_populates="inspection_runs")
+
 
 class AdviserRun(Base, BaseExtension):
     """A class representing a single adviser run."""
