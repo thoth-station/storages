@@ -470,6 +470,7 @@ class PythonFileDigest(Base, BaseExtension):
     __table_args__ = (UniqueConstraint("sha256"), Index("sha256_idx", "sha256", unique=True))
 
 class InspectionBatch(Base, BaseExtension):
+    """A class representing a batch of inspection runs."""
 
     __tablename__ = "inspection_batch"
 
@@ -485,8 +486,6 @@ class InspectionBatch(Base, BaseExtension):
     )
 
     inspection_document_id = Column(Text, nullable=False, unique=True)
-    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
-
     inspection_sync_state = Column(
         ENUM(
             InspectionSyncStateEnum.PENDING.value,
@@ -503,9 +502,9 @@ class InspectionBatch(Base, BaseExtension):
 
     inspection_build = relationship("InspectionBuild", back_populates="inspection_batch")
     inspection_runs = relationship("InspectionRun", order_by="InspectionRun.id", back_populates="inspection_batch")
-    inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_batches")
 
 class InspectionBuild(Base, BaseExtension):
+    """A class representing an inspection build."""
 
     __tablename__ = "inspection_build"
 
@@ -555,6 +554,9 @@ class InspectionRun(Base, BaseExtension):
     conv1d_perf_indicators = relationship("PiConv1D", back_populates="inspection_run")
     conv2d_perf_indicators = relationship("PiConv2D", back_populates="inspection_run")
     pybench_perf_indicators = relationship("PiPyBench", back_populates="inspection_run")
+
+    inspection_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
+    inspection_software_stack = relationship("PythonSoftwareStack", back_populates="inspection_runs")
 
     inspection_batch = relationship("InspectionBatch", back_populates="inspection_runs")
 
@@ -687,6 +689,7 @@ class DependencyMonkeyRun(Base, BaseExtension):
     build_hardware_information_id = Column(Integer, ForeignKey("hardware_information.id", ondelete="CASCADE"))
 
     inspection_batches = relationship("InspectionBatch", back_populates="dependency_monkey_run")
+
     python_package_requirements = relationship(
         "PythonDependencyMonkeyRequirements", back_populates="dependency_monkey_run"
     )
@@ -984,7 +987,7 @@ class PythonSoftwareStack(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    inspection_batches = relationship("InspectionBatch", back_populates="inspection_software_stack")
+    inspection_runs = relationship("InspectionRun", back_populates="inspection_software_stack")
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     advised_by = relationship("Advised", back_populates="python_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")

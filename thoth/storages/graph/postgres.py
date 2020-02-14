@@ -67,6 +67,8 @@ from .models import ExternalHardwareInformation
 from .models import ExternalPythonRequirementsLock
 from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
+from .models import InspectionBatch
+from .models import InspectionBuild
 from .models import InspectionRun
 from .models import PackageAnalyzerRun
 from .models import PackageExtractRun
@@ -3674,30 +3676,94 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
-    def sync_inspection_result(self, document) -> None:
-        """Sync the given inspection document into the graph database."""
-        # Check if we have such performance model before creating any other records.
-        inspection_document_id = InspectionResultsStore.get_document_id(document)
-        with self._session_scope() as session, session.begin(subtransactions=True):
-            build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
-            build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
-            run_cpu = OpenShift.parse_cpu_spec(document["specification"]["run"]["requests"]["cpu"])
-            run_memory = OpenShift.parse_memory_spec(document["specification"]["run"]["requests"]["memory"])
+    def sync_inspection_batch(self, document, inspection_document_id, session):
+        """Sync an inspection batch from an inspection document into the graph database."""
+        inspection_batch = (
+            session.query(InspectionBatch)
+            .filter(InspectionRun.inspection_document_id == inspection_document_id)
+            .first()
+        )
+        if inspection_batch and inspection_batch.dependency_monkey_run_id:
+            # If inspection was run through Dependency Monkey
 
-            # Convert bytes to GiB, we need float number given the fixed int size.
-            run_memory = run_memory / (1024 ** 3)
-            build_memory = build_memory / (1024 ** 3)
-
-            runtime_environment = document["job_log"]["runtime_environment"]
-
-            run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
-                session, runtime_environment, environment_type=EnvironmentTypeEnum.RUNTIME.value, is_external=False
+            # INSERT…ON CONFLICT (Upsert)
+            # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+            # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
+            row = (
+                insert(InspectionBatch)
+                .values(
+                    id=inspection_batch.dependency_monkey_run_id,
+                    inspection_document_id=inspection_document_id,
+                    dependency_monkey_run_id=inspection_batch.dependency_monkey_run_id,
+                    inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
+                )
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_=dict(
+                        inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
+                        inspection_document_id=inspection_document_id,
+                        datetime=document.get("created"),
+                        amun_version=None,  # TODO: propagate Amun version here which should match API version
+                    ),
+                )
+                .compile(dialect=postgresql.dialect())
+            )
+        else:
+            inspection_batch, _ = InspectionBatch.get_or_create(
+                session,
+                amun_version=None,  # TODO: propagate Amun version here which should match API version
+                batch_size=document["specification"].get("batch_size"),
+                batch_name=document["specification"].get("batch_name"),
+                datetime=document.get("created"),
+                inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
+                inspection_document_id=inspection_document_id,
             )
 
-            runtime_environment["hardware"] = document["specification"]["build"]["requests"]["hardware"]
+        return inspection_batch
 
-            build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
-                session, runtime_environment, environment_type=EnvironmentTypeEnum.BUILDTIME.value, is_external=False
+    def sync_inspection_build(self, document, inspection_document_id, session):
+        """Sync an inspection build from an inspection document into the graph database."""
+        build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
+        build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
+        # Convert bytes to GiB, we need float number given the fixed int size.
+        build_memory = build_memory / (1024 ** 3)
+
+        runtime_environment = {
+            "hardware": document["specification"]["build"]["requests"]["hardware"]
+        }
+
+        hardware_information, software_environment = self._runtime_environment_conf2models(
+            session,
+            runtime_environment,
+            environment_type=EnvironmentTypeEnum.BUILDTIME.value,
+            is_external=False
+        )
+
+        inspection_build, _ = InspectionBuild.get_or_create(
+            session,
+            inspection_document_id=inspection_document_id,
+            requests_cpu=build_cpu,
+            requests_memory=build_memory,
+            software_environment_id=software_environment.id,
+            hardware_information_id=hardware_information.id,
+        )
+
+        return inspection_build
+
+    def sync_inspection_runs(self, document, inspection_document_id, session):
+        """Sync inspection runs from an inspection document into the graph database."""
+        run_cpu = OpenShift.parse_cpu_spec(document["specification"]["run"]["requests"]["cpu"])
+        run_memory = OpenShift.parse_memory_spec(document["specification"]["run"]["requests"]["memory"])
+        # Convert bytes to GiB, we need float number given the fixed int size.
+        run_memory = run_memory / (1024 ** 3)
+
+        inspection_runs = []
+        # TODO: Load this from ceph artifact instead of document
+        for log in document["job_logs"]:
+            runtime_environment = log["runtime_environment"]
+
+            hardware_information, software_environment = self._runtime_environment_conf2models(
+                session, runtime_environment, environment_type=EnvironmentTypeEnum.RUNTIME.value, is_external=False
             )
 
             software_stack = None
@@ -3708,15 +3774,19 @@ class GraphDatabase(SQLBase):
                     software_stack_type=SoftwareStackTypeEnum.INSPECTION.value,
                     requirements=document["specification"]["python"].get("requirements"),
                     requirements_lock=document["specification"]["python"].get("requirements_locked"),
-                    software_environment=run_software_environment,
+                    software_environment=software_environment,
                     performance_score=None,
                     overall_score=None,
                 )
 
-            inspection_run = (
-                session.query(InspectionRun)
-                .filter(InspectionRun.inspection_document_id == inspection_document_id)
-                .first()
+            inspection_run, _ = InspectionRun.get_or_create(
+                session,
+                inspection_document_id=inspection_document_id,
+                inspection_software_stack_id=software_stack.id if software_stack else None,
+                requests_cpu=run_cpu,
+                requests_memory=run_memory,
+                software_environment_id=software_environment.id,
+                hardware_information_id=hardware_information.id,
             )
 
             if inspection_run and inspection_run.dependency_monkey_run_id:
@@ -3772,10 +3842,10 @@ class GraphDatabase(SQLBase):
 
             if document["specification"].get("script"):  # We have run an inspection job.
 
-                if not document["job_log"]["stdout"]:
+                if not log["stdout"]:
                     raise ValueError("No values provided for inspection output %r", inspection_document_id)
 
-                performance_indicator_name = document["job_log"]["stdout"].get("name")
+                performance_indicator_name = log["stdout"].get("name")
                 performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
 
                 if not performance_model_class:
@@ -3784,8 +3854,30 @@ class GraphDatabase(SQLBase):
                     )
 
                 performance_indicator, _ = performance_model_class.create_from_report(
-                    session, document, inspection_run_id=inspection_run.id
+                    session,
+                    document["specification"],
+                    inspection_log=log,
+                    inspection_run_id=inspection_run.id
                 )
+
+            inspection_runs.append(inspection_run)
+
+        return inspection_runs
+
+
+    def sync_inspection_result(self, document) -> None:
+        """Sync the given inspection document into the graph database."""
+        # Check if we have such performance model before creating any other records.
+        inspection_document_id = InspectionResultsStore.get_document_id(document)
+        with self._session_scope() as session:
+            session.begin(subtransactions=True)
+            inspection_batch = self.sync_inspection_batch(document, inspection_document_id, session)
+            inspection_build = self.sync_inspection_build(document, inspection_document_id, session)
+
+            # TODO: provide job logs from ceph instead
+            inspection_runs = self.sync_inspection_runs(document, inspection_document_id, session)
+
+        _LOGGER.info("Synced inspection %s", inspection_document_id)
 
     def create_python_cve_record(
         self,
