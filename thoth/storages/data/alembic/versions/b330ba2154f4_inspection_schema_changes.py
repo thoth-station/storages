@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('datetime', sa.DateTime(), nullable=True),
     sa.Column('dependency_monkey_run_id', sa.Integer(), nullable=True),
     sa.Column('inspection_document_id', sa.String(length=256), nullable=False),
-    sa.Column('inspection_sync_state', postgresql.ENUM('PENDING', 'SYNCED', name='inspection_sync_state'), nullable=False),
+    sa.Column('inspection_sync_state', postgresql.ENUM('PENDING', 'SYNCED', name='inspection_sync_state', create_type=False), nullable=False),
     sa.Column('amun_version', sa.String(length=256), nullable=True),
     sa.ForeignKeyConstraint(['dependency_monkey_run_id'], ['dependency_monkey_run.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
