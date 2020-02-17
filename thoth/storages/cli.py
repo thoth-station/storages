@@ -18,6 +18,7 @@
 """A CLI client to thoth-storages library."""
 
 import logging
+import re
 
 import click
 import daiquiri
@@ -61,21 +62,52 @@ def cli(ctx=None, verbose: bool = False):
 
 
 @cli.command("generate-schema")
+@click.option(
+    "-i",
+    "--include",
+    multiple=True,
+    type=str,
+    help=(
+        "Models to be included in the generated schema. Accepts regular expression. "
+        "If not provided, all models will be included."
+    )
+)
+@click.option(
+    "--include_performance_models",
+    default=True,
+    help="Whether to include performance models in the generated schema."
+)
 @click.argument("schema_file", type=str, required=False, default="schema.png", metavar="schema.png")
-def generate_schema(schema_file: str):
+def generate_schema(schema_file: str, include=None, include_performance_models=True):
     """Generate an image out of the current schema."""
     try:
         import sadisplay
         import pydot
     except ImportError:
-        _LOGGER.error("Failed to import required libraries to perform schema generation")
+        _LOGGER.error(
+            "Failed to import required libraries to perform schema generation")
         raise
 
-    import thoth.storages.graph.models as models
     import thoth.storages.graph.models_performance as performance_models
 
+    from thoth.storages.graph.models import ALL_MAIN_MODELS
+    from thoth.storages.graph.models import ALL_RELATION_MODELS
+
+    all_models = list(ALL_MAIN_MODELS.union(ALL_RELATION_MODELS))
+
+    if include:
+        desc_models = [
+            m for m in all_models
+            if any(re.fullmatch(p, m.__name__) for p in include)
+        ]
+    else:
+        desc_models = all_models
+
+    if include_performance_models:
+        desc_models += list(vars(performance_models).values())
+
     desc = sadisplay.describe(
-        list(vars(models).values()) + list(vars(performance_models).values()),
+        desc_models,
         show_methods=True,
         show_properties=True,
         show_indexes=False,
