@@ -3980,7 +3980,7 @@ class GraphDatabase(SQLBase):
                 sw_class = SoftwareEnvironment
                 python_version = image_name.rsplit("-", maxsplit=1)[1]   # pyXX
                 python_version = python_version[2:3] + "." + python_version[3:]   # take first digit and put . after it
-                if not re.match(r"^\d\.\d*$", python_version):
+                if not re.match(r"^\d(\.\d+)*$", python_version):
                     raise ValueError("Python Version does not match pattern")
 
             software_environment, _ = sw_class.get_or_create(
