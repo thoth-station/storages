@@ -17,6 +17,7 @@
 
 """An SQL database for storing Thoth data."""
 
+import re
 import logging
 import json
 import os
@@ -3976,13 +3977,18 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session, session.begin(subtransactions=True):
             if is_external:
                 sw_class = ExternalSoftwareEnvironment
+                python_version = None
             else:
                 sw_class = SoftwareEnvironment
+                python_version = image_name.rsplit("-", maxsplit=1)[1]   # pyXX
+                python_version = python_version[2:3] + "." + python_version[3:]   # take first digit and put . after it
+                if not re.match(r"^\d\.\d*$", python_version):
+                    raise ValueError("Python Version does not match pattern")
 
             software_environment, _ = sw_class.get_or_create(
                 session,
                 environment_name=environment_name,
-                python_version=None,  # TODO: find Python version which would be used by default
+                python_version=python_version,
                 image_name=image_name,
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
