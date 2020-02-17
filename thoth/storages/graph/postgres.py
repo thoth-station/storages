@@ -3868,8 +3868,7 @@ class GraphDatabase(SQLBase):
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
         inspection_document_id = InspectionResultsStore.get_document_id(document)
-        with self._session_scope() as session:
-            session.begin(subtransactions=True)
+        with self._session_scope() as session, session.begin(subtransactions=True):
             inspection_batch = self.sync_inspection_batch(document, inspection_document_id, session)
             inspection_build = self.sync_inspection_build(document, inspection_document_id, session)
 
