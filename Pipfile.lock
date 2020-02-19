@@ -42,11 +42,11 @@
         },
         "amun": {
             "hashes": [
-                "sha256:7da5d570cda4f0b51e5e18ca9740149580446743e94575f2f7e6c0989824b6dd",
-                "sha256:de1dd299296325b63bc4d765ecf6d4004585d5dcd4bfeed5d8036ccd34c030f9"
+                "sha256:73d2b082d65402231c6c6efb3816391074587ba824576d0173cab28dc8325e4d",
+                "sha256:964c55bd11f645b106376ece7da897a171646b50501aee9b390fb028db04ba1d"
             ],
             "index": "pypi",
-            "version": "==0.3.8"
+            "version": "==0.4.0"
         },
         "argo-workflows": {
             "hashes": [
@@ -327,9 +327,9 @@
         },
         "openshift": {
             "hashes": [
-                "sha256:ce7411a5689e6d3831bb5dc08a8c324860d71e3dd5547ba44f4d139cfa57c34b"
+                "sha256:10868c5697c7610e1d18d62118f1bf2096d35789fa9790c89285947a93545a8a"
             ],
-            "version": "==0.10.1"
+            "version": "==0.10.2"
         },
         "packaging": {
             "hashes": [
