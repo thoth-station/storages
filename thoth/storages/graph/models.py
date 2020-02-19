@@ -538,6 +538,7 @@ class InspectionRun(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     inspection_document_id = Column(Text, ForeignKey("inspection_batch.inspection_document_id"))
+    inspection_batch_order = Column(Integer, nullable=False)
 
     requests_cpu = Column(Float, nullable=True)
     requests_memory = Column(Float, nullable=True)

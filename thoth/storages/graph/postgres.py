@@ -3759,7 +3759,7 @@ class GraphDatabase(SQLBase):
 
         inspection_runs = []
         # TODO: Load this from ceph artifact instead of document
-        for log in document["job_logs"]:
+        for inspection_batch_order, log in enumerate(document["job_logs"]):
             runtime_environment = log["runtime_environment"]
 
             hardware_information, software_environment = self._runtime_environment_conf2models(
@@ -3782,6 +3782,7 @@ class GraphDatabase(SQLBase):
             inspection_run, _ = InspectionRun.get_or_create(
                 session,
                 inspection_document_id=inspection_document_id,
+                inspection_batch_order=inspection_batch_order,
                 inspection_software_stack_id=software_stack.id if software_stack else None,
                 requests_cpu=run_cpu,
                 requests_memory=run_memory,
