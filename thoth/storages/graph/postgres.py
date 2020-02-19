@@ -3782,7 +3782,7 @@ class GraphDatabase(SQLBase):
             inspection_run, _ = InspectionRun.get_or_create(
                 session,
                 inspection_document_id=inspection_document_id,
-                inspection_batch_order=inspection_batch_order,
+                inspection_batch_order=inspection_batch_order + 1,
                 inspection_software_stack_id=software_stack.id if software_stack else None,
                 requests_cpu=run_cpu,
                 requests_memory=run_memory,
