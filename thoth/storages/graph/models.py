@@ -68,6 +68,7 @@ class PythonPackageVersion(Base, BaseExtension):
     python_package_metadata_id = Column(
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True
     )
+    is_missing = Column(Boolean, nullable=False, default=False)
 
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
