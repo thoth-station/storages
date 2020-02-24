@@ -3771,35 +3771,41 @@ class GraphDatabase(SQLBase):
 
                 return False
 
-    def update_missing_flag_package_version(value: bool, index_url: str, package_name: str, package_version: str):
+    def update_missing_flag_package_version(
+        value: bool,
+        index_url: str,
+        package_name: str,
+        package_version: str
+    ) -> None:
         """Update value of is_missing flag for PythonPackageVersion."""
-        with self._session_scope() as session, session.begin(subtransactions=True):
-            
+        with self._session_scope():
             (session.query(PythonPackageVersion)
-            .update()
-            .where(index_url==index_url)
-            .where(package_name==package_name)
-            .where(package_version==package_version)
-            .values(is_missing = value))
+                .update()
+                .where(index_url == index_url)
+                .where(package_name == package_name)
+                .where(package_version == package_version)
+                .values(is_missing=value))
 
-    def get_repositories_using_package(index_url: str, package_name:str):
-        with self._session_scope() as session, session.begin(subtransactions=True):
+    def get_repositories_using_package(index_url: str, package_name: str) -> List[str]:
+        """Given package info, retrieve urls of repos which have been advised with this package."""
+        with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
-                .filter(index_url==index_url)
-                .filter(package_name==package_name)
+                .filter(index_url == index_url)
+                .filter(package_name == package_name)
                 .join(PythonRequirementsLock)
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
                 .with_entities(origin)
             )
 
-    def get_repositories_using_package_version():
-        with self._session_scope() as session, session.begin(subtransactions=True):
+    def get_repositories_using_package_version(index_url: str, package_name: str, package_version: str) -> List[str]:
+        """Given package version info, retrieve urls of repos which have been advised with this package version."""
+        with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
-                .filter(index_url==index_url)
-                .filter(package_name==package_name)
+                .filter(index_url == index_url)
+                .filter(package_name == package_name)
                 .join(PythonRequirementsLock)
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
