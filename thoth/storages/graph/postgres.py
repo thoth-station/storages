@@ -3797,6 +3797,7 @@ class GraphDatabase(SQLBase):
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
                 .with_entities(origin)
+                .distinct()
             )
 
     def get_repositories_using_package_version(index_url: str, package_name: str, package_version: str) -> List[str]:
@@ -3810,6 +3811,7 @@ class GraphDatabase(SQLBase):
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
                 .with_entities(origin)
+                .distinct()
             )
 
     @staticmethod
