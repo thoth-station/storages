@@ -3771,6 +3771,41 @@ class GraphDatabase(SQLBase):
 
                 return False
 
+    def update_missing_flag_package_version(value: bool, index_url: str, package_name: str, package_version: str):
+        """Update value of is_missing flag for PythonPackageVersion."""
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            
+            (session.query(PythonPackageVersion)
+            .update()
+            .where(index_url==index_url)
+            .where(package_name==package_name)
+            .where(package_version==package_version)
+            .values(is_missing = value))
+
+    def get_repositories_using_package(index_url: str, package_name:str):
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            result = (
+                session.query(PythonPackageVersion)
+                .filter(index_url==index_url)
+                .filter(package_name==package_name)
+                .join(PythonRequirementsLock)
+                .join(ExternalSoftwareEnvironment)
+                .join(AdviserRun)
+                .with_entities(origin)
+            )
+
+    def get_repositories_using_package_version():
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            result = (
+                session.query(PythonPackageVersion)
+                .filter(index_url==index_url)
+                .filter(package_name==package_name)
+                .join(PythonRequirementsLock)
+                .join(ExternalSoftwareEnvironment)
+                .join(AdviserRun)
+                .with_entities(origin)
+            )
+
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
         """Sync results of RPMs found in the given container image."""
