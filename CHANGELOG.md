@@ -4036,3 +4036,24 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.11.15 to 1.11.16
 * :pushpin: Automatic update of dependency thoth-common from 0.10.5 to 0.10.6
 * All counts optional
+
+## Release 0.22.3 (2020-02-25T12:48:07)
+* Move import to local use
+* :pushpin: Automatic update of dependency boto3 from 1.12.5 to 1.12.6
+* :pushpin: Automatic update of dependency thoth-common from 0.10.7 to 0.10.8
+* :pushpin: Automatic update of dependency pytest-mypy from 0.4.2 to 0.5.0
+* :pushpin: Automatic update of dependency boto3 from 1.12.4 to 1.12.5
+* :pushpin: Automatic update of dependency boto3 from 1.12.3 to 1.12.4
+* :pushpin: Automatic update of dependency boto3 from 1.12.2 to 1.12.3
+* Alembic update
+* flag for missing package version
+* :pushpin: Automatic update of dependency amun from 0.3.8 to 0.4.0
+* :pushpin: Automatic update of dependency boto3 from 1.12.1 to 1.12.2
+* :pushpin: Automatic update of dependency boto3 from 1.12.0 to 1.12.1
+* Python must have major and minor version
+* Change regex expression
+* :pushpin: Automatic update of dependency boto3 from 1.11.17 to 1.12.0
+* :pushpin: Automatic update of dependency thoth-common from 0.10.6 to 0.10.7
+* :pushpin: Automatic update of dependency boto3 from 1.11.16 to 1.11.17
+* raise valueError
+* Address issue #1573
