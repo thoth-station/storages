@@ -3791,13 +3791,14 @@ class GraphDatabase(SQLBase):
         with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
-                .filter(index_url == index_url)
-                .filter(package_name == package_name)
                 .join(PythonRequirementsLock)
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
+                .order_by(AdviserRun.datetime.desc())
+                .distinct(AdviserRun.origin)
                 .with_entities(origin)
-                .distinct()
+                .filter(PythonPackageVersion.index_url == index_url)
+                .filter(PythonPackageVersion.package_name == package_name)
             )
 
     def get_repositories_using_package_version(index_url: str, package_name: str, package_version: str) -> List[str]:
@@ -3805,13 +3806,15 @@ class GraphDatabase(SQLBase):
         with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
-                .filter(index_url == index_url)
-                .filter(package_name == package_name)
                 .join(PythonRequirementsLock)
                 .join(ExternalSoftwareEnvironment)
                 .join(AdviserRun)
-                .with_entities(origin)
-                .distinct()
+                .order_by(AdviserRun.datetime.desc())
+                .distinct(AdviserRun.origin)
+                .filter(PythonPackageVersion.index_url == index_url)
+                .filter(PythonPackageVersion.package_name == package_name)
+                .filter(PythonPackageVersion.package_version == package_version)
+                .with_entities(AdviserRun.origin)
             )
 
     @staticmethod
