@@ -42,11 +42,11 @@
         },
         "amun": {
             "hashes": [
-                "sha256:73d2b082d65402231c6c6efb3816391074587ba824576d0173cab28dc8325e4d",
-                "sha256:964c55bd11f645b106376ece7da897a171646b50501aee9b390fb028db04ba1d"
+                "sha256:025738758afb52f1b028ebce299a91eea1f1f28004474887329c2f913100ac9b",
+                "sha256:07572ad17071d35c4ffdadb9329cf20a0bd2f722d70b90deaa394b7242f5219c"
             ],
             "index": "pypi",
-            "version": "==0.4.0"
+            "version": "==0.4.3"
         },
         "argo-workflows": {
             "hashes": [
@@ -194,10 +194,10 @@
         },
         "jmespath": {
             "hashes": [
-                "sha256:3720a4b1bd659dd2eecad0666459b9788813e032b83e7ba58578e48254e0a0e6",
-                "sha256:bde2aef6f44302dfb30320115b17d030798de8c4110e28d5cf6cf91a7a31074c"
+                "sha256:695cb76fa78a10663425d5b73ddc5714eb711157e52704d69be03b1a02ba4fec",
+                "sha256:cca55c8d153173e21baa59983015ad0daf603f9cb799904ff057bfb8ff8dc2d9"
             ],
-            "version": "==0.9.4"
+            "version": "==0.9.5"
         },
         "kubernetes": {
             "hashes": [
@@ -1092,10 +1092,10 @@
         },
         "jmespath": {
             "hashes": [
-                "sha256:3720a4b1bd659dd2eecad0666459b9788813e032b83e7ba58578e48254e0a0e6",
-                "sha256:bde2aef6f44302dfb30320115b17d030798de8c4110e28d5cf6cf91a7a31074c"
+                "sha256:695cb76fa78a10663425d5b73ddc5714eb711157e52704d69be03b1a02ba4fec",
+                "sha256:cca55c8d153173e21baa59983015ad0daf603f9cb799904ff057bfb8ff8dc2d9"
             ],
-            "version": "==0.9.4"
+            "version": "==0.9.5"
         },
         "jsondiff": {
             "hashes": [
@@ -1517,10 +1517,10 @@
         },
         "responses": {
             "hashes": [
-                "sha256:515fd7c024097e5da76e9c4cf719083d181f1c3ddc09c2e0e49284ce863dd263",
-                "sha256:8ce8cb4e7e1ad89336f8865af152e0563d2e7f0e0b86d2cf75f015f819409243"
+                "sha256:33d8994990de31a9fbb8c889c3a378dac296b821f37330c845608ae565e7fca3",
+                "sha256:859a7f8495a069ce835620bb4bb111688f593a6f8873a3335a99c31a5aef9a9a"
             ],
-            "version": "==0.10.9"
+            "version": "==0.10.11"
         },
         "restructuredtext-lint": {
             "hashes": [
