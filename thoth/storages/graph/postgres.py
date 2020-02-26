@@ -3786,8 +3786,8 @@ class GraphDatabase(SQLBase):
                 .where(package_version == package_version)
                 .values(is_missing=value))
 
-    def get_repositories_using_package(index_url: str, package_name: str) -> List[str]:
-        """Given package info, retrieve urls of repos which have been advised with this package."""
+    def get_all_repositories_using_package(index_url: str, package_name: str) -> List[str]:
+        """Given package info, get unique urls of repos which have been advised with this package."""
         with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
@@ -3801,8 +3801,12 @@ class GraphDatabase(SQLBase):
                 .filter(PythonPackageVersion.package_name == package_name)
             )
 
-    def get_repositories_using_package_version(index_url: str, package_name: str, package_version: str) -> List[str]:
-        """Given package version info, retrieve urls of repos which have been advised with this package version."""
+    def get_all_repositories_using_package_version(
+        index_url: str,
+        package_name: str,
+        package_version: str
+    ) -> List[str]:
+        """Given package version info, get unique urls of repos which have been advised with this package version."""
         with self._session_scope():
             result = (
                 session.query(PythonPackageVersion)
