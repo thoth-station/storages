@@ -3797,9 +3797,9 @@ class GraphDatabase(SQLBase):
                 .join(AdviserRun)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
-                .with_entities(origin)
                 .filter(PythonPackageVersion.index_url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
+                .with_entities(AdviserRun.origin)
             )
 
     def get_all_repositories_using_package_version(
