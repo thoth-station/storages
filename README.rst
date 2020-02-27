@@ -313,3 +313,7 @@ maps prefix of the document id to the handler (function) which is responsible
 for syncing data into the knowledge base (please mind signatures of existing
 syncing funcions to automatically integrate with ``sync_documents`` function
 which is called from ``graph-sync-job``).
+
+
+Query Naming conventions in Thoth
+===================================
