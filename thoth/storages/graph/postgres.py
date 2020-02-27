@@ -3781,10 +3781,11 @@ class GraphDatabase(SQLBase):
         """Update value of is_missing flag for PythonPackageVersion."""
         with self._session_scope() as session:
             (session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
                 .update()
-                .where(index_url == index_url)
-                .where(package_name == package_name)
-                .where(package_version == package_version)
+                .where(PythonPackageIndex.url == index_url)
+                .where(PythonPackageVersion.package_name == package_name)
+                .where(PythonPackageVersion.package_version == package_version)
                 .values(is_missing=value))
 
     def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
@@ -3797,7 +3798,7 @@ class GraphDatabase(SQLBase):
                 .join(AdviserRun)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
-                .filter(PythonPackageVersion.index_url == index_url)
+                .filter(PythonPackageIndex.url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .with_entities(AdviserRun.origin)
             )
@@ -3812,12 +3813,13 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             result = (
                 session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
                 .join(PythonRequirementsLock)
                 .join(PythonSoftwareStack)
                 .join(AdviserRun)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
-                .filter(PythonPackageVersion.index_url == index_url)
+                .filter(PythonPackageIndex.url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .filter(PythonPackageVersion.package_version == package_version)
                 .with_entities(AdviserRun.origin)
