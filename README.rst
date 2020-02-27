@@ -317,3 +317,6 @@ which is called from ``graph-sync-job``).
 
 Query Naming conventions in Thoth
 ===================================
+
+For query naming conventions, please read all the docs in `conventions for query name
+<https://github.com/thoth-station/storages/blob/master/docs/conventions/README.md>`__.
