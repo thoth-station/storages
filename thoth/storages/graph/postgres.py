@@ -3779,7 +3779,7 @@ class GraphDatabase(SQLBase):
         package_version: str
     ) -> None:
         """Update value of is_missing flag for PythonPackageVersion."""
-        with self._session_scope():
+        with self._session_scope() as session:
             (session.query(PythonPackageVersion)
                 .update()
                 .where(index_url == index_url)
@@ -3789,7 +3789,7 @@ class GraphDatabase(SQLBase):
 
     def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
         """Given package info, get unique urls of repos which have been advised with this package."""
-        with self._session_scope():
+        with self._session_scope() as session:
             result = (
                 session.query(PythonPackageVersion)
                 .join(PythonRequirementsLock)
@@ -3809,7 +3809,7 @@ class GraphDatabase(SQLBase):
         package_version: str
     ) -> List[str]:
         """Given package version info, get unique urls of repos which have been advised with this package version."""
-        with self._session_scope():
+        with self._session_scope() as session:
             result = (
                 session.query(PythonPackageVersion)
                 .join(PythonRequirementsLock)
