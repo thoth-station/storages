@@ -3793,7 +3793,7 @@ class GraphDatabase(SQLBase):
             result = (
                 session.query(PythonPackageVersion)
                 .join(PythonRequirementsLock)
-                .join(ExternalSoftwareEnvironment)
+                .join(PythonSoftwareStack)
                 .join(AdviserRun)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
@@ -3813,7 +3813,7 @@ class GraphDatabase(SQLBase):
             result = (
                 session.query(PythonPackageVersion)
                 .join(PythonRequirementsLock)
-                .join(ExternalSoftwareEnvironment)
+                .join(PythonSoftwareStack)
                 .join(AdviserRun)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
