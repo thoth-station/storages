@@ -3772,6 +3772,7 @@ class GraphDatabase(SQLBase):
                 return False
 
     def update_missing_flag_package_version(
+        self,
         value: bool,
         index_url: str,
         package_name: str,
@@ -3786,7 +3787,7 @@ class GraphDatabase(SQLBase):
                 .where(package_version == package_version)
                 .values(is_missing=value))
 
-    def get_all_repositories_using_package(index_url: str, package_name: str) -> List[str]:
+    def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
         """Given package info, get unique urls of repos which have been advised with this package."""
         with self._session_scope():
             result = (
@@ -3802,6 +3803,7 @@ class GraphDatabase(SQLBase):
             )
 
     def get_all_repositories_using_package_version(
+        self,
         index_url: str,
         package_name: str,
         package_version: str
