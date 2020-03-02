@@ -44,8 +44,6 @@ from sqlalchemy import exists
 from sqlalchemy import and_
 from sqlalchemy import tuple_
 from sqlalchemy import or_
-from sqlalchemy import update
-from sqlalchemy import select
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
@@ -3792,7 +3790,7 @@ class GraphDatabase(SQLBase):
             (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.id.in_(subq))
-                .update({"is_missing": False}, synchronize_session='fetch')
+                .update({"is_missing": value}, synchronize_session='fetch')
             )
 
     def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
