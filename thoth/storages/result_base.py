@@ -55,10 +55,16 @@ class ResultStorageBase(StorageBase):
             self.RESULT_TYPE
         ), "Make sure RESULT_TYPE in derived classes to distinguish between adapter type instances is non-empty."
 
-        self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
-        self.prefix = "{}/{}/{}".format(
-            prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
-        )
+        self.deployment_name = deployment_name or os.getenv("THOTH_DEPLOYMENT_NAME")
+
+        if self.deployment_name:
+            self.prefix = "{}/{}/{}".format(
+                prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
+            )
+        else:
+            self.prefix = "{}/{}".format(
+                prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.RESULT_TYPE
+            )
         self.ceph = CephStore(
             self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
         )
