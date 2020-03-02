@@ -44,6 +44,8 @@ from sqlalchemy import exists
 from sqlalchemy import and_
 from sqlalchemy import tuple_
 from sqlalchemy import or_
+from sqlalchemy import update
+from sqlalchemy import select
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
@@ -3780,13 +3782,18 @@ class GraphDatabase(SQLBase):
     ) -> None:
         """Update value of is_missing flag for PythonPackageVersion."""
         with self._session_scope() as session:
-            (session.query(PythonPackageVersion)
-                .join(PythonPackageIndex)
-                .update()
-                .where(PythonPackageIndex.url == index_url)
-                .where(PythonPackageVersion.package_name == package_name)
-                .where(PythonPackageVersion.package_version == package_version)
-                .values(is_missing=value))
+            subq = (session.query(PythonPackageVersion)
+                    .join(PythonPackageIndex)
+                    .filter(PythonPackageVersion.package_name == package_name)
+                    .filter(PythonPackageVersion.package_version == package_version)
+                    .filter(PythonPackageIndex.url == index_url)
+                    .with_entities(PythonPackageVersion.id)
+                    )
+            (
+                session.query(PythonPackageVersion)
+                .filter(PythonPackageVersion.id.in_(subq))
+                .update({"is_missing": False}, synchronize_session='fetch')
+            )
 
     def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
         """Given package info, get unique urls of repos which have been advised with this package."""
@@ -3796,12 +3803,15 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .join(PythonRequirementsLock)
                 .join(AdviserRun, AdviserRun.user_software_stack_id == PythonRequirementsLock.python_software_stack_id)
+                .order_by(AdviserRun.origin)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
                 .filter(PythonPackageIndex.url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .with_entities(AdviserRun.origin)
-            )
+            ).all()
+            result = [x[0] for x in result]
+            return result
 
     def get_all_repositories_using_package_version(
         self,
@@ -3816,13 +3826,16 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .join(PythonRequirementsLock)
                 .join(AdviserRun, AdviserRun.user_software_stack_id == PythonRequirementsLock.python_software_stack_id)
+                .order_by(AdviserRun.origin)
                 .order_by(AdviserRun.datetime.desc())
                 .distinct(AdviserRun.origin)
                 .filter(PythonPackageIndex.url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .filter(PythonPackageVersion.package_version == package_version)
                 .with_entities(AdviserRun.origin)
-            )
+            ).all()
+            result = [x[0] for x in result]
+            return result
 
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
