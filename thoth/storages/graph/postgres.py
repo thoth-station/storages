@@ -3773,10 +3773,10 @@ class GraphDatabase(SQLBase):
 
     def update_missing_flag_package_version(
         self,
-        value: bool,
-        index_url: str,
         package_name: str,
-        package_version: str
+        package_version: str,
+        index_url: str,
+        value: bool,
     ) -> None:
         """Update value of is_missing flag for PythonPackageVersion."""
         with self._session_scope() as session:
@@ -3793,7 +3793,7 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session='fetch')
             )
 
-    def get_all_repositories_using_package(self, index_url: str, package_name: str) -> List[str]:
+    def get_all_repositories_using_package(self, package_name: str, index_url: str) -> List[str]:
         """Given package info, get unique urls of repos which have been advised with this package."""
         with self._session_scope() as session:
             result = (
@@ -3813,9 +3813,9 @@ class GraphDatabase(SQLBase):
 
     def get_all_repositories_using_package_version(
         self,
-        index_url: str,
         package_name: str,
-        package_version: str
+        package_version: str,
+        index_url: str,
     ) -> List[str]:
         """Given package version info, get unique urls of repos which have been advised with this package version."""
         with self._session_scope() as session:
