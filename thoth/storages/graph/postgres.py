@@ -3835,6 +3835,32 @@ class GraphDatabase(SQLBase):
             result = [x[0] for x in result]
             return result
 
+    def remove_python_package_hash():
+        with self._session_scope() as session:
+            # We need to remove rows from both HasArtifact and PythonArtifact
+            subq = (
+                session.query(PythonPackageVersionEntity)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+                .filter(PythonPackageVersionEntity.package_version == package_version)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+                .join(HasArtifact)
+                .join(PythonArtifact)
+                .filter(PythonArtifact.artifact_hash_sha256)
+                .with_entities(PythonArtifact.id)
+            )
+            # Can a hash be present on more than one python_version_entity?
+            (
+                session.query(PythonArtifact)
+                .filter(PythonArtifact.id.in_(subq))
+                .delete(synchronize_session='fetch')
+            )
+            (
+                session.query(HasArtifact)
+                .filter(HasArtifact.python_artifact_id.in_(subq))
+                .delete(synchronize_session='fetch')
+            )
+
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
         """Sync results of RPMs found in the given container image."""
