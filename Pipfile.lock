@@ -86,18 +86,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:5cfe1e609af34e1641402e016047e2d12452992b52dccd3e5caea0990f225dc3",
-                "sha256:6a45d2b777821b9b4b69656f628b498b86f6906c6643eca7759c660b26eb541e"
+                "sha256:8804cd39b53ac2add31db3f8617548ce25d373dba179ba7f6d505861fd506042",
+                "sha256:918c2e2153d96a5ae30c27ff8bfe2d5f5fc48ce0e62c766236c78a4f5aaff931"
             ],
             "index": "pypi",
-            "version": "==1.12.19"
+            "version": "==1.12.20"
         },
         "botocore": {
             "hashes": [
-                "sha256:19c11d11aa4f5eee6a21aef85d311dd758dc6df59306e72176c980c3259db71f",
-                "sha256:914059286a560ccca6c5c9fa7edd8de8533176090230676193a2e3fbcf214a9e"
+                "sha256:4aabdfb65e1f3eb6d35fe5d921a9b6fd2880ea0ec39ad874af762192b6c40825",
+                "sha256:babe0e84fc8ba1d8b349acf2cd98d5b15d8974912d393ad149ff2b385097a062"
             ],
-            "version": "==1.15.19"
+            "version": "==1.15.20"
         },
         "cachetools": {
             "hashes": [
@@ -748,18 +748,18 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:5cfe1e609af34e1641402e016047e2d12452992b52dccd3e5caea0990f225dc3",
-                "sha256:6a45d2b777821b9b4b69656f628b498b86f6906c6643eca7759c660b26eb541e"
+                "sha256:8804cd39b53ac2add31db3f8617548ce25d373dba179ba7f6d505861fd506042",
+                "sha256:918c2e2153d96a5ae30c27ff8bfe2d5f5fc48ce0e62c766236c78a4f5aaff931"
             ],
             "index": "pypi",
-            "version": "==1.12.19"
+            "version": "==1.12.20"
         },
         "botocore": {
             "hashes": [
-                "sha256:19c11d11aa4f5eee6a21aef85d311dd758dc6df59306e72176c980c3259db71f",
-                "sha256:914059286a560ccca6c5c9fa7edd8de8533176090230676193a2e3fbcf214a9e"
+                "sha256:4aabdfb65e1f3eb6d35fe5d921a9b6fd2880ea0ec39ad874af762192b6c40825",
+                "sha256:babe0e84fc8ba1d8b349acf2cd98d5b15d8974912d393ad149ff2b385097a062"
             ],
-            "version": "==1.15.19"
+            "version": "==1.15.20"
         },
         "certifi": {
             "hashes": [
