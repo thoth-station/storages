@@ -4057,3 +4057,35 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.11.16 to 1.11.17
 * raise valueError
 * Address issue #1573
+
+## Release 0.22.4 (2020-03-19T23:20:03)
+* :pushpin: Automatic update of dependency boto3 from 1.12.24 to 1.12.25
+* Reduce number of queries for environment markers by caching results
+* :pushpin: Automatic update of dependency thoth-common from 0.10.11 to 0.10.12
+* :pushpin: Automatic update of dependency boto3 from 1.12.23 to 1.12.24
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.2 to 0.36.3
+* :pushpin: Automatic update of dependency boto3 from 1.12.22 to 1.12.23
+* upcase
+* Add empty env template
+* :pushpin: Automatic update of dependency boto3 from 1.12.21 to 1.12.22
+* :pushpin: Automatic update of dependency pytest from 5.3.5 to 5.4.1
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.1 to 0.36.2
+* :pushpin: Automatic update of dependency pytest-mypy from 0.5.0 to 0.6.0
+* :pushpin: Automatic update of dependency boto3 from 1.12.20 to 1.12.21
+* :pushpin: Automatic update of dependency pyyaml from 5.3 to 3.13
+* :pushpin: Automatic update of dependency boto3 from 1.12.19 to 1.12.20
+* :pushpin: Automatic update of dependency boto3 from 1.12.18 to 1.12.19
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.14 to 1.3.15
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.13 to 1.3.14
+* :pushpin: Automatic update of dependency thoth-common from 0.10.9 to 0.10.11
+* :pushpin: Automatic update of dependency click from 7.0 to 7.1.1
+* :pushpin: Automatic update of dependency boto3 from 1.12.16 to 1.12.18
+* Remove typeshed dev dependency
+* :pushpin: Automatic update of dependency boto3 from 1.12.10 to 1.12.11
+* :pushpin: Automatic update of dependency boto3 from 1.12.9 to 1.12.10
+* :pushpin: Automatic update of dependency thoth-common from 0.10.8 to 0.10.9
+* Add conventions and query template
+* Add naming conventions docs for queries
+* :pushpin: Automatic update of dependency boto3 from 1.12.8 to 1.12.9
+* :pushpin: Automatic update of dependency boto3 from 1.12.7 to 1.12.8
+* Fix database migration for python_package_version.is_missing
