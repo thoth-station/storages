@@ -50,10 +50,10 @@
         },
         "argo-workflows": {
             "hashes": [
-                "sha256:b94c3d7d8406040cb11c704368372b4a1db4e0b097d5c51095375b1ec311a7e8",
-                "sha256:e56e94b788da26aac7a23dc2284889b77ef7cd488822044fc71615e1d7fb93ec"
+                "sha256:46dbdf025d5db61fbd74eb5edab55864f4c44df60566b0b82fc92d486decc9a9",
+                "sha256:800dd926c9e90acd331c11830a48ca68e27194959fadb1ba56df649baaab6ad2"
             ],
-            "version": "==3.0.3"
+            "version": "==3.1.1"
         },
         "async-timeout": {
             "hashes": [
@@ -583,11 +583,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:34c3b4f884eda0981773d8cf78e907f3742a53fd3d18ad31075d6a91b2e9b490",
-                "sha256:5799536a92cdfab2ae1c7d01dcedc186a2879d67f9d051550a4a809cbb86475b"
+                "sha256:c8662d82007f2dbb58c968ac173c6970d08fcf736d7b54c114b6769784cbb9fe",
+                "sha256:e28e430da178cbe90758fab720cde9efe330d405aec3a310decd7dd77d5c5369"
             ],
             "index": "pypi",
-            "version": "==0.10.11"
+            "version": "==0.10.12"
         },
         "thoth-python": {
             "hashes": [
