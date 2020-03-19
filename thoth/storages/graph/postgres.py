@@ -3835,7 +3835,8 @@ class GraphDatabase(SQLBase):
             result = [x[0] for x in result]
             return result
 
-    def remove_python_package_hash():
+    def remove_python_package_hash(package_name: str, package_version: str, index_url: str, sha256_hash: str):
+        """Remove hash associated with python package in the graph."""
         with self._session_scope() as session:
             # We need to remove rows from both HasArtifact and PythonArtifact
             subq = (
@@ -3846,7 +3847,7 @@ class GraphDatabase(SQLBase):
                 .filter(PythonPackageIndex.url == index_url)
                 .join(HasArtifact)
                 .join(PythonArtifact)
-                .filter(PythonArtifact.artifact_hash_sha256)
+                .filter(PythonArtifact.artifact_hash_sha256 == sha256_hash)
                 .with_entities(PythonArtifact.id)
             )
             # Can a hash be present on more than one python_version_entity?
