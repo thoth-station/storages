@@ -4567,7 +4567,6 @@ class GraphDatabase(SQLBase):
                 return
 
             for idx, product in enumerate(document["result"].get("report", {}).get("products", [])):
-                print(idx)
                 performance_score = None
                 overall_score = product["score"]
                 for entry in product.get("justification", []):
@@ -4607,7 +4606,9 @@ class GraphDatabase(SQLBase):
                 )
 
                 HasUnresolved.get_or_create(
-                    session, adviser_run_id=adviser_run.id, python_package_version_entity_id=python_package_version_entity.id
+                    session,
+                    adviser_run_id=adviser_run.id,
+                    python_package_version_entity_id=python_package_version_entity.id
                 )
 
     def sync_provenance_checker_result(self, document: dict) -> None:
