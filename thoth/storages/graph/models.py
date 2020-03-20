@@ -141,10 +141,10 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     # Nullable if we cannot resolve.
     package_version = Column(String(256), nullable=True)
     # Nullable if coming from user or cross-index resolution.
-
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
 
     versions = relationship("DependsOn", back_populates="entity")
+    adviser_runs = relationship("HasUnresolved", back_populates="python_package_version_entity")
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
     build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
@@ -571,6 +571,8 @@ class AdviserRun(Base, BaseExtension):
 
     advised_software_stacks = relationship("Advised", back_populates="adviser_run")
 
+    python_package_version_entities = relationship("HasUnresolved", back_populates="adviser_run")
+
     external_run_software_environment_id = Column(
         Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
     )
@@ -611,6 +613,20 @@ class Advised(Base, BaseExtension):
 
     adviser_run = relationship("AdviserRun", back_populates="advised_software_stacks")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="advised_by")
+
+
+class HasUnresolved(Base, BaseExtension):
+    """A relation representing a Python package version entity unresolved identified in adviser run."""
+
+    __tablename__ = "has_unresolved"
+
+    adviser_run_id = Column(Integer, ForeignKey("adviser_run.id", ondelete="CASCADE"), primary_key=True)
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    adviser_run = relationship("AdviserRun", back_populates="python_package_version_entities")
+    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="adviser_runs")
 
 
 class DependencyMonkeyRun(Base, BaseExtension):
@@ -1511,6 +1527,7 @@ ALL_RELATION_MODELS = frozenset(
         HasMetadataRequiresExternal,
         HasMetadataSupportedPlatform,
         HasSymbol,
+        HasUnresolved,
         HasVulnerability,
         Identified,
         IncludedFile,
