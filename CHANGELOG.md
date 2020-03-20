@@ -4089,3 +4089,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.12.8 to 1.12.9
 * :pushpin: Automatic update of dependency boto3 from 1.12.7 to 1.12.8
 * Fix database migration for python_package_version.is_missing
+
+## Release 0.22.5 (2020-03-20T01:14:38)
+* Release of version 0.22.4
+* :pushpin: Automatic update of dependency alembic from 1.4.1 to 1.4.2
