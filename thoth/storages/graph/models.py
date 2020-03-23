@@ -543,6 +543,8 @@ class AdviserRun(Base, BaseExtension):
     origin = Column(String(256), nullable=True)
     is_s2i = Column(Boolean, nullable=True)
     debug = Column(Boolean, nullable=False)
+    need_re_run = Column(Boolean, nullable=True)
+    re_run_adviser_id = Column(String(256), nullable=True)
     limit_latest_versions = Column(Integer, nullable=True)
     adviser_error = Column(Boolean, nullable=False, default=False)
     recommendation_type = Column(
