@@ -1,7 +1,7 @@
 """Add parameters to deal with unsolved pacakges in adviser run
 
 Revision ID: 125a71b49a50
-Revises: 20359160bf0f
+Revises: 74254b596f00
 Create Date: 2020-03-23 13:46:21.439043+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '125a71b49a50'
-down_revision = '20359160bf0f'
+down_revision = '74254b596f00'
 branch_labels = None
 depends_on = None
 

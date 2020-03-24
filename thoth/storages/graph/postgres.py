@@ -3671,34 +3671,32 @@ class GraphDatabase(SQLBase):
                 # INSERT…ON CONFLICT (Upsert)
                 # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
                 # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
-                row = (
-                    insert(InspectionRun)
-                    .values(
-                        id=inspection_run.dependency_monkey_run_id,
-                        inspection_document_id=inspection_document_id,
-                        dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
-                        inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
-                    )
-                    .on_conflict_do_update(
-                        index_elements=["id"],
-                        set_=dict(
-                            inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
-                            inspection_document_id=inspection_document_id,
-                            datetime=document.get("created"),
-                            amun_version=None,  # TODO: propagate Amun version here which should match API version
-                            build_requests_cpu=build_cpu,
-                            build_requests_memory=build_memory,
-                            run_requests_cpu=run_cpu,
-                            run_requests_memory=run_memory,
-                            build_software_environment_id=build_software_environment.id,
-                            build_hardware_information_id=build_hardware_information.id,
-                            run_software_environment_id=run_software_environment.id,
-                            run_hardware_information_id=run_hardware_information.id,
-                            inspection_software_stack_id=software_stack.id if software_stack else None,
-                        ),
-                    )
-                    .compile(dialect=postgresql.dialect())
+                insert_stmt = insert(InspectionRun).values(
+                    id=inspection_run.dependency_monkey_run_id,
+                    inspection_document_id=inspection_document_id,
+                    dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
+                    inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
                 )
+                do_update_stmt = insert_stmt.on_conflict_do_update(
+                    index_elements=["id"],
+                    set_=dict(
+                        inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
+                        inspection_document_id=inspection_document_id,
+                        datetime=document.get("created"),
+                        amun_version=None,  # TODO: propagate Amun version here which should match API version
+                        build_requests_cpu=build_cpu,
+                        build_requests_memory=build_memory,
+                        run_requests_cpu=run_cpu,
+                        run_requests_memory=run_memory,
+                        build_software_environment_id=build_software_environment.id,
+                        build_hardware_information_id=build_hardware_information.id,
+                        run_software_environment_id=run_software_environment.id,
+                        run_hardware_information_id=run_hardware_information.id,
+                        inspection_software_stack_id=software_stack.id if software_stack else None,
+                    ),
+                )
+
+                session.execute(do_update_stmt)
 
             else:
                 inspection_run, _ = InspectionRun.get_or_create(
@@ -4506,8 +4504,11 @@ class GraphDatabase(SQLBase):
         parameters = document["result"]["parameters"]
         cli_arguments = document["metadata"]["arguments"]["thoth-adviser"]
         origin = (cli_arguments.get("metadata") or {}).get("origin")
+        re_run_adviser_id = (cli_arguments.get("metadata") or {}).get("re_run_adviser_id")
         is_s2i = (cli_arguments.get("metadata") or {}).get("is_s2i")
         runtime_environment = parameters["project"].get("runtime_environment")
+
+        need_re_run=False
 
         if not origin:
             _LOGGER.warning("No origin stated in the adviser result %r", adviser_document_id)
@@ -4535,36 +4536,183 @@ class GraphDatabase(SQLBase):
                 is_external=True,
             )
 
-            adviser_run, _ = AdviserRun.get_or_create(
-                session,
-                additional_stack_info=bool(document["result"].get("stack_info")),
-                advised_configuration_changes=bool(document["result"].get("advised_configuration")),
-                adviser_document_id=adviser_document_id,
-                adviser_error=document["result"]["error"],
-                adviser_name=document["metadata"]["analyzer"],
-                adviser_version=document["metadata"]["analyzer_version"],
-                count=parameters["count"],
-                datetime=document["metadata"]["datetime"],
-                debug=cli_arguments.get("verbose", False),
-                duration=document["metadata"].get("duration"),
-                limit=parameters["limit"],
-                limit_latest_versions=parameters.get("limit_latest_versions"),
-                origin=origin,
-                is_s2i=is_s2i,
-                recommendation_type=parameters["recommendation_type"].upper(),
-                requirements_format=parameters["requirements_format"].upper(),
-                external_hardware_information_id=external_hardware_info.id,
-                external_build_software_environment=None,
-                external_run_software_environment_id=external_run_software_environment.id,
-                user_software_stack_id=software_stack.id,
-            )
-
             # Output stacks - advised stacks
             if not document["result"].get("report", {}):
                 _LOGGER.warning(
                     "No report found in %r", adviser_document_id
                 )
+                adviser_run, _ = AdviserRun.get_or_create(
+                    session,
+                    additional_stack_info=bool(document["result"].get("stack_info")),
+                    advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+                    adviser_document_id=adviser_document_id,
+                    adviser_error=document["result"]["error"],
+                    adviser_name=document["metadata"]["analyzer"],
+                    adviser_version=document["metadata"]["analyzer_version"],
+                    count=parameters["count"],
+                    datetime=document["metadata"]["datetime"],
+                    debug=cli_arguments.get("verbose", False),
+                    duration=document["metadata"].get("duration"),
+                    limit=parameters["limit"],
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
+                    origin=origin,
+                    is_s2i=is_s2i,
+                    recommendation_type=parameters["recommendation_type"].upper(),
+                    requirements_format=parameters["requirements_format"].upper(),
+                    external_hardware_information_id=external_hardware_info.id,
+                    external_build_software_environment=None,
+                    external_run_software_environment_id=external_run_software_environment.id,
+                    user_software_stack_id=software_stack.id,
+                    need_re_run=need_re_run
+                )
                 return
+
+            unresolved_packages = document["result"].get("report", {}).get("_ERROR_DETAILS", {}).get("unresolved", [])
+
+            if unresolved_packages:
+                need_re_run=True
+
+            if re_run_adviser_id and unresolved_packages:
+                # If adviser was re run and there are still unsolved packages
+                adviser_run, _ = AdviserRun.get_or_create(
+                    session,
+                    additional_stack_info=bool(document["result"].get("stack_info")),
+                    advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+                    adviser_document_id=adviser_document_id,
+                    adviser_error=document["result"]["error"],
+                    adviser_name=document["metadata"]["analyzer"],
+                    adviser_version=document["metadata"]["analyzer_version"],
+                    count=parameters["count"],
+                    datetime=document["metadata"]["datetime"],
+                    debug=cli_arguments.get("verbose", False),
+                    duration=document["metadata"].get("duration"),
+                    limit=parameters["limit"],
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
+                    origin=origin,
+                    is_s2i=is_s2i,
+                    recommendation_type=parameters["recommendation_type"].upper(),
+                    requirements_format=parameters["requirements_format"].upper(),
+                    external_hardware_information_id=external_hardware_info.id,
+                    external_build_software_environment_id=None,
+                    external_run_software_environment_id=external_run_software_environment.id,
+                    user_software_stack_id=software_stack.id,
+                    need_re_run=need_re_run,
+                    re_run_adviser_id=re_run_adviser_id
+                )
+
+            elif re_run_adviser_id and not unresolved_packages:
+                # If adviser was re run and there are no more unsolved packages
+                initial_adviser_run = (
+                    session.query(AdviserRun)
+                    .filter(AdviserRun.adviser_document_id == re_run_adviser_id)
+                    .first()
+                )
+                # INSERT…ON CONFLICT (Upsert)
+                # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
+                # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
+                if initial_adviser_run.need_re_run:
+                    insert_stmt = insert(AdviserRun).values(
+                        id=initial_adviser_run.id,
+                        need_re_run=initial_adviser_run.need_re_run,
+                        additional_stack_info=initial_adviser_run.additional_stack_info,
+                        advised_configuration_changes=initial_adviser_run.advised_configuration_changes,
+                        adviser_document_id=initial_adviser_run.adviser_document_id,
+                        adviser_error=initial_adviser_run.adviser_error,
+                        adviser_name=initial_adviser_run.adviser_name,
+                        adviser_version=initial_adviser_run.adviser_version,
+                        count=initial_adviser_run.count,
+                        datetime=initial_adviser_run.datetime,
+                        debug=initial_adviser_run.debug,
+                        duration=initial_adviser_run.duration,
+                        limit=initial_adviser_run.limit,
+                        limit_latest_versions=initial_adviser_run.limit_latest_versions,
+                        is_s2i=initial_adviser_run.is_s2i,
+                        recommendation_type=initial_adviser_run.recommendation_type,
+                        requirements_format=initial_adviser_run.requirements_format,
+                        external_hardware_information_id=initial_adviser_run.external_hardware_information_id,
+                        external_run_software_environment_id=initial_adviser_run.external_run_software_environment_id,
+                        user_software_stack_id=initial_adviser_run.user_software_stack_id,
+                    )
+                        
+                    do_update_stmt = insert_stmt.on_conflict_do_update(
+                        index_elements=['id'],
+                        set_=dict(
+                            need_re_run=False,
+                            additional_stack_info=initial_adviser_run.additional_stack_info,
+                            advised_configuration_changes=initial_adviser_run.advised_configuration_changes,
+                            adviser_document_id=initial_adviser_run.adviser_document_id,
+                            adviser_error=initial_adviser_run.adviser_error,
+                            adviser_name=initial_adviser_run.adviser_name,
+                            adviser_version=initial_adviser_run.adviser_version,
+                            count=initial_adviser_run.count,
+                            datetime=initial_adviser_run.datetime,
+                            debug=initial_adviser_run.debug,
+                            duration=initial_adviser_run.duration,
+                            limit=initial_adviser_run.limit,
+                            limit_latest_versions=initial_adviser_run.limit_latest_versions,
+                            is_s2i=initial_adviser_run.is_s2i,
+                            recommendation_type=initial_adviser_run.recommendation_type,
+                            requirements_format=initial_adviser_run.requirements_format,
+                            external_hardware_information_id=initial_adviser_run.external_hardware_information_id,
+                            external_run_software_environment_id=initial_adviser_run.external_run_software_environment_id,
+                            user_software_stack_id=initial_adviser_run.user_software_stack_id,
+                        ),
+                    )
+
+                    session.execute(do_update_stmt)
+
+                adviser_run, _ = AdviserRun.get_or_create(
+                    session,
+                    additional_stack_info=bool(document["result"].get("stack_info")),
+                    advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+                    adviser_document_id=adviser_document_id,
+                    adviser_error=document["result"]["error"],
+                    adviser_name=document["metadata"]["analyzer"],
+                    adviser_version=document["metadata"]["analyzer_version"],
+                    count=parameters["count"],
+                    datetime=document["metadata"]["datetime"],
+                    debug=cli_arguments.get("verbose", False),
+                    duration=document["metadata"].get("duration"),
+                    limit=parameters["limit"],
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
+                    origin=origin,
+                    is_s2i=is_s2i,
+                    recommendation_type=parameters["recommendation_type"].upper(),
+                    requirements_format=parameters["requirements_format"].upper(),
+                    external_hardware_information_id=external_hardware_info.id,
+                    external_build_software_environment_id=None,
+                    external_run_software_environment_id=external_run_software_environment.id,
+                    user_software_stack_id=software_stack.id,
+                    need_re_run=need_re_run,
+                    re_run_adviser_id=re_run_adviser_id
+                )
+
+            else:
+                # Any other case of adviser run
+                adviser_run, _ = AdviserRun.get_or_create(
+                    session,
+                    additional_stack_info=bool(document["result"].get("stack_info")),
+                    advised_configuration_changes=bool(document["result"].get("advised_configuration")),
+                    adviser_document_id=adviser_document_id,
+                    adviser_error=document["result"]["error"],
+                    adviser_name=document["metadata"]["analyzer"],
+                    adviser_version=document["metadata"]["analyzer_version"],
+                    count=parameters["count"],
+                    datetime=document["metadata"]["datetime"],
+                    debug=cli_arguments.get("verbose", False),
+                    duration=document["metadata"].get("duration"),
+                    limit=parameters["limit"],
+                    limit_latest_versions=parameters.get("limit_latest_versions"),
+                    origin=origin,
+                    is_s2i=is_s2i,
+                    recommendation_type=parameters["recommendation_type"].upper(),
+                    requirements_format=parameters["requirements_format"].upper(),
+                    external_hardware_information_id=external_hardware_info.id,
+                    external_build_software_environment_id=None,
+                    external_run_software_environment_id=external_run_software_environment.id,
+                    user_software_stack_id=software_stack.id,
+                    need_re_run=need_re_run
+                )
 
             for idx, product in enumerate(document["result"].get("report", {}).get("products", [])):
                 performance_score = None
@@ -4593,7 +4741,7 @@ class GraphDatabase(SQLBase):
                     )
 
             # Mark down packages that were not solved if adviser run failed.
-            for unresolved in document["result"].get("report", {}).get("_ERROR_DETAILS", {}).get("unresolved", []):
+            for unresolved in unresolved_packages:
                 python_package_version_entity = self._create_python_package_version(
                     session,
                     package_name=unresolved,
