@@ -115,6 +115,7 @@ from .models import HasMetadataProvidesExtra
 from .models import HasMetadataRequiresExternal
 from .models import HasMetadataSupportedPlatform
 from .models import HasSymbol
+from .models import HasUnresolved
 from .models import HasVulnerability
 from .models import Identified
 from .models import IncludedFile
@@ -174,6 +175,8 @@ _GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE = int(os.getenv("THOTH_STORAGE_GET_PYTHON
 _GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(
     os.getenv("THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE", 4096)
 )
+_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -2298,6 +2301,7 @@ class GraphDatabase(SQLBase):
 
         return result
 
+    @lru_cache(maxsize=_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE)
     def get_python_environment_marker(
         self,
         package_name: str,
@@ -4655,7 +4659,6 @@ class GraphDatabase(SQLBase):
                 return
 
             for idx, product in enumerate(document["result"].get("report", {}).get("products", [])):
-                print(idx)
                 performance_score = None
                 overall_score = product["score"]
                 for entry in product.get("justification", []):
@@ -4683,7 +4686,7 @@ class GraphDatabase(SQLBase):
 
             # Mark down packages that were not solved if adviser run failed.
             for unresolved in document["result"].get("report", {}).get("_ERROR_DETAILS", {}).get("unresolved", []):
-                self._create_python_package_version(
+                python_package_version_entity = self._create_python_package_version(
                     session,
                     package_name=unresolved,
                     package_version=None,
@@ -4692,6 +4695,12 @@ class GraphDatabase(SQLBase):
                     os_version=None,
                     python_version=None,
                     sync_only_entity=True,
+                )
+
+                HasUnresolved.get_or_create(
+                    session,
+                    adviser_run_id=adviser_run.id,
+                    python_package_version_entity_id=python_package_version_entity.id
                 )
 
     def sync_provenance_checker_result(self, document: dict) -> None:
