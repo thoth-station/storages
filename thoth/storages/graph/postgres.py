@@ -3861,6 +3861,7 @@ class GraphDatabase(SQLBase):
                 .filter(HasArtifact.python_artifact_id.in_(subq))
                 .delete(synchronize_session='fetch')
             )
+            # TODO: we don't want to delete here
 
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
