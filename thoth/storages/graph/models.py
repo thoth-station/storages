@@ -419,6 +419,7 @@ class PythonArtifact(Base, BaseExtension):
 
     artifact_hash_sha256 = Column(String(256), nullable=False)
     artifact_name = Column(String(256), nullable=True)
+    present = Column(Boolean, nullable=False, default=True)
     # TODO: parse wheel specific tags to make them queryable?
 
     python_files = relationship("IncludedFile", back_populates="python_artifact")

@@ -3797,29 +3797,11 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session='fetch')
             )
 
-    def get_all_repositories_using_package(self, package_name: str, index_url: str) -> List[str]:
-        """Given package info, get unique urls of repos which have been advised with this package."""
-        with self._session_scope() as session:
-            result = (
-                session.query(PythonPackageVersion)
-                .join(PythonPackageIndex)
-                .join(PythonRequirementsLock)
-                .join(AdviserRun, AdviserRun.user_software_stack_id == PythonRequirementsLock.python_software_stack_id)
-                .order_by(AdviserRun.origin)
-                .order_by(AdviserRun.datetime.desc())
-                .distinct(AdviserRun.origin)
-                .filter(PythonPackageIndex.url == index_url)
-                .filter(PythonPackageVersion.package_name == package_name)
-                .with_entities(AdviserRun.origin)
-            ).all()
-            result = [x[0] for x in result]
-            return result
-
-    def get_all_repositories_using_package_version(
+    def get_all_repositories_using_python_package(
         self,
         package_name: str,
-        package_version: str,
         index_url: str,
+        package_version: str = None,
     ) -> List[str]:
         """Given package version info, get unique urls of repos which have been advised with this package version."""
         with self._session_scope() as session:
@@ -3834,12 +3816,20 @@ class GraphDatabase(SQLBase):
                 .filter(PythonPackageIndex.url == index_url)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .filter(PythonPackageVersion.package_version == package_version)
-                .with_entities(AdviserRun.origin)
-            ).all()
+            )
+            if package_version is not None:
+                result.filter(PythonPackageVersion.package_version == package_version)
+
+            result = result.with_entities(AdviserRun.origin).all()
             result = [x[0] for x in result]
             return result
 
-    def remove_python_package_hash(package_name: str, package_version: str, index_url: str, sha256_hash: str):
+    def update_python_package_hash_present_flag(
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        sha256_hash: str,
+    ):
         """Remove hash associated with python package in the graph."""
         with self._session_scope() as session:
             # We need to remove rows from both HasArtifact and PythonArtifact
@@ -3858,14 +3848,8 @@ class GraphDatabase(SQLBase):
             (
                 session.query(PythonArtifact)
                 .filter(PythonArtifact.id.in_(subq))
-                .delete(synchronize_session='fetch')
+                .update(present=False)
             )
-            (
-                session.query(HasArtifact)
-                .filter(HasArtifact.python_artifact_id.in_(subq))
-                .delete(synchronize_session='fetch')
-            )
-            # TODO: we don't want to delete here
 
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
