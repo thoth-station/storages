@@ -3797,31 +3797,61 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session='fetch')
             )
 
-    def get_all_repositories_using_python_package(
+    def get_adviser_run_origins_all(
         self,
-        package_name: str,
-        index_url: str,
+        package_name: str = None,
         package_version: str = None,
+        index_url: str = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        distinct: bool = False,
     ) -> List[str]:
-        """Given package version info, get unique urls of repos which have been advised with this package version."""
+        """Retrieve all origins (git repos URLs) in Adviser Run.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_adviser_run_origins_all()
+        ['https://github.com/thoth-station/storages',
+         'https://github.com/thoth-station/user-api',
+         'https://github.com/thoth-station/adviser']
+        """
         with self._session_scope() as session:
-            result = (
-                session.query(PythonPackageVersion)
-                .join(PythonPackageIndex)
-                .join(PythonRequirementsLock)
-                .join(AdviserRun, AdviserRun.user_software_stack_id == PythonRequirementsLock.python_software_stack_id)
+            query = (
+                session.query(AdviserRun)
                 .order_by(AdviserRun.origin)
                 .order_by(AdviserRun.datetime.desc())
-                .distinct(AdviserRun.origin)
-                .filter(PythonPackageIndex.url == index_url)
-                .filter(PythonPackageVersion.package_name == package_name)
-                .filter(PythonPackageVersion.package_version == package_version)
             )
-            if package_version is not None:
-                result.filter(PythonPackageVersion.package_version == package_version)
 
-            result = result.with_entities(AdviserRun.origin).all()
-            result = [x[0] for x in result]
+            if package_name or package_version:
+                query = (
+                    query.join(
+                        ExternalPythonRequirementsLock,
+                        ExternalPythonRequirementsLock.python_software_stack_id == AdviserRun.user_sotware_stack_id
+                    )
+                    .join(PythonPackageVersion)
+                )
+                if index_url:
+                    query = query.join(PythonPackageIndex)
+
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query.filter(PythonPackageVersion.package_name == package_name)
+
+            if package_version is not None:
+                package_version = self.normalize_python_package_version(package_version)
+                query.filter(PythonPackageVersion.package_version == package_version)
+
+            if index_url is not None:
+                query.filter(PythonPackageIndex.url  == index_url)
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            result = [r[0] for r in query.all() if r[0]] # We do not consider None results
+
             return result
 
     def update_python_package_hash_present_flag(
