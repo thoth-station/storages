@@ -3843,14 +3843,14 @@ class GraphDatabase(SQLBase):
                 query.filter(PythonPackageVersion.package_version == package_version)
 
             if index_url is not None:
-                query.filter(PythonPackageIndex.url  == index_url)
+                query.filter(PythonPackageIndex.url == index_url)
 
             query = query.offset(start_offset).limit(count)
 
             if distinct:
                 query = query.distinct()
 
-            result = [r[0] for r in query.all() if r[0]] # We do not consider None results
+            result = [r[0] for r in query.all() if r[0]]   # We do not consider None results
 
             return result
 
