@@ -24,6 +24,7 @@ from sqlalchemy import Float
 from sqlalchemy import DateTime
 from sqlalchemy import Boolean
 from sqlalchemy import Text
+from sqlalchemy import String
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 
