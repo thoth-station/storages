@@ -589,11 +589,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:499f967d0d624894ff3936cf5cc4787c177b6b2da2d269d83944b197a8b97def",
-                "sha256:a61a0926aec36298dd923ee3fbc0c3c64e2b3105b714bc51037dbc2b025b9f6f"
+                "sha256:2c7288d4d1f2cb049e5d601bc35b2b66821e0d9a5b8a190d7b175764c4e9e97f",
+                "sha256:e5b4ce9c7cdb0b7c5e1895d87da05f4d4b82eeef5ebc3557c6b012a390357436"
             ],
             "index": "pypi",
-            "version": "==0.12.2"
+            "version": "==0.12.3"
         },
         "thoth-python": {
             "hashes": [
@@ -1063,11 +1063,11 @@
         },
         "importlib-metadata": {
             "hashes": [
-                "sha256:0095bf45caca7a93685cbb9e5ef49f0ed37f848639df8f4684f07229aa7a8322",
-                "sha256:dd381cddc02a58a23667ef675164ad70848d82966d3a8fddea96dcfb51064803"
+                "sha256:298a914c82144c6b3b06c568a8973b89ad2176685f43cd1ea9ba968307300fa9",
+                "sha256:dfc83688553a91a786c6c91eeb5f3b1d31f24d71877bbd94ecbf5484e57690a2"
             ],
             "markers": "python_version < '3.8'",
-            "version": "==1.5.1"
+            "version": "==1.5.2"
         },
         "importlib-resources": {
             "hashes": [
