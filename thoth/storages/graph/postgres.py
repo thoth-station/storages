@@ -3855,7 +3855,7 @@ class GraphDatabase(SQLBase):
                 query = (
                     query.join(
                         ExternalPythonRequirementsLock,
-                        ExternalPythonRequirementsLock.python_software_stack_id == AdviserRun.user_sotware_stack_id
+                        ExternalPythonRequirementsLock.python_software_stack_id == AdviserRun.user_software_stack_id,
                     )
                     .join(PythonPackageVersion)
                 )
