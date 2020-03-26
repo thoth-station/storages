@@ -3857,7 +3857,10 @@ class GraphDatabase(SQLBase):
                         ExternalPythonRequirementsLock,
                         ExternalPythonRequirementsLock.python_software_stack_id == AdviserRun.user_software_stack_id,
                     )
-                    .join(PythonPackageVersion)
+                    .join(
+                        PythonPackageVersion,
+                        ExternalPythonRequirementsLock.python_package_version_entity_id == PythonPackageVersion.id,
+                    )
                 )
                 if index_url is not None:
                     query = query.join(PythonPackageIndex)
