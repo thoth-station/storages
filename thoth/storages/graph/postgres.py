@@ -3863,18 +3863,16 @@ class GraphDatabase(SQLBase):
                     )
                 )
                 if index_url is not None:
-                    query = (
-                        query.join(PythonPackageIndex),
-                        query.filter(PythonPackageIndex.url == index_url),
-                    )
+                    query = query.join(PythonPackageIndex)
+                    query.filter(PythonPackageIndex.url == index_url)
 
             if package_name is not None:
                 package_name = self.normalize_python_package_name(package_name)
-                query = query.filter(PythonPackageVersion.package_name == package_name)
+                query.filter(PythonPackageVersion.package_name == package_name)
 
             if package_version is not None:
                 package_version = self.normalize_python_package_version(package_version)
-                query = query.filter(PythonPackageVersion.package_version == package_version)
+                query.filter(PythonPackageVersion.package_version == package_version)
 
             query = query.offset(start_offset).limit(count)
 
