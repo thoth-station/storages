@@ -77,7 +77,7 @@ class BaseExtension:
                 result[column.name] = None
             else:
                 result[column.name] = getattr(self, column.name)
-                if isinstance(result[column.name], datetime.datetime):
+                if isinstance(result[column.name], (datetime.datetime, datetime.date)):
                     result[column.name] = str(result[column.name])
 
         return result
