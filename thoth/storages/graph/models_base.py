@@ -18,7 +18,7 @@
 """A base and utilities for implementing SQLAlchemy based models."""
 
 import logging
-from typing import Union
+import datetime
 from itertools import combinations
 from typing import List
 
@@ -73,7 +73,14 @@ class BaseExtension:
             if without_id and column.name == "id":
                 continue
 
-            result[column.name] = str(getattr(self, column.name)) if getattr(self, column.name) else None
+            if getattr(self, column.name) is None:
+                result[column.name] = None
+            else:
+                value = getattr(self, column.name)
+                if isinstance(value, (datetime.datetime, datetime.date)):
+                    result[column.name] = str(value)
+                else:
+                    result[column.name] = value
 
         return result
 
