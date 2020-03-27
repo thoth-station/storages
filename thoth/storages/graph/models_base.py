@@ -73,7 +73,10 @@ class BaseExtension:
             if without_id and column.name == "id":
                 continue
 
-            result[column.name] = str(getattr(self, column.name)) if getattr(self, column.name) else None
+            if not getattr(self, column.name):
+                result[column.name] = None
+            else:
+                result[column.name] = getattr(self, column.name)
 
         return result
 
