@@ -231,7 +231,7 @@ Automatic backups of Thoth deployment
 =====================================
 
 In each deployment, an automatic knowledge `graph backup cronjob
-<https://github.com/thtoh-station/graph-backup-job>`__ is run, usually once a
+<https://github.com/thoth-station/graph-backup-job>`__ is run, usually once a
 day. Results of automatic backups are stored on Ceph - you can find them in
 ``s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp>.sql``.
 Refer to deployment configuration for expansion of parameters in the path.
@@ -242,7 +242,7 @@ PostgreSQL instance and fill it from the backup file:
 .. code-block:: console
 
   $ cd thoth-station/storages
-  $ aws s3 --endpoint <ceph-s3-endpoint> cp s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp>.sql pg_dump-<timestamp>.sql
+  $ aws s3 --endpoint <ceph-s3-endpoint> cp s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp> pg_dump-<timestamp>.sql
   $ podman-compose up
   $ psql -h localhost -p 5432 --username=postgres < pg_dump-<timestamp>.sql
   password: <type password "postgres" here>
