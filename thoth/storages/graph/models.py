@@ -24,6 +24,7 @@ from sqlalchemy import Float
 from sqlalchemy import DateTime
 from sqlalchemy import Boolean
 from sqlalchemy import Text
+from sqlalchemy import String
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 
@@ -416,8 +417,9 @@ class PythonArtifact(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    artifact_hash_sha256 = Column(Text, nullable=False)
-    artifact_name = Column(Text, nullable=True)
+    artifact_hash_sha256 = Column(String(256), nullable=False)
+    artifact_name = Column(String(256), nullable=True)
+    present = Column(Boolean, nullable=False, default=True)
     # TODO: parse wheel specific tags to make them queryable?
 
     python_files = relationship("IncludedFile", back_populates="python_artifact")

@@ -3803,6 +3803,115 @@ class GraphDatabase(SQLBase):
 
                 return False
 
+    def update_missing_flag_package_version(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        value: bool,
+    ) -> None:
+        """Update value of is_missing flag for PythonPackageVersion."""
+        with self._session_scope() as session:
+            subq = (session.query(PythonPackageVersion)
+                    .join(PythonPackageIndex)
+                    .filter(PythonPackageVersion.package_name == package_name)
+                    .filter(PythonPackageVersion.package_version == package_version)
+                    .filter(PythonPackageIndex.url == index_url)
+                    .with_entities(PythonPackageVersion.id)
+                    )
+            (
+                session.query(PythonPackageVersion)
+                .filter(PythonPackageVersion.id.in_(subq))
+                .update({"is_missing": value}, synchronize_session='fetch')
+            )
+
+    def get_adviser_run_origins_all(
+        self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> List[str]:
+        """Retrieve all origins (git repos URLs) in Adviser Run.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_adviser_run_origins_all()
+        ['https://github.com/thoth-station/storages',
+         'https://github.com/thoth-station/user-api',
+         'https://github.com/thoth-station/adviser']
+        """
+        with self._session_scope() as session:
+            query = (
+                session.query(AdviserRun)
+                .order_by(AdviserRun.origin)
+                .order_by(AdviserRun.datetime.desc())
+            )
+
+            if package_name or package_version:
+                query = (
+                    query.join(
+                        ExternalPythonRequirementsLock,
+                        ExternalPythonRequirementsLock.python_software_stack_id == AdviserRun.user_software_stack_id,
+                    )
+                    .join(
+                        PythonPackageVersion,
+                        ExternalPythonRequirementsLock.python_package_version_entity_id == PythonPackageVersion.id,
+                    )
+                )
+                if index_url is not None:
+                    query = query.join(PythonPackageIndex)
+                    query.filter(PythonPackageIndex.url == index_url)
+
+            if package_name is not None:
+                package_name = self.normalize_python_package_name(package_name)
+                query.filter(PythonPackageVersion.package_name == package_name)
+
+            if package_version is not None:
+                package_version = self.normalize_python_package_version(package_version)
+                query.filter(PythonPackageVersion.package_version == package_version)
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            query = query.with_entities(AdviserRun.origin)
+
+            result = [r[0] for r in query.all() if r[0]]   # We do not consider None results
+
+            return result
+
+    def update_python_package_hash_present_flag(
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        sha256_hash: str,
+    ):
+        """Remove hash associated with python package in the graph."""
+        with self._session_scope() as session:
+            # We need to remove rows from both HasArtifact and PythonArtifact
+            subq = (
+                session.query(PythonPackageVersionEntity)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+                .filter(PythonPackageVersionEntity.package_version == package_version)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+                .join(HasArtifact)
+                .join(PythonArtifact)
+                .filter(PythonArtifact.artifact_hash_sha256 == sha256_hash)
+                .with_entities(PythonArtifact.id)
+            )
+            # Can a hash be present on more than one python_version_entity?
+            (
+                session.query(PythonArtifact)
+                .filter(PythonArtifact.id.in_(subq))
+                .update(present=False)
+            )
+
     @staticmethod
     def _rpm_sync_analysis_result(session: Session, package_extract_run: PackageExtractRun, document: dict) -> None:
         """Sync results of RPMs found in the given container image."""
