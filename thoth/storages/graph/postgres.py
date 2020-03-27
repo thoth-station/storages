@@ -4738,7 +4738,29 @@ class GraphDatabase(SQLBase):
                 # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
 
                 if first_adviser_run and first_adviser_run.need_re_run:
-                    insert_stmt = insert(AdviserRun).values(**first_adviser_run.to_dict(without_id=False))
+                    insert_stmt = insert(AdviserRun).values(
+                        id=first_adviser_run.id,
+                        additional_stack_info=first_adviser_run.additional_stack_info,
+                        advised_configuration_changes=first_adviser_run.advised_configuration_changes,
+                        adviser_document_id=first_adviser_run.adviser_document_id,
+                        adviser_error=first_adviser_run.adviser_error,
+                        adviser_name=first_adviser_run.adviser_name,
+                        adviser_version=first_adviser_run.adviser_version,
+                        count=first_adviser_run.count,
+                        datetime=first_adviser_run.datetime,
+                        debug=first_adviser_run.debug,
+                        duration=first_adviser_run.duration,
+                        limit=first_adviser_run.limit,
+                        limit_latest_versions=first_adviser_run.limit_latest_versions,
+                        origin=first_adviser_run.origin,
+                        is_s2i=first_adviser_run.is_s2i,
+                        recommendation_type=first_adviser_run.recommendation_type,
+                        requirements_format=first_adviser_run.requirements_format,
+                        external_hardware_information_id=first_adviser_run.external_hardware_information_id,
+                        external_build_software_environment_id=first_adviser_run.external_build_software_environment_id,
+                        external_run_software_environment_id=first_adviser_run.external_run_software_environment_id,
+                        user_software_stack_id=first_adviser_run.user_software_stack_id,
+                    )
 
                     do_update_stmt = insert_stmt.on_conflict_do_update(
                         index_elements=['id'],
