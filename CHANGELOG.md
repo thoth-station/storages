@@ -4093,3 +4093,56 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.22.5 (2020-03-20T01:14:38)
 * Release of version 0.22.4
 * :pushpin: Automatic update of dependency alembic from 1.4.1 to 1.4.2
+
+## Release 0.22.6 (2020-03-27T13:51:27)
+* Consider also boolean values
+* Optimize accessing dict
+* Minor correction for package-update-api
+* Consider also raw date without datetime in to_dict()
+* Explictly cast datetime to a string
+* Fix obtaining model attributes in model.to_dict()
+* Correct README for graph-backup-job
+* :pushpin: Automatic update of dependency thoth-common from 0.12.3 to 0.12.4
+* do not set query
+* with_entities
+* Join
+* :pushpin: Automatic update of dependency boto3 from 1.12.29 to 1.12.30
+* Small typo
+* New alembic version
+* Use Text everywhere
+* Created query to retrieve adviser runs to be re run
+* Modified logic for adviser sync
+* Modify schema and logic to sync adviser run
+* :pushpin: Automatic update of dependency thoth-common from 0.12.2 to 0.12.3
+* :pushpin: Automatic update of dependency pyyaml from 5.3.1 to 3.13
+* :pushpin: Automatic update of dependency thoth-common from 0.12.1 to 0.12.2
+* :pushpin: Automatic update of dependency boto3 from 1.12.28 to 1.12.29
+* Move url filter inside if-if statement
+* Update storages function to be more versatile and follow conventions
+* :pushpin: Automatic update of dependency thoth-common from 0.10.12 to 0.12.1
+* Do not delete rows, keep track of present hashes
+* :pushpin: Automatic update of dependency boto3 from 1.12.27 to 1.12.28
+* :pushpin: Automatic update of dependency pyyaml from 3.13 to 5.3.1
+* TODO
+* :pushpin: Automatic update of dependency boto3 from 1.12.26 to 1.12.27
+* Revert "API calls for package-update-consumer"
+* :pushpin: Automatic update of dependency boto3 from 1.12.25 to 1.12.26
+* Remove print
+* Link Adviser Run with Python Package Versio Entity
+* Add arguments and doc string to remove hash
+* Function to remove missing hash from database
+* reorder function arguments
+* Remove unnecessary imports
+* Update using subquery
+* Specify condition for join
+* Remove unecessary join
+* Index url is in the pythonpackageindex table
+* prepend AdviserRun to origin
+* join with PythonSoftware not external
+* with ... as session
+* Add self as postional argument
+* Follow API naming conventions
+* Only get packages used by most recent advise
+* Add distinct modifier for origin
+* Add doc strings and remove unnecessary subtransactions
+* API calls for package-update-consumer
