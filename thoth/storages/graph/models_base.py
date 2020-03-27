@@ -18,7 +18,7 @@
 """A base and utilities for implementing SQLAlchemy based models."""
 
 import logging
-from typing import Union
+import datetime
 from itertools import combinations
 from typing import List
 
@@ -77,6 +77,8 @@ class BaseExtension:
                 result[column.name] = None
             else:
                 result[column.name] = getattr(self, column.name)
+                if isinstance(result[column.name], datetime.datetime):
+                    result[column.name] = str(result[column.name])
 
         return result
 
