@@ -17,11 +17,13 @@
 
 """An SQL database for storing Thoth data."""
 
+import functools
 import re
 import logging
 import json
 import os
 import itertools
+import weakref
 from typing import List
 from typing import Set
 from typing import Tuple
@@ -35,9 +37,7 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import attr
-from methodtools import lru_cache
 from sqlalchemy import create_engine
-from sqlalchemy import text
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy import exists
@@ -48,7 +48,6 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.functions import create_database
 from sqlalchemy_utils.functions import database_exists
 from thoth.python import PackageVersion
@@ -130,8 +129,6 @@ from .models import ALL_RELATION_MODELS
 from .models_performance import PERFORMANCE_MODEL_BY_NAME, ALL_PERFORMANCE_MODELS
 from .models_performance import PERFORMANCE_MODELS_ML_FRAMEWORKS
 
-from collections import Counter
-
 from .sql_base import SQLBase
 from .models_base import Base
 from .query_result_base import PythonQueryResult
@@ -179,6 +176,33 @@ _GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVI
 
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def lru_cache(*lru_args, **lru_kwargs):
+    """Implement a cache for methods.
+
+    Based on:
+      https://stackoverflow.com/questions/33672412/python-functools-lru-cache-with-class-methods-release-object
+    """
+    # XXX: possibly move to another module to make it available for the whole Thoth
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapped_func(self, *args, **kwargs):
+            # We're storing the wrapped method inside the instance. If we had
+            # a strong reference to self the instance would never die.
+            self_weak = weakref.ref(self)
+
+            @functools.wraps(func)
+            @functools.lru_cache(*lru_args, **lru_kwargs)
+            def cached_method(*args, **kwargs):
+                return func(self_weak(), *args, **kwargs)
+
+            setattr(self, func.__name__, cached_method)
+            return cached_method(*args, **kwargs)
+
+        return wrapped_func
+
+    return decorator
 
 
 @attr.s()
