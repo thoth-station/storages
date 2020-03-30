@@ -4146,3 +4146,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add distinct modifier for origin
 * Add doc strings and remove unnecessary subtransactions
 * API calls for package-update-consumer
+
+## Release 0.22.7 (2020-03-30T10:12:52)
+* Drop methods tools to gain performance
+* :pushpin: Automatic update of dependency boto3 from 1.12.30 to 1.12.31
