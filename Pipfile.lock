@@ -206,10 +206,10 @@
         },
         "kubernetes": {
             "hashes": [
-                "sha256:85a767d04f17d6d317374b6c35e09eb168a6bfd9276f0b3177cc206376bad968",
-                "sha256:9aa4f34431a442dda856bafc959bcf296cb5802f370361604c440093c702b17c"
+                "sha256:0e24771ceb63ae18ab0d6a7b31e208a0ace7941adae785260840b123888f706c",
+                "sha256:70bff95703a09f0a67473a22d13be36a158ab6e8facc59e64454a26b14690908"
             ],
-            "version": "==10.1.0"
+            "version": "==10.0.0"
         },
         "lxml": {
             "hashes": [
@@ -581,11 +581,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:5c7d9fd4b972a4a4d0c6d0278447bec82508cc82a35d6671ce68687ffca4d524",
-                "sha256:9d7cc09169615e4f763ddbc3f9951f281532e262b228fb77899d737b98877839"
+                "sha256:393ab7ee45e8ee6d9f522b074cf32b7a843d1131e430a9c51c2894a3a92c806e",
+                "sha256:e851405db384e6e712881d9a2e968541cfb2ccee6b1ad107b7853f679c95c76b"
             ],
             "index": "pypi",
-            "version": "==0.12.4"
+            "version": "==0.12.5"
         },
         "thoth-python": {
             "hashes": [
