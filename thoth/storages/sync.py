@@ -460,7 +460,7 @@ def sync_inspection_documents(
     is_local: bool = False,
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
-    from amun import get_inspection_job_log
+    from amun import get_inspection_job_logs
 
     if is_local:
         raise NotImplementedError(
