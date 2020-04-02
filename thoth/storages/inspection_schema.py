@@ -32,6 +32,7 @@ INSPECTION_SPECIFICATION_SCHEMA = Schema(
         Optional("environment"): list,
         Optional("files"): list,
         Optional("identifier"): str,
+        Optional("package_manager"): str,
         Optional("packages"): list,
         Optional("parallelism", default=1): int,
         Optional("python"): dict,
