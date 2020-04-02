@@ -3683,31 +3683,33 @@ class GraphDatabase(SQLBase):
             .filter(InspectionRun.inspection_document_id == inspection_document_id)
             .first()
         )
-        if inspection_batch and inspection_batch.dependency_monkey_run_id:
+
+        if inspection_batch and inspection_batch.dependency_monkey_batch_id:
             # If inspection was run through Dependency Monkey
 
             # INSERT…ON CONFLICT (Upsert)
             # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
             # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
-            row = (
-                insert(InspectionBatch)
-                .values(
-                    id=inspection_batch.dependency_monkey_run_id,
-                    inspection_document_id=inspection_document_id,
-                    dependency_monkey_run_id=inspection_batch.dependency_monkey_run_id,
-                    inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
-                )
-                .on_conflict_do_update(
-                    index_elements=["id"],
-                    set_=dict(
-                        inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
-                        inspection_document_id=inspection_document_id,
-                        datetime=document.get("created"),
-                        amun_version=None,  # TODO: propagate Amun version here which should match API version
-                    ),
-                )
-                .compile(dialect=postgresql.dialect())
+            insert_stmt = insert(InspectionRun).values(
+                id=inspection_batch.dependency_monkey_batch_id,
+                inspection_document_id=inspection_document_id,
+                dependency_monkey_batch_id=inspection_batch.dependency_monkey_batch_id,
+                inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
             )
+            do_update_stmt = insert_stmt.on_conflict_do_update(
+                index_elements=["id"],
+                set_=dict(
+                    amun_version=None,  # TODO: propagate Amun version here which should match API version
+                    batch_size=document["specification"].get("batch_size"),
+                    batch_name=document["specification"].get("batch_name"),
+                    inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
+                    inspection_document_id=inspection_document_id,
+                    datetime=document.get("created"),
+                ),
+            )
+
+            session.execute(do_update_stmt)
+
         else:
             inspection_batch, _ = InspectionBatch.get_or_create(
                 session,
@@ -3789,57 +3791,6 @@ class GraphDatabase(SQLBase):
                 software_environment_id=software_environment.id,
                 hardware_information_id=hardware_information.id,
             )
-
-            if inspection_run and inspection_run.dependency_monkey_run_id:
-                # If inspection was run through Dependency Monkey
-
-                # INSERT…ON CONFLICT (Upsert)
-                # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
-                # https://docs.sqlalchemy.org/en/13/errors.html#sql-expression-language compile required
-                insert_stmt = insert(InspectionRun).values(
-                    id=inspection_run.dependency_monkey_run_id,
-                    inspection_document_id=inspection_document_id,
-                    dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
-                    inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
-                )
-                do_update_stmt = insert_stmt.on_conflict_do_update(
-                    index_elements=["id"],
-                    set_=dict(
-                        inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
-                        inspection_document_id=inspection_document_id,
-                        datetime=document.get("created"),
-                        amun_version=None,  # TODO: propagate Amun version here which should match API version
-                        build_requests_cpu=build_cpu,
-                        build_requests_memory=build_memory,
-                        run_requests_cpu=run_cpu,
-                        run_requests_memory=run_memory,
-                        build_software_environment_id=build_software_environment.id,
-                        build_hardware_information_id=build_hardware_information.id,
-                        run_software_environment_id=run_software_environment.id,
-                        run_hardware_information_id=run_hardware_information.id,
-                        inspection_software_stack_id=software_stack.id if software_stack else None,
-                    ),
-                )
-
-                session.execute(do_update_stmt)
-
-            else:
-                inspection_run, _ = InspectionRun.get_or_create(
-                    session,
-                    inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
-                    inspection_document_id=inspection_document_id,
-                    datetime=document.get("created"),
-                    amun_version=None,  # TODO: propagate Amun version here which should match API version
-                    build_requests_cpu=build_cpu,
-                    build_requests_memory=build_memory,
-                    run_requests_cpu=run_cpu,
-                    run_requests_memory=run_memory,
-                    build_software_environment_id=build_software_environment.id,
-                    build_hardware_information_id=build_hardware_information.id,
-                    run_software_environment_id=run_software_environment.id,
-                    run_hardware_information_id=run_hardware_information.id,
-                    inspection_software_stack_id=software_stack.id if software_stack else None,
-                )
 
             if document["specification"].get("script"):  # We have run an inspection job.
 
