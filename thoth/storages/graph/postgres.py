@@ -2277,12 +2277,13 @@ class GraphDatabase(SQLBase):
         stack = deque((initial_stack_entry,))
         seen_tuples = {(package_name, package_version, index_url)}
         while stack:
-            extras, *package_tuple = stack.pop()
+            extras, package_name, package_version, index_url, = stack.pop()
+            package_tuple = (package_name, package_version, index_url)
 
             configurations = self.get_python_package_version_records(
-                package_name=package_tuple[0],
-                package_version=package_tuple[1],
-                index_url=package_tuple[2],
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
