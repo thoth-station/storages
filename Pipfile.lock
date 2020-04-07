@@ -579,11 +579,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:9b612204e50d88489928f6dd3fe529822cc28a3fb0b5a2ec002f6288344cd491",
-                "sha256:a9e4a9dffc2d13036542d5260b4e54d26d77dcb9b8652e0579b636556f9d4668"
+                "sha256:419af5a6f02279371c1220fd13a14d7ab7f1479a3bb5b03c88592d4bed43f1ee",
+                "sha256:8c89d7e4302bf27d39361f1782c48f44266f38452a2e59ece5f8213d30af5216"
             ],
             "index": "pypi",
-            "version": "==0.12.6"
+            "version": "==0.12.7"
         },
         "thoth-python": {
             "hashes": [
@@ -1305,10 +1305,10 @@
         },
         "pbr": {
             "hashes": [
-                "sha256:139d2625547dbfa5fb0b81daebb39601c478c21956dc57e2e07b74450a8c506b",
-                "sha256:61aa52a0f18b71c5cc58232d2cf8f8d09cd67fcad60b742a60124cb8d6951488"
+                "sha256:07f558fece33b05caf857474a366dfcc00562bca13dd8b47b2b3e22d9f9bf55c",
+                "sha256:579170e23f8e0c2f24b0de612f71f648eccb79fb1322c814ae6b3c07b5ba23e8"
             ],
-            "version": "==5.4.4"
+            "version": "==5.4.5"
         },
         "pluggy": {
             "hashes": [
