@@ -4399,6 +4399,45 @@ class GraphDatabase(SQLBase):
 
         return importlib_metadata
 
+    def sync_revsolver_result(self, document: Dict[str, Any]) -> None:
+        """Sync results of the reverse solver.
+
+        This updates relations for DependsOn on a new package release.
+        """
+        dependency_name = document["metadata"]["arguments"]["solve"]["name"]
+        dependency_version = document["metadata"]["arguments"]["solve"]["version"]
+
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
+                session,
+                package_name=dependency_name,
+                package_version=dependency_version,
+                python_package_index_id=None,
+            )
+
+            for entry in document["result"]:
+                python_package_version = (
+                    session.query(PythonPackageVersion)
+                    .filter(PythonPackageVersion.package_name == entry["package_name"])
+                    .filter(PythonPackageVersion.package_version == entry["package_version"])
+                    .filter(PythonPackageVersion.os_name == entry["os_name"])
+                    .filter(PythonPackageVersion.os_version == entry["os_version"])
+                    .filter(PythonPackageVersion.python_version == entry["python_version"])
+                    .join(PythonPackageIndex)
+                    .filter(PythonPackageIndex.url == entry["index_url"])
+                    .one()
+                )
+
+                DependsOn.get_or_create(
+                    session,
+                    version=python_package_version,
+                    entity=python_package_version_entity,
+                    version_range=entry["version_range"],
+                    marker=entry["marker"],
+                    extra=entry["extra"],
+                    marker_evaluation_result=entry["marker_evaluation_result"],
+                )
+
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)

@@ -32,6 +32,7 @@ from amun import is_inspection_finished
 from amun import has_inspection_job
 
 from .solvers import SolverResultsStore
+from .revsolvers import RevSolverResultsStore
 from .analyses import AnalysisResultsStore
 from .buildlogs_analyses import BuildLogsAnalysisResultsStore
 from .package_analyses import PackageAnalysisResultsStore
@@ -143,6 +144,55 @@ def sync_solver_documents(
         else:
             _LOGGER.info(f"Sync of solver document with id {document_id!r} skipped - already synced")
             skipped += 1
+
+    return processed, synced, skipped, failed
+
+
+def sync_revsolver_documents(
+    document_ids: Optional[List[str]] = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: Optional[GraphDatabase] = None,
+    is_local: bool = False,
+) -> tuple:
+    """Sync reverse solver documents into graph."""
+    if is_local and not document_ids:
+        raise ValueError(
+            "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
+        )
+
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
+
+    if not is_local:
+        revsolver_store = RevSolverResultsStore()
+        revsolver_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for document_id in document_ids or revsolver_store.get_document_listing():
+        processed += 1
+        try:
+            if is_local:
+                _LOGGER.debug("Loading document from a local file: %r", document_id)
+                with open(document_id, "r") as document_file:
+                    document = json.loads(document_file.read())
+            else:
+                _LOGGER.info(
+                    "Syncing reverse solver document from %r with id %r to graph",
+                    revsolver_store.ceph.host,
+                    document_id
+                )
+                document = revsolver_store.retrieve_document(document_id)
+
+            graph.sync_revsolver_result(document)
+            synced += 1
+        except Exception:
+            if not graceful:
+                raise
+
+            _LOGGER.exception("Failed to sync reverse solver result with document id %r", document_id)
+            failed += 1
 
     return processed, synced, skipped, failed
 
@@ -512,6 +562,7 @@ _HANDLERS_MAPPING = {
     "package-extract": sync_analysis_documents,
     "provenance-checker": sync_provenance_checker_documents,
     "solver": sync_solver_documents,
+    "revsolver": sync_revsolver_documents,
 }
 
 
