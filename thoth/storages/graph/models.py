@@ -82,7 +82,8 @@ class PythonPackageVersion(Base, BaseExtension):
         + [
             UniqueConstraint(
                 "package_name", "package_version", "python_package_index_id", "os_name", "os_version", "python_version"
-            )
+            ),
+            Index("python_package_version_environment_idx", "os_name", "os_version", "python_version"),
         ]
     )
 
@@ -166,7 +167,8 @@ class PythonPackageVersionEntity(Base, BaseExtension):
             "python_package_index_id",
             unique=True,
         ),
-        Index("python_package_version_entity_id_idx", "id", unique=True)
+        Index("python_package_version_entity_id_idx", "id", unique=True),
+        Index("python_package_version_entity_package_name_idx", "package_name"),
     )
 
 
@@ -186,7 +188,10 @@ class DependsOn(Base, BaseExtension):
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
 
-    __table_args__ = (Index("depends_on_version_id_idx", "version_id"),)
+    __table_args__ = (
+        Index("depends_on_version_id_idx", "version_id"),
+        Index("depends_on_entity_id_idx", "entity_id"),
+    )
 
 
 class EcosystemSolver(Base, BaseExtension):
