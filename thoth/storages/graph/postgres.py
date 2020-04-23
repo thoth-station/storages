@@ -2447,6 +2447,9 @@ class GraphDatabase(SQLBase):
             "package_name": "thoth-worker",
             "package_version": "0.0.2",
             "version_range": ">=1.0.0",
+            "marker_evaluation_result": True,
+            "marker": None,
+            "extra": None,
           }
         ]
         """
