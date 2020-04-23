@@ -2425,7 +2425,7 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
-    def get_dependents(
+    def get_python_package_version_dependents_all(
         self,
         package_name: str,
         *,
