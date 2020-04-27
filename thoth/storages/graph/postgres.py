@@ -2425,6 +2425,79 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
+    def get_python_package_version_dependents_all(
+        self,
+        package_name: str,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        start_offset: int = 0,
+        count: int = DEFAULT_COUNT,
+    ) -> List[Dict[str, Any]]:
+        """Get dependents for the given package.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_dependents("selinon", os_name="rhel", os_version="8", python_version="3.6")
+        [
+          {
+            "index_url": "https://pypi.org/simple",
+            "package_name": "thoth-worker",
+            "package_version": "0.0.2",
+            "version_range": ">=1.0.0",
+            "marker_evaluation_result": True,
+            "marker": None,
+            "extra": None,
+          }
+        ]
+        """
+        package_name = self.normalize_python_package_name(package_name)
+        os_version = self.normalize_os_version(os_name, os_version)
+
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersionEntity)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+                .join(DependsOn)
+            )
+
+            query = query.join(PythonPackageVersion)
+
+            if os_name is not None:
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version is not None:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version is not None:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            query_result = query.distinct().join(PythonPackageIndex).offset(start_offset).limit(count).with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+                DependsOn.version_range,
+                DependsOn.marker_evaluation_result,
+                DependsOn.marker,
+                DependsOn.extra,
+            ).all()
+
+            result = []
+            for entry in query_result:
+                result.append({
+                    "package_name": entry[0],
+                    "package_version": entry[1],
+                    "index_url": entry[2],
+                    "version_range": entry[3],
+                    "marker_evaluation_result": entry[4],
+                    "marker": entry[5],
+                    "extra": entry[6],
+                })
+
+            return result
+
     @lru_cache(maxsize=_GET_DEPENDS_ON_CACHE_SIZE)
     def get_depends_on(
         self,
