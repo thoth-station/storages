@@ -4561,13 +4561,13 @@ class GraphDatabase(SQLBase):
                                     "Multiple extra detected for dependency %r in version %r required "
                                     "by %r in version %r from index %r with marker %r, only the "
                                     "first extra will be used: %r",
-                                    dependency["name"],
+                                    dependency["package_name"],
                                     dependency_version,
                                     package_name,
                                     package_version,
                                     index_url,
                                     dependency.get("marker"),
-                                    dependency_version["extra"],
+                                    dependency.get("extra"),
                                 )
 
                             DependsOn.get_or_create(
