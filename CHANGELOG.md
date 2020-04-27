@@ -4150,3 +4150,35 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.22.7 (2020-03-30T10:12:52)
 * Drop methods tools to gain performance
 * :pushpin: Automatic update of dependency boto3 from 1.12.30 to 1.12.31
+
+## Release 0.22.8 (2020-04-27T09:17:40)
+* Corrected wrong keys used in solver sync
+* :pushpin: Automatic update of dependency pytest-mypy from 0.6.1 to 0.6.2
+* :pushpin: Automatic update of dependency thoth-common from 0.12.10 to 0.13.0
+* :pushpin: Automatic update of dependency boto3 from 1.12.43 to 1.12.46
+* Adjust method name based on review comment
+* Adjust commit message
+* :pushpin: Automatic update of dependency thoth-common from 0.12.9 to 0.12.10
+* Add logic for syncing revsolver result
+* Relock to fix sqlalchemy release hashes
+* Introduce get_dependents query
+* :pushpin: Automatic update of dependency boto3 from 1.12.38 to 1.12.39
+* :pushpin: Automatic update of dependency thoth-common from 0.12.8 to 0.12.9
+* :pushpin: Automatic update of dependency thoth-common from 0.12.7 to 0.12.8
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.15 to 1.3.16
+* :pushpin: Automatic update of dependency boto3 from 1.12.37 to 1.12.38
+* :pushpin: Automatic update of dependency thoth-common from 0.12.6 to 0.12.7
+* :pushpin: Automatic update of dependency boto3 from 1.12.36 to 1.12.37
+* :pushpin: Automatic update of dependency psycopg2-binary from 2.8.4 to 2.8.5
+* Fix return value
+* :pushpin: Automatic update of dependency pytest-mypy from 0.6.0 to 0.6.1
+* :pushpin: Automatic update of dependency boto3 from 1.12.35 to 1.12.36
+* Use RHEL 8
+* :pushpin: Automatic update of dependency boto3 from 1.12.34 to 1.12.35
+* :pushpin: Automatic update of dependency thoth-common from 0.12.5 to 0.12.6
+* :pushpin: Automatic update of dependency boto3 from 1.12.33 to 1.12.34
+* :pushpin: Automatic update of dependency pyyaml from 3.13 to 5.3.1
+* :pushpin: Automatic update of dependency thoth-common from 0.12.4 to 0.12.5
+* :pushpin: Automatic update of dependency boto3 from 1.12.32 to 1.12.33
+* :pushpin: Automatic update of dependency boto3 from 1.12.31 to 1.12.32
+* add assignments to query
