@@ -363,6 +363,14 @@ class GraphDatabase(SQLBase):
         # Discard any minor release, if present.
         return os_version.split(".", maxsplit=1)[0]
 
+    @staticmethod
+    def map_os_name(os_name: Optional[str]) -> Optional[str]:
+        """Map operating system name."""
+        if os_name == "ubi":
+            return "rhel"
+
+        return os_name
+
     @classmethod
     def parse_python_solver_name(cls, solver_name: str) -> dict:
         """Parse os and Python identifiers encoded into solver name."""
@@ -4783,6 +4791,14 @@ class GraphDatabase(SQLBase):
         re_run_adviser_id = (cli_arguments.get("metadata") or {}).get("re_run_adviser_id")
         is_s2i = (cli_arguments.get("metadata") or {}).get("is_s2i")
         runtime_environment = parameters["project"].get("runtime_environment")
+
+        os = runtime_environment.get("operating_system", {})
+        if os:
+            os_name = runtime_environment["operating_system"].get("name")
+            if os_name:
+                runtime_environment["operating_system"]["name"] = self.map_os_name(
+                    os_name=runtime_environment["operating_system"]["name"]
+                )
 
         need_re_run = False
 
