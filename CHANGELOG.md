@@ -4182,3 +4182,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.12.32 to 1.12.33
 * :pushpin: Automatic update of dependency boto3 from 1.12.31 to 1.12.32
 * add assignments to query
+
+## Release 0.22.9 (2020-04-27T20:48:26)
+* Map ubi to rhel
