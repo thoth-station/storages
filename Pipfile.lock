@@ -583,10 +583,10 @@
         },
         "sqlalchemy-utils": {
             "hashes": [
-                "sha256:f268af5bc03597fe7690d60df3e5f1193254a83e07e4686f720f61587ec4493a"
+                "sha256:61dd50924c5805fdc264342b286b43adf24aba2144e064a943826b07e76c2f5a"
             ],
             "index": "pypi",
-            "version": "==0.36.3"
+            "version": "==0.36.4"
         },
         "thoth-analyzer": {
             "hashes": [
