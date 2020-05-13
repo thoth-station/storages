@@ -5118,7 +5118,7 @@ class GraphDatabase(SQLBase):
         return result
 
     def get_entity_count(self, entity: Union[Base, BaseExtension]) -> int:
-        """Get dictionary mapping performance tables to records count."""
+        """Get count of a specific entity in the database."""
         with self._session_scope() as session:
             result = session.query(func.count(entity.id)).scalar()
 
