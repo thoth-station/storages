@@ -56,6 +56,8 @@ from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
 from thoth.common import OpenShift
 
+from .models_base import BaseExtension
+from .models_base import Base
 from .models import AdviserRun
 from .models import BuildLogAnalyzerRun
 from .models import CVE
@@ -5112,6 +5114,13 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             for pi_model in PERFORMANCE_MODELS_ML_FRAMEWORKS:
                 result[pi_model.__tablename__] = session.query(pi_model).filter_by(component=component).count()
+
+        return result
+
+    def get_entity_count(self, entity: Union[Base, BaseExtension]) -> int:
+        """Get count of a specific entity in the database."""
+        with self._session_scope() as session:
+            result = session.query(func.count(entity.id)).scalar()
 
         return result
 
