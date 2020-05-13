@@ -4185,3 +4185,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.22.9 (2020-04-27T20:48:26)
 * Map ubi to rhel
+
+## Release 0.22.10 (2020-05-13T14:19:08)
+* Add correct docstring
+* Add query to count a table
+* :pushpin: Automatic update of dependency boto3 from 1.13.5 to 1.13.6
+* :pushpin: Automatic update of dependency pytest from 5.4.1 to 5.4.2
+* :pushpin: Automatic update of dependency boto3 from 1.13.4 to 1.13.5
+* :pushpin: Automatic update of dependency boto3 from 1.13.3 to 1.13.4
+* :pushpin: Automatic update of dependency boto3 from 1.13.2 to 1.13.3
+* :pushpin: Automatic dependency re-locking
+* :pushpin: Automatic update of dependency boto3 from 1.12.47 to 1.12.49
