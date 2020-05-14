@@ -33,3 +33,4 @@ Query Name Template in Thoth
 | 7 | ``get_<object>()`` Get a specific record according to the input parameters in the function.. | ``Dict[str,Any] or List[str]`` |
 | 8 | ``<object>_exists()`` Query to check if a specific record with specific attributes exists in the database. | ``bool`` |
 | 9 | ``has_<object><statement>()`` Query to check if a specific record has a specific value of an attribute. | ``bool`` |
+| 10 | ``is_<object><flag/statement>`` Returns boolean value indicating the value of the flag or statement. | ``bool`` |
