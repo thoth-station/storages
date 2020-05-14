@@ -1471,6 +1471,26 @@ class PythonPackageMetadataDistutils(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataDistutils", back_populates="python_package_metadata_distutils")
 
 
+class KebechetGithubAppInstalltions(Base, BaseExtension):
+    """Kebechet Github App Installations.
+
+    slug = namespace/repository (ex - thoth-station/advisor)
+    repo_name = repository (ex - advisor)
+    private = True or False
+    installation_id = proviced by github (ex - 236821515)
+    """
+
+    __tablename__ = "kebechet_github_installations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    slug = Column(Text, nullable=False)
+    repo_name = Column(Text, nullable=True)
+    private = Column(Boolean, nullable=True)
+    installation_id = Column(Text, nullable=True)
+
+    __table_args__ = (UniqueConstraint("slug"), Index("slug", unique=True))
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1510,6 +1530,7 @@ ALL_MAIN_MODELS = frozenset(
         RPMRequirement,
         SoftwareEnvironment,
         VersionedSymbol,
+        KebechetGithubAppInstalltions
     )
 )
 
