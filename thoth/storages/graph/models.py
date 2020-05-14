@@ -1505,6 +1505,7 @@ ALL_MAIN_MODELS = frozenset(
         ExternalSoftwareEnvironment,
         HardwareInformation,
         InspectionRun,
+        KebechetGithubAppInstalltions,
         PackageAnalyzerRun,
         PackageExtractRun,
         ProvenanceCheckerRun,
@@ -1529,8 +1530,7 @@ ALL_MAIN_MODELS = frozenset(
         RPMPackageVersion,
         RPMRequirement,
         SoftwareEnvironment,
-        VersionedSymbol,
-        KebechetGithubAppInstalltions
+        VersionedSymbol
     )
 )
 
