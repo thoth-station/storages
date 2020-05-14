@@ -1483,12 +1483,10 @@ class KebechetGithubAppInstalltions(Base, BaseExtension):
     __tablename__ = "kebechet_github_installations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    slug = Column(Text, nullable=False)
+    slug = Column(Text, nullable=False, unique=True)
     repo_name = Column(Text, nullable=True)
     private = Column(Boolean, nullable=True)
     installation_id = Column(Text, nullable=True)
-
-    __table_args__ = (UniqueConstraint("slug"), Index("slug", unique=True))
 
 
 ALL_MAIN_MODELS = frozenset(
