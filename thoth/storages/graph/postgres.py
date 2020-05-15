@@ -3939,7 +3939,7 @@ class GraphDatabase(SQLBase):
         package_version: str,
         index_url: str,
     ) -> bool:
-        """Check whether is missing flag is set for python package version."""
+        """Check whether is_missing flag is set for python package version."""
         with self._session_scope as session:
             query = (
                 session.query(PythonPackageVersion)
