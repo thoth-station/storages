@@ -3933,6 +3933,25 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session='fetch')
             )
 
+    def is_python_package_version_is_missing(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+    ) -> bool:
+        """Check whether is_missing flag is set for python package version."""
+        with self._session_scope as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageVersion.package_name == package_name)
+                .filter(PythonPackageVersion.package_version == package_version)
+                .filter(PythonPackageIndex.url == index_url)
+                .with_entities(PythonPackageVersion.is_missing)
+            )
+
+            return query.first()[0]
+
     def get_adviser_run_origins_all(
         self,
         package_name: str = None,
