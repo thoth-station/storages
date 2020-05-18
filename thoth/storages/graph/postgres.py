@@ -3950,6 +3950,12 @@ class GraphDatabase(SQLBase):
                 .with_entities(PythonPackageVersion.is_missing)
             )
 
+            if query.first() is None:
+                raise NotFoundError(
+                    f"The given package {package_name!r} in version {package_version!r} "
+                    f"from {index_url!r} was not found"
+                )
+
             return query.first()[0]
 
     def get_adviser_run_origins_all(
