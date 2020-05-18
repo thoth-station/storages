@@ -1487,6 +1487,7 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     repo_name = Column(Text, nullable=False)
     private = Column(Boolean, nullable=False)
     installation_id = Column(Text, nullable=False)
+    is_active = Column(Boolean, nullable=False)
 
 
 ALL_MAIN_MODELS = frozenset(
