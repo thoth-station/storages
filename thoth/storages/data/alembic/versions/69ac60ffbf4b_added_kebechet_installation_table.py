@@ -1,8 +1,8 @@
-"""Added Kebechet Installation Table.
+"""Added Kebechet installation table
 
-Revision ID: 77b74d7f0f85
+Revision ID: 69ac60ffbf4b
 Revises: a7442899ef28
-Create Date: 2020-05-14 21:16:29.635409+00:00
+Create Date: 2020-05-18 17:53:52.825181+00:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '77b74d7f0f85'
+revision = '69ac60ffbf4b'
 down_revision = 'a7442899ef28'
 branch_labels = None
 depends_on = None
@@ -21,9 +21,9 @@ def upgrade():
     op.create_table('kebechet_github_installations',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('slug', sa.Text(), nullable=False),
-    sa.Column('repo_name', sa.Text(), nullable=True),
-    sa.Column('private', sa.Boolean(), nullable=True),
-    sa.Column('installation_id', sa.Text(), nullable=True),
+    sa.Column('repo_name', sa.Text(), nullable=False),
+    sa.Column('private', sa.Boolean(), nullable=False),
+    sa.Column('installation_id', sa.Text(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('slug')
     )

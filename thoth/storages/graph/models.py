@@ -1471,7 +1471,7 @@ class PythonPackageMetadataDistutils(Base, BaseExtension):
     python_packages_metadata = relationship("HasMetadataDistutils", back_populates="python_package_metadata_distutils")
 
 
-class KebechetGithubAppInstalltions(Base, BaseExtension):
+class KebechetGithubAppInstallations(Base, BaseExtension):
     """Kebechet Github App Installations.
 
     slug = namespace/repository (ex - thoth-station/advisor)
@@ -1503,7 +1503,7 @@ ALL_MAIN_MODELS = frozenset(
         ExternalSoftwareEnvironment,
         HardwareInformation,
         InspectionRun,
-        KebechetGithubAppInstalltions,
+        KebechetGithubAppInstallations,
         PackageAnalyzerRun,
         PackageExtractRun,
         ProvenanceCheckerRun,
