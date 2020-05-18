@@ -1477,16 +1477,16 @@ class KebechetGithubAppInstalltions(Base, BaseExtension):
     slug = namespace/repository (ex - thoth-station/advisor)
     repo_name = repository (ex - advisor)
     private = True or False
-    installation_id = proviced by github (ex - 236821515)
+    installation_id = provided by github (ex - 236821515)
     """
 
     __tablename__ = "kebechet_github_installations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     slug = Column(Text, nullable=False, unique=True)
-    repo_name = Column(Text, nullable=True)
-    private = Column(Boolean, nullable=True)
-    installation_id = Column(Text, nullable=True)
+    repo_name = Column(Text, nullable=False)
+    private = Column(Boolean, nullable=False)
+    installation_id = Column(Text, nullable=False)
 
 
 ALL_MAIN_MODELS = frozenset(
