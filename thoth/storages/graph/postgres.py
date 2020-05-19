@@ -3672,6 +3672,13 @@ class GraphDatabase(SQLBase):
                 return True
             return False
 
+    def get_active_kebechet_installations(self) -> int:
+        """Return the count of active repos with Kebechet installation."""
+        with self._session_scope() as session:
+            count = session.query(KebechetGithubAppInstallations)\
+                .filter(KebechetGithubAppInstallations.is_active is True).count()
+            return count
+
     def create_python_package_version_entity(
         self,
         package_name: str,
