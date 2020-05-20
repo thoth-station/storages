@@ -919,6 +919,7 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
+        is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for solved Python packages versions functions, the query is not executed."""
         return self.__class__._construct_python_package_versions_query(**locals())
@@ -935,6 +936,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        is_missing: Optional[bool] = None,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database.
 
@@ -954,6 +956,7 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
+                is_missing=is_missing,
             )
 
             query = query.offset(start_offset).limit(count)
@@ -973,6 +976,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        is_missing: Optional[bool] = None,
     ) -> int:
         """Retrieve solved Python package versions number in Thoth Database."""
         os_version = self.normalize_os_version(os_name, os_version)
@@ -985,6 +989,7 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
+                is_missing=is_missing,
             )
 
             if distinct:
@@ -3268,6 +3273,7 @@ class GraphDatabase(SQLBase):
         os_name: str = None,
         os_version: str = None,
         python_version: str = None,
+        is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for Python packages versions functions, the query is not executed."""
         query = (
@@ -3298,6 +3304,9 @@ class GraphDatabase(SQLBase):
         if python_version is not None:
             query = query.filter(PythonPackageVersion.python_version == python_version)
 
+        if is_missing is not None:
+            query = query.filter(PythonPackageVersion.is_missing == is_missing)
+
         return query
 
     def get_python_package_versions_all(
@@ -3312,6 +3321,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        is_missing: Optional[bool] = None,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve Python package versions in Thoth Database.
 
@@ -3331,6 +3341,7 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
+                is_missing=is_missing,
             )
 
             query = query.offset(start_offset).limit(count)
@@ -3350,6 +3361,7 @@ class GraphDatabase(SQLBase):
         os_version: str = None,
         python_version: str = None,
         distinct: bool = False,
+        is_missing: Optional[bool] = None,
     ) -> int:
         """Retrieve Python package versions number in Thoth Database."""
         os_version = self.normalize_os_version(os_name, os_version)
@@ -3362,6 +3374,7 @@ class GraphDatabase(SQLBase):
                 os_name=os_name,
                 os_version=os_version,
                 python_version=python_version,
+                is_missing=is_missing,
             )
 
             if distinct:
