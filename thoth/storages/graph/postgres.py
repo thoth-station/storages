@@ -3618,8 +3618,8 @@ class GraphDatabase(SQLBase):
 
         Accepts installation details passed down by Github.
         :rtype: True, False
-        :raises True: if installation existed and was updated
-        :raises False: if installation was newly added.
+        :returns True: if installation existed and was updated
+        :returns False: if installation was newly added.
         """
         with self._session_scope() as session:
             instance = session.query(KebechetGithubAppInstallations)\
@@ -3647,8 +3647,8 @@ class GraphDatabase(SQLBase):
         Passed a slug name to be deactivated.
         Example - slug:'thoth-station/advisor'
         :rtype: True, False
-        :raises True: if installation existed and was deactivated.
-        :raises False: if installation was not found.
+        :returns True: if installation existed and was deactivated.
+        :returns False: if installation was not found.
         """
         with self._session_scope() as session:
             instance = session.query(KebechetGithubAppInstallations)\
