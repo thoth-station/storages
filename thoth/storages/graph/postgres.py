@@ -3640,7 +3640,7 @@ class GraphDatabase(SQLBase):
             if instance:
                 instance.installation_id = installation_id
                 instance.private = private
-                is_active = True
+                instance.is_active = True
                 session.commit()
                 return True
             else:
