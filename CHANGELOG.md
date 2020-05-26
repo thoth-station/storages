@@ -4196,3 +4196,27 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.13.2 to 1.13.3
 * :pushpin: Automatic dependency re-locking
 * :pushpin: Automatic update of dependency boto3 from 1.12.47 to 1.12.49
+
+## Release 0.22.11 (2020-05-21T22:02:23)
+* :pushpin: Automatic update of dependency boto3 from 1.13.14 to 1.13.15
+* :pushpin: Automatic update of dependency thoth-common from 0.13.3 to 0.13.4
+* :pushpin: Automatic update of dependency boto3 from 1.13.13 to 1.13.14
+* :pushpin: Automatic update of dependency boto3 from 1.13.12 to 1.13.13
+* :pushpin: Automatic update of dependency boto3 from 1.13.11 to 1.13.12
+* Add is_missing optional argument to all pypackageversion queries
+* Added is_active column
+* fixed typo and changed migrations
+* Alembic file
+* App columns not nullable
+* Raise NotFoundError if setting is_missing flag for non-existing package
+* :pushpin: Automatic update of dependency boto3 from 1.13.10 to 1.13.11
+* docstring match variable name
+* pytest failing due to hash mismatch
+* Removed table constraints
+* Changed order
+* add new calling convention for flags/statements
+* Updated alembic version
+* function for checking current availability of package
+* Added kebhut table to models
+* :pushpin: Automatic update of dependency boto3 from 1.13.6 to 1.13.9
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.16 to 1.3.17
