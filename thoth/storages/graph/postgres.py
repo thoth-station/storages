@@ -3655,7 +3655,7 @@ class GraphDatabase(SQLBase):
                 return newly_added
 
     def update_kebechet_github_installations_on_is_active(self, slug: str) -> bool:
-        """We deactivate the app on getting an uninstall event.
+        """Deactivate the app on getting an uninstall event.
 
         Passed a slug name to be deactivated.
         Example - slug:'thoth-station/advisor'
