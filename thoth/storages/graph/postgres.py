@@ -95,6 +95,7 @@ from .models import RPMPackageVersion
 from .models import RPMRequirement
 from .models import SoftwareEnvironment
 from .models import VersionedSymbol
+from .models import KebechetGithubAppInstallations
 from .models import ALL_MAIN_MODELS
 
 from .models import Advised
@@ -3622,6 +3623,58 @@ class GraphDatabase(SQLBase):
         )
 
         return hardware_information, software_environment
+
+    def create_github_app_installation(self, slug: str, repo_name: str, private: bool, installation_id: str) -> bool:
+        """Create a record for new installation or reactivate uninstalled installation.
+
+        Example -
+            "installation_id": "236796147",
+            "repo_name": "advisor",
+            "slug": "thoth-station/advisor",
+            "private": False
+
+        Accepts installation details passed down by Github.
+        :rtype: True, False
+        :returns True: if installation existed and was updated
+        :returns False: if installation was newly added.
+        """
+        with self._session_scope() as session:
+            instance = session.query(KebechetGithubAppInstallations)\
+                .filter(KebechetGithubAppInstallations.slug == slug).first()
+            if instance:
+                instance.installation_id = installation_id
+                instance.private = private
+                instance.is_active = True
+                session.commit()
+                return True
+            else:
+                _, newly_added = KebechetGithubAppInstallations.get_or_create(
+                    session,
+                    slug=slug,
+                    repo_name=repo_name,
+                    private=private,
+                    installation_id=installation_id,
+                    is_active=True
+                )
+                return newly_added
+
+    def update_kebechet_github_installations_on_is_active(self, slug: str) -> bool:
+        """Deactivate the app on getting an uninstall event.
+
+        Passed a slug name to be deactivated.
+        Example - slug:'thoth-station/advisor'
+        :rtype: True, False
+        :returns True: if installation existed and was deactivated.
+        :returns False: if installation was not found.
+        """
+        with self._session_scope() as session:
+            instance = session.query(KebechetGithubAppInstallations)\
+                .filter(KebechetGithubAppInstallations.slug == slug).first()
+            if instance:
+                instance.is_active = False
+                session.commit()
+                return True
+            return False
 
     def create_python_package_version_entity(
         self,
