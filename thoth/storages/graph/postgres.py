@@ -2526,6 +2526,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         extras: FrozenSet[Optional[str]] = None,
         marker_evaluation_result: Optional[bool] = None,
+        is_missing: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Get dependencies for the given Python package respecting environment and extras.
 
@@ -2562,6 +2563,9 @@ class GraphDatabase(SQLBase):
 
             if python_version is not None:
                 query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            if is_missing is not None:
+                query = query.filter(PythonPackageVersion.is_missing == is_missing)
 
             query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
 
