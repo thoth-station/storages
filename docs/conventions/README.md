@@ -34,3 +34,4 @@ Query Name Template in Thoth
 | 8 | ``<object>_exists()`` Query to check if a specific record with specific attributes exists in the database. | ``bool`` |
 | 9 | ``has_<object><statement>()`` Query to check if a specific record has a specific value of an attribute. | ``bool`` |
 | 10 | ``is_<object><flag/statement>`` Returns boolean value indicating the value of the flag or statement. | ``bool`` |
+| 11 | ``update_<objects>_on_<attribute_filter>()`` Update a particular object's attribute, selecting it based on a unique constraint. | ``bool`` |
