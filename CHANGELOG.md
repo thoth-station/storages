@@ -4220,3 +4220,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Added kebhut table to models
 * :pushpin: Automatic update of dependency boto3 from 1.13.6 to 1.13.9
 * :pushpin: Automatic update of dependency sqlalchemy from 1.3.16 to 1.3.17
+
+## Release 0.22.12 (2020-05-28T18:31:30)
+* :pushpin: Automatic update of dependency boto3 from 1.13.17 to 1.13.18
+* Changed function name
+* removed is
+* Added method to count active installations
+* :pushpin: Automatic update of dependency thoth-common from 0.13.6 to 0.13.7
+* :pushpin: Automatic update of dependency boto3 from 1.13.16 to 1.13.17
+* add is_missing flag to depends on query
+* Fix typo
+* :pushpin: Automatic update of dependency pytest-cov from 2.8.1 to 2.9.0
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.5 to 0.36.6
+* :pushpin: Automatic update of dependency thoth-common from 0.13.5 to 0.13.6
+* :pushpin: Automatic update of dependency boto3 from 1.13.15 to 1.13.16
+* fixed re-active
+* :pushpin: Automatic update of dependency thoth-common from 0.13.4 to 0.13.5
+* Added update to readme
+* Docstring update
+* Added activate deactivate functions
