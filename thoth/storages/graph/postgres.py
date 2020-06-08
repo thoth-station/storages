@@ -2518,6 +2518,23 @@ class GraphDatabase(SQLBase):
 
             return result
 
+    def python_package_version_depends_on_platform_exists(self, platform: str) -> bool:
+        """Check if the given platform has some records in the database."""
+        with self._session_scope() as session:
+            return session.query(exists().where(DependsOn.platform == platform)).scalar()
+
+    def get_python_package_version_platform_all(self) -> List[str]:
+        """Retrieve all platforms stored in the database."""
+        with self._session_scope() as session:
+            result = (
+                session.query(DependsOn)
+                .with_entities(DependsOn.platform)
+                .distinct()
+                .all()
+            )
+
+            return list(itertools.chain(*result))
+
     @lru_cache(maxsize=_GET_DEPENDS_ON_CACHE_SIZE)
     def get_depends_on(
         self,
