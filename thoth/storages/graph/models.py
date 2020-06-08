@@ -192,6 +192,7 @@ class DependsOn(Base, BaseExtension):
     __table_args__ = (
         Index("depends_on_version_id_idx", "version_id"),
         Index("depends_on_entity_id_idx", "entity_id"),
+        Index("depends_on_platform", "platform"),
     )
 
 
