@@ -184,6 +184,7 @@ class DependsOn(Base, BaseExtension):
     marker = Column(Text, nullable=True)
     extra = Column(Text, nullable=True)
     marker_evaluation_result = Column(Boolean, nullable=False)
+    platform = Column(Text, nullable=False)
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
@@ -191,6 +192,7 @@ class DependsOn(Base, BaseExtension):
     __table_args__ = (
         Index("depends_on_version_id_idx", "version_id"),
         Index("depends_on_entity_id_idx", "entity_id"),
+        Index("depends_on_platform", "platform"),
     )
 
 
