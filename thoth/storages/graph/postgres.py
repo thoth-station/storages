@@ -283,6 +283,10 @@ class GraphDatabase(SQLBase):
             self._sessionmaker = None
             raise
 
+        if not database_exists(self._engine.url):
+            _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
+            return
+
         try:
             if not self.is_schema_up2date():
                 _LOGGER.warning(
