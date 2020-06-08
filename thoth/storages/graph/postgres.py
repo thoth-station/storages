@@ -2530,6 +2530,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
         extras: FrozenSet[Optional[str]] = None,
         marker_evaluation_result: Optional[bool] = None,
+        platform: Optional[str] = None,
         is_missing: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Get dependencies for the given Python package respecting environment and extras.
@@ -2585,6 +2586,9 @@ class GraphDatabase(SQLBase):
 
             if marker_evaluation_result is not None:
                 query = query.filter(DependsOn.marker_evaluation_result == marker_evaluation_result)
+
+            if platform is not None:
+                query = query.filter(DependsOn.platform == platform)
 
             dependencies = (
                 query.join(PythonPackageVersionEntity)
@@ -4638,6 +4642,7 @@ class GraphDatabase(SQLBase):
         os_name = solver_info["os_name"]
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
+        platform = document["result"]["platform"]
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             ecosystem_solver, _ = EcosystemSolver.get_or_create(
@@ -4767,6 +4772,7 @@ class GraphDatabase(SQLBase):
                                 marker=dependency.get("marker"),
                                 extra=dependency["extra"][0] if dependency.get("extra") else None,
                                 marker_evaluation_result=dependency.get("marker_evaluation_result", True),
+                                platform=platform,
                             )
 
             for error_info in document["result"]["errors"]:
