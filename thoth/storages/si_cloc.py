@@ -20,7 +20,7 @@
 from .result_base import ResultStorageBase
 
 
-class SecurityIndicatorResultsStore(ResultStorageBase):
+class SIClocResultsStore(ResultStorageBase):
     """Adapter for persisting CLOC security indicator results."""
 
     RESULT_TYPE = "si-cloc"

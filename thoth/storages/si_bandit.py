@@ -20,7 +20,7 @@
 from .result_base import ResultStorageBase
 
 
-class SecurityIndicatorResultsStore(ResultStorageBase):
+class SIBanditResultsStore(ResultStorageBase):
     """Adapter for persisting bandit security indicator results."""
 
     RESULT_TYPE = "si-bandit"
