@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Adapter for storing security indicators (SI) onto a persistence remote store."""
+"""Adapter for storing CLOC security indicators (SI) onto a persistence remote store."""
 
 from .result_base import ResultStorageBase
 
 
 class SecurityIndicatorResultsStore(ResultStorageBase):
-    """Adapter for persisting recommendation results."""
+    """Adapter for persisting CLOC security indicator results."""
 
-    RESULT_TYPE = "security-indicator"
+    RESULT_TYPE = "si-cloc"
