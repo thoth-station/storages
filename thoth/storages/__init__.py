@@ -45,8 +45,6 @@ from .sync import sync_inspection_documents
 from .sync import sync_package_analysis_documents
 from .sync import sync_provenance_checker_documents
 from .sync import sync_solver_documents
-from .si_bandit import SIBanditResultsStore
-from .si_cloc import SIClocResultsStore
 
 
 __name__ = "thoth-storages"
