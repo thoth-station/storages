@@ -48,4 +48,4 @@ from .si_cloc import SIClocResultsStore
 
 
 __name__ = "thoth-storages"
-__version__ = "0.23.0"
+__version__ = "0.23.1"
