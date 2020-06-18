@@ -30,6 +30,8 @@ from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
 from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
+from .inspections import InspectionBuildsStore
+from .inspections import InspectionStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
