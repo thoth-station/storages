@@ -25,12 +25,6 @@ from typing import Tuple
 from typing import List
 from typing import Optional
 
-from amun import get_inspection_build_log
-from amun import get_inspection_specification
-from amun import get_inspection_status
-from amun import is_inspection_finished
-from amun import has_inspection_job
-
 from .solvers import SolverResultsStore
 from .revsolvers import RevSolverResultsStore
 from .analyses import AnalysisResultsStore
@@ -478,7 +472,12 @@ def sync_inspection_documents(
     is_local: bool = False,
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
+    from amun import get_inspection_build_log
     from amun import get_inspection_job_log
+    from amun import get_inspection_specification
+    from amun import get_inspection_status
+    from amun import has_inspection_job
+    from amun import is_inspection_finished
 
     if is_local:
         raise NotImplementedError("Cannot sync inspection documents from a local file")
