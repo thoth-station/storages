@@ -284,7 +284,10 @@ class GraphDatabase(SQLBase):
             self._sessionmaker = None
             raise
 
-        _LOGGER.warning("Engine URL: %s", str(self._engine.url))
+        print(str(self._engine.url))
+        print(self._engine.url.database)
+        print("URL drivername:", self._engine.url.drivername)
+
         if not database_exists(self._engine.url):
             _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
             return
