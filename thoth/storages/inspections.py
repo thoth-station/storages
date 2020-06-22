@@ -158,3 +158,8 @@ class InspectionStore:
         """Check connections of this adapter."""
         self.builds.check_connection()
         self.results.check_connection()
+
+    def exists(self) -> bool:
+        """Check if the given inspection exists."""
+        # Specification is stored as one of the very first inspection results.
+        return self.builds.ceph.document_exists("specification")
