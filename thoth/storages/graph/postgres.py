@@ -271,7 +271,8 @@ class GraphDatabase(SQLBase):
         try:
             self._engine = create_engine(self.construct_connection_string(), echo=echo)
             self._sessionmaker = sessionmaker(bind=self._engine)
-        except Exception:
+        except Exception as engine_exc:
+            _LOGGER.warning("Failed to create engine: %s", str(engine_exc))
             # Drop engine and session in case of any connection issues so is_connected behaves correctly.
             if self._engine:
                 try:
@@ -283,6 +284,7 @@ class GraphDatabase(SQLBase):
             self._sessionmaker = None
             raise
 
+        _LOGGER.warning("Engine URL: %s", str(self._engine.url))
         if not database_exists(self._engine.url):
             _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
             return
