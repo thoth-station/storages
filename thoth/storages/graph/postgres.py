@@ -298,7 +298,7 @@ class GraphDatabase(SQLBase):
             return
 
         try:
-            if not self.is_schema_up2date(is_connected):
+            if not self.is_schema_up2date():
                 _LOGGER.warning(
                     "Database schema is not up to date, you might encounter issues when manipulating with the database"
                 )
