@@ -30,10 +30,14 @@ from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .graph import GraphDatabase
 from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
+from .inspections import InspectionBuildsStore
+from .inspections import InspectionStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
+from .si_bandit import SIBanditResultsStore
+from .si_cloc import SIClocResultsStore
 from .solvers import SolverResultsStore
 from .sync import sync_adviser_documents
 from .sync import sync_analysis_documents
@@ -43,9 +47,7 @@ from .sync import sync_inspection_documents
 from .sync import sync_package_analysis_documents
 from .sync import sync_provenance_checker_documents
 from .sync import sync_solver_documents
-from .si_bandit import SIBanditResultsStore
-from .si_cloc import SIClocResultsStore
 
 
 __name__ = "thoth-storages"
-__version__ = "0.23.1"
+__version__ = "0.23.2"
