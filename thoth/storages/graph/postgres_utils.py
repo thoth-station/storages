@@ -49,11 +49,10 @@ from sqlalchemy.exc import OperationalError, ProgrammingError
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def database_exists(url):
     """Check if a database exists.
-
     :param url: A SQLAlchemy engine URL.
-
     Performs backend-specific testing to quickly determine if a database
     exists on the server. ::
         database_exists('postgres://postgres@localhost/name')  #=> False
@@ -89,11 +88,9 @@ def database_exists(url):
 
 def create_database(url, encoding="utf8", template=None):
     """Issue the appropriate CREATE DATABASE statement.
-
     :param url: A SQLAlchemy engine URL.
     :param encoding: The encoding to create the database as.
     :param template:
-
         The name of the template from which to create the new database. At the
         moment only supported by PostgreSQL driver.
     To create a database, you can pass a simple URL that would have
