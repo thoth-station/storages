@@ -48,8 +48,6 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy_utils.functions import create_database
-from sqlalchemy_utils.functions import database_exists
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -134,6 +132,8 @@ from .models_performance import PERFORMANCE_MODELS_ML_FRAMEWORKS
 
 from .sql_base import SQLBase
 from .models_base import Base
+from .postgres_utils import database_exists
+from .postgres_utils import create_database
 from .query_result_base import PythonQueryResult
 from .enums import EnvironmentTypeEnum
 from .enums import SoftwareStackTypeEnum
@@ -270,7 +270,8 @@ class GraphDatabase(SQLBase):
         try:
             self._engine = create_engine(self.construct_connection_string(), echo=echo)
             self._sessionmaker = sessionmaker(bind=self._engine)
-        except Exception:
+        except Exception as engine_exc:
+            _LOGGER.warning("Failed to create engine: %s", str(engine_exc))
             # Drop engine and session in case of any connection issues so is_connected behaves correctly.
             if self._engine:
                 try:
@@ -304,6 +305,7 @@ class GraphDatabase(SQLBase):
             raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
 
         if not database_exists(self._engine.url):
+            _LOGGER.info("The database has not been created yet, it will be created now...")
             create_database(self._engine.url)
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
