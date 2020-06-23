@@ -268,12 +268,9 @@ class GraphDatabase(SQLBase):
             raise AlreadyConnected("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
-        #TODO: Remove once https://github.com/kvesteri/sqlalchemy-utils/pull/372 is merged and new release of sqlalchemy_utils is issued
-        is_successfully_started = False
         try:
             self._engine = create_engine(self.construct_connection_string(), echo=echo)
             self._sessionmaker = sessionmaker(bind=self._engine)
-            is_successfully_started = True
         except Exception as engine_exc:
             _LOGGER.warning("Failed to create engine: %s", str(engine_exc))
             # Drop engine and session in case of any connection issues so is_connected behaves correctly.
