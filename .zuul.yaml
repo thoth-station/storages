@@ -2,12 +2,10 @@
     check:
       queue: thoth-station/storages
       jobs:
-        - thoth-coala
         - thoth-pytest
     gate:
       queue: thoth-station/storages
       jobs:
-        - thoth-coala
         - thoth-pytest
     release:
       jobs:
@@ -57,5 +55,4 @@
     kebechet-auto-gate:
       queue: thoth-station/storages
       jobs:
-        - thoth-coala
         - thoth-pytest
