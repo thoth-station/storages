@@ -157,7 +157,6 @@ from ..exceptions import SolverNotRun
 from ..exceptions import NotConnected
 from ..exceptions import AlreadyConnected
 from ..exceptions import DatabaseNotInitialized
-from ..exceptions import SolverNameParseError
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
@@ -362,51 +361,12 @@ class GraphDatabase(SQLBase):
         return PackageVersion.normalize_python_package_version(package_version)
 
     @staticmethod
-    def normalize_os_version(os_name: Optional[str], os_version: Optional[str]) -> Optional[str]:
-        """Normalize operating system version based on operating system used."""
-        if os_name is None or os_version is None or os_name.lower() != "rhel":
-            return os_version
-
-        # Discard any minor release, if present.
-        return os_version.split(".", maxsplit=1)[0]
-
-    @staticmethod
     def map_os_name(os_name: Optional[str]) -> Optional[str]:
         """Map operating system name."""
         if os_name == "ubi":
             return "rhel"
 
         return os_name
-
-    @classmethod
-    def parse_python_solver_name(cls, solver_name: str) -> dict:
-        """Parse os and Python identifiers encoded into solver name."""
-        if solver_name.startswith("solver-"):
-            solver_identifiers = solver_name[len("solver-"):]
-        else:
-            raise SolverNameParseError(f"Solver name has to start with 'solver-' prefix: {solver_name!r}")
-
-        parts = solver_identifiers.split("-")
-        if len(parts) != 3:
-            raise SolverNameParseError(
-                "Solver should be in a form of 'solver-<os_name>-<os_version>-<python_version>, "
-                f"solver name {solver_name!r} does not correspond to this naming schema"
-            )
-
-        python_version = parts[2]
-        if python_version.startswith("py"):
-            python_version = python_version[len("py"):]
-        else:
-            raise SolverNameParseError(
-                f"Python version encoded into Python solver name does not start with 'py' prefix: {solver_name!r}"
-            )
-
-        python_version = ".".join(list(python_version))
-        return {
-            "os_name": parts[0],
-            "os_version": cls.normalize_os_version(parts[0], parts[1]),
-            "python_version": python_version,
-        }
 
     def get_analysis_metadata(self, analysis_document_id: str) -> Dict[str, Any]:
         """Get metadata stored for the given analysis document.
@@ -2875,7 +2835,7 @@ class GraphDatabase(SQLBase):
             result = session.query(software_environment).offset(start_offset).limit(count).all()
             return [model.to_dict() for model in result]
 
-    def get_python_package_index_urls_all(self, enabled: bool = None) -> List[str]:
+    def get_python_package_index_urls_all(self, enabled: Optional[bool] = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
         with self._session_scope() as session:
             query = session.query(PythonPackageIndex)
@@ -4652,7 +4612,7 @@ class GraphDatabase(SQLBase):
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)
         solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
-        solver_info = self.parse_python_solver_name(solver_name)
+        solver_info = OpenShift.parse_python_solver_name(solver_name)
         solver_datetime = document["metadata"]["datetime"]
         solver_version = document["metadata"]["analyzer_version"]
         solver_duration = (document["metadata"].get("duration"),)
