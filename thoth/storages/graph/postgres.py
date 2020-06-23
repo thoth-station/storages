@@ -272,10 +272,8 @@ class GraphDatabase(SQLBase):
         try:
             self._engine = create_engine(self.construct_connection_string(), echo=echo)
             self._sessionmaker = sessionmaker(bind=self._engine)
-            print("Engine started successfully")
             self._is_successfully_started = True
         except Exception as engine_exc:
-            print("Engine did not started successfully", str(engine_exc))
             _LOGGER.warning("Failed to create engine: %s", str(engine_exc))
             # Drop engine and session in case of any connection issues so is_connected behaves correctly.
             if self._engine:
@@ -287,11 +285,6 @@ class GraphDatabase(SQLBase):
             self._engine = None
             self._sessionmaker = None
             raise
-
-        print("Engine URL", str(self._engine.url))
-        print("Engine URL database", self._engine.url.database)
-        print("Engine URL drivername:", self._engine.url.drivername)
-        print("Engine Dialect name", self._engine.dialect.name)
 
         if not self._is_successfully_started:
             _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
@@ -313,10 +306,6 @@ class GraphDatabase(SQLBase):
 
         if not self.is_connected():
             raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
-
-        if not self._is_successfully_started:
-            _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
-            return
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
         alembic_cfg.attributes["configure_logger"] = False
