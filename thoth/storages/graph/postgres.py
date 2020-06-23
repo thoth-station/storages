@@ -132,6 +132,8 @@ from .models_performance import PERFORMANCE_MODELS_ML_FRAMEWORKS
 
 from .sql_base import SQLBase
 from .models_base import Base
+from .postgres_utils import database_exists
+from .postgres_utils import create_database
 from .query_result_base import PythonQueryResult
 from .enums import EnvironmentTypeEnum
 from .enums import SoftwareStackTypeEnum
@@ -285,7 +287,7 @@ class GraphDatabase(SQLBase):
             self._sessionmaker = None
             raise
 
-        if not is_successfully_started:
+        if not database_exists(self._engine.url):
             _LOGGER.warning("The database has not been created yet, no check for schema version is performed")
             return
 
@@ -305,6 +307,10 @@ class GraphDatabase(SQLBase):
 
         if not self.is_connected():
             raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
+
+        if not database_exists(self._engine.url):
+            _LOGGER.info("The database has not been created yet, it will be created now...")
+            create_database(self._engine.url)
 
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
         alembic_cfg.attributes["configure_logger"] = False
