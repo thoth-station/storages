@@ -46,10 +46,6 @@ class DatabaseNotInitialized(ThothStorageException):
     """Raised if trying to perform operations on un-initialized database schema."""
 
 
-class SolverNameParseError(ThothStorageException):
-    """Raised if unable to determine solver information out of solver name run."""
-
-
 class MultipleFoundError(ThothStorageException):
     """Raised if there are multiple entities in the graph database when querying for a single one."""
 

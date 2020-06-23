@@ -24,6 +24,7 @@ from typing import Dict
 from typing import Generator
 
 from .ceph import CephStore
+from .exceptions import NotFoundError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,11 +107,15 @@ class InspectionResultsStore(_InspectionBase):
 
         del items_set
 
-        items.sort(reverse=True)
+        if len(items) == 0:
+            raise NotFoundError(f"No results were found for inspection {self.inspection_id!r}")
+
+        items.sort(reverse=False)
+
         if len(items) != items[-1] + 1:
             _LOGGER.warning("Some of the inspection results are missing")
 
-        return items[-1]
+        return items[-1] + 1
 
     def retrieve_hwinfo(self, item: int) -> Dict[str, Any]:
         """Obtain hardware information for the given inspection run."""
