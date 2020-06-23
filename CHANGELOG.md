@@ -6032,3 +6032,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create initial classes with interface
 * Add .travis.yml configuration file
 * Initial project import
+
+## Release 0.23.3 (2020-06-22T23:31:10)
+* Move imports of amun to local scope
+* Introduce a method for checking if the given inspection exists
+* Fix computing batch size of inspection jobs
+* Add missing exports of inspection adapters
