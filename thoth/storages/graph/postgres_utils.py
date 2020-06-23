@@ -40,6 +40,7 @@
 
 """Utils for postgresql database."""
 
+import os
 import logging
 from copy import copy
 
