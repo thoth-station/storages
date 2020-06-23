@@ -75,7 +75,7 @@ def database_exists(url):
         return result
 
     url = copy(make_url(url))
-    database, url.database = url.database, None
+    database, url.database = url.database, os.getenv('KNOWLEDGE_GRAPH_DATABASE')
     engine = create_engine(url)
 
     if engine.dialect.name == "postgresql":
@@ -106,8 +106,7 @@ def create_database(url, encoding="utf8", template=None):
 
     url = copy(make_url(url))
 
-    database, url.database = url.database, None
-
+    database, url.database = url.database, os.getenv('KNOWLEDGE_GRAPH_DATABASE')
     engine = create_engine(url)
     result_proxy = None
 
