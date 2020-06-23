@@ -48,8 +48,6 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy_utils.functions import create_database
-from sqlalchemy_utils.functions import database_exists
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -268,6 +266,7 @@ class GraphDatabase(SQLBase):
             raise AlreadyConnected("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
+        #TODO: Remove once https://github.com/kvesteri/sqlalchemy-utils/pull/372 is merged and new release of sqlalchemy_utils is released
         is_successfully_started = False
         try:
             self._engine = create_engine(self.construct_connection_string(), echo=echo)
