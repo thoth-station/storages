@@ -6032,3 +6032,24 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create initial classes with interface
 * Add .travis.yml configuration file
 * Initial project import
+
+## Release 0.24.0 (2020-06-23T20:53:00)
+* Add import
+* Add database
+* make coala happy
+* Update .zuul.yaml
+* No inspection result batch size
+* remove variables
+* Reproduce methods specific for postgres
+* Use variable only
+* remove imports
+* Adjust methods
+* small change
+* remove sqlalchemy utils
+* more info
+* more messages
+* Move imports of amun to local scope
+* Introduce a method for checking if the given inspection exists
+* Fix computing batch size of inspection jobs
+* Add missing exports of inspection adapters
+* Remove parts moved to thoth-common
