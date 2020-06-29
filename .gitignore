@@ -5,6 +5,7 @@ __pycache__
 thoth_storages.egg-info/
 .eggs/
 .vscode/
+.idea/
 docs/schema.dia~
 dist/
 schema.groovy

@@ -40,7 +40,7 @@ from .enums import RecommendationTypeEnum
 from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
-
+from thoth.common import ThothAdviserIntegrationEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(
@@ -548,6 +548,17 @@ class AdviserRun(Base, BaseExtension):
     count = Column(Integer, nullable=True)
     limit = Column(Integer, nullable=True)
     origin = Column(Text, nullable=True)
+    source_type = Column(ENUM(
+            ThothAdviserIntegrationEnum.CLI.value,
+            ThothAdviserIntegrationEnum.KEBECHET.value,
+            ThothAdviserIntegrationEnum.S2I.value,
+            ThothAdviserIntegrationEnum.GITHUB_APP.value,
+            ThothAdviserIntegrationEnum.JUPYTER_NOTEBOOK.value,
+            name="source_type",
+            create_type=True,
+        ),
+        nullable=True,
+    )
     is_s2i = Column(Boolean, nullable=True)
     debug = Column(Boolean, nullable=False)
     need_re_run = Column(Boolean, nullable=True)
