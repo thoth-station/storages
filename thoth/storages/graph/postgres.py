@@ -4884,6 +4884,8 @@ class GraphDatabase(SQLBase):
         re_run_adviser_id = (cli_arguments.get("metadata") or {}).get("re_run_adviser_id")
         is_s2i = (cli_arguments.get("metadata") or {}).get("is_s2i")
         runtime_environment = parameters["project"].get("runtime_environment")
+        source_type = (cli_arguments.get("metadata") or {}).get("source_type")
+        source_type = source_type.upper() if source_type else None
 
         os = runtime_environment.get("operating_system", {})
         if os:
@@ -4935,6 +4937,7 @@ class GraphDatabase(SQLBase):
                 "limit": parameters["limit"],
                 "limit_latest_versions": parameters.get("limit_latest_versions"),
                 "origin": origin,
+                "source_type": source_type,
                 "is_s2i": is_s2i,
                 "recommendation_type": parameters["recommendation_type"].upper(),
                 "requirements_format": parameters["requirements_format"].upper(),

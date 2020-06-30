@@ -18,7 +18,7 @@
 """Enum types used in thoth-storages code."""
 
 from enum import Enum
-
+from enum import auto
 
 class EnvironmentTypeEnum(Enum):
     """Class for the environment types."""
@@ -70,3 +70,13 @@ class QuerySortTypeEnum(Enum):
 
     PACKAGE_NAME = "package_name"
     PACKAGE_VERSION = "package_version"
+
+
+class ThothAdviserIntegrationEnum(Enum):
+    """Class for source type enum."""
+
+    CLI = auto()
+    KEBECHET = auto()
+    S2I = auto()
+    GITHUB_APP = auto()
+    JUPYTER_NOTEBOOK = auto()
