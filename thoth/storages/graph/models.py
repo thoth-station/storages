@@ -146,6 +146,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     versions = relationship("DependsOn", back_populates="entity")
     adviser_runs = relationship("HasUnresolved", back_populates="python_package_version_entity")
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
+    si_aggregated_runs = relationship("Aggregated", back_populates="python_package_version_entity")
     build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
@@ -1500,6 +1501,64 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     is_active = Column(Boolean, nullable=False)
 
 
+class SecurityIndicatorAggregatedRun(Base, BaseExtension):
+    """SecurityIndicatorAggregatedRun."""
+
+    __tablename__ = "si_aggregated_run"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    si_aggregated_run_document_id = Column(Text, nullable=False)
+
+    # SI bandit
+    severity_high_confidence_high = Column(Integer, nullable=False)
+    severity_high_confidence_low = Column(Integer, nullable=False)
+    severity_high_confidence_medium = Column(Integer, nullable=False)
+    severity_high_confidence_undefined = Column(Integer, nullable=False)
+    severity_low_confidence_high = Column(Integer, nullable=False)
+    severity_low_confidence_low = Column(Integer, nullable=False)
+    severity_low_confidence_medium = Column(Integer, nullable=False)
+    severity_low_confidence_undefined = Column(Integer, nullable=False)
+    severity_medium_confidence_high = Column(Integer, nullable=False)
+    severity_medium_confidence_low = Column(Integer, nullable=False)
+    severity_medium_confidence_medium = Column(Integer, nullable=False)
+    severity_medium_confidence_undefined = Column(Integer, nullable=False)
+    number_of_analyzed_files = Column(Integer, nullable=False)
+    number_of_files_total = Column(Integer, nullable=False)
+    number_of_files_with_severities = Column(Integer, nullable=False)
+    number_of_filtered_files = Column(Integer, nullable=False)
+
+    # SI cloc
+
+    ## Python files
+    number_of_python_files = Column(Integer, nullable=False)
+    number_of_lines_with_comments_in_python_files = Column(Integer, nullable=False)
+    number_of_blank_lines_in_python_files = Column(Integer, nullable=False)
+    number_of_lines_with_code_in_python_files = Column(Integer, nullable=False)
+
+    ## All files
+    total_number_of_files = Column(Integer, nullable=False)
+    total_number_of_lines = Column(Integer, nullable=False)
+    total_number_of_lines_with_comments = Column(Integer, nullable=False)
+    total_number_of_blank_lines = Column(Integer, nullable=False)
+    total_number_of_lines_with_code = Column(Integer, nullable=False)
+
+    python_package_version_entities = relationship("Aggregated", back_populates="si_aggregated_run")
+
+
+class Aggregated(Base, BaseExtension):
+    """A relation representing a Python package version entity analyzed by a si_aggregated_run."""
+
+    __tablename__ = "aggregated"
+
+    si_aggregated_run_id = Column(Integer, ForeignKey("si_aggregated_run.id", ondelete="CASCADE"), primary_key=True)
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    si_aggregated_run = relationship("SecurityIndicatorAggregatedRun", back_populates="python_package_version_entities")
+    python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="si_aggregated_runs")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         AdviserRun,
@@ -1538,6 +1597,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonSoftwareStack,
         RPMPackageVersion,
         RPMRequirement,
+        SecurityIndicatorAggregatedRun,
         SoftwareEnvironment,
         VersionedSymbol
     )
@@ -1546,6 +1606,7 @@ ALL_MAIN_MODELS = frozenset(
 ALL_RELATION_MODELS = frozenset(
     (
         Advised,
+        Aggregated,
         DebDepends,
         DebPreDepends,
         DebReplaces,
