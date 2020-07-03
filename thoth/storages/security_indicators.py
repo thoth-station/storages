@@ -94,6 +94,6 @@ class SecurityIndicatorsResultsStore:
         """Check connections of this adapter."""
         self.ceph.check_connection()
 
-    def get_document_path_listing(self) -> Generator[str, None, None]:
+    def get_listing(self) -> Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator."""
         return self.ceph.get_document_listing()
