@@ -43,11 +43,11 @@ class SecurityIndicatorStore:
         self.ceph = CephStore(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
-    def retrieve_si_bandit_document(self) -> str:
+    def retrieve_si_bandit_document(self) -> Dict[str, Any]:
         """Retrieve SI bandit document."""
         return self.ceph.retrieve_document("bandit")
 
-    def retrieve_si_cloc_document(self) -> str:
+    def retrieve_si_cloc_document(self) -> Dict[str, Any]:
         """Retrieve SI cloc document."""
         return self.ceph.retrieve_document("cloc")
 
