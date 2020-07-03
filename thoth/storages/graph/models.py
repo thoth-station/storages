@@ -146,7 +146,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     versions = relationship("DependsOn", back_populates="entity")
     adviser_runs = relationship("HasUnresolved", back_populates="python_package_version_entity")
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
-    si_aggregated_runs = relationship("Aggregated", back_populates="python_package_version_entity")
+    si_aggregated_runs = relationship("SIAggregated", back_populates="python_package_version_entity")
     build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
     package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
@@ -1542,13 +1542,13 @@ class SecurityIndicatorAggregatedRun(Base, BaseExtension):
     total_number_of_blank_lines = Column(Integer, nullable=False)
     total_number_of_lines_with_code = Column(Integer, nullable=False)
 
-    python_package_version_entities = relationship("Aggregated", back_populates="si_aggregated_run")
+    python_package_version_entities = relationship("SIAggregated", back_populates="si_aggregated_run")
 
 
-class Aggregated(Base, BaseExtension):
+class SIAggregated(Base, BaseExtension):
     """A relation representing a Python package version entity analyzed by a si_aggregated_run."""
 
-    __tablename__ = "aggregated"
+    __tablename__ = "si_aggregated"
 
     si_aggregated_run_id = Column(Integer, ForeignKey("si_aggregated_run.id", ondelete="CASCADE"), primary_key=True)
     python_package_version_entity_id = Column(
@@ -1606,7 +1606,6 @@ ALL_MAIN_MODELS = frozenset(
 ALL_RELATION_MODELS = frozenset(
     (
         Advised,
-        Aggregated,
         DebDepends,
         DebPreDepends,
         DebReplaces,
@@ -1634,6 +1633,7 @@ ALL_RELATION_MODELS = frozenset(
         PythonDependencyMonkeyRequirements,
         RequiresSymbol,
         RPMRequires,
+        SIAggregated,
         Solved,
     )
 )

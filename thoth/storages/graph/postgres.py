@@ -98,7 +98,6 @@ from .models import KebechetGithubAppInstallations
 from .models import ALL_MAIN_MODELS
 
 from .models import Advised
-from .models import Aggregated
 from .models import DebDepends
 from .models import DebPreDepends
 from .models import DebReplaces
@@ -126,6 +125,7 @@ from .models import InvestigatedFile
 from .models import PythonDependencyMonkeyRequirements
 from .models import RequiresSymbol
 from .models import RPMRequires
+from .models import SIAggregated
 from .models import Solved
 from .models import ALL_RELATION_MODELS
 
@@ -4674,7 +4674,7 @@ class GraphDatabase(SQLBase):
                 total_number_of_lines_with_code=result['SUM.code']
             )
 
-            Aggregated.get_or_create(
+            SIAggregated.get_or_create(
                 session,
                 si_aggregated_run_id=si_aggregated_run.id,
                 python_package_version_entity_id=python_package_version_entity.id,

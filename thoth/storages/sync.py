@@ -590,7 +590,6 @@ def sync_security_indicators_documents(
                         with open(si_aggregated_document_id, "r") as document_file:
                             aggregated_document = json.loads(document_file.read())
                     else:
-                        _LOGGER.info(security_indicator_id)
                         security_indicator_store = SecurityIndicatorStore(security_indicator_id=security_indicator_id)
                         security_indicator_store.connect()
                         _LOGGER.info(
