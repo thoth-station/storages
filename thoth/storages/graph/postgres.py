@@ -4635,7 +4635,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             python_package_index = self._get_or_create_python_package_index(
-                session, index_url=index_url, only_if_enabled=False
+                session, index_url=index_url, only_if_enabled=True
             )
             python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
                 session,
