@@ -36,8 +36,8 @@ from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
-from .si_bandit import SIBanditResultsStore
-from .si_cloc import SIClocResultsStore
+from .security_indicators import SecurityIndicatorStore
+from .security_indicators import SecurityIndicatorsResultsStore
 from .solvers import SolverResultsStore
 from .sync import sync_adviser_documents
 from .sync import sync_analysis_documents
@@ -46,6 +46,7 @@ from .sync import sync_documents
 from .sync import sync_inspection_documents
 from .sync import sync_package_analysis_documents
 from .sync import sync_provenance_checker_documents
+from .sync import sync_security_indicators_documents
 from .sync import sync_solver_documents
 
 

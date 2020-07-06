@@ -25,15 +25,17 @@ from typing import Tuple
 from typing import List
 from typing import Optional
 
-from .solvers import SolverResultsStore
-from .revsolvers import RevSolverResultsStore
 from .analyses import AnalysisResultsStore
-from .buildlogs_analyses import BuildLogsAnalysisResultsStore
-from .package_analyses import PackageAnalysisResultsStore
 from .advisers import AdvisersResultsStore
-from .inspections import InspectionResultsStore
-from .provenance import ProvenanceResultsStore
+from .buildlogs_analyses import BuildLogsAnalysisResultsStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
+from .inspections import InspectionResultsStore
+from .package_analyses import PackageAnalysisResultsStore
+from .provenance import ProvenanceResultsStore
+from .revsolvers import RevSolverResultsStore
+from .security_indicators import SecurityIndicatorStore, SecurityIndicatorsResultsStore
+from .solvers import SolverResultsStore
+
 from .graph import GraphDatabase
 
 _LOGGER = logging.getLogger(__name__)
@@ -548,6 +550,68 @@ def sync_inspection_documents(
 
     return processed, synced, skipped, failed
 
+def sync_security_indicators_documents(
+    document_ids: Optional[List[str]] = None,
+    force: bool = False,
+    graceful: bool = False,
+    graph: Optional[GraphDatabase] = None,
+    is_local: bool = False,
+) -> tuple:
+    """Sync security indicators results into graph."""
+    if is_local and not document_ids:
+        raise ValueError(
+            "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
+        )
+
+    if not graph:
+        graph = GraphDatabase()
+        graph.connect()
+
+    if not is_local:
+        security_store = SecurityIndicatorsResultsStore()
+        security_store.connect()
+
+    processed, synced, skipped, failed = 0, 0, 0, 0
+    for security_indicator_key in document_ids or security_store.get_listing():
+        security_indicator_id = security_indicator_key
+
+        if not is_local:
+            security_indicator_id = security_indicator_key.split("/")[0]
+
+        if is_local or "aggregated" in security_indicator_key:
+            si_aggregated_document_id = f"{security_indicator_id}/aggregated"
+            processed += 1
+
+            if force or not graph.si_aggregated_document_id_exist(os.path.basename(security_indicator_id)):
+                try:
+                    if is_local:
+                        # Adjust local
+                        _LOGGER.debug("Loading document from a local file: %r", si_aggregated_document_id)
+                        with open(si_aggregated_document_id, "r") as document_file:
+                            aggregated_document = json.loads(document_file.read())
+                    else:
+                        security_indicator_store = SecurityIndicatorStore(security_indicator_id=security_indicator_id)
+                        security_indicator_store.connect()
+                        _LOGGER.info(
+                            "Syncing analysis document from %r with id %r to graph", security_indicator_store.ceph.host, security_indicator_id
+                        )
+            
+                        aggregated_document = security_indicator_store.retrieve_si_aggregated_document()
+
+                    graph.sync_security_indicator_aggregated_result(aggregated_document)
+                    synced += 1
+                except Exception:
+                    if not graceful:
+                        raise
+
+                    _LOGGER.exception("Failed to sync analysis result with document id %r", security_indicator_id)
+                    failed += 1
+            else:
+                _LOGGER.info(f"Sync of analysis document with id {security_indicator_id!r} skipped - already synced")
+                skipped += 1
+
+    return processed, synced, skipped, failed
+
 
 # Corresponding mapping of document prefix (before the actual unique document identifier part) to
 # functions which can handle the given document sync.
@@ -562,6 +626,7 @@ _HANDLERS_MAPPING = {
     "provenance-checker": sync_provenance_checker_documents,
     "solver": sync_solver_documents,
     "revsolver": sync_revsolver_documents,
+    "security-indicator": sync_security_indicators_documents
 }
 
 

@@ -91,6 +91,7 @@ from .models import PythonRequirementsLock
 from .models import PythonSoftwareStack
 from .models import RPMPackageVersion
 from .models import RPMRequirement
+from .models import SecurityIndicatorAggregatedRun
 from .models import SoftwareEnvironment
 from .models import VersionedSymbol
 from .models import KebechetGithubAppInstallations
@@ -124,6 +125,7 @@ from .models import InvestigatedFile
 from .models import PythonDependencyMonkeyRequirements
 from .models import RequiresSymbol
 from .models import RPMRequires
+from .models import SIAggregated
 from .models import Solved
 from .models import ALL_RELATION_MODELS
 
@@ -2636,6 +2638,16 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
+    def si_aggregated_document_id_exist(self, si_aggregated_run_document_id: str) -> bool:
+        """Check if the given security indicator aggregated report record exists in the graph database."""
+        with self._session_scope() as session:
+            return (
+                session.query(SecurityIndicatorAggregatedRun)
+                .filter(SecurityIndicatorAggregatedRun.si_aggregated_run_document_id == si_aggregated_run_document_id)
+                .count()
+                > 0
+            )
+
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
         with self._session_scope() as session:
@@ -4609,6 +4621,65 @@ class GraphDatabase(SQLBase):
                     extra=entry["extra"],
                     marker_evaluation_result=entry["marker_evaluation_result"],
                 )
+
+
+    def sync_security_indicator_aggregated_result(self, document: dict) -> None:
+        """Sync the given security-indicator aggregated result to the graph database."""
+        metadata = document['metadata']
+        result = document['result']
+        document_id = metadata['document_id']
+
+        package_name = metadata["arguments"]["app.py"]["package_name"]
+        package_version = metadata["arguments"]["app.py"]["package_version"]
+        index_url = metadata["arguments"]["app.py"]["package_index"]
+
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            python_package_index = self._get_or_create_python_package_index(
+                session, index_url=index_url, only_if_enabled=True
+            )
+            python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=python_package_index.id,
+            )
+
+            si_aggregated_run, _ = SecurityIndicatorAggregatedRun.get_or_create(
+                session,
+                si_aggregated_run_document_id=document_id,
+                severity_high_confidence_high=result.get('SEVERITY.HIGH__CONFIDENCE.HIGH') or 0,
+                severity_high_confidence_low=result.get('SEVERITY.HIGH__CONFIDENCE.LOW') or 0,
+                severity_high_confidence_medium=result.get('SEVERITY.HIGH__CONFIDENCE.MEDIUM') or 0,
+                severity_high_confidence_undefined=result.get('SEVERITY.HIGH__CONFIDENCE.UNDEFINED') or 0,
+                severity_low_confidence_high=result.get('SEVERITY.LOW__CONFIDENCE.HIGH') or 0,
+                severity_low_confidence_low=result.get('SEVERITY.LOW__CONFIDENCE.LOW') or 0,
+                severity_low_confidence_medium=result.get('SEVERITY.LOW__CONFIDENCE.MEDIUM') or 0,
+                severity_low_confidence_undefined=result.get('SEVERITY.LOW__CONFIDENCE.UNDEFINED') or 0,
+                severity_medium_confidence_high=result.get('SEVERITY.MEDIUM__CONFIDENCE.HIGH') or 0,
+                severity_medium_confidence_low=result.get('SEVERITY.MEDIUM__CONFIDENCE.LOW') or 0,
+                severity_medium_confidence_medium=result.get('SEVERITY.MEDIUM__CONFIDENCE.MEDIUM') or 0,
+                severity_medium_confidence_undefined=result.get('SEVERITY.MEDIUM__CONFIDENCE.UNDEFINED') or 0,
+                number_of_analyzed_files=result['number_of_analyzed_files'],
+                number_of_files_total=result['number_of_files_total'],
+                number_of_files_with_severities=result['number_of_files_with_severities'],
+                number_of_filtered_files=result['number_of_filtered_files'],
+                number_of_python_files=result['Python.nFiles'],
+                number_of_lines_with_comments_in_python_files=result['Python.comment'],
+                number_of_blank_lines_in_python_files=result['Python.blank'],
+                number_of_lines_with_code_in_python_files=result['Python.code'],
+                total_number_of_files=result['SUM.nFiles'],
+                total_number_of_lines=result['SUM.n_lines'],
+                total_number_of_lines_with_comments=result['SUM.comment'],
+                total_number_of_blank_lines=result['SUM.blank'],
+                total_number_of_lines_with_code=result['SUM.code']
+            )
+
+            SIAggregated.get_or_create(
+                session,
+                si_aggregated_run_id=si_aggregated_run.id,
+                python_package_version_entity_id=python_package_version_entity.id,
+            )
+
 
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
