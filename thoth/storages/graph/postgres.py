@@ -2183,7 +2183,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         package_version: str,
         index_url: str,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, int]:
         """Get Aggregate Security Indicators (SI) results per Python package version.
 
         Examples:
