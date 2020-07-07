@@ -580,13 +580,13 @@ def sync_security_indicators_documents(
                     with open(si_aggregated_document_id, "r") as document_file:
                         aggregated_document = json.loads(document_file.read())
                 else:
-                    security_indicator_store = SIAggregatedStore(security_indicator_id=security_indicator_id)
-                    security_indicator_store.connect()
+                    si_aggregated_store = SIAggregatedStore(security_indicator_id=security_indicator_id)
+                    si_aggregated_store.connect()
                     _LOGGER.info(
-                        "Syncing analysis document from %r with id %r to graph", security_indicator_store.ceph.host, security_indicator_id
+                        "Syncing analysis document from %r with id %r to graph", si_aggregated_store.ceph.host, security_indicator_id
                     )
         
-                    aggregated_document = security_indicator_store.retrieve_si_aggregated_document()
+                    aggregated_document = si_aggregated_store.retrieve_si_aggregated_document()
 
                 graph.sync_security_indicator_aggregated_result(aggregated_document)
                 synced += 1
