@@ -138,33 +138,33 @@ class InspectionResultsStore(_InspectionBase):
 class InspectionStore:
     """Adapter for manipulating with Amun inspections."""
 
-    __slots__ = ["builds", "results", "inspection_id"]
+    __slots__ = ["build", "results", "inspection_id"]
 
     def __init__(self, inspection_id: str) -> None:
         """A representation of an inspection."""
         self.inspection_id = inspection_id
-        self.builds = InspectionBuildsStore(inspection_id)
+        self.build = InspectionBuildsStore(inspection_id)
         self.results = InspectionResultsStore(inspection_id)
 
     def retrieve_specification(self) -> Dict[str, Any]:
         """Retrieve specification used for this inspection."""
-        return self.builds.retrieve_specification()
+        return self.build.retrieve_specification()
 
     def connect(self) -> None:
         """Connect this adapter."""
-        self.builds.connect()
+        self.build.connect()
         self.results.connect()
 
     def is_connected(self) -> bool:
         """Check if this adapter is connected."""
-        return self.builds.is_connected() and self.results.is_connected()
+        return self.build.is_connected() and self.results.is_connected()
 
     def check_connection(self):
         """Check connections of this adapter."""
-        self.builds.check_connection()
+        self.build.check_connection()
         self.results.check_connection()
 
     def exists(self) -> bool:
         """Check if the given inspection exists."""
         # Specification is stored as one of the very first inspection results.
-        return self.builds.ceph.document_exists("specification")
+        return self.build.ceph.document_exists("specification")
