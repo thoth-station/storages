@@ -567,11 +567,8 @@ def sync_security_indicators_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    if not is_local:
-        security_store = SecurityIndicatorsResultsStore
-
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for security_indicator_id in document_ids or security_store.iter_security_indicators():
+    for security_indicator_id in document_ids or SecurityIndicatorsResultsStore.iter_security_indicators():
 
         processed += 1
 
