@@ -2189,7 +2189,7 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_aggregated_si_per_python_package_version(
+        >>> graph.get_si_aggregated_python_package_version(
             package_name='thoth-common',
             package_version='0.10.0',
             index_url='https://pypi.org/simple'
