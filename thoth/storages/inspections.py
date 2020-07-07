@@ -22,11 +22,26 @@ import logging
 from typing import Any
 from typing import Dict
 from typing import Generator
+from typing import Optional
 
 from .ceph import CephStore
 from .exceptions import NotFoundError
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _get_inspection_prefix(inspection_id: Optional[str] = None) -> str:
+    """Get prefix where inspections store data.
+
+    This configuration matches Amun configmap.
+    """
+    bucket_prefix = os.environ["THOTH_CEPH_BUCKET_PREFIX"]
+    deployment_name = os.environ["THOTH_DEPLOYMENT_NAME"]
+
+    if inspection_id is None:
+        return f'{bucket_prefix}/{deployment_name}/inspections'
+
+    return f'{bucket_prefix}/{deployment_name}/inspections/{inspection_id}'
 
 
 class _InspectionBase:
@@ -46,23 +61,13 @@ class _InspectionBase:
         """Check connection of this adapter."""
         return self.ceph.check_connection()
 
-    @staticmethod
-    def _get_inspection_prefix(inspection_id: str) -> str:
-        """Get prefix where inspections store data.
-
-        This configuration matches Amun configmap.
-        """
-        bucket_prefix = os.environ["THOTH_CEPH_BUCKET_PREFIX"]
-        deployment_name = os.environ["THOTH_DEPLOYMENT_NAME"]
-        return f'{bucket_prefix}/{deployment_name}/inspections/{inspection_id}'
-
 
 class InspectionBuildsStore(_InspectionBase):
     """An adapter for manipulating with inspection builds."""
 
     def __init__(self, inspection_id: str) -> None:
         """Constructor."""
-        prefix = f"{self._get_inspection_prefix(inspection_id)}/build/"
+        prefix = f"{_get_inspection_prefix(inspection_id)}/build/"
         self.ceph = CephStore(prefix=prefix)
         self.inspection_id = inspection_id
 
@@ -84,7 +89,7 @@ class InspectionResultsStore(_InspectionBase):
 
     def __init__(self, inspection_id: str) -> None:
         """Constructor."""
-        prefix = f"{self._get_inspection_prefix(inspection_id)}/results/"
+        prefix = f"{_get_inspection_prefix(inspection_id)}/results/"
         self.ceph = CephStore(prefix=prefix)
         self.ceph.connect()
         self.inspection_id = inspection_id
@@ -168,3 +173,24 @@ class InspectionStore:
         """Check if the given inspection exists."""
         # Specification is stored as one of the very first inspection results.
         return self.builds.ceph.document_exists("specification")
+
+    @classmethod
+    def iter_inspections(cls) -> Generator[str, None, None]:
+        """Iterate over inspection ids stored."""
+        ceph = CephStore(prefix=_get_inspection_prefix())
+        ceph.connect()
+
+        last_id = None
+        for item in ceph.get_document_listing():
+            inspection_id = item.split("/", maxsplit=1)[0]
+            if last_id == inspection_id:
+                # Return only unique inspection ids, discard any results placed under the given prefix.
+                continue
+
+            last_id = inspection_id
+            yield inspection_id
+
+    @classmethod
+    def get_inspection_count(cls) -> int:
+        """Get number of inspection stored."""
+        return sum(1 for _ in cls.iter_inspections())
