@@ -2128,9 +2128,9 @@ class GraphDatabase(SQLBase):
     def _construct_query_get_si_aggregated_python_package_version(
         self,
         session: Session,
-        package_name: str,
-        package_version: str,
-        index_url: str,
+        package_name: Optional[str],
+        package_version: Optional[str],
+        index_url: Optional[str],
     ) -> Query:
         """Construct query for aggregate Security Indicators (SI) results per Python package version functions,
         the query is not executed.
