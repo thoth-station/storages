@@ -33,7 +33,7 @@ from .inspections import InspectionResultsStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .revsolvers import RevSolverResultsStore
-from .security_indicators import SecurityIndicatorStore, SecurityIndicatorsResultsStore
+from .security_indicators import SIAggregatedStore, SecurityIndicatorsResultsStore
 from .solvers import SolverResultsStore
 
 from .graph import GraphDatabase
@@ -567,48 +567,38 @@ def sync_security_indicators_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    if not is_local:
-        security_store = SecurityIndicatorsResultsStore()
-        security_store.connect()
-
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for security_indicator_key in document_ids or security_store.get_listing():
-        security_indicator_id = security_indicator_key
+    for security_indicator_id in document_ids or SecurityIndicatorsResultsStore.iter_security_indicators():
 
-        if not is_local:
-            security_indicator_id = security_indicator_key.split("/")[0]
+        processed += 1
 
-        if is_local or "aggregated" in security_indicator_key:
-            si_aggregated_document_id = f"{security_indicator_id}/aggregated"
-            processed += 1
+        if force or not graph.si_aggregated_document_id_exist(os.path.basename(security_indicator_id)):
+            try:
+                if is_local:
+                    si_aggregated_document_id = f"{security_indicator_id}/aggregated"
+                    _LOGGER.debug("Loading document from a local file: %r", si_aggregated_document_id)
+                    with open(si_aggregated_document_id, "r") as document_file:
+                        aggregated_document = json.loads(document_file.read())
+                else:
+                    si_aggregated_store = SIAggregatedStore(security_indicator_id=security_indicator_id)
+                    si_aggregated_store.connect()
+                    _LOGGER.info(
+                        "Syncing analysis document from %r with id %r to graph", si_aggregated_store.ceph.host, security_indicator_id
+                    )
+        
+                    aggregated_document = si_aggregated_store.retrieve_document()
 
-            if force or not graph.si_aggregated_document_id_exist(os.path.basename(security_indicator_id)):
-                try:
-                    if is_local:
-                        # Adjust local
-                        _LOGGER.debug("Loading document from a local file: %r", si_aggregated_document_id)
-                        with open(si_aggregated_document_id, "r") as document_file:
-                            aggregated_document = json.loads(document_file.read())
-                    else:
-                        security_indicator_store = SecurityIndicatorStore(security_indicator_id=security_indicator_id)
-                        security_indicator_store.connect()
-                        _LOGGER.info(
-                            "Syncing analysis document from %r with id %r to graph", security_indicator_store.ceph.host, security_indicator_id
-                        )
-            
-                        aggregated_document = security_indicator_store.retrieve_si_aggregated_document()
+                graph.sync_security_indicator_aggregated_result(aggregated_document)
+                synced += 1
+            except Exception:
+                if not graceful:
+                    raise
 
-                    graph.sync_security_indicator_aggregated_result(aggregated_document)
-                    synced += 1
-                except Exception:
-                    if not graceful:
-                        raise
-
-                    _LOGGER.exception("Failed to sync analysis result with document id %r", security_indicator_id)
-                    failed += 1
-            else:
-                _LOGGER.info(f"Sync of analysis document with id {security_indicator_id!r} skipped - already synced")
-                skipped += 1
+                _LOGGER.exception("Failed to sync analysis result with document id %r", security_indicator_id)
+                failed += 1
+        else:
+            _LOGGER.info(f"Sync of analysis document with id {security_indicator_id!r} skipped - already synced")
+            skipped += 1
 
     return processed, synced, skipped, failed
 

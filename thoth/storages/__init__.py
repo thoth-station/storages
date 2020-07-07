@@ -36,7 +36,7 @@ from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
-from .security_indicators import SecurityIndicatorStore
+from .security_indicators import SIAggregatedStore, SIBanditStore, SIClocStore
 from .security_indicators import SecurityIndicatorsResultsStore
 from .solvers import SolverResultsStore
 from .sync import sync_adviser_documents
