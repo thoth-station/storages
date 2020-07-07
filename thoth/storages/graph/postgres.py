@@ -2152,12 +2152,10 @@ class GraphDatabase(SQLBase):
             SecurityIndicatorAggregatedRun
         )
 
-        conditions = [
+        query = query.filter(
             SIAggregated.python_package_version_entity_id == SecurityIndicatorAggregatedRun.id,
             PythonPackageVersionEntity.python_package_index_id == PythonPackageIndex.id
-            ]
-
-        query = query.filter(*conditions)
+        )
 
         return query
 
