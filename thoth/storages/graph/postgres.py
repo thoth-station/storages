@@ -2125,6 +2125,117 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return session.query(PackageExtractRun).distinct(PackageExtractRun.analysis_document_id).count()
 
+    def _construct_query_get_si_aggregated_python_package_version(
+        self,
+        session: Session,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+    ) -> Query:
+        """Construct query for aggregate Security Indicators (SI) results per Python package version functions,
+        the query is not executed.
+        """
+        query = session.query(SecurityIndicatorAggregatedRun)
+
+        if package_name is not None:
+            package_name = self.normalize_python_package_name(package_name)
+            query = query.filter(PythonPackageVersionEntity.package_name == package_name)
+
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+            query = query.filter(PythonPackageVersionEntity.package_version == package_version)
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
+        
+        query = query.with_entities(
+            SecurityIndicatorAggregatedRun
+        )
+
+        conditions = [
+            SIAggregated.python_package_version_entity_id == SecurityIndicatorAggregatedRun.id,
+            PythonPackageVersionEntity.python_package_index_id == PythonPackageIndex.id
+            ]
+
+        query = query.filter(*conditions)
+
+        return query
+
+    def si_aggregated_python_package_version_exists(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+    ) -> bool:
+        """Check if Aggregate Security Indicators (SI) results exists for Python package version."""
+        with self._session_scope() as session:
+            query = self._construct_query_get_si_aggregated_python_package_version(
+                session=session,
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url
+            )
+
+        return query.count() > 0
+
+    def get_si_aggregated_python_package_version(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+    ) -> Dict[str, Any]:
+        """Get Aggregate Security Indicators (SI) results per Python package version.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_aggregated_si_per_python_package_version(
+            package_name='thoth-common',
+            package_version='0.10.0',
+            index_url='https://pypi.org/simple'
+        )
+            {
+                'severity_high_confidence_high': 0,
+                'severity_high_confidence_low': 0,
+                'severity_high_confidence_medium': 0,
+                'severity_high_confidence_undefined': 0,
+                'severity_low_confidence_high': 0,
+                'severity_low_confidence_low': 0,
+                'severity_low_confidence_medium': 0,
+                'severity_low_confidence_undefined': 0,
+                'severity_medium_confidence_high': 0,
+                'severity_medium_confidence_low': 0,
+                'severity_medium_confidence_medium': 0,
+                'severity_medium_confidence_undefined': 0,
+                'number_of_analyzed_files': 0,
+                'number_of_files_total': 0,
+                'number_of_files_with_severities': 0,
+                'number_of_filtered_files': 0,
+                'number_of_python_files': 39,
+                'number_of_lines_with_comments_in_python_files': 922,
+                'number_of_blank_lines_in_python_files': 2760,
+                'number_of_lines_with_code_in_python_files': 9509,
+                'total_number_of_files': 75,
+                'total_number_of_lines': 36856,
+                'total_number_of_lines_with_comments': 2895,
+                'total_number_of_blank_lines': 6737,
+                'total_number_of_lines_with_code': 27224
+            }
+        """
+        with self._session_scope() as session:
+            query = self._construct_query_get_si_aggregated_python_package_version(
+                session=session,
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url
+            )
+
+            result = query.order_by(SecurityIndicatorAggregatedRun.datetime.desc()).first()
+            result = result.to_dict()
+            result.pop('si_aggregated_run_document_id')
+            result.pop('datetime')
+            return result
+
     def retrieve_dependent_packages(self, package_name: str, package_version: str = None) -> Dict[str, List[str]]:
         """Get mapping package name to package version of packages that depend on the given package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -4647,6 +4758,7 @@ class GraphDatabase(SQLBase):
             si_aggregated_run, _ = SecurityIndicatorAggregatedRun.get_or_create(
                 session,
                 si_aggregated_run_document_id=document_id,
+                datetime=metadata['datetime'],
                 severity_high_confidence_high=result.get('SEVERITY.HIGH__CONFIDENCE.HIGH') or 0,
                 severity_high_confidence_low=result.get('SEVERITY.HIGH__CONFIDENCE.LOW') or 0,
                 severity_high_confidence_medium=result.get('SEVERITY.HIGH__CONFIDENCE.MEDIUM') or 0,
