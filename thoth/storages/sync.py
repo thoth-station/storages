@@ -586,7 +586,7 @@ def sync_security_indicators_documents(
                         "Syncing analysis document from %r with id %r to graph", si_aggregated_store.ceph.host, security_indicator_id
                     )
         
-                    aggregated_document = si_aggregated_store.retrieve_si_aggregated_document()
+                    aggregated_document = si_aggregated_store.retrieve_document()
 
                 graph.sync_security_indicator_aggregated_result(aggregated_document)
                 synced += 1

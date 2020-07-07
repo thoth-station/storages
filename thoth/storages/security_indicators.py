@@ -67,11 +67,11 @@ class SIBanditStore(_SecurityIndicatorBase):
         self.ceph = CephStore(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
-    def retrieve_si_bandit_document(self) -> Dict[str, Any]:
+    def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI bandit document."""
         return self.ceph.retrieve_document("bandit")
 
-    def si_bandit_document_exists(self) -> bool:
+    def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
         return self.ceph.document_exists("bandit")
 
@@ -85,11 +85,11 @@ class SIClocStore(_SecurityIndicatorBase):
         self.ceph = CephStore(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
-    def retrieve_si_cloc_document(self) -> Dict[str, Any]:
+    def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI cloc document."""
         return self.ceph.retrieve_document("cloc")
 
-    def si_cloc_document_exists(self) -> bool:
+    def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
         return self.ceph.document_exists("cloc")
 
@@ -103,11 +103,11 @@ class SIAggregatedStore(_SecurityIndicatorBase):
         self.ceph = CephStore(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
-    def retrieve_si_aggregated_document(self) -> Dict[str, Any]:
+    def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI aggregated document."""
         return self.ceph.retrieve_document("aggregated")
 
-    def si_aggregated_document_exists(self) -> bool:
+    def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
         return self.ceph.document_exists("aggregated")
 
