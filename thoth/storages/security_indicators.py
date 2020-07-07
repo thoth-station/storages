@@ -71,6 +71,10 @@ class SIBanditStore(_SecurityIndicatorBase):
         """Retrieve SI bandit document."""
         return self.ceph.retrieve_document("bandit")
 
+    def si_bandit_document_exists(self) -> bool:
+        """Check if the there is an object with the given key in bucket."""
+        return self.ceph.document_exists("bandit")
+
 
 class SIClocStore(_SecurityIndicatorBase):
     """An adapter for manipulating with security-indicators cloc."""
@@ -84,6 +88,10 @@ class SIClocStore(_SecurityIndicatorBase):
     def retrieve_si_cloc_document(self) -> Dict[str, Any]:
         """Retrieve SI cloc document."""
         return self.ceph.retrieve_document("cloc")
+
+    def si_cloc_document_exists(self) -> bool:
+        """Check if the there is an object with the given key in bucket."""
+        return self.ceph.document_exists("cloc")
 
 
 class SIAggregatedStore(_SecurityIndicatorBase):
@@ -131,17 +139,6 @@ class SecurityIndicatorsResultsStore:
         self.bandit.check_connection()
         self.cloc.check_connection()
         self.aggregated.check_connection()
-
-    def exists(self, si_type: str) -> bool:
-        """Check if the given si analyzer result exists."""
-        if si_type == "bandit":
-            return self.bandit.ceph.document_exists(si_type)
-
-        if si_type == "cloc":
-            return self.cloc.ceph.document_exists(si_type)
-
-        if si_type == "aggregated":
-            return self.aggregated.ceph.document_exists(si_type)
 
     @classmethod
     def iter_security_indicators(cls) -> Generator[str, None, None]:
