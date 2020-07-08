@@ -118,7 +118,7 @@ def sync_solver_documents(
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in document_ids or solver_store.get_document_listing():
         processed += 1
-        if force or not graph.solver_document_id_exist(os.path.basename(document_id)):
+        if force or not graph.solver_document_id_exists(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
@@ -434,7 +434,7 @@ def sync_dependency_monkey_documents(
     for document_id in document_ids or dependency_monkey_reports_store.get_document_listing():
         processed += 1
 
-        if force or not graph.dependency_monkey_document_id_exist(os.path.basename(document_id)):
+        if force or not graph.dependency_monkey_document_id_exists(os.path.basename(document_id)):
             try:
                 if is_local:
                     _LOGGER.debug("Loading document from a local file: %r", document_id)
@@ -495,7 +495,7 @@ def sync_inspection_documents(
 
             processed += 1
 
-            if force or not graph.inspection_document_id_result_number_exist(
+            if force or not graph.inspection_document_id_result_number_exists(
                 inspection_document_id=os.path.basename(inspection_document_id),
                 inspection_result_number=inspection_result_number
             ):
@@ -566,7 +566,7 @@ def sync_security_indicators_documents(
 
         processed += 1
 
-        if force or not graph.si_aggregated_document_id_exist(os.path.basename(security_indicator_id)):
+        if force or not graph.si_aggregated_document_id_exists(os.path.basename(security_indicator_id)):
             try:
                 if is_local:
                     si_aggregated_document_id = f"{security_indicator_id}/aggregated"

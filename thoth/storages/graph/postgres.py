@@ -2732,12 +2732,12 @@ class GraphDatabase(SQLBase):
         solver_document_id = SolverResultsStore.get_document_id(solver_document)
         return self.solver_document_id_exist(solver_document_id)
 
-    def solver_document_id_exist(self, solver_document_id: str) -> bool:
+    def solver_document_id_exists(self, solver_document_id: str) -> bool:
         """Check if there is a solver document record with the given id."""
         with self._session_scope() as session:
             return session.query(Solved).filter(Solved.document_id == solver_document_id).count() > 0
 
-    def dependency_monkey_document_id_exist(self, dependency_monkey_document_id: str) -> bool:
+    def dependency_monkey_document_id_exists(self, dependency_monkey_document_id: str) -> bool:
         """Check if the given dependency monkey report record exists in the graph database."""
         with self._session_scope() as session:
             return (
@@ -2747,7 +2747,7 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    def si_aggregated_document_id_exist(self, si_aggregated_run_document_id: str) -> bool:
+    def si_aggregated_document_id_exists(self, si_aggregated_run_document_id: str) -> bool:
         """Check if the given security indicator aggregated report record exists in the graph database."""
         with self._session_scope() as session:
             return (
@@ -2757,7 +2757,7 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    def inspection_document_id_result_number_exist(self, inspection_document_id: str, inspection_result_number: int) -> bool:
+    def inspection_document_id_result_number_exists(self, inspection_document_id: str, inspection_result_number: int) -> bool:
         """Check if the given inspection id result number record exists in the graph database."""
         with self._session_scope() as session:
             return (
