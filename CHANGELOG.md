@@ -6071,3 +6071,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Update OWNERS
 * Update OWNERS
 * Update OWNERS
+
+## Release 0.24.2 (2020-07-08T12:02:05)
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.7 to 0.36.8 (#1889)
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.7 to 0.36.8 (#1887)
+* :pushpin: Automatic update of dependency boto3 from 1.14.17 to 1.14.18 (#1886)
