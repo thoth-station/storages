@@ -2757,6 +2757,17 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
+    def inspection_document_id_result_number_exist(self, inspection_document_id: str, inspection_result_number: int) -> bool:
+        """Check if the given inspection id result number record exists in the graph database."""
+        with self._session_scope() as session:
+            return (
+                session.query(InspectionRun)
+                .filter(InspectionRun.inspection_document_id == inspection_document_id)
+                .filter(InspectionRun.inspection_result_number == inspection_result_number)
+                .count()
+                > 0
+            )
+
     def adviser_document_id_exist(self, adviser_document_id: str) -> bool:
         """Check if there is a adviser document record with the given id."""
         with self._session_scope() as session:
@@ -3946,37 +3957,41 @@ class GraphDatabase(SQLBase):
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
-        inspection_document_id = InspectionResultsStore.get_document_id(document)
+        inspection_document_id = ["document_id"]
+        inspection_result_number= ["result_number"]        
+        inspection_specification = document['specification']
+        inspection_result = document['result']
+
         with self._session_scope() as session, session.begin(subtransactions=True):
-            build_cpu = OpenShift.parse_cpu_spec(document["specification"]["build"]["requests"]["cpu"])
-            build_memory = OpenShift.parse_memory_spec(document["specification"]["build"]["requests"]["memory"])
-            run_cpu = OpenShift.parse_cpu_spec(document["specification"]["run"]["requests"]["cpu"])
-            run_memory = OpenShift.parse_memory_spec(document["specification"]["run"]["requests"]["memory"])
+            build_cpu = OpenShift.parse_cpu_spec(inspection_specification["build"]["requests"]["cpu"])
+            build_memory = OpenShift.parse_memory_spec(inspection_specification["build"]["requests"]["memory"])
+            run_cpu = OpenShift.parse_cpu_spec(inspection_specification["run"]["requests"]["cpu"])
+            run_memory = OpenShift.parse_memory_spec(inspection_specification["run"]["requests"]["memory"])
 
             # Convert bytes to GiB, we need float number given the fixed int size.
             run_memory = run_memory / (1024 ** 3)
             build_memory = build_memory / (1024 ** 3)
 
-            runtime_environment = document["job_log"]["runtime_environment"]
+            runtime_environment = inspection_result["runtime_environment"]
 
             run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                 session, runtime_environment, environment_type=EnvironmentTypeEnum.RUNTIME.value, is_external=False
             )
 
-            runtime_environment["hardware"] = document["specification"]["build"]["requests"]["hardware"]
+            runtime_environment["hardware"] = inspection_specification["build"]["requests"]["hardware"]
 
             build_hardware_information, build_software_environment = self._runtime_environment_conf2models(
                 session, runtime_environment, environment_type=EnvironmentTypeEnum.BUILDTIME.value, is_external=False
             )
 
             software_stack = None
-            if "python" in document["specification"]:
+            if "python" in inspection_specification:
                 # Inspection stack.
                 software_stack = self._create_python_software_stack(
                     session,
                     software_stack_type=SoftwareStackTypeEnum.INSPECTION.value,
-                    requirements=document["specification"]["python"].get("requirements"),
-                    requirements_lock=document["specification"]["python"].get("requirements_locked"),
+                    requirements=inspection_specification["python"].get("requirements"),
+                    requirements_lock=inspection_specification["python"].get("requirements_locked"),
                     software_environment=run_software_environment,
                     performance_score=None,
                     overall_score=None,
@@ -3985,6 +4000,7 @@ class GraphDatabase(SQLBase):
             inspection_run = (
                 session.query(InspectionRun)
                 .filter(InspectionRun.inspection_document_id == inspection_document_id)
+                .filter(InspectionRun.inspection_result_number == inspection_result_number)
                 .first()
             )
 
@@ -3997,6 +4013,7 @@ class GraphDatabase(SQLBase):
                 insert_stmt = insert(InspectionRun).values(
                     id=inspection_run.dependency_monkey_run_id,
                     inspection_document_id=inspection_document_id,
+                    inspection_result_number=inspection_result_number,
                     dependency_monkey_run_id=inspection_run.dependency_monkey_run_id,
                     inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
                 )
@@ -4005,7 +4022,8 @@ class GraphDatabase(SQLBase):
                     set_=dict(
                         inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
                         inspection_document_id=inspection_document_id,
-                        datetime=document.get("created"),
+                        inspection_result_number=inspection_result_number,
+                        datetime=inspection_specification.get("@created"),
                         amun_version=None,  # TODO: propagate Amun version here which should match API version
                         build_requests_cpu=build_cpu,
                         build_requests_memory=build_memory,
@@ -4026,7 +4044,8 @@ class GraphDatabase(SQLBase):
                     session,
                     inspection_sync_state=InspectionSyncStateEnum.SYNCED.value,
                     inspection_document_id=inspection_document_id,
-                    datetime=document.get("created"),
+                    inspection_result_number=inspection_result_number,
+                    datetime=inspection_specification.get("@created"),
                     amun_version=None,  # TODO: propagate Amun version here which should match API version
                     build_requests_cpu=build_cpu,
                     build_requests_memory=build_memory,
@@ -4039,12 +4058,12 @@ class GraphDatabase(SQLBase):
                     inspection_software_stack_id=software_stack.id if software_stack else None,
                 )
 
-            if document["specification"].get("script"):  # We have run an inspection job.
+            if inspection_specification.get("script"):  # We have run an inspection job.
 
-                if not document["job_log"]["stdout"]:
+                if not inspection_specification["stdout"]:
                     raise ValueError("No values provided for inspection output %r", inspection_document_id)
 
-                performance_indicator_name = document["job_log"]["stdout"].get("name")
+                performance_indicator_name = inspection_specification["stdout"].get("name")
                 performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
 
                 if not performance_model_class:
@@ -4053,7 +4072,7 @@ class GraphDatabase(SQLBase):
                     )
 
                 performance_indicator, _ = performance_model_class.create_from_report(
-                    session, document, inspection_run_id=inspection_run.id
+                    session, inspection_result, inspection_run_id=inspection_run.id
                 )
 
     def create_python_cve_record(
