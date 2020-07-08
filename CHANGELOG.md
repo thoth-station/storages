@@ -6053,3 +6053,21 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Fix computing batch size of inspection jobs
 * Add missing exports of inspection adapters
 * Remove parts moved to thoth-common
+
+## Release 0.24.1 (2020-07-07T06:56:06)
+* :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.6 to 0.36.7 (#1876)
+* :pushpin: Automatic update of dependency thoth-common from 0.14.0 to 0.14.1 (#1875)
+* :pushpin: Automatic update of dependency boto3 from 1.14.14 to 1.14.17 (#1874)
+* Sync si aggregated (#1873)
+* :pushpin: Automatic update of dependency thoth-common from 0.13.13 to 0.14.0 (#1872)
+* Fix missing normalize_os_version (#1868)
+* :pushpin: Automatic update of dependency boto3 from 1.14.13 to 1.14.14 (#1866)
+* :pushpin: Automatic update of dependency thoth-common from 0.13.12 to 0.13.13 (#1865)
+* :pushpin: Automatic update of dependency boto3 from 1.14.9 to 1.14.13 (#1864)
+* Source type column (#1862)
+* Update OWNERS
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.17 to 1.3.18
+* Update OWNERS
+* Update OWNERS
+* Update OWNERS
+* Update OWNERS
