@@ -178,7 +178,7 @@ def sync_revsolver_documents(
                 _LOGGER.info(
                     "Syncing reverse solver document from %r with id %r to graph",
                     revsolver_store.ceph.host,
-                    document_id
+                    document_id,
                 )
                 document = revsolver_store.retrieve_document(document_id)
 
@@ -482,28 +482,28 @@ def sync_inspection_documents(
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_document_id in document_ids or InspectionStore.iter_inspections():
-        print(inspection_document_id)
 
         if not is_local:
             inspection_store = InspectionStore(inspection_id=inspection_document_id)
             inspection_store.connect()
         else:
             main_repo = Path(f"{inspection_document_id}/results")
-        
+
         for inspection_result_number in range(inspection_store.results.get_results_count()) or main_repo.iterdir():
-            print(inspection_result_number)
 
             processed += 1
 
             if force or not graph.inspection_document_id_result_number_exists(
-                inspection_document_id=os.path.basename(inspection_document_id),
-                inspection_result_number=inspection_result_number
+                inspection_document_id=inspection_document_id,
+                inspection_result_number=inspection_result_number,
             ):
                 try:
                     if is_local:
 
                         inspection_specification_path = f"{inspection_document_id}/build/specification"
-                        _LOGGER.debug("Loading specification document from a local file: %r", inspection_specification_path)
+                        _LOGGER.debug(
+                            "Loading specification document from a local file: %r", inspection_specification_path
+                        )
 
                         inspection_result_path = f"{inspection_document_id}/results/{inspection_result_number}/result"
                         _LOGGER.debug("Loading result document from a local file: %r", inspection_result_path)
@@ -515,7 +515,10 @@ def sync_inspection_documents(
                             inspection_result_document = json.loads(document_file.read())
                     else:
                         _LOGGER.info(
-                            "Syncing analysis document from %r with id %r and number %r to graph", inspection_store.results.ceph.host, inspection_document_id, inspection_result_number
+                            "Syncing analysis document from %r with id %r and number %r to graph",
+                            inspection_store.results.ceph.host,
+                            inspection_document_id,
+                            inspection_result_number,
                         )
 
                         inspection_specification_document = inspection_store.retrieve_specification()
@@ -525,7 +528,7 @@ def sync_inspection_documents(
                             "document_id": inspection_document_id,
                             "result_number": inspection_result_number,
                             "specification": inspection_specification_document,
-                            "result": inspection_result_document
+                            "result": inspection_result_document,
                         }
 
                     graph.sync_inspection_result(inspection_document)
@@ -541,8 +544,8 @@ def sync_inspection_documents(
                 _LOGGER.info(f"Skipping inspection {inspection_document_id!r} - not finised yet")
                 skipped += 1
 
-
     return processed, synced, skipped, failed
+
 
 def sync_security_indicators_documents(
     document_ids: Optional[List[str]] = None,
@@ -566,7 +569,7 @@ def sync_security_indicators_documents(
 
         processed += 1
 
-        if force or not graph.si_aggregated_document_id_exists(os.path.basename(security_indicator_id)):
+        if force or not graph.si_aggregated_document_id_exists(security_indicator_id):
             try:
                 if is_local:
                     si_aggregated_document_id = f"{security_indicator_id}/aggregated"
@@ -577,9 +580,11 @@ def sync_security_indicators_documents(
                     si_aggregated_store = SIAggregatedStore(security_indicator_id=security_indicator_id)
                     si_aggregated_store.connect()
                     _LOGGER.info(
-                        "Syncing analysis document from %r with id %r to graph", si_aggregated_store.ceph.host, security_indicator_id
+                        "Syncing analysis document from %r with id %r to graph",
+                        si_aggregated_store.ceph.host,
+                        security_indicator_id,
                     )
-        
+
                     aggregated_document = si_aggregated_store.retrieve_document()
 
                 graph.sync_security_indicator_aggregated_result(aggregated_document)
@@ -610,7 +615,7 @@ _HANDLERS_MAPPING = {
     "provenance-checker": sync_provenance_checker_documents,
     "solver": sync_solver_documents,
     "revsolver": sync_revsolver_documents,
-    "security-indicator": sync_security_indicators_documents
+    "security-indicator": sync_security_indicators_documents,
 }
 
 
