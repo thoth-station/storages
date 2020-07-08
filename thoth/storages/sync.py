@@ -29,7 +29,7 @@ from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
 from .buildlogs_analyses import BuildLogsAnalysisResultsStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
-from .inspections import InspectionResultsStore
+from .inspections import InspectionStore, InspectionResultsStore
 from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .revsolvers import RevSolverResultsStore
@@ -464,89 +464,80 @@ def sync_dependency_monkey_documents(
 
 def sync_inspection_documents(
     document_ids: Optional[List[str]] = None,
-    *,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
-    amun_api_url: str,
-    only_ceph_sync: bool = False,
-    only_graph_sync: bool = False,
     is_local: bool = False,
 ) -> tuple:
     """Sync observations made on Amun into graph database."""
-    from amun import get_inspection_build_log
-    from amun import get_inspection_job_log
-    from amun import get_inspection_specification
-    from amun import get_inspection_status
-    from amun import has_inspection_job
-    from amun import is_inspection_finished
-
-    if is_local:
-        raise NotImplementedError("Cannot sync inspection documents from a local file")
-
-    if only_graph_sync and only_ceph_sync:
-        raise ValueError("At least one of Ceph or Graph should be performed")
-
-    inspection_store = InspectionResultsStore()
-    inspection_store.connect()
-
-    dependency_monkey_reports_store = DependencyMonkeyReportsStore()
-    dependency_monkey_reports_store.connect()
+    if is_local and not document_ids:
+        raise ValueError(
+            "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
+        )
 
     if not graph:
         graph = GraphDatabase()
         graph.connect()
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for inspection_id in document_ids or dependency_monkey_reports_store.iterate_inspection_ids():
-        processed += 1
-        if force or not inspection_store.document_exists(inspection_id):
-            finished = is_inspection_finished(amun_api_url, inspection_id)
+    for inspection_document_id in document_ids or InspectionStore.iter_inspections():
+        print(inspection_document_id)
 
-            if finished:
-                _LOGGER.info("Obtaining results from Amun API for inspection %r", inspection_id)
+        if not is_local:
+            inspection_store = InspectionStore(inspection_id=inspection_document_id)
+            inspection_store.connect()
+        
+        for inspection_result_number in range(inspection_store.results.get_results_count()):
+            print(inspection_result_number)
+
+            processed += 1
+
+            if force or not graph.inspection_document_id_result_number_exist(
+                inspection_document_id=os.path.basename(inspection_document_id),
+                inspection_result_number=inspection_result_number
+            ):
                 try:
-                    specification, created = get_inspection_specification(amun_api_url, inspection_id)
-                    build_log = get_inspection_build_log(amun_api_url, inspection_id)
-                    status = get_inspection_status(amun_api_url, inspection_id)
-                    job_log = None
-                    if has_inspection_job(amun_api_url, inspection_id):
-                        job_log = get_inspection_job_log(amun_api_url, inspection_id)
+                    if is_local:
 
-                    document = {
-                        "specification": specification,
-                        "created": created,
-                        "build_log": build_log,
-                        "job_log": job_log,
-                        "inspection_id": inspection_id,
-                        "status": status,
-                    }
+                        inspection_specification_path = f"{inspection_document_id}/build/specification"
+                        _LOGGER.debug("Loading specification document from a local file: %r", inspection_specification_path)
 
-                    # First we store results into graph database and then onto
-                    # Ceph. This way in the next run we can sync documents that
-                    # failed to sync to graph - see if statement that is asking
-                    # for Ceph document presents first.
-                    if not only_ceph_sync:
-                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to graph")
-                        graph.sync_inspection_result(document)
+                        inspection_result_path = f"{inspection_document_id}/results/{inspection_result_number}/result"
+                        _LOGGER.debug("Loading result document from a local file: %r", inspection_result_path)
 
-                    if not only_graph_sync:
-                        _LOGGER.info(f"Syncing inspection {inspection_id!r} to {inspection_store.ceph.host}")
-                        inspection_store.store_document(document)
+                        with open(inspection_specification_path, "r") as document_file:
+                            inspection_specification_document = json.loads(document_file.read())
 
+                        with open(inspection_result_path, "r") as document_file:
+                            inspection_result_document = json.loads(document_file.read())
+                    else:
+                        _LOGGER.info(
+                            "Syncing analysis document from %r with id %r and number %r to graph", inspection_store.results.ceph.host, inspection_document_id, inspection_result_number
+                        )
+
+                        inspection_specification_document = inspection_store.retrieve_specification()
+                        inspection_result_document = inspection_store.results.retrieve_result(inspection_result_number)
+
+                        inspection_document = {
+                            "document_id": inspection_document_id,
+                            "result_number": inspection_result_number,
+                            "specification": inspection_specification_document,
+                            "result": inspection_result_document
+                        }
+
+                    graph.sync_inspection_result(inspection_document)
                     synced += 1
-                except Exception as exc:
+                except Exception:
                     if not graceful:
                         raise
 
-                    _LOGGER.exception(f"Failed to sync inspection %r: %s", inspection_id, str(exc))
-                    failed += 1
+                _LOGGER.exception("Failed to sync analysis result with document id %r", inspection_document_id)
+                failed += 1
+
             else:
-                _LOGGER.info(f"Skipping inspection {inspection_id!r} - not finised yet")
+                _LOGGER.info(f"Skipping inspection {inspection_document_id!r} - not finised yet")
                 skipped += 1
-        else:
-            _LOGGER.info(f"Skipping inspection {inspection_id!r} - the given inspection is already synced")
-            skipped += 1
+
 
     return processed, synced, skipped, failed
 
