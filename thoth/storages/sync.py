@@ -24,6 +24,7 @@ from typing import Dict
 from typing import Tuple
 from typing import List
 from typing import Optional
+from pathlib import Path
 
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
@@ -486,8 +487,10 @@ def sync_inspection_documents(
         if not is_local:
             inspection_store = InspectionStore(inspection_id=inspection_document_id)
             inspection_store.connect()
+        else:
+            main_repo = Path(f"{inspection_document_id}/results")
         
-        for inspection_result_number in range(inspection_store.results.get_results_count()):
+        for inspection_result_number in range(inspection_store.results.get_results_count()) or main_repo.iterdir():
             print(inspection_result_number)
 
             processed += 1
