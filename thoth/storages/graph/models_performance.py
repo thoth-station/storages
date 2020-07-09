@@ -76,7 +76,7 @@ class PerformanceIndicatorBase:
 
     @classmethod
     def create_from_report(
-        cls, session: Session, inspection_specification: dict, inspection_result: dict, inspection_run_id: int
+        cls, session: Session, inspection_specification: Dict[str, Any], inspection_result: Dict[str, Any], inspection_run_id: int
     ) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
@@ -115,7 +115,7 @@ class PerformanceIndicatorBase:
         return cls.from_report(inspection_result, partial_model)
 
     @classmethod
-    def from_report(cls, inspection_result: dict, partial_model: type(partial)) -> "PerformanceIndicatorBase":
+    def from_report(cls, inspection_result: Dict[str, Any], partial_model: type(partial)) -> "PerformanceIndicatorBase":
         """Create model from the inspection report respecting parameters and result reported by the indicator."""
         kwargs = {}
         for parameter, parameter_value in inspection_result["@parameters"].items():

@@ -465,6 +465,7 @@ def sync_dependency_monkey_documents(
 
 def sync_inspection_documents(
     document_ids: Optional[List[str]] = None,
+    *,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
@@ -483,17 +484,19 @@ def sync_inspection_documents(
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_document_id in document_ids or InspectionStore.iter_inspections():
 
-        if inspection_document_id.startswith("inspection"):
+        if not is_local:
+            results = []
+            inspection_store = InspectionStore(inspection_id=inspection_document_id)
+            inspection_store.connect()
 
-            if not is_local:
-                results = []
-                inspection_store = InspectionStore(inspection_id=inspection_document_id)
-                inspection_store.connect()
-            else:
-                main_repo = Path(f"{inspection_document_id}/results")
-                results = [repo.name for repo in main_repo.iterdir()]
+            number_results = inspection_store.results.get_results_count()
+        else:
+            main_repo = Path(f"{inspection_document_id}/results")
+            results = [repo.name for repo in main_repo.iterdir()]
 
-            for inspection_result_number in results or range(inspection_store.results.get_results_count()):
+        if number_results > 0:
+
+            for inspection_result_number in results or range(number_results):
 
                 processed += 1
                 try:
@@ -547,8 +550,7 @@ def sync_inspection_documents(
                         )
                         skipped += 1
 
-                except Exception as e:
-                    print(e)
+                except Exception:
                     if not graceful:
                         raise
 
@@ -559,9 +561,7 @@ def sync_inspection_documents(
                     failed += 1
 
         else:
-            _LOGGER.info(
-                f"inspection_document_id: {inspection_document_id!r} - does not starts with inspection prefix."
-            )
+            _LOGGER.info(f"inspection_document_id: {inspection_document_id!r} - does not have any results.")
 
     return processed, synced, skipped, failed
 
