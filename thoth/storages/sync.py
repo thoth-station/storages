@@ -483,46 +483,52 @@ def sync_inspection_documents(
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_document_id in document_ids or InspectionStore.iter_inspections():
 
-        if not is_local:
-            inspection_store = InspectionStore(inspection_id=inspection_document_id)
-            inspection_store.connect()
-        else:
-            main_repo = Path(f"{inspection_document_id}/results")
+        if inspection_document_id.startswith("inspection"):
 
-        for inspection_result_number in range(inspection_store.results.get_results_count()) or main_repo.iterdir():
+            if not is_local:
+                results = []
+                inspection_store = InspectionStore(inspection_id=inspection_document_id)
+                inspection_store.connect()
+            else:
+                main_repo = Path(f"{inspection_document_id}/results")
+                results = [repo.name for repo in main_repo.iterdir()]
 
-            processed += 1
+            for inspection_result_number in results or range(inspection_store.results.get_results_count()):
 
-            if force or not graph.inspection_document_id_result_number_exists(
-                inspection_document_id=inspection_document_id,
-                inspection_result_number=inspection_result_number,
-            ):
+                processed += 1
                 try:
-                    if is_local:
+                    if force or not graph.inspection_document_id_result_number_exists(
+                        inspection_document_id=inspection_document_id, inspection_result_number=inspection_result_number
+                    ):
+                        if is_local:
 
-                        inspection_specification_path = f"{inspection_document_id}/build/specification"
-                        _LOGGER.debug(
-                            "Loading specification document from a local file: %r", inspection_specification_path
-                        )
+                            inspection_specification_path = f"{inspection_document_id}/build/specification"
+                            _LOGGER.debug(
+                                "Loading specification document from a local file: %r", inspection_specification_path
+                            )
 
-                        inspection_result_path = f"{inspection_document_id}/results/{inspection_result_number}/result"
-                        _LOGGER.debug("Loading result document from a local file: %r", inspection_result_path)
+                            inspection_result_path = (
+                                f"{inspection_document_id}/results/{inspection_result_number}/result"
+                            )
+                            _LOGGER.debug("Loading result document from a local file: %r", inspection_result_path)
 
-                        with open(inspection_specification_path, "r") as document_file:
-                            inspection_specification_document = json.loads(document_file.read())
+                            with open(inspection_specification_path, "r") as document_file:
+                                inspection_specification_document = json.loads(document_file.read())
 
-                        with open(inspection_result_path, "r") as document_file:
-                            inspection_result_document = json.loads(document_file.read())
-                    else:
-                        _LOGGER.info(
-                            "Syncing analysis document from %r with id %r and number %r to graph",
-                            inspection_store.results.ceph.host,
-                            inspection_document_id,
-                            inspection_result_number,
-                        )
+                            with open(inspection_result_path, "r") as document_file:
+                                inspection_result_document = json.loads(document_file.read())
+                        else:
+                            _LOGGER.info(
+                                "Syncing analysis document from %r with id %r and number %r to graph",
+                                inspection_store.results.ceph.host,
+                                inspection_document_id,
+                                inspection_result_number,
+                            )
 
-                        inspection_specification_document = inspection_store.retrieve_specification()
-                        inspection_result_document = inspection_store.results.retrieve_result(inspection_result_number)
+                            inspection_specification_document = inspection_store.retrieve_specification()
+                            inspection_result_document = inspection_store.results.retrieve_result(
+                                inspection_result_number
+                            )
 
                         inspection_document = {
                             "document_id": inspection_document_id,
@@ -531,18 +537,31 @@ def sync_inspection_documents(
                             "result": inspection_result_document,
                         }
 
-                    graph.sync_inspection_result(inspection_document)
-                    synced += 1
-                except Exception:
+                        graph.sync_inspection_result(inspection_document)
+                        synced += 1
+
+                    else:
+                        _LOGGER.info(
+                            f"Sync of results n.{inspection_result_number!r}"
+                            f" from inspection id {inspection_document_id!r} skipped - already synced"
+                        )
+                        skipped += 1
+
+                except Exception as e:
+                    print(e)
                     if not graceful:
                         raise
 
-                _LOGGER.exception("Failed to sync analysis result with document id %r", inspection_document_id)
-                failed += 1
+                    _LOGGER.exception(
+                        f"Failed to sync results n.{inspection_result_number!r}"
+                        f" from inspection id {inspection_document_id!r}"
+                    )
+                    failed += 1
 
-            else:
-                _LOGGER.info(f"Skipping inspection {inspection_document_id!r} - not finised yet")
-                skipped += 1
+        else:
+            _LOGGER.info(
+                f"inspection_document_id: {inspection_document_id!r} - does not starts with inspection prefix."
+            )
 
     return processed, synced, skipped, failed
 
