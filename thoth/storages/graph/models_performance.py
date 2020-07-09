@@ -20,6 +20,8 @@
 from functools import partial
 import logging
 
+from typing import Dict, Any
+
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import ForeignKey
