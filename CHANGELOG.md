@@ -6076,3 +6076,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.7 to 0.36.8 (#1889)
 * :pushpin: Automatic update of dependency sqlalchemy-utils from 0.36.7 to 0.36.8 (#1887)
 * :pushpin: Automatic update of dependency boto3 from 1.14.17 to 1.14.18 (#1886)
+
+## Release 0.24.3 (2020-07-09T15:17:14)
+* Sync inspections results (#1892)
+* :pushpin: Automatic update of dependency boto3 from 1.14.18 to 1.14.19 (#1894)
+* Do raise on counting, return zero instead (#1893)
