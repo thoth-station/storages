@@ -3958,7 +3958,7 @@ class GraphDatabase(SQLBase):
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
         inspection_document_id = ["document_id"]
-        inspection_result_number= ["result_number"]        
+        inspection_result_number= ["result_number"]
         inspection_specification = document['specification']
         inspection_result = document['result']
 
