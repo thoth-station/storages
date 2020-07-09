@@ -3957,8 +3957,8 @@ class GraphDatabase(SQLBase):
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
-        inspection_document_id = ["document_id"]
-        inspection_result_number= ["result_number"]
+        inspection_document_id = document["document_id"]
+        inspection_result_number= document["result_number"]
         inspection_specification = document['specification']
         inspection_result = document['result']
 
@@ -4060,10 +4060,10 @@ class GraphDatabase(SQLBase):
 
             if inspection_specification.get("script"):  # We have run an inspection job.
 
-                if not inspection_specification["stdout"]:
+                if not inspection_result["stdout"]:
                     raise ValueError("No values provided for inspection output %r", inspection_document_id)
 
-                performance_indicator_name = inspection_specification["stdout"].get("name")
+                performance_indicator_name = inspection_result.get("name")
                 performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
 
                 if not performance_model_class:
@@ -4072,7 +4072,7 @@ class GraphDatabase(SQLBase):
                     )
 
                 performance_indicator, _ = performance_model_class.create_from_report(
-                    session, inspection_result, inspection_run_id=inspection_run.id
+                    session, inspection_specification=inspection_specification, inspection_result=inspection_result, inspection_run_id=inspection_run.id
                 )
 
     def create_python_cve_record(
