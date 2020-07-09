@@ -25,7 +25,6 @@ from typing import Generator
 from typing import Optional
 
 from .ceph import CephStore
-from .exceptions import NotFoundError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,7 +112,7 @@ class InspectionResultsStore(_InspectionBase):
         del items_set
 
         if len(items) == 0:
-            raise NotFoundError(f"No results were found for inspection {self.inspection_id!r}")
+            return 0
 
         items.sort(reverse=False)
 
