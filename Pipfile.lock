@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d3294db033d8f179e527513944d60377fe870a904536a1842119b36bb632b712"
+            "sha256": "b6514bf30fbc249de98c95c6b2084b09f53a9db7c51a2393f24983a63dc2f4cb"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -37,15 +37,8 @@
             "hashes": [
                 "sha256:035ab00497217628bf5d0be82d664d8713ab13d37b630084da8e1f98facf4dbf"
             ],
-            "version": "==1.4.2"
-        },
-        "amun": {
-            "hashes": [
-                "sha256:025738758afb52f1b028ebce299a91eea1f1f28004474887329c2f913100ac9b",
-                "sha256:07572ad17071d35c4ffdadb9329cf20a0bd2f722d70b90deaa394b7242f5219c"
-            ],
             "index": "pypi",
-            "version": "==0.4.3"
+            "version": "==1.4.2"
         },
         "argo-workflows": {
             "hashes": [
