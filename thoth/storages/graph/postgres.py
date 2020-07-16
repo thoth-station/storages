@@ -5414,7 +5414,6 @@ class GraphDatabase(SQLBase):
         package_version = self.normalize_python_package_version(package_version)
         index_url = GraphDatabase.normalize_python_index_url(index_url)
 
-
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersionEntity)
