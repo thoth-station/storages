@@ -371,6 +371,14 @@ class GraphDatabase(SQLBase):
             return "rhel"
 
         return os_name
+    
+    @staticmethod
+    def normalize_python_index_url(index_url: Optional[str]) -> Optional[str]:
+        """Map python index url."""
+        if index_url == "https://pypi.python.org/simple":
+            return "https://pypi.org/simple"
+
+        return index_url
 
     def get_analysis_metadata(self, analysis_document_id: str) -> Dict[str, Any]:
         """Get metadata stored for the given analysis document.
@@ -561,6 +569,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             query = (
@@ -641,6 +650,7 @@ class GraphDatabase(SQLBase):
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             query = (
@@ -691,6 +701,7 @@ class GraphDatabase(SQLBase):
     @staticmethod
     def _count_per_index(result: Union[List, Dict[str, Any]], index_url: str) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Format Query result to count per index."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         query_result = {index_url: {}}
         for item in result:
             if item[2] == index_url:
@@ -853,6 +864,7 @@ class GraphDatabase(SQLBase):
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         return self.__class__.get_python_package_versions_count_per_index(**locals())
 
     def get_solved_python_package_versions_count_per_version(
@@ -890,6 +902,7 @@ class GraphDatabase(SQLBase):
         is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for solved Python packages versions functions, the query is not executed."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         return self.__class__._construct_python_package_versions_query(**locals())
 
     def get_solved_python_package_versions_all(
@@ -948,6 +961,7 @@ class GraphDatabase(SQLBase):
     ) -> int:
         """Retrieve solved Python package versions number in Thoth Database."""
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_solved_python_package_versions_query(
                 session,
@@ -979,6 +993,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
     ) -> Query:
         """Construct query for solved with error Python packages versions functions, the query is not executed."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         query = session.query(PythonPackageVersion)
 
         if package_name is not None:
@@ -1041,6 +1056,7 @@ class GraphDatabase(SQLBase):
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         if unsolvable is True and unparseable is True:
             raise ValueError("Cannot query for unparseable and unsolvable at the same time")
 
@@ -1087,6 +1103,7 @@ class GraphDatabase(SQLBase):
         if unparseable=True -> get_unparseable_python_package_versions_count_all
         """
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         if unsolvable is True and unparseable is True:
             raise ValueError("Cannot query for unparseable and unsolvable at the same time")
 
@@ -1126,6 +1143,7 @@ class GraphDatabase(SQLBase):
         python_version: str = None,
     ) -> Query:
         """Construct query for unsolved Python packages versions functions, the query is not executed."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         query = session.query(PythonPackageVersionEntity).filter(
             PythonPackageVersionEntity.package_version.isnot(None),
             PythonPackageIndex.url.isnot(None),
@@ -1313,6 +1331,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, index_url=index_url, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1430,6 +1449,7 @@ class GraphDatabase(SQLBase):
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1470,6 +1490,7 @@ class GraphDatabase(SQLBase):
     ) -> int:
         """Retrieve unsolved Python package versions number in Thoth Database."""
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1501,6 +1522,7 @@ class GraphDatabase(SQLBase):
         query = session.query(PythonPackageVersionEntity).filter(
             exists().where(PackageAnalyzerRun.input_python_package_version_entity_id == PythonPackageVersionEntity.id)
         )
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         if package_name is not None:
             package_name = self.normalize_python_package_name(package_name)
@@ -1586,6 +1608,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_analyzed_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_analyzed_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -1608,6 +1631,7 @@ class GraphDatabase(SQLBase):
         self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
     ) -> int:
         """Retrieve analyzed Python package versions number in Thoth Database."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_analyzed_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -1679,6 +1703,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_analyzed_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_analyzed_python_package_versions_query(session, index_url=index_url)
 
@@ -1762,6 +1787,7 @@ class GraphDatabase(SQLBase):
         self, session: Session, package_name: str = None, package_version: str = None, index_url: str = None
     ) -> Query:
         """Construct query for analyzed Python packages versions functions with error, the query is not executed."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         query = session.query(PythonPackageVersionEntity).filter(
             exists().where(
                 and_(
@@ -1802,6 +1828,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_analyzed_error_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_analyzed_error_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -1824,6 +1851,7 @@ class GraphDatabase(SQLBase):
         self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
     ) -> int:
         """Retrieve analyzed Python package versions with error number in Thoth Database."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_analyzed_error_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -1940,6 +1968,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unanalyzed_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unanalyzed_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -1965,6 +1994,7 @@ class GraphDatabase(SQLBase):
         self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
     ) -> int:
         """Retrieve unanalyzed Python package versions number in Thoth Database."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unanalyzed_python_package_versions_query(
                 session, package_name=package_name, package_version=package_version, index_url=index_url
@@ -2036,6 +2066,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unanalyzed_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_unanalyzed_python_package_versions_query(session, index_url=index_url)
 
@@ -2166,6 +2197,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
     ) -> bool:
         """Check if Aggregate Security Indicators (SI) results exists for Python package version."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_query_get_si_aggregated_python_package_version(
                 session=session,
@@ -2220,6 +2252,7 @@ class GraphDatabase(SQLBase):
                 'total_number_of_lines_with_code': 27224
             }
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = self._construct_query_get_si_aggregated_python_package_version(
                 session=session,
@@ -2361,6 +2394,7 @@ class GraphDatabase(SQLBase):
         transitive dependencies are not required as solver directly report dependencies regardless extras
         configuration - see get_depends_on docs for extras parameter values..
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
@@ -2436,6 +2470,7 @@ class GraphDatabase(SQLBase):
 
         @raises NotFoundError: if the given package has no entry in the database
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
@@ -2490,6 +2525,7 @@ class GraphDatabase(SQLBase):
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             result = (
@@ -2639,6 +2675,7 @@ class GraphDatabase(SQLBase):
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         package_requested = locals()
         package_requested.pop("self")
@@ -2864,6 +2901,7 @@ class GraphDatabase(SQLBase):
         """
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             query = (
@@ -2981,6 +3019,7 @@ class GraphDatabase(SQLBase):
 
     def get_python_package_versions_per_index(self, index_url: str, *, distinct: bool = False) -> Dict[str, List[str]]:
         """Retrieve listing of Python packages (solved) known to graph database instance for the given index."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -3289,6 +3328,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = (
@@ -3399,6 +3439,7 @@ class GraphDatabase(SQLBase):
         is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for Python packages versions functions, the query is not executed."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         query = (
             session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
@@ -3454,6 +3495,7 @@ class GraphDatabase(SQLBase):
         >>> graph.get_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_versions_query(
@@ -3487,6 +3529,7 @@ class GraphDatabase(SQLBase):
         is_missing: Optional[bool] = None,
     ) -> int:
         """Retrieve Python package versions number in Thoth Database."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_versions_query(
@@ -3548,6 +3591,7 @@ class GraphDatabase(SQLBase):
         self, package_name: str, package_version: str, index_url: str
     ) -> Dict[str, str]:
         """Retrieve Python package metadata."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
 
@@ -3814,6 +3858,7 @@ class GraphDatabase(SQLBase):
 
         By creating this entity, the system will record and track the given package.
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         package_name = self.normalize_python_package_name(package_name)
         if package_version is not None:
             package_version = self.normalize_python_package_version(package_version)
@@ -4089,6 +4134,7 @@ class GraphDatabase(SQLBase):
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session, session.begin(subtransactions=True):
             if session.query(exists().where(CVE.cve_id == record_id)).scalar():
                 return True
@@ -4123,6 +4169,7 @@ class GraphDatabase(SQLBase):
         value: bool,
     ) -> None:
         """Update value of is_missing flag for PythonPackageVersion."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             subq = (session.query(PythonPackageVersion)
                     .join(PythonPackageIndex)
@@ -4144,6 +4191,7 @@ class GraphDatabase(SQLBase):
         index_url: str,
     ) -> bool:
         """Check whether is_missing flag is set for python package version."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope as session:
             query = (
                 session.query(PythonPackageVersion)
@@ -4181,6 +4229,7 @@ class GraphDatabase(SQLBase):
          'https://github.com/thoth-station/user-api',
          'https://github.com/thoth-station/adviser']
         """
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             query = (
                 session.query(AdviserRun)
@@ -4223,12 +4272,14 @@ class GraphDatabase(SQLBase):
             return result
 
     def update_python_package_hash_present_flag(
+        self,
         package_name: str,
         package_version: str,
         index_url: str,
         sha256_hash: str,
     ):
         """Remove hash associated with python package in the graph."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             # We need to remove rows from both HasArtifact and PythonArtifact
             subq = (
@@ -4611,12 +4662,12 @@ class GraphDatabase(SQLBase):
         session: Session, index_url: str, only_if_enabled: bool = True
     ) -> Optional[PythonPackageIndex]:
         """Get or create Python package index entry with a check the given index is enabled."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
         python_package_index = session.query(PythonPackageIndex).filter(PythonPackageIndex.url == index_url).first()
 
         if python_package_index is None:
             if only_if_enabled:
                 raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not know to system")
-
             python_package_index, _ = PythonPackageIndex.get_or_create(session, url=index_url)
         elif not python_package_index.enabled and only_if_enabled:
             raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not enabled")
@@ -5361,6 +5412,7 @@ class GraphDatabase(SQLBase):
         """Get required symbols for a Python package in a specified version."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             query = (
