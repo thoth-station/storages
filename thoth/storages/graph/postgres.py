@@ -4860,7 +4860,6 @@ class GraphDatabase(SQLBase):
                 python_package_version_entity_id=python_package_version_entity.id,
             )
 
-
     def sync_solver_result(self, document: dict) -> None:
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)
@@ -4872,7 +4871,8 @@ class GraphDatabase(SQLBase):
         os_name = solver_info["os_name"]
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
-        platform = document["result"]["platform"]
+        # Older solver documents did not provide platform explictly.
+        platform = document["result"].get("platform") or "linux-x86_64"
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             ecosystem_solver, _ = EcosystemSolver.get_or_create(
