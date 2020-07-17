@@ -6081,3 +6081,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Sync inspections results (#1892)
 * :pushpin: Automatic update of dependency boto3 from 1.14.18 to 1.14.19 (#1894)
 * Do raise on counting, return zero instead (#1893)
+
+## Release 0.24.4 (2020-07-17T07:50:49)
+* Default platform if not available in the solver document (#1901)
+* :pushpin: Automatic update of dependency pytest-timeout from 1.4.1 to 1.4.2 (#1900)
+* :pushpin: Automatic update of dependency thoth-common from 0.14.1 to 0.14.2 (#1899)
+* :pushpin: Automatic update of dependency boto3 from 1.14.19 to 1.14.21 (#1898)
+* Map old domain to new (#1897)
