@@ -579,7 +579,7 @@ class GraphDatabase(SQLBase):
             )
 
             if solver_name:
-                solver_info = self.parse_python_solver_name(solver_name)
+                solver_info = OpenShift.parse_python_solver_name(solver_name)
                 os_name = solver_info["os_name"]
                 os_version = solver_info["os_version"]
                 python_version = solver_info["python_version"]
