@@ -6088,3 +6088,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency thoth-common from 0.14.1 to 0.14.2 (#1899)
 * :pushpin: Automatic update of dependency boto3 from 1.14.19 to 1.14.21 (#1898)
 * Map old domain to new (#1897)
+
+## Release 0.24.5 (2020-07-23T15:08:59)
+* Use method from thoth-common (#1907)
+* :pushpin: Automatic update of dependency boto3 from 1.14.22 to 1.14.26 (#1908)
