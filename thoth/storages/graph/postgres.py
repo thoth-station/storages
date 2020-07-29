@@ -291,8 +291,8 @@ class GraphDatabase(SQLBase):
 
         try:
             if not self.is_schema_up2date():
-                _LOGGER.warning(
-                    "Database schema is not up to date, you might encounter issues when manipulating with the database"
+                _LOGGER.debug(
+                    "Database adapter connected, database is initialized"
                 )
         except DatabaseNotInitialized as exc:
             _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
@@ -350,9 +350,18 @@ class GraphDatabase(SQLBase):
 
         revision_heads = set(directory.get_heads())
 
-        _LOGGER.debug("Current library revision heads: %r", revision_heads)
-        _LOGGER.debug("Current database heads: %r", database_heads)
-        return database_heads == revision_heads
+        # Multiple heads can be available, handle such case.
+        is_up2date = revision_heads == database_heads
+
+        if not is_up2date:
+            _LOGGER.warning(
+                "The database schema is not in sync with library revisions, the current library revision "
+                "heads: %r, database heads",
+                revision_heads,
+                database_heads,
+            )
+
+        return is_up2date
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
