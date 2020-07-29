@@ -148,7 +148,6 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     package_extract_runs = relationship("Identified", back_populates="python_package_version_entity")
     si_aggregated_runs = relationship("SIAggregated", back_populates="python_package_version_entity")
     build_log_analyzer_runs = relationship("BuildLogAnalyzerRun", back_populates="input_python_package_version_entity")
-    package_analyzer_runs = relationship("PackageAnalyzerRun", back_populates="input_python_package_version_entity")
     cves = relationship("HasVulnerability", back_populates="python_package_version_entity")
     # inspection_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
     # user_software_stacks = relationship("PythonSoftwareStack", back_populates="python_package_version_entity")
@@ -393,30 +392,6 @@ class BuildLogAnalyzerRun(Base, BaseExtension):
     )
 
 
-class PackageAnalyzerRun(Base, BaseExtension):
-    """A class representing a single package-analyzer (package analysis) run."""
-
-    __tablename__ = "package_analyzer_run"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    package_analyzer_name = Column(Text, nullable=True)
-    package_analyzer_version = Column(Text, nullable=True)
-    package_analysis_document_id = Column(Text, nullable=False)
-    datetime = Column(DateTime, nullable=False)
-    debug = Column(Boolean, nullable=False, default=False)
-    package_analyzer_error = Column(Boolean, nullable=False, default=False)
-    duration = Column(Integer, nullable=True)
-    input_python_package_version_entity_id = Column(
-        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE")
-    )
-
-    input_python_package_version_entity = relationship(
-        "PythonPackageVersionEntity", back_populates="package_analyzer_runs"
-    )
-    python_artifacts = relationship("Investigated", back_populates="package_analyzer_run")
-    python_files = relationship("InvestigatedFile", back_populates="package_analyzer_run")
-
-
 class PythonArtifact(Base, BaseExtension):
     """An artifact for a python package in a specific version."""
 
@@ -431,36 +406,7 @@ class PythonArtifact(Base, BaseExtension):
 
     python_files = relationship("IncludedFile", back_populates="python_artifact")
     python_package_version_entities = relationship("HasArtifact", back_populates="python_artifact")
-    package_analyzer_runs = relationship("Investigated", back_populates="python_artifact")
     versioned_symbols = relationship("RequiresSymbol", back_populates="python_artifact")
-
-
-class InvestigatedFile(Base, BaseExtension):
-    """A record about found file by package analyzer."""
-
-    __tablename__ = "investigated_file"
-
-    package_analyzer_run_id = Column(
-        Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
-    )
-    python_file_digest_id = Column(Integer, ForeignKey("python_file_digest.id", ondelete="CASCADE"), primary_key=True)
-
-    package_analyzer_run = relationship("PackageAnalyzerRun", back_populates="python_files")
-    python_file_digest = relationship("PythonFileDigest", back_populates="package_analyzer_runs")
-
-
-class Investigated(Base, BaseExtension):
-    """A record about investigated Python artifact by a package analyzer."""
-
-    __tablename__ = "investigated"
-
-    package_analyzer_run_id = Column(
-        Integer, ForeignKey("package_analyzer_run.id", ondelete="CASCADE"), primary_key=True
-    )
-    python_artifact_id = Column(Integer, ForeignKey("python_artifact.id", ondelete="CASCADE"), primary_key=True)
-
-    package_analyzer_run = relationship("PackageAnalyzerRun", back_populates="python_artifacts")
-    python_artifact = relationship("PythonArtifact", back_populates="package_analyzer_runs")
 
 
 class PythonFileDigest(Base, BaseExtension):
@@ -472,7 +418,6 @@ class PythonFileDigest(Base, BaseExtension):
     sha256 = Column(Text, nullable=False)
 
     package_extract_runs = relationship("FoundPythonFile", back_populates="python_file_digest")
-    package_analyzer_runs = relationship("InvestigatedFile", back_populates="python_file_digest")
     python_artifacts = relationship("IncludedFile", back_populates="python_file_digest")
 
     __table_args__ = (UniqueConstraint("sha256"), Index("sha256_idx", "sha256", unique=True))
@@ -1576,7 +1521,6 @@ ALL_MAIN_MODELS = frozenset(
         HardwareInformation,
         InspectionRun,
         KebechetGithubAppInstallations,
-        PackageAnalyzerRun,
         PackageExtractRun,
         ProvenanceCheckerRun,
         PythonArtifact,
@@ -1630,8 +1574,6 @@ ALL_RELATION_MODELS = frozenset(
         HasVulnerability,
         Identified,
         IncludedFile,
-        Investigated,
-        InvestigatedFile,
         PythonDependencyMonkeyRequirements,
         RequiresSymbol,
         RPMRequires,

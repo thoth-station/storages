@@ -32,7 +32,6 @@ from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
 from .inspections import InspectionBuildsStore
 from .inspections import InspectionStore
-from .package_analyses import PackageAnalysisResultsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
@@ -44,7 +43,6 @@ from .sync import sync_analysis_documents
 from .sync import sync_dependency_monkey_documents
 from .sync import sync_documents
 from .sync import sync_inspection_documents
-from .sync import sync_package_analysis_documents
 from .sync import sync_provenance_checker_documents
 from .sync import sync_security_indicators_documents
 from .sync import sync_solver_documents
