@@ -591,9 +591,8 @@ def sync_security_indicators_documents(
         if force or not graph.si_aggregated_document_id_exists(security_indicator_id):
             try:
                 if is_local:
-                    si_aggregated_document_id = f"{security_indicator_id}/aggregated"
-                    _LOGGER.debug("Loading document from a local file: %r", si_aggregated_document_id)
-                    with open(si_aggregated_document_id, "r") as document_file:
+                    _LOGGER.debug("Loading document from a local file: %r", security_indicator_id)
+                    with open(security_indicator_id, "r") as document_file:
                         aggregated_document = json.loads(document_file.read())
                 else:
                     si_aggregated_store = SIAggregatedStore(security_indicator_id=security_indicator_id)
