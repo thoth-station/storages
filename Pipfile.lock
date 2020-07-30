@@ -604,11 +604,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:713041d77a8a71ee1e78e4ce861c696523ad56c63ea8280c759e43e49942a726",
-                "sha256:8b8b7a64148f3e2c5370ab1a7feab741cda4cdd3388fe46f955c65be086f5741"
+                "sha256:bc76345e6ee79f248da6d5bc7f702e12ec59de0296f6c393241fafe775282a92",
+                "sha256:bd4391f5b62fede8c1e38cce9929012b904d1fca50bc4a4e071dadce67471fee"
             ],
             "index": "pypi",
-            "version": "==0.15.0"
+            "version": "==0.16.0"
         },
         "thoth-python": {
             "hashes": [
@@ -1002,10 +1002,10 @@
         },
         "ecdsa": {
             "hashes": [
-                "sha256:867ec9cf6df0b03addc8ef66b56359643cb5d0c1dc329df76ba7ecfe256c8061",
-                "sha256:8f12ac317f8a1318efa75757ef0a651abe12e51fc1af8838fb91079445227277"
+                "sha256:64c613005f13efec6541bb0a33290d0d03c27abab5f15fbab20fb0ee162bdd8e",
+                "sha256:e108a5fe92c67639abae3260e43561af914e7fd0d27bae6d2ec1312ae7934dfe"
             ],
-            "version": "==0.15"
+            "version": "==0.14.1"
         },
         "eradicate": {
             "hashes": [
@@ -1521,10 +1521,10 @@
         },
         "python-jose": {
             "hashes": [
-                "sha256:1ac4caf4bfebd5a70cf5bd82702ed850db69b0b6e1d0ae7368e5f99ac01c9571",
-                "sha256:8484b7fdb6962e9d242cce7680469ecf92bda95d10bbcbbeb560cacdff3abfce"
+                "sha256:4e4192402e100b5fb09de5a8ea6bcc39c36ad4526341c123d401e2561720335b",
+                "sha256:67d7dfff599df676b04a996520d9be90d6cdb7e6dd10b4c7cacc0c3e2e92f2be"
             ],
-            "version": "==3.1.0"
+            "version": "==3.2.0"
         },
         "pytz": {
             "hashes": [
