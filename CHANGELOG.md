@@ -6092,3 +6092,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.24.5 (2020-07-23T15:08:59)
 * Use method from thoth-common (#1907)
 * :pushpin: Automatic update of dependency boto3 from 1.14.22 to 1.14.26 (#1908)
+
+## Release 0.25.0 (2020-07-30T08:29:14)
+* :pushpin: Automatic update of dependency pytest from 5.4.3 to 6.0.0 (#1921)
+* :pushpin: Automatic update of dependency boto3 from 1.14.30 to 1.14.31 (#1920)
+* adding aggregated points to wrong location (#1919)
+* :pushpin: Automatic update of dependency thoth-common from 0.14.2 to 0.15.0 (#1915)
+* :pushpin: Automatic update of dependency boto3 from 1.14.28 to 1.14.30 (#1914)
+* :pushpin: Automatic update of dependency boto3 from 1.14.26 to 1.14.28 (#1912)
+* Use postgres 10.12 in podman-compose as in the cluster (#1911)
