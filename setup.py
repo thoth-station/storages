@@ -75,6 +75,7 @@ setup(
     version=VERSION,
     description='Storage and database adapters available in project Thoth',
     long_description=Path('README.rst').read_text(),
+    long_description_content_type='text/x-rst',
     author='Fridolin Pokorny',
     author_email='fridolin@redhat.com',
     license='GPLv3+',
