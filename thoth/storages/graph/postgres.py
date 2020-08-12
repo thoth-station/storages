@@ -2200,7 +2200,7 @@ class GraphDatabase(SQLBase):
         """Check if Aggregate Security Indicators (SI) results exists for Python package version."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
-            query = self._construct_query_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION(
+            query = self._construct_query_get_si_aggregated_python_package_version(
                 session=session,
                 package_name=package_name,
                 package_version=package_version,
@@ -2256,7 +2256,7 @@ class GraphDatabase(SQLBase):
         """
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
-            query = self._construct_query_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION(
+            query = self._construct_query_get_si_aggregated_python_package_version(
                 session=session,
                 package_name=package_name,
                 package_version=package_version,
