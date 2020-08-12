@@ -177,6 +177,7 @@ _GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(
     os.getenv("THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE", 4096)
 )
 _GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
+_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -2199,7 +2200,7 @@ class GraphDatabase(SQLBase):
         """Check if Aggregate Security Indicators (SI) results exists for Python package version."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
-            query = self._construct_query_get_si_aggregated_python_package_version(
+            query = self._construct_query_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION(
                 session=session,
                 package_name=package_name,
                 package_version=package_version,
@@ -2208,12 +2209,13 @@ class GraphDatabase(SQLBase):
 
         return query.count() > 0
 
+    @lru_cache(maxsize=_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE)
     def get_si_aggregated_python_package_version(
         self,
         package_name: str,
         package_version: str,
         index_url: str,
-    ) -> Dict[str, int]:
+    ) -> Optional[Dict[str, int]}:
         """Get Aggregate Security Indicators (SI) results per Python package version.
 
         Examples:
@@ -2254,12 +2256,15 @@ class GraphDatabase(SQLBase):
         """
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
-            query = self._construct_query_get_si_aggregated_python_package_version(
+            query = self._construct_query_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION(
                 session=session,
                 package_name=package_name,
                 package_version=package_version,
                 index_url=index_url
             )
+
+            if query.count() == 0:
+                return None
 
             result = query.order_by(SecurityIndicatorAggregatedRun.datetime.desc()).first()
             result = result.to_dict()
