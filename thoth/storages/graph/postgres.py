@@ -2215,7 +2215,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         package_version: str,
         index_url: str,
-    ) -> Optional[Dict[str, int]}:
+    ) -> Optional[Dict[str, int]]:
         """Get Aggregate Security Indicators (SI) results per Python package version.
 
         Examples:
@@ -2262,11 +2262,9 @@ class GraphDatabase(SQLBase):
                 package_version=package_version,
                 index_url=index_url
             )
-
-            if query.count() == 0:
-                return None
-
             result = query.order_by(SecurityIndicatorAggregatedRun.datetime.desc()).first()
+            if result is None:
+                return None
             result = result.to_dict()
             result.pop('si_aggregated_run_document_id')
             result.pop('datetime')
