@@ -177,6 +177,7 @@ _GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(
     os.getenv("THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE", 4096)
 )
 _GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
+_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -2208,12 +2209,13 @@ class GraphDatabase(SQLBase):
 
         return query.count() > 0
 
+    @lru_cache(maxsize=_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE)
     def get_si_aggregated_python_package_version(
         self,
         package_name: str,
         package_version: str,
         index_url: str,
-    ) -> Dict[str, int]:
+    ) -> Optional[Dict[str, int]]:
         """Get Aggregate Security Indicators (SI) results per Python package version.
 
         Examples:
@@ -2260,8 +2262,9 @@ class GraphDatabase(SQLBase):
                 package_version=package_version,
                 index_url=index_url
             )
-
             result = query.order_by(SecurityIndicatorAggregatedRun.datetime.desc()).first()
+            if result is None:
+                return None
             result = result.to_dict()
             result.pop('si_aggregated_run_document_id')
             result.pop('datetime')
