@@ -48,6 +48,8 @@ class RecommendationTypeEnum(Enum):
     STABLE = "STABLE"
     TESTING = "TESTING"
     LATEST = "LATEST"
+    PERFORMANCE = "PERFORMANCE"
+    SECURITY = "SECURITY"
 
 
 class RequirementsFormatEnum(Enum):
