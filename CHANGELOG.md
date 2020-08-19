@@ -6111,3 +6111,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * add cache and return None if empty (#1929)
 * Add long_description_content_type (#1927)
 * :pushpin: Automatic update of dependency thoth-common from 0.15.0 to 0.16.0 (#1924)
+
+## Release 0.25.2 (2020-08-19T11:42:37)
+* :pushpin: Automatic update of dependency boto3 from 1.14.43 to 1.14.45 (#1941)
+* Add information about heads on schema up2date check (#1917)
+* Add security and performance database enums (#1940)
+* Fix revsolver syncing logic (#1944)
