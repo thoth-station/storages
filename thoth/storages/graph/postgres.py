@@ -4770,8 +4770,8 @@ class GraphDatabase(SQLBase):
 
         This updates relations for DependsOn on a new package release.
         """
-        dependency_name = document["metadata"]["arguments"]["solve"]["name"]
-        dependency_version = document["metadata"]["arguments"]["solve"]["version"]
+        dependency_name = document["metadata"]["arguments"]["app.py"]["package_name"]
+        dependency_version = document["metadata"]["arguments"]["app.py"]["package_version"]
 
         with self._session_scope() as session, session.begin(subtransactions=True):
             python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
@@ -4803,7 +4803,6 @@ class GraphDatabase(SQLBase):
                     extra=entry["extra"],
                     marker_evaluation_result=entry["marker_evaluation_result"],
                 )
-
 
     def sync_security_indicator_aggregated_result(self, document: dict) -> None:
         """Sync the given security-indicator aggregated result to the graph database."""
