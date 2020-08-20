@@ -4811,6 +4811,7 @@ class GraphDatabase(SQLBase):
                     marker=entry["marker"],
                     extra=entry["extra"],
                     marker_evaluation_result=entry["marker_evaluation_result"],
+                    platform=entry["platform"],
                 )
 
     def sync_security_indicator_aggregated_result(self, document: dict) -> None:
