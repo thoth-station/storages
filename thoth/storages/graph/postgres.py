@@ -2623,6 +2623,7 @@ class GraphDatabase(SQLBase):
                 DependsOn.marker_evaluation_result,
                 DependsOn.marker,
                 DependsOn.extra,
+                DependsOn.platform,
             ).all()
 
             result = []
@@ -2635,6 +2636,7 @@ class GraphDatabase(SQLBase):
                     "marker_evaluation_result": entry[4],
                     "marker": entry[5],
                     "extra": entry[6],
+                    "platform": entry[7],
                 })
 
             return result
