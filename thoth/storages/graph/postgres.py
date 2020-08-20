@@ -357,7 +357,7 @@ class GraphDatabase(SQLBase):
         if not is_up2date:
             _LOGGER.warning(
                 "The database schema is not in sync with library revisions, the current library revision "
-                "heads: %r, database heads",
+                "heads: %r, database heads: %r",
                 revision_heads,
                 database_heads,
             )
