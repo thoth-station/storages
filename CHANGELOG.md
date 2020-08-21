@@ -6127,3 +6127,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Propagate platform information in dependents query (#1954)
 * Propagate platform when syncing revsolver results (#1955)
 * :pushpin: Automatic update of dependency boto3 from 1.14.46 to 1.14.47 (#1956)
+
+## Release 0.25.5 (2020-08-21T15:30:50)
+* Add filters to method
