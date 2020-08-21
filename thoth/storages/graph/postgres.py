@@ -2210,16 +2210,6 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    def package_analysis_document_id_exist(self, package_analysis_document_id: str) -> bool:
-        """Check if there is a package analysis document record with the given id."""
-        with self._session_scope() as session:
-            return (
-                session.query(PackageAnalyzerRun)
-                .filter(PackageAnalyzerRun.package_analysis_document_id == package_analysis_document_id)
-                .count()
-                > 0
-            )
-
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
         with self._session_scope() as session:
