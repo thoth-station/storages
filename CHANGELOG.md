@@ -6122,3 +6122,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.14.45 to 1.14.46 (#1950)
 * Fix logging error when database schema is not up2date (#1949)
 * :pushpin: Automatic update of dependency sqlalchemy from 1.3.18 to 1.3.19 (#1943)
+
+## Release 0.25.4 (2020-08-21T07:31:14)
+* Propagate platform information in dependents query (#1954)
+* Propagate platform when syncing revsolver results (#1955)
+* :pushpin: Automatic update of dependency boto3 from 1.14.46 to 1.14.47 (#1956)
