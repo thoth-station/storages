@@ -3634,7 +3634,7 @@ class GraphDatabase(SQLBase):
 
             return formatted_result
 
-    def get_unsolved_python_packages_all_per_adviser_run(self) -> Dict[str, List[str]]:
+    def get_unsolved_python_packages_all_per_adviser_run(self, source_type: str) -> Dict[str, List[str]]:
         """Retrieve all unsolved packages for a certain Adviser Run that need to be re run.
 
         Examples:
@@ -3648,6 +3648,12 @@ class GraphDatabase(SQLBase):
                 session.query(AdviserRun)
                 .filter(
                     AdviserRun.need_re_run.is_(True),
+                )
+                .filter(
+                    AdviserRun.source_type == source_type,
+                )
+                .filter(
+                    AdviserRun.re_run_adviser_id.is_(None)
                 )
                 .join(HasUnresolved)
                 .join(PythonPackageVersionEntity)
