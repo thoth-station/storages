@@ -1880,6 +1880,62 @@ class GraphDatabase(SQLBase):
 
     # Unanalyzed Python Packages
 
+    def _construct_si_unanalyzed_python_package_versions_query(
+        self, session: Session, index_url: Optional[str] = None
+    ) -> Query:
+        """Construct query for packages analyzed by solver, but unanalyzed by SI."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
+        query = session.query(PythonPackageVersion).filter(
+            PythonPackageVersion.package_version.isnot(None),
+            PythonPackageIndex.url.isnot(None),
+            PythonPackageIndex.enabled.is_(True),
+        )
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
+
+        # We find all rows that are same in PythonPackageVersion and SIAggregated table.
+        conditions = [PythonPackageVersion.id == SIAggregated.python_package_version_id]
+
+        # Finally filter these out.
+        query = query.filter(~exists().where(and_(*conditions)))
+
+        return query
+
+    def get_si_unanalyzed_python_package_versions_all(
+        self,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        distinct: bool = True,
+        randomize: bool = True,
+    ) -> List[Tuple[str, str]]:
+        """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_si_unanalyzed_python_package_versions_all()
+        [('crossbar', '0.10.0', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
+        """
+        with self._session_scope() as session:
+            query = self._construct_si_unanalyzed_python_package_versions_query(session)
+
+            query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+            )
+
+            if randomize:
+                query = query.order_by(func.random())
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            return query.all()
+    
+    
     def _construct_unanalyzed_python_package_versions_query(
         self, session: Session, package_name: str = None, package_version: str = None, index_url: str = None
     ) -> Query:
@@ -4822,6 +4878,27 @@ class GraphDatabase(SQLBase):
                     platform=entry["platform"],
                 )
 
+    def _check_package_solved(self, session: Session, package_name: str, package_version: str,
+                              package_index: str) -> Tuple:
+        """We check if the package has been solved before syncing it to the database."""
+        # Check if a package have been solved by any of the solver
+        python_package_version = (
+                session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageVersion.package_name == package_name)
+                .filter(PythonPackageVersion.package_version == package_version)
+                .filter(PythonPackageIndex.url == package_index if package_index else None)
+                .first()
+            )
+
+        if not python_package_version:
+            raise SolverNotRun(
+                f"Trying to sync package {package_name!r} in version {package_version!r} "
+                f"not solved by any solver."
+            )
+        return python_package_version.entity_id, python_package_version.id
+            
+
     def sync_security_indicator_aggregated_result(self, document: dict) -> None:
         """Sync the given security-indicator aggregated result to the graph database."""
         metadata = document['metadata']
@@ -4833,16 +4910,8 @@ class GraphDatabase(SQLBase):
         index_url = metadata["arguments"]["app.py"]["package_index"]
 
         with self._session_scope() as session, session.begin(subtransactions=True):
-            python_package_index = self._get_or_create_python_package_index(
-                session, index_url=index_url, only_if_enabled=True
-            )
-            python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
-                session,
-                package_name=package_name,
-                package_version=package_version,
-                python_package_index_id=python_package_index.id,
-            )
-
+            python_package_version_entity_id, python_package_version_id = self._check_package_solved(
+                session=session, package_name=package_name, package_version=package_version, package_index=index_url)
             si_aggregated_run, _ = SecurityIndicatorAggregatedRun.get_or_create(
                 session,
                 si_aggregated_run_document_id=document_id,
@@ -4877,7 +4946,8 @@ class GraphDatabase(SQLBase):
             SIAggregated.get_or_create(
                 session,
                 si_aggregated_run_id=si_aggregated_run.id,
-                python_package_version_entity_id=python_package_version_entity.id,
+                python_package_version_entity_id=python_package_version_entity_id,
+                python_package_version=python_package_version_id,
             )
 
     def sync_solver_result(self, document: dict) -> None:
