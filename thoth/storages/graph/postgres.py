@@ -3062,7 +3062,7 @@ class GraphDatabase(SQLBase):
         """Retrieve names of Python package entities in the Thoth's knowledge base."""
         with self._session_scope() as session:
             query = session.query(PythonPackageVersionEntity.package_name)
-            return query.distinct().all()
+            return [i[0] for i in query.distinct().all()]
 
     def get_python_package_version_names_all(
         self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
