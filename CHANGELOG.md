@@ -6130,3 +6130,6 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.25.5 (2020-08-21T15:30:50)
 * Add filters to method
+
+## Release 0.25.6 (2020-08-26T19:30:11)
+* query.all returns type List[result] not List[str]
