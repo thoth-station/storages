@@ -39,6 +39,8 @@ PostgreSQL instance, (make sure you installed `podman-compose
 
 .. code-block:: console
 
+  $ dnf install -y podman podman-compose
+  $ # Also available from PyPI: pip install podman-compose
   $ podman-compose up
 
 After running the command above, you should be able to access a local
