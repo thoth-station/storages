@@ -1094,6 +1094,63 @@ class GraphDatabase(SQLBase):
 
             return query.all()
 
+
+    def get_error_solved_document_id_all(
+        self,
+        package_name: str = None,
+        package_version: str = None,
+        index_url: str = None,
+        *,
+        unsolvable: bool = False,
+        unparseable: bool = False,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        os_name: str = None,
+        os_version: str = None,
+        python_version: str = None,
+        distinct: bool = False,
+        limit_results: bool = True
+    ) -> List[str]:
+        """Retrieve solver document id with error Python package versions in Thoth Database.
+
+        if unsolvable=True -> get_unsolvable_python_package_versions
+        if unparseable=True -> get_unparseable_python_package_versions
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_error_solved_document_id_all()
+        ['solver-fedora-32-py37-324232']
+        """
+        os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
+        if unsolvable is True and unparseable is True:
+            raise ValueError("Cannot query for unparseable and unsolvable at the same time")
+
+        with self._session_scope() as session:
+            query = self._construct_error_solved_python_package_versions_query(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                index_url=index_url,
+                unsolvable=unsolvable,
+                unparseable=unparseable,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+            )
+
+            query = query.with_entities(Solved.document_id)
+
+            if limit_results:
+                query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            return [ids[0] for ids in query.all()]
+
+
     def get_error_solved_python_package_versions_count_all(
         self,
         package_name: str = None,
