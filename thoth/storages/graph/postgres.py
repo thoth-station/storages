@@ -570,7 +570,7 @@ class GraphDatabase(SQLBase):
         )
 
     def python_package_version_exists(
-        self, package_name: str, package_version: str, index_url: str = None, solver_name: str = None
+        self, package_name: str, package_version: str, index_url: Optional[str] = None, solver_name: Optional[str] = None,
     ) -> bool:
         """Check if the given Python package version exists in the graph database.
 
@@ -755,9 +755,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str]]:
         """Retrieve solved Python package with index in Thoth Database.
@@ -772,7 +772,7 @@ class GraphDatabase(SQLBase):
         return self.__class__.get_python_packages_all(**locals())
 
     def _construct_solved_python_packages_query(
-        self, session: Session, *, os_name: str = None, os_version: str = None, python_version: str = None
+        self, session: Session, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None,
     ) -> Query:
         """Construct query for solved Python packages functions, the query is not executed."""
         kwargs = locals()
@@ -780,7 +780,7 @@ class GraphDatabase(SQLBase):
         return self.__class__._construct_python_packages_query(**kwargs)
 
     def get_solved_python_packages_count_all(
-        self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None, distinct: bool = False
     ) -> int:
         """Retrieve number of solved Python package versions in Thoth Database."""
         os_version = OpenShift.normalize_os_version(os_name, os_version)
@@ -799,9 +799,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve solved Python package versions per package in Thoth Database.
@@ -838,9 +838,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
         """Retrieve number of Python Package (package_name, package_version, index_url) solved in Thoth Database.
@@ -860,9 +860,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Retrieve number of solved Python package versions per index url in Thoth Database.
@@ -883,9 +883,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of solved Python package versions per package version in Thoth Database.
@@ -902,13 +902,13 @@ class GraphDatabase(SQLBase):
     def _construct_solved_python_package_versions_query(
         self,
         session: Session,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for solved Python packages versions functions, the query is not executed."""
@@ -917,15 +917,15 @@ class GraphDatabase(SQLBase):
 
     def get_solved_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         is_missing: Optional[bool] = None,
     ) -> List[Tuple[str, str, str]]:
@@ -959,13 +959,13 @@ class GraphDatabase(SQLBase):
 
     def get_solved_python_package_versions_count_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         is_missing: Optional[bool] = None,
     ) -> int:
@@ -992,15 +992,15 @@ class GraphDatabase(SQLBase):
     def _construct_error_solved_python_package_versions_query(
         self,
         session: Session,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         unsolvable: bool = False,
         unparseable: bool = False,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
     ) -> Query:
         """Construct query for solved with error Python packages versions functions, the query is not executed."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1015,6 +1015,7 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageVersion.package_version == package_version)
 
         if index_url is not None:
+            index_url = GraphDatabase.normalize_python_index_url(index_url)
             query = query.filter(PythonPackageIndex.url == index_url)
 
         conditions = [Solved.version_id == PythonPackageVersion.id]
@@ -1030,6 +1031,7 @@ class GraphDatabase(SQLBase):
             conditions.append(PythonPackageVersion.os_name == os_name)
 
         if os_version:
+            os_version = OpenShift.normalize_os_version(os_name, os_version)
             conditions.append(PythonPackageVersion.os_version == os_version)
 
         if python_version:
@@ -1041,17 +1043,17 @@ class GraphDatabase(SQLBase):
 
     def get_error_solved_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         unsolvable: bool = False,
         unparseable: bool = False,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved with error Python package versions in Thoth Database.
@@ -1097,17 +1099,17 @@ class GraphDatabase(SQLBase):
 
     def get_error_solved_document_id_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         unsolvable: bool = False,
         unparseable: bool = False,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         limit_results: bool = True
     ) -> List[str]:
@@ -1122,8 +1124,6 @@ class GraphDatabase(SQLBase):
         >>> graph.get_error_solved_document_id_all()
         ['solver-fedora-32-py37-324232']
         """
-        os_version = OpenShift.normalize_os_version(os_name, os_version)
-        index_url = GraphDatabase.normalize_python_index_url(index_url)
         if unsolvable is True and unparseable is True:
             raise ValueError("Cannot query for unparseable and unsolvable at the same time")
 
@@ -1153,15 +1153,15 @@ class GraphDatabase(SQLBase):
 
     def get_error_solved_python_package_versions_count_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         unsolvable: bool = False,
         unparseable: bool = False,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> int:
         """Retrieve solved with error Python package versions number in Thoth Database.
@@ -1201,13 +1201,13 @@ class GraphDatabase(SQLBase):
     def _construct_unsolved_python_package_versions_query(
         self,
         session: Session,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
     ) -> Query:
         """Construct query for unsolved Python packages versions functions, the query is not executed."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1246,9 +1246,9 @@ class GraphDatabase(SQLBase):
     def get_unsolved_python_packages_all(
         self,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
@@ -1281,9 +1281,9 @@ class GraphDatabase(SQLBase):
     def get_unsolved_python_packages_all_versions(
         self,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
@@ -1328,9 +1328,9 @@ class GraphDatabase(SQLBase):
     def get_unsolved_python_package_versions_count(
         self,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
@@ -1383,9 +1383,9 @@ class GraphDatabase(SQLBase):
         self,
         index_url: str,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
@@ -1440,9 +1440,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of unsolved Python package versions per package version in Thoth Database.
@@ -1495,15 +1495,15 @@ class GraphDatabase(SQLBase):
 
     def get_unsolved_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         randomize: bool = True,
     ) -> List[Tuple[str, Optional[str], Optional[str]]]:
@@ -1546,13 +1546,13 @@ class GraphDatabase(SQLBase):
 
     def get_unsolved_python_package_versions_count_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> int:
         """Retrieve unsolved Python package versions number in Thoth Database."""
@@ -1583,7 +1583,7 @@ class GraphDatabase(SQLBase):
     # Analyzed Python Packages
 
     def _construct_analyzed_python_package_versions_query(
-        self, session: Session, package_name: str = None, package_version: str = None, index_url: str = None
+        self, session: Session, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None,
     ) -> Query:
         """Construct query for analyzed Python packages versions functions, the query is not executed."""
         query = session.query(PythonPackageVersionEntity).filter(
@@ -1659,9 +1659,9 @@ class GraphDatabase(SQLBase):
 
     def get_analyzed_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
@@ -1695,7 +1695,7 @@ class GraphDatabase(SQLBase):
             return query.all()
 
     def get_analyzed_python_package_versions_count_all(
-        self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
+        self, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None, *, distinct: bool = False
     ) -> int:
         """Retrieve analyzed Python package versions number in Thoth Database."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1851,7 +1851,7 @@ class GraphDatabase(SQLBase):
             return self._count_per_version(result=result)
 
     def _construct_analyzed_error_python_package_versions_query(
-        self, session: Session, package_name: str = None, package_version: str = None, index_url: str = None
+        self, session: Session, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None,
     ) -> Query:
         """Construct query for analyzed Python packages versions functions with error, the query is not executed."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1879,9 +1879,9 @@ class GraphDatabase(SQLBase):
 
     def get_analyzed_error_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
@@ -1915,7 +1915,7 @@ class GraphDatabase(SQLBase):
             return query.all()
 
     def get_analyzed_error_python_package_versions_count_all(
-        self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
+        self, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None, *, distinct: bool = False
     ) -> int:
         """Retrieve analyzed Python package versions with error number in Thoth Database."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1938,7 +1938,7 @@ class GraphDatabase(SQLBase):
     # Unanalyzed Python Packages
 
     def _construct_unanalyzed_python_package_versions_query(
-        self, session: Session, package_name: str = None, package_version: str = None, index_url: str = None
+        self, session: Session, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None,
     ) -> Query:
         """Construct query for unanalyzed Python packages versions functions, the query is not executed."""
         query = session.query(PythonPackageVersionEntity).filter(
@@ -2018,9 +2018,9 @@ class GraphDatabase(SQLBase):
 
     def get_unanalyzed_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
@@ -2058,7 +2058,7 @@ class GraphDatabase(SQLBase):
             return query.all()
 
     def get_unanalyzed_python_package_versions_count_all(
-        self, package_name: str = None, package_version: str = None, index_url: str = None, *, distinct: bool = False
+        self, package_name: Optional[str] = None, package_version: Optional[str] = None, index_url: Optional[str] = None, *, distinct: bool = False
     ) -> int:
         """Retrieve unanalyzed Python package versions number in Thoth Database."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -2336,7 +2336,7 @@ class GraphDatabase(SQLBase):
             result.pop('datetime')
             return result
 
-    def retrieve_dependent_packages(self, package_name: str, package_version: str = None) -> Dict[str, List[str]]:
+    def retrieve_dependent_packages(self, package_name: str, package_version: Optional[str] = None,) -> Dict[str, List[str]]:
         """Get mapping package name to package version of packages that depend on the given package."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
@@ -2435,9 +2435,9 @@ class GraphDatabase(SQLBase):
         package_version: str,
         index_url: str,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         extras: FrozenSet[Optional[str]] = None,
         marker_evaluation_result: Optional[bool] = None,
     ) -> List[
@@ -2722,9 +2722,9 @@ class GraphDatabase(SQLBase):
         package_version: str,
         index_url: str,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         extras: FrozenSet[Optional[str]] = None,
         marker_evaluation_result: Optional[bool] = None,
         platform: Optional[str] = None,
@@ -2812,7 +2812,7 @@ class GraphDatabase(SQLBase):
             return result
 
     def retrieve_transitive_dependencies_python_multi(
-        self, *package_tuples, os_name: str = None, os_version: str = None, python_version: str = None
+        self, *package_tuples, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None,
     ) -> Dict[
         Tuple[str, str, str],
         Set[
@@ -3020,7 +3020,7 @@ class GraphDatabase(SQLBase):
             session.commit()
 
     def register_python_package_index(
-        self, url: str, warehouse_api_url: str = None, verify_ssl: bool = True, enabled: bool = False
+        self, url: str, warehouse_api_url: Optional[str] = None, verify_ssl: bool = True, enabled: bool = False
     ) -> bool:
         """Register the given Python package index in the graph database."""
         with self._session_scope() as session:
@@ -3122,7 +3122,7 @@ class GraphDatabase(SQLBase):
             return [i[0] for i in query.distinct().all()]
 
     def get_python_package_version_names_all(
-        self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None, distinct: bool = False
     ) -> List[str]:
         """Retrieve names of Python Packages known by Thoth.
 
@@ -3156,9 +3156,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> List[Tuple[str, str]]:
         """Retrieve Python packages with index in Thoth Database.
@@ -3195,7 +3195,7 @@ class GraphDatabase(SQLBase):
 
     @staticmethod
     def _construct_python_packages_query(
-        session: Session, *, os_name: str = None, os_version: str = None, python_version: str = None
+        session: Session, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None,
     ) -> Query:
         """Construct query for Python packages functions, the query is not executed."""
         query = (
@@ -3219,7 +3219,7 @@ class GraphDatabase(SQLBase):
         return query
 
     def get_python_packages_count_all(
-        self, *, os_name: str = None, os_version: str = None, python_version: str = None, distinct: bool = False
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None, distinct: bool = False
     ) -> int:
         """Retrieve number of versions per Python package in Thoth Database."""
         os_version = OpenShift.normalize_os_version(os_name, os_version)
@@ -3238,9 +3238,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Retrieve Python package versions per package in Thoth Database.
@@ -3271,9 +3271,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[Tuple[str, str, str], int]:
         """Retrieve number of Python Package (package_name, package_version, index_url) in Thoth Database.
@@ -3329,9 +3329,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         sort_by: QuerySortTypeEnum = None,
     ) -> PythonQueryResult:
@@ -3386,9 +3386,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[Tuple[str, str], int]]:
         """Retrieve number of Python package versions per index url in Thoth Database.
@@ -3441,9 +3441,9 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
     ) -> Dict[str, Dict[str, int]]:
         """Retrieve number of Python package versions per index url in Thoth Database.
@@ -3500,13 +3500,13 @@ class GraphDatabase(SQLBase):
     def _construct_python_package_versions_query(
         self,
         session: Session,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         is_missing: Optional[bool] = None,
     ) -> Query:
         """Construct query for Python packages versions functions, the query is not executed."""
@@ -3546,15 +3546,15 @@ class GraphDatabase(SQLBase):
 
     def get_python_package_versions_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         is_missing: Optional[bool] = None,
     ) -> List[Tuple[str, str, str]]:
@@ -3589,13 +3589,13 @@ class GraphDatabase(SQLBase):
 
     def get_python_package_versions_count_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
-        os_name: str = None,
-        os_version: str = None,
-        python_version: str = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
         is_missing: Optional[bool] = None,
     ) -> int:
@@ -3926,8 +3926,8 @@ class GraphDatabase(SQLBase):
     def create_python_package_version_entity(
         self,
         package_name: str,
-        package_version: str = None,
-        index_url: str = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         only_if_package_seen: bool = False,
     ) -> Optional[Tuple[PythonPackageVersionEntity, bool]]:
@@ -4206,7 +4206,7 @@ class GraphDatabase(SQLBase):
         record_id: str,
         version_range: str,
         advisory: str,
-        cve: str = None,
+        cve: Optional[str] = None,
     ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -4289,9 +4289,9 @@ class GraphDatabase(SQLBase):
 
     def get_adviser_run_origins_all(
         self,
-        package_name: str = None,
-        package_version: str = None,
-        index_url: str = None,
+        package_name: Optional[str] = None,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = False,
