@@ -68,12 +68,14 @@ class PythonPackageVersion(Base, BaseExtension):
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True
     )
     is_missing = Column(Boolean, nullable=False, default=False)
-
+    
+    # Relations
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
     index = relationship("PythonPackageIndex", back_populates="python_package_versions")
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="python_package_versions")
+    si_aggregated = relationship("SIAggregated", back_populates="python_package_version")
 
     python_software_stacks = relationship("PythonRequirementsLock", back_populates="python_package_version")
 
@@ -1556,7 +1558,11 @@ class SIAggregated(Base, BaseExtension):
     python_package_version_entity_id = Column(
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
+    python_package_version_id = Column(
+        Integer, ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True
+    )
 
+    python_package_version = relationship("PythonPackageVersion", back_populates="si_aggregated")
     si_aggregated_run = relationship("SecurityIndicatorAggregatedRun", back_populates="python_package_version_entities")
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="si_aggregated_runs")
 
