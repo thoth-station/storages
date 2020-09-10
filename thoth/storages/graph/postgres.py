@@ -2746,8 +2746,8 @@ class GraphDatabase(SQLBase):
     def get_depends_on(
         self,
         package_name: str,
-        package_version: str,
-        index_url: str,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
         *,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
@@ -2771,9 +2771,15 @@ class GraphDatabase(SQLBase):
         Environment markers are not taken into account in this query.
         """
         package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
-        os_version = OpenShift.normalize_os_version(os_name, os_version)
-        index_url = GraphDatabase.normalize_python_index_url(index_url)
+
+        if package_version is not None:
+            package_version = self.normalize_python_package_version(package_version)
+
+        if index_url is not None:
+            index_url = self.normalize_python_index_url(index_url)
+
+        if os_version is not None:
+            os_version = OpenShift.normalize_os_version(os_name, os_version)
 
         package_requested = locals()
         package_requested.pop("self")
@@ -2782,8 +2788,10 @@ class GraphDatabase(SQLBase):
             query = (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.package_name == package_name)
-                .filter(PythonPackageVersion.package_version == package_version)
             )
+
+            if package_version is not None:
+                query = query.filter(PythonPackageVersion.package_version == package_version)
 
             if os_name is not None:
                 query = query.filter(PythonPackageVersion.os_name == os_name)
@@ -2797,7 +2805,8 @@ class GraphDatabase(SQLBase):
             if is_missing is not None:
                 query = query.filter(PythonPackageVersion.is_missing == is_missing)
 
-            query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+            if index_url is not None:
+                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
 
             # Mark the query here for later check, if we do not have any records for the given
             # package for the given environment.
