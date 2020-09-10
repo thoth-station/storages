@@ -6133,3 +6133,20 @@ Starting with this release we have a Zuul-CI pipeline that:
 
 ## Release 0.25.6 (2020-08-26T19:30:11)
 * query.all returns type List[result] not List[str]
+
+## Release 0.25.7 (2020-09-10T18:35:54)
+### Features
+* Added query to get SI unanalyzed packages (#1963)
+* Introduce query for document ids with solver error (#1976)
+* :arrow_up: Relock the pipfile.lock
+### Improvements
+* Make package version and package index optional in get_depends_on (#1975)
+* State how to install podman and podman-compose (#1971)
+### Automatic Updates
+* :pushpin: Automatic update of dependency thoth-common from 0.18.0 to 0.18.1 (#1983)
+* :pushpin: Automatic update of dependency thoth-common from 0.17.3 to 0.18.0 (#1982)
+* :pushpin: Automatic update of dependency boto3 from 1.14.57 to 1.14.58 (#1981)
+* :pushpin: Automatic update of dependency thoth-common from 0.16.1 to 0.17.2 (#1973)
+* :pushpin: Automatic update of dependency boto3 from 1.14.49 to 1.14.53 (#1972)
+* :pushpin: Automatic update of dependency pytest-mypy from 0.6.2 to 0.7.0 (#1970)
+* :pushpin: Automatic update of dependency boto3 from 1.14.47 to 1.14.49 (#1969)
