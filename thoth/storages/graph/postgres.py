@@ -1592,6 +1592,53 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+    # SI Analyzed Python Packages
+
+    def _construct_si_analyzed_python_package_versions_query(
+        self, session: Session, index_url: Optional[str] = None
+    ) -> Query:
+        """Construct query for packages analyzed by solver and analyzed by SI."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
+        query = session.query(PythonPackageVersion).filter(
+            PythonPackageVersion.package_version.isnot(None),
+            PythonPackageIndex.url.isnot(None),
+            PythonPackageIndex.enabled.is_(True),
+        )
+
+        if index_url is not None:
+            query = query.filter(PythonPackageIndex.url == index_url)
+
+        # We find all rows that are same in PythonPackageVersion and SIAggregated table.
+        conditions = [PythonPackageVersion.id == SIAggregated.python_package_version_id]
+
+        query = query.filter(exists().where(and_(*conditions)))
+
+        return query
+
+    def get_si_analyzed_python_package_versions_count_all(
+        self,
+        index_url: Optional[str] = None,
+        *,
+        distinct: bool = False,
+    ) -> int:
+        """Get SI analyzed Python package versions number in Thoth Database."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
+        with self._session_scope() as session:
+            query = self._construct_si_analyzed_python_package_versions_query(
+                session, index_url=index_url
+            )
+
+            query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersionEntity.package_name,
+                PythonPackageVersionEntity.package_version,
+                PythonPackageIndex.url,
+            )
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
+
     # Analyzed Python Packages
 
     def _construct_analyzed_python_package_versions_query(
@@ -2021,8 +2068,28 @@ class GraphDatabase(SQLBase):
                 query = query.distinct()
 
             return query.all()
-    
-    
+
+    def get_si_unanalyzed_python_package_versions_count_all(
+        self,
+        index_url: Optional[str] = None,
+        *,
+        distinct: bool = False,
+    ) -> int:
+        """Get SI unanalyzed Python package versions number in Thoth Database."""
+        with self._session_scope() as session:
+            query = self._construct_si_unanalyzed_python_package_versions_query(session)
+
+            query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersion.package_name,
+                PythonPackageVersion.package_version,
+                PythonPackageIndex.url,
+            )
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
+
     def _construct_unanalyzed_python_package_versions_query(
         self,
         session: Session,
@@ -2335,6 +2402,7 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageVersionEntity.package_version == package_version)
 
         if index_url is not None:
+            index_url = GraphDatabase.normalize_python_index_url(index_url)
             query = query.filter(PythonPackageIndex.url == index_url)
 
         query = query.with_entities(SecurityIndicatorAggregatedRun)
@@ -2460,6 +2528,7 @@ class GraphDatabase(SQLBase):
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         os_version = OpenShift.normalize_os_version(os_name, os_version)
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
 
         with self._session_scope() as session:
             query = session.query(PythonPackageVersion).filter_by(
