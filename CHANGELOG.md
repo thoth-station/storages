@@ -6150,3 +6150,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.14.49 to 1.14.53 (#1972)
 * :pushpin: Automatic update of dependency pytest-mypy from 0.6.2 to 0.7.0 (#1970)
 * :pushpin: Automatic update of dependency boto3 from 1.14.47 to 1.14.49 (#1969)
+
+## Release 0.25.8 (2020-09-11T21:39:02)
+### Features
+* Add queries for SI metrics
+### Automatic Updates
+* :pushpin: Automatic update of dependency alembic from 1.4.2 to 1.4.3 (#1991)
+* :pushpin: Automatic update of dependency alembic from 1.4.2 to 1.4.3 (#1990)
+* :pushpin: Automatic update of dependency thoth-common from 0.18.1 to 0.18.2 (#1989)
+* :pushpin: Automatic update of dependency boto3 from 1.14.58 to 1.14.60 (#1988)
