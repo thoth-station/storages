@@ -613,10 +613,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:de9e9c0a5f37005100c3e961a17bc57a8f85cb4bee320fa1a9311280fe766ff5"
+                "sha256:81fb4a92cdac08ef300db5c779875a79ac2dc739e009bb74b5a9dda7cbd8ce6a",
+                "sha256:ff3f75cf8b53eed46b382e8663c6b264231d89bf5b05ab8dd6f6d82dd6eeafe5"
             ],
             "index": "pypi",
-            "version": "==0.18.1"
+            "version": "==0.18.2"
         },
         "thoth-python": {
             "hashes": [
@@ -639,7 +640,7 @@
                 "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c",
                 "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"
             ],
-            "markers": "python_version < '3.8'",
+            "markers": "python_version < '3.7'",
             "version": "==3.7.4.3"
         },
         "tzlocal": {
@@ -1809,7 +1810,7 @@
                 "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c",
                 "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"
             ],
-            "markers": "python_version < '3.8'",
+            "markers": "python_version < '3.7'",
             "version": "==3.7.4.3"
         },
         "unidiff": {
