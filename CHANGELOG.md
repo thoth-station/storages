@@ -6159,3 +6159,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency alembic from 1.4.2 to 1.4.3 (#1990)
 * :pushpin: Automatic update of dependency thoth-common from 0.18.1 to 0.18.2 (#1989)
 * :pushpin: Automatic update of dependency boto3 from 1.14.58 to 1.14.60 (#1988)
+
+## Release 0.25.9 (2020-09-15T12:40:57)
+### Features
+* Remove package-analyzer related bits (#1994)
+### Improvements
+* Add query for adviser run per source type (#1997)
+### Automatic Updates
+* :pushpin: Automatic update of dependency pytest from 6.0.1 to 6.0.2 (#1996)
+* :pushpin: Automatic update of dependency thoth-common from 0.18.2 to 0.19.0 (#1999)
+* :pushpin: Automatic update of dependency boto3 from 1.14.60 to 1.14.61 (#1998)
