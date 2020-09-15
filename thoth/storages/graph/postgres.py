@@ -142,6 +142,7 @@ from .enums import SoftwareStackTypeEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
 from .enums import QuerySortTypeEnum
+from .enums import ThothAdviserIntegrationEnum
 
 from ..analyses import AnalysisResultsStore
 from ..buildlogs_analyses import BuildLogsAnalysisResultsStore
@@ -4514,6 +4515,30 @@ class GraphDatabase(SQLBase):
             result = [r[0] for r in query.all() if r[0]]  # We do not consider None results
 
             return result
+
+    def get_adviser_run_count_per_source_type(
+        self,
+    ) -> Dict[str, int]:
+        """Retrieve number of Adviser run per source type in Thoth Database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_adviser_run_count_per_source_type()
+        {'GITHUB_APP': 154, 'CLI': 71}
+        """
+        with self._session_scope() as session:
+            query = (
+                session.query(AdviserRun.source_type, func.count(AdviserRun.source_type))
+                .group_by(AdviserRun.source_type)
+            )
+
+            results = query.all()
+
+            return {
+                source_result[0]: source_result[1] for source_result in results
+                if source_result[0] in ThothAdviserIntegrationEnum._member_names_
+            }
 
     def update_python_package_hash_present_flag(
         self, package_name: str, package_version: str, index_url: str, sha256_hash: str
