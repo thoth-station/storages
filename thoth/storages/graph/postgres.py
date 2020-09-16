@@ -4382,7 +4382,7 @@ class GraphDatabase(SQLBase):
                 session,
                 si_aggregated_run_id=si_aggregated_run.id,
                 python_package_version_entity_id=python_package_version_entity_id,
-                python_package_version=python_package_version_id,
+                python_package_version_id=python_package_version_id,
             )
 
     def sync_solver_result(self, document: dict) -> None:
