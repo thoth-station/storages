@@ -1611,8 +1611,14 @@ class GraphDatabase(SQLBase):
         self,
         *,
         distinct: bool = False,
-    ) -> int:
-        """Get SI analyzed Python package versions in Thoth Database."""
+    ) -> List[Tuple[str, str, str]]:
+        """Get SI analyzed Python package versions in Thoth Database.
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_si_analyzed_python_package_versions_all()
+        [('fbprophet', '0.4', 'https://pypi.org/simple')]
+        """
         with self._session_scope() as session:
             query = self._construct_si_analyzed_python_package_versions_query(
                 session
@@ -1679,7 +1685,7 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = True,
         randomize: bool = True,
-    ) -> List[Tuple[str, str]]:
+    ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -4331,7 +4337,7 @@ class GraphDatabase(SQLBase):
                               package_index: str) -> Tuple:
         """Check if the package has been solved before syncing it to the database."""
         # Check all packages solved
-        python_package_versions = (
+        python_package_version = (
             session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
             .filter(PythonPackageVersion.package_name == package_name)
