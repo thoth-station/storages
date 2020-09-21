@@ -1672,7 +1672,7 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         # We find all rows that are same in PythonPackageVersion and SIAggregated table.
-        conditions = [PythonPackageVersion.id == SIAggregated.python_package_version_id]
+        conditions = [PythonPackageVersion.entity_id == SIAggregated.python_package_version_entity_id]
 
         # Finally filter these out.
         query = query.filter(~exists().where(and_(*conditions)))
