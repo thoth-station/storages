@@ -4335,8 +4335,8 @@ class GraphDatabase(SQLBase):
 
     def _check_package_solved(self, session: Session, package_name: str, package_version: str,
                               package_index: str) -> Tuple:
-        """Check if the package has been solved before syncing it to the database."""
-        # Check all packages solved
+        """Check if the package has been solved before syncing SI analysis to the database."""
+        # Check if a package have been solved by any of the solver
         python_package_version = (
             session.query(PythonPackageVersion)
             .join(PythonPackageIndex)
