@@ -6173,3 +6173,16 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.25.10 (2020-09-16T14:47:02)
 ### Features
 * Fix sync for security (#2002)
+
+## Release 0.25.11 (2020-09-21T16:04:13)
+### Features
+* Adjust comment
+* Adjust query for SI unanalyzed
+* Add query to retrieve packages SI analyzed
+* Adjust SI queries after schema change
+* Invert order to allow sync (#2010)
+### Automatic Updates
+* :pushpin: Automatic update of dependency voluptuous from 0.11.7 to 0.12.0 (#2011)
+* :pushpin: Automatic update of dependency boto3 from 1.14.63 to 1.15.1 (#2012)
+* :pushpin: Automatic update of dependency boto3 from 1.14.62 to 1.14.63 (#2009)
+* :pushpin: Automatic update of dependency boto3 from 1.14.61 to 1.14.62 (#2006)
