@@ -69,7 +69,7 @@ class PythonPackageVersion(Base, BaseExtension):
     )
     is_missing = Column(Boolean, nullable=False, default=False)
     is_downloadable = Column(Boolean, nullable=False, default=True)
-    
+
     # Relations
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
