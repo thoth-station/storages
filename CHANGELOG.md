@@ -6200,3 +6200,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency thoth-python from 0.10.1 to 0.10.2 (#2019)
 * :pushpin: Automatic update of dependency thoth-common from 0.19.0 to 0.20.0 (#2018)
 * :pushpin: Automatic update of dependency boto3 from 1.15.1 to 1.15.6 (#2017)
+
+## Release 0.25.13 (2020-09-29T09:22:07)
+### Features
+* Rename flag to be generalized (#2030)
