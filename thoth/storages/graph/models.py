@@ -68,7 +68,7 @@ class PythonPackageVersion(Base, BaseExtension):
         Integer, ForeignKey("python_package_metadata.id", ondelete="CASCADE"), nullable=True
     )
     is_missing = Column(Boolean, nullable=False, default=False)
-    is_downloadable = Column(Boolean, nullable=False, default=True)
+    is_si_analyzable = Column(Boolean, nullable=False, default=True)
 
     # Relations
     dependencies = relationship("DependsOn", back_populates="version")
