@@ -1686,6 +1686,7 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = True,
         randomize: bool = True,
+        is_downloadable: bool = True,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
         Examples:
@@ -1695,7 +1696,10 @@ class GraphDatabase(SQLBase):
         [('crossbar', '0.10.0', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
         with self._session_scope() as session:
-            query = self._construct_si_unanalyzed_python_package_versions_query(session)
+            query = self._construct_si_unanalyzed_python_package_versions_query(
+                session,
+                is_downloadable=is_downloadable
+            )
 
             query = query.join(PythonPackageIndex).with_entities(
                 PythonPackageVersion.package_name,
@@ -1718,69 +1722,13 @@ class GraphDatabase(SQLBase):
         index_url: Optional[str] = None,
         *,
         distinct: bool = False,
+        is_downloadable: bool = True,
     ) -> int:
         """Get SI unanalyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
-            query = self._construct_si_unanalyzed_python_package_versions_query(session)
-
-            query = query.join(PythonPackageIndex).with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url,
-            )
-
-            if distinct:
-                query = query.distinct()
-
-            return query.count()
-
-    def get_si_unanalyzed_not_downloadable_python_package_versions_all(
-        self,
-        start_offset: int = 0,
-        count: Optional[int] = DEFAULT_COUNT,
-        distinct: bool = True,
-        randomize: bool = True,
-    ) -> List[Tuple[str, str, str]]:
-        """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI and not downloadable. 
-        Examples:
-        >>> from thoth.storages import GraphDatabase
-        >>> graph = GraphDatabase()
-        >>> graph.get_si_unanalyzed_not_downloadable_python_package_versions_all()
-        [('crossbar', '0.10.0', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
-        """
-        with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                is_downloadable=False
-            )
-
-            query = query.join(PythonPackageIndex).with_entities(
-                PythonPackageVersion.package_name,
-                PythonPackageVersion.package_version,
-                PythonPackageIndex.url,
-            )
-
-            if randomize:
-                query = query.order_by(func.random())
-
-            query = query.offset(start_offset).limit(count)
-
-            if distinct:
-                query = query.distinct()
-
-            return query.all()
-
-    def get_si_unanalyzed_not_downloadable_python_package_versions_count_all(
-        self,
-        index_url: Optional[str] = None,
-        *,
-        distinct: bool = False,
-    ) -> int:
-        """Get SI unanalyzed not downloadable Python package versions number in Thoth Database."""
-        with self._session_scope() as session:
-            query = self._construct_si_unanalyzed_python_package_versions_query(
-                session,
-                is_downloadable=False
+                is_downloadable=is_downloadable
             )
 
             query = query.join(PythonPackageIndex).with_entities(
