@@ -1455,7 +1455,7 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     thoth_advise_manager = Column(Boolean, nullable=False, default=False)
     thoth_provenance_manager = Column(Boolean, nullable=False, default=False)
     # Last run time-stamp
-    last_run = Column(DateTime(timezone=False), nullable=False)
+    last_run = Column(DateTime(timezone=False), nullable=True)
 
 
 class SecurityIndicatorAggregatedRun(Base, BaseExtension):
