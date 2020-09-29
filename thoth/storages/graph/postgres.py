@@ -3787,6 +3787,26 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session="fetch")
             )
 
+    def update_is_downloadable_flag_package_version(
+        self, package_name: str, package_version: str, index_url: str, value: bool
+    ) -> None:
+        """Update value of is_missing flag for PythonPackageVersion."""
+        index_url = GraphDatabase.normalize_python_index_url(index_url)
+        with self._session_scope() as session:
+            subq = (
+                session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageVersion.package_name == package_name)
+                .filter(PythonPackageVersion.package_version == package_version)
+                .filter(PythonPackageIndex.url == index_url)
+                .with_entities(PythonPackageVersion.id)
+            )
+            (
+                session.query(PythonPackageVersion)
+                .filter(PythonPackageVersion.id.in_(subq))
+                .update({"is_downloadable": value}, synchronize_session="fetch")
+            )
+
     def is_python_package_version_is_missing(self, package_name: str, package_version: str, index_url: str) -> bool:
         """Check whether is_missing flag is set for python package version."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
