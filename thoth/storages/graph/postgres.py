@@ -3796,7 +3796,7 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session="fetch")
             )
 
-    def update_is_si_analyzable_flag_package_version(
+    def update_provides_source_distro_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
     ) -> None:
         """Update value of is_si_analyzable flag for PythonPackageVersion."""
@@ -3813,7 +3813,7 @@ class GraphDatabase(SQLBase):
             (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.id.in_(subq))
-                .update({"is_si_analyzable": value}, synchronize_session="fetch")
+                .update({"provides_source_distro": value}, synchronize_session="fetch")
             )
 
     def is_python_package_version_is_missing(self, package_name: str, package_version: str, index_url: str) -> bool:
