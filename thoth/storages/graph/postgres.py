@@ -3426,6 +3426,7 @@ class GraphDatabase(SQLBase):
                     private=private,
                     installation_id=installation_id,
                     is_active=True,
+                    last_run=datetime.utcnow()
                 )
                 return newly_added
 
@@ -3457,6 +3458,18 @@ class GraphDatabase(SQLBase):
                 session.query(KebechetGithubAppInstallations).filter(KebechetGithubAppInstallations.is_active).count()
             )
             return count
+    
+    def get_kebechet_github_installations_active_managers(self, slug: str) -> list:
+        """Return the list of active managers for a particular repo."""
+        with self._session_scope() as session:
+            instance = (
+                    session.query(KebechetGithubAppInstallations)
+                    .filter(KebechetGithubAppInstallations.slug == slug)
+                    .first()
+                )
+            if instance:
+                return instance
+            return []
 
     def create_python_package_version_entity(
         self,
