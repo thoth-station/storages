@@ -6186,3 +6186,17 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.14.63 to 1.15.1 (#2012)
 * :pushpin: Automatic update of dependency boto3 from 1.14.62 to 1.14.63 (#2009)
 * :pushpin: Automatic update of dependency boto3 from 1.14.61 to 1.14.62 (#2006)
+
+## Release 0.25.12 (2020-09-29T07:44:45)
+### Features
+* Adjust query for new flag is_downloadable (#2027)
+* Correct docstring (#2025)
+* add func for updating downloadable function (#2022)
+* add flag for missing src distro (#2021)
+### Automatic Updates
+* :pushpin: Automatic update of dependency boto3 from 1.15.6 to 1.15.7 (#2026)
+* :pushpin: Automatic update of dependency pytest from 6.0.2 to 6.1.0 (#2023)
+* :pushpin: Automatic update of dependency pytest from 6.0.2 to 6.1.0 (#2020)
+* :pushpin: Automatic update of dependency thoth-python from 0.10.1 to 0.10.2 (#2019)
+* :pushpin: Automatic update of dependency thoth-common from 0.19.0 to 0.20.0 (#2018)
+* :pushpin: Automatic update of dependency boto3 from 1.15.1 to 1.15.6 (#2017)
