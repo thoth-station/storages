@@ -1447,6 +1447,15 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     private = Column(Boolean, nullable=False)
     installation_id = Column(Text, nullable=False)
     is_active = Column(Boolean, nullable=False)
+    # Kebechet managers activated per repo
+    info_manager = Column(Boolean, nullable=False, default=False)
+    pipfile_requirements_manager = Column(Boolean, nullable=False, default=False)
+    update_manager = Column(Boolean, nullable=False, default=False)
+    version_manager = Column(Boolean, nullable=False, default=False)
+    thoth_advise_manager = Column(Boolean, nullable=False, default=False)
+    thoth_provenance_manager = Column(Boolean, nullable=False, default=False)
+    # Last run time-stamp
+    last_run = Column(DateTime(timezone=False), nullable=False)
 
 
 class SecurityIndicatorAggregatedRun(Base, BaseExtension):
