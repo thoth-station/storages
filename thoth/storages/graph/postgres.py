@@ -1658,7 +1658,7 @@ class GraphDatabase(SQLBase):
             return query.count()
 
     def _construct_si_unanalyzed_python_package_versions_query(
-        self, session: Session, index_url: Optional[str] = None, is_downloadable: bool = True
+        self, session: Session, index_url: Optional[str] = None, is_si_analyzable: bool = True
     ) -> Query:
         """Construct query for packages analyzed by solver, but unanalyzed by SI."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1666,7 +1666,7 @@ class GraphDatabase(SQLBase):
             PythonPackageVersion.package_version.isnot(None),
             PythonPackageIndex.url.isnot(None),
             PythonPackageIndex.enabled.is_(True),
-            PythonPackageVersion.is_downloadable.is_(is_downloadable),
+            PythonPackageVersion.is_si_analyzable.is_(is_si_analyzable),
         )
 
         if index_url is not None:
@@ -1686,7 +1686,7 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = True,
         randomize: bool = True,
-        is_downloadable: bool = True,
+        is_si_analyzable: bool = True,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
         Examples:
@@ -1698,7 +1698,7 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                is_downloadable=is_downloadable
+                is_si_analyzable=is_si_analyzable
             )
 
             query = query.join(PythonPackageIndex).with_entities(
@@ -1722,13 +1722,13 @@ class GraphDatabase(SQLBase):
         index_url: Optional[str] = None,
         *,
         distinct: bool = False,
-        is_downloadable: bool = True,
+        is_si_analyzable: bool = True,
     ) -> int:
         """Get SI unanalyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                is_downloadable=is_downloadable
+                is_si_analyzable=is_si_analyzable
             )
 
             query = query.join(PythonPackageIndex).with_entities(
@@ -3796,10 +3796,10 @@ class GraphDatabase(SQLBase):
                 .update({"is_missing": value}, synchronize_session="fetch")
             )
 
-    def update_is_downloadable_flag_package_version(
+    def update_is_si_analyzable_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
     ) -> None:
-        """Update value of is_downloadable flag for PythonPackageVersion."""
+        """Update value of is_si_analyzable flag for PythonPackageVersion."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             subq = (
@@ -3813,7 +3813,7 @@ class GraphDatabase(SQLBase):
             (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.id.in_(subq))
-                .update({"is_downloadable": value}, synchronize_session="fetch")
+                .update({"is_si_analyzable": value}, synchronize_session="fetch")
             )
 
     def is_python_package_version_is_missing(self, package_name: str, package_version: str, index_url: str) -> bool:
