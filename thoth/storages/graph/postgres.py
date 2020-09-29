@@ -3790,7 +3790,7 @@ class GraphDatabase(SQLBase):
     def update_is_downloadable_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
     ) -> None:
-        """Update value of is_missing flag for PythonPackageVersion."""
+        """Update value of is_downloadable flag for PythonPackageVersion."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
         with self._session_scope() as session:
             subq = (
