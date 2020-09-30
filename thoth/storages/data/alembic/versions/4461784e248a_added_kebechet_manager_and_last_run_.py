@@ -1,7 +1,7 @@
 """Added kebechet manager and last run columns
 
 Revision ID: 4461784e248a
-Revises: 6389973bd8b6
+Revises: b9f960cdd223
 Create Date: 2020-09-29 18:08:42.771601+00:00
 
 """
