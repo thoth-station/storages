@@ -6204,3 +6204,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.25.13 (2020-09-29T09:22:07)
 ### Features
 * Rename flag to be generalized (#2030)
+
+## Release 0.25.14 (2020-09-30T19:19:52)
+### Features
+* Correct queries after changes in schema (#2036)
+* Added changes to kebechet model (#2024)
+### Bug Fixes
+* Alembic timeline fix (#2035)
+### Improvements
+* change flag name and alembic commands (#2033)
+### Automatic Updates
+* :pushpin: Automatic update of dependency boto3 from 1.15.7 to 1.15.8 (#2034)
