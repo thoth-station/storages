@@ -1658,7 +1658,7 @@ class GraphDatabase(SQLBase):
             return query.count()
 
     def _construct_si_unanalyzed_python_package_versions_query(
-        self, session: Session, index_url: Optional[str] = None, is_si_analyzable: bool = True
+        self, session: Session, index_url: Optional[str] = None, provides_source_distro: bool = True
     ) -> Query:
         """Construct query for packages analyzed by solver, but unanalyzed by SI."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1666,7 +1666,7 @@ class GraphDatabase(SQLBase):
             PythonPackageVersion.package_version.isnot(None),
             PythonPackageIndex.url.isnot(None),
             PythonPackageIndex.enabled.is_(True),
-            PythonPackageVersion.is_si_analyzable.is_(is_si_analyzable),
+            PythonPackageVersion.provides_source_distro.is_(provides_source_distro),
         )
 
         if index_url is not None:
@@ -1686,7 +1686,7 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         distinct: bool = True,
         randomize: bool = True,
-        is_si_analyzable: bool = True,
+        provides_source_distro: bool = True,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
         Examples:
@@ -1698,7 +1698,7 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                is_si_analyzable=is_si_analyzable
+                provides_source_distro=provides_source_distro
             )
 
             query = query.join(PythonPackageIndex).with_entities(
@@ -1722,13 +1722,13 @@ class GraphDatabase(SQLBase):
         index_url: Optional[str] = None,
         *,
         distinct: bool = False,
-        is_si_analyzable: bool = True,
+        provides_source_distro: bool = True,
     ) -> int:
         """Get SI unanalyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                is_si_analyzable=is_si_analyzable
+                provides_source_distro=provides_source_distro
             )
 
             query = query.join(PythonPackageIndex).with_entities(
