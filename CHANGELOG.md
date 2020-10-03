@@ -6215,3 +6215,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * change flag name and alembic commands (#2033)
 ### Automatic Updates
 * :pushpin: Automatic update of dependency boto3 from 1.15.7 to 1.15.8 (#2034)
+
+## Release 0.25.15 (2020-10-03T16:31:54)
+### Features
+* Adjust docstring (#2037)
