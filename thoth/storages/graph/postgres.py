@@ -202,6 +202,7 @@ def lru_cache(*lru_args, **lru_kwargs):
                 return func(self_weak(), *args, **kwargs)
 
             setattr(self, func.__name__, cached_method)
+            self._CACHED_METHODS.append(cached_method)
             return cached_method(*args, **kwargs)
 
         return wrapped_func
@@ -228,6 +229,8 @@ class GraphDatabase(SQLBase):
         "project_url": [HasMetadataProjectUrl, PythonPackageMetadataProjectUrl, "project_url"],
         "provides_extra": [HasMetadataProvidesExtra, PythonPackageMetadataProvidesExtra, "optional_feature"],
     }
+
+    _CACHED_METHODS = []
 
     def __del__(self) -> None:
         """Destruct adapter object."""
@@ -5094,16 +5097,15 @@ class GraphDatabase(SQLBase):
         """Get statistics for this adapter."""
         stats = {}
         # We need to provide name explicitly as wrappers do not handle it correctly.
-        for method, method_name in (
-            (self.get_python_package_version_records, "get_python_package_version_records"),
-            (self.get_depends_on, "get_depends_on"),
-            (self.has_python_solver_error, "has_python_solver_error"),
-            (self.get_python_cve_records_all, "get_python_cve_records_all"),
-            (self.get_python_package_required_symbols, "get_python_package_required_symbols"),
-        ):
-            stats[method_name] = dict(method.cache_info()._asdict())
+        for method in self._CACHED_METHODS:
+            stats[method.__name__] = dict(method.cache_info()._asdict())
 
         return {"memory_cache_info": stats}
+
+    def cache_clear(self) -> None:
+        """Drop cache of records."""
+        for method in self._CACHED_METHODS:
+            method.cache_clear()
 
     def get_bloat_data(self) -> dict:
         """Get bloat data."""
