@@ -4413,8 +4413,8 @@ class GraphDatabase(SQLBase):
     def sync_security_indicator_aggregated_result(self, document: dict) -> None:
         """Sync the given security-indicator aggregated result to the graph database."""
         metadata = document["metadata"]
-        result = document["result"]
         document_id = metadata["document_id"]
+        result = document.get("result", dict())
 
         package_name = metadata["arguments"]["app.py"]["package_name"]
         package_version = metadata["arguments"]["app.py"]["package_version"]
@@ -4429,6 +4429,7 @@ class GraphDatabase(SQLBase):
                 session,
                 si_aggregated_run_document_id=document_id,
                 datetime=metadata["datetime"],
+                error=document.get("error", False),
                 severity_high_confidence_high=result.get("SEVERITY.HIGH__CONFIDENCE.HIGH") or 0,
                 severity_high_confidence_low=result.get("SEVERITY.HIGH__CONFIDENCE.LOW") or 0,
                 severity_high_confidence_medium=result.get("SEVERITY.HIGH__CONFIDENCE.MEDIUM") or 0,
