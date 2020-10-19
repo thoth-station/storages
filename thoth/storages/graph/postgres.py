@@ -3726,13 +3726,12 @@ class GraphDatabase(SQLBase):
         return python_package_version
 
     @staticmethod
-    def _create_hash(inputs: List[int]) -> str:
+    def _create_hash(table_ids: List[int]) -> str:
         """Create hash string using ssdeep.
 
         Reference: https://python-ssdeep.readthedocs.io/en/latest/installation.html#id11
         """
-        file_ids = "-".join([str(ppr) for ppr in inputs])
-        hash_ = ssdeep.hash(file_ids)
+        hash_ = ssdeep.hash(bytes(table_ids))
 
         return hash_
 
