@@ -24,7 +24,8 @@ import json
 import os
 import itertools
 import weakref
-import ssdeep
+
+from hashids import Hashids
 
 from typing import List
 from typing import Set
@@ -3517,34 +3518,8 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
-    ) -> dict:
+    ) -> Dict[str, Dict[str, Any]]:
         """Return info about repo containing Python Package in the software stack.
-
-        Examples:
-        >>> from thoth.storages import GraphDatabase
-        >>> graph = GraphDatabase()
-        >>> graph.get_kebechet_github_installations_info_for_python_package_version(
-            package_name='pyzmq'
-        )
-        {
-            'thoth-station/jupyter-nbrequirements': 
-                {
-                    'installation_id': '193650988',
-                    'private': False,
-                    'package_name': 'pyzmq',
-                    'package_version': '7.1.2',
-                    'index': None}
-                }
-        }
-
-        Examples:
-        >>> from thoth.storages import GraphDatabase
-        >>> graph = GraphDatabase()
-        >>> graph.get_kebechet_github_installations_info_for_python_package_version(
-            package_name='pyzmq'
-            index_url="https://pypi.org/simple",
-        )
-        {}
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -3561,7 +3536,7 @@ class GraphDatabase(SQLBase):
                     'private': False,
                     'package_name': 'click',
                     'package_version': '7.1.2',
-                    'index': 'https://pypi.org/simple'}
+                    'index_url': 'https://pypi.org/simple'}
                 }
         """
         package_name = self.normalize_python_package_name(package_name)
@@ -3577,12 +3552,14 @@ class GraphDatabase(SQLBase):
                 .filter(PythonPackageVersionEntity.package_name == package_name)
             )
 
+
             if index_url:
                 index_url = self.normalize_python_index_url(index_url)
-                query = (
-                    query.join(PythonPackageIndex)
-                    .filter(PythonPackageIndex.url == index_url)
-                )
+
+                conditions = [
+                    PythonPackageVersionEntity.python_package_index_id == PythonPackageIndex.id,
+                    PythonPackageVersionEntity.python_package_index_id.is_(None)
+                ]
 
             if package_version:
                 package_version = self.normalize_python_package_version(package_version)
@@ -3601,10 +3578,8 @@ class GraphDatabase(SQLBase):
             if python_version:
                 query = query.filter(ExternalSoftwareEnvironment.python_version == python_version)
 
-            index_returned = PythonPackageVersionEntity.python_package_index_id
-
             if index_url:
-                index_returned = PythonPackageIndex.url
+                query = query.filter(exists().where(or_(*conditions)))
 
             query = query.with_entities(
                 KebechetGithubAppInstallations.slug,
@@ -3612,24 +3587,43 @@ class GraphDatabase(SQLBase):
                 KebechetGithubAppInstallations.private,
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
-                index_returned
+                PythonPackageVersionEntity.python_package_index_id,
             )
 
             result = query.all()
 
         return self._group_by_slug(result)
 
-    @staticmethod
-    def _group_by_slug(result: Union[List, Dict[str, Any]],) -> Dict[str, List[Tuple[str, str]]]:
+    def get_index_url_from_id(self, package_index_id: int) -> list:
+        """Return index URL from id."""
+        with self._session_scope() as session:
+            output = (
+                    session.query(PythonPackageIndex)
+                    .filter(PythonPackageIndex.id == package_index_id)
+                    .with_entities(
+                        PythonPackageIndex.url
+                    )
+                    .first()
+                )
+
+        return output[0]
+
+    def _group_by_slug(self, result: Union[List, Dict[str, Any]],) -> Dict[str, List[Tuple[str, str]]]:
         """Format Query result to group by package name."""
         query_result = {}
+
         for item in result:
+            if item[5]:
+                index_url = self.get_index_url_from_id(item[5])
+            else:
+                index_url = item[5]
+
             query_result[item[0]] = {
                 "installation_id": item[1],
                 "private": item[2],
                 "package_name": item[3],
                 "package_version": item[4],
-                "index": item[5],
+                "index_url": index_url,
                 }
 
         return query_result
@@ -3726,12 +3720,16 @@ class GraphDatabase(SQLBase):
         return python_package_version
 
     @staticmethod
-    def _create_hash(table_ids: List[int]) -> str:
+    def _create_hash(hashids: Hashids, table_ids: List[int]) -> str:
         """Create hash string using ssdeep.
 
         Reference: https://python-ssdeep.readthedocs.io/en/latest/installation.html#id11
         """
-        hash_ = ssdeep.hash(bytes(table_ids))
+        hash_ = ""
+
+        for number in table_ids:
+
+            hash_ += hashids.encode(number)
 
         return hash_
 
@@ -3748,11 +3746,12 @@ class GraphDatabase(SQLBase):
         is_external: bool = False,
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
+        hashids = Hashids()
         if requirements is not None:
             python_package_requirements = self._create_python_package_requirement(session, requirements)
             # Create unique hash for requirements to go into PythonRequirements
             requirements_ids = [int(ppr.id) for ppr in python_package_requirements]
-            requirements_hash = self._create_hash(sorted(requirements_ids))
+            requirements_hash = self._create_hash(hashids, sorted(requirements_ids))
 
             if is_external:
                 python_requirements, _ = ExternalPythonRequirements.get_or_create(
@@ -3785,7 +3784,7 @@ class GraphDatabase(SQLBase):
             )
             # Create unique hash for requirements locked to go to PythonRequirementsLock
             requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions]
-            requirements_lock_hash = self._create_hash(sorted(requirements_lock_ids))
+            requirements_lock_hash = self._create_hash(hashids, sorted(requirements_lock_ids))
 
             if is_external:
                 external_python_requirements_lock, _ = ExternalPythonRequirementsLock.get_or_create(
