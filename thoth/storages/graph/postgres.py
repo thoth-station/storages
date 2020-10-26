@@ -3721,17 +3721,11 @@ class GraphDatabase(SQLBase):
 
     @staticmethod
     def _create_hash(hashids: Hashids, table_ids: List[int]) -> str:
-        """Create hash string using ssdeep.
+        """Create hash string using hashids.
 
-        Reference: https://python-ssdeep.readthedocs.io/en/latest/installation.html#id11
+        Reference: https://pypi.org/project/hashids/
         """
-        hash_ = ""
-
-        for number in table_ids:
-
-            hash_ += hashids.encode(number)
-
-        return hash_
+        return hashids.encode(*table_ids)
 
     def _create_python_software_stack(
         self,
