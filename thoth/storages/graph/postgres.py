@@ -1661,7 +1661,11 @@ class GraphDatabase(SQLBase):
             return query.count()
 
     def _construct_si_unanalyzed_python_package_versions_query(
-        self, session: Session, index_url: Optional[str] = None, provides_source_distro: bool = True
+        self,
+        session: Session,
+        index_url: Optional[str] = None,
+        provides_source_distro: bool = True,
+        si_error : bool = False
     ) -> Query:
         """Construct query for packages analyzed by solver, but unanalyzed by SI."""
         index_url = GraphDatabase.normalize_python_index_url(index_url)
@@ -1676,7 +1680,10 @@ class GraphDatabase(SQLBase):
             query = query.filter(PythonPackageIndex.url == index_url)
 
         # We find all rows that are same in PythonPackageVersion and SIAggregated table.
-        conditions = [PythonPackageVersion.entity_id == SIAggregated.python_package_version_entity_id]
+        conditions = [
+            PythonPackageVersion.entity_id == SIAggregated.python_package_version_entity_id,
+            SecurityIndicatorAggregatedRun.error == si_error,
+        ]
 
         # Finally filter these out.
         query = query.filter(~exists().where(and_(*conditions)))
@@ -1690,6 +1697,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = True,
         randomize: bool = True,
         provides_source_distro: bool = True,
+        si_error: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
         Examples:
@@ -1701,7 +1709,8 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                provides_source_distro=provides_source_distro
+                provides_source_distro=provides_source_distro,
+                si_error=si_error,
             )
 
             query = query.join(PythonPackageIndex).with_entities(
@@ -1726,12 +1735,14 @@ class GraphDatabase(SQLBase):
         *,
         distinct: bool = False,
         provides_source_distro: bool = True,
+        si_error: bool = False
     ) -> int:
         """Get SI unanalyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
             query = self._construct_si_unanalyzed_python_package_versions_query(
                 session,
-                provides_source_distro=provides_source_distro
+                provides_source_distro=provides_source_distro,
+                si_error=si_error,
             )
 
             query = query.join(PythonPackageIndex).with_entities(
