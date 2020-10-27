@@ -3727,7 +3727,7 @@ class GraphDatabase(SQLBase):
         """
         hash_ = ""
         for object_id in sorted_ids:
-            # lenght of bytes required for the integer
+            # length of bytes required for the integer
             length = (object_id.bit_length() + 7) // 8
             # no negative ids are passed
             hash_ += ssdeep.hash(object_id.to_bytes(length=length, byteorder='big'))
