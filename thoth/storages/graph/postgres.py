@@ -24,8 +24,7 @@ import json
 import os
 import itertools
 import weakref
-
-from hashids import Hashids
+import ssdeep
 
 from typing import List
 from typing import Set
@@ -3720,12 +3719,19 @@ class GraphDatabase(SQLBase):
         return python_package_version
 
     @staticmethod
-    def _create_hash(hashids: Hashids, table_ids: List[int]) -> str:
-        """Create hash string using hashids.
+    def _create_hash(sorted_ids: List[int]) -> str:
+        """Create hash string using hashids from sorted list of integers.
 
-        Reference: https://pypi.org/project/hashids/
+        Reference: https://pypi.org/project/python-ssdeep/
+        Reference: https://docs.python.org/3/library/stdtypes.html#int.to_bytes
         """
-        return hashids.encode(*table_ids)
+        hash_ = ""
+        for object_id in sorted_ids:
+            # lenght of bytes required for the integer
+            length = (object_id.bit_length() + 7) // 8
+            # no negative ids are passed
+            hash_ += ssdeep.hash(object_id.to_bytes(length=length, byteorder='big'))
+        return hash_
 
     def _create_python_software_stack(
         self,
@@ -3740,12 +3746,11 @@ class GraphDatabase(SQLBase):
         is_external: bool = False,
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
-        hashids = Hashids()
         if requirements is not None:
             python_package_requirements = self._create_python_package_requirement(session, requirements)
             # Create unique hash for requirements to go into PythonRequirements
             requirements_ids = [int(ppr.id) for ppr in python_package_requirements]
-            requirements_hash = self._create_hash(hashids, sorted(requirements_ids))
+            requirements_hash = self._create_hash(sorted(requirements_ids))
 
             if is_external:
                 python_requirements, _ = ExternalPythonRequirements.get_or_create(
@@ -3778,7 +3783,7 @@ class GraphDatabase(SQLBase):
             )
             # Create unique hash for requirements locked to go to PythonRequirementsLock
             requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions]
-            requirements_lock_hash = self._create_hash(hashids, sorted(requirements_lock_ids))
+            requirements_lock_hash = self._create_hash(sorted(requirements_lock_ids))
 
             if is_external:
                 external_python_requirements_lock, _ = ExternalPythonRequirementsLock.get_or_create(
