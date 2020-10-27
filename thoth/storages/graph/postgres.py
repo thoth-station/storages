@@ -3719,8 +3719,8 @@ class GraphDatabase(SQLBase):
         return python_package_version
 
     @staticmethod
-    def _create_hash(sorted_ids: List[int]) -> str:
-        """Create hash string using hashids from sorted list of integers.
+    def _create_fuzzy_hash(sorted_ids: List[int]) -> str:
+        """Create fuzzy hash from sorted list of integers.
 
         Reference: https://pypi.org/project/python-ssdeep/
         Reference: https://docs.python.org/3/library/stdtypes.html#int.to_bytes
@@ -3750,7 +3750,7 @@ class GraphDatabase(SQLBase):
             python_package_requirements = self._create_python_package_requirement(session, requirements)
             # Create unique hash for requirements to go into PythonRequirements
             requirements_ids = [int(ppr.id) for ppr in python_package_requirements]
-            requirements_hash = self._create_hash(sorted(requirements_ids))
+            requirements_hash = self._create_fuzzy_hash(sorted(requirements_ids))
 
             if is_external:
                 python_requirements, _ = ExternalPythonRequirements.get_or_create(
@@ -3783,7 +3783,7 @@ class GraphDatabase(SQLBase):
             )
             # Create unique hash for requirements locked to go to PythonRequirementsLock
             requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions]
-            requirements_lock_hash = self._create_hash(sorted(requirements_lock_ids))
+            requirements_lock_hash = self._create_fuzzy_hash(sorted(requirements_lock_ids))
 
             if is_external:
                 external_python_requirements_lock, _ = ExternalPythonRequirementsLock.get_or_create(
@@ -3817,7 +3817,7 @@ class GraphDatabase(SQLBase):
             if requirements_lock is None:
                 external_python_requirements_lock, _ = ExternalPythonRequirementsLock.get_or_create(
                     session,
-                    requirements_lock_hash=self._create_hash([0]),
+                    requirements_lock_hash=self._create_fuzzy_hash([0]),
                 )
 
                 software_stack, _ = ExternalPythonSoftwareStack.get_or_create(
