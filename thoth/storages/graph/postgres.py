@@ -1682,6 +1682,7 @@ class GraphDatabase(SQLBase):
         # We find all rows that are same in PythonPackageVersion and SIAggregated table.
         conditions = [
             PythonPackageVersion.entity_id == SIAggregated.python_package_version_entity_id,
+            SIAggregated.si_aggregated_run_id == SecurityIndicatorAggregatedRun.id,
             SecurityIndicatorAggregatedRun.error == si_error,
         ]
 
