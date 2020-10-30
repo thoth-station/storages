@@ -6219,3 +6219,22 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.25.15 (2020-10-03T16:31:54)
 ### Features
 * Adjust docstring (#2037)
+
+## Release 0.25.16 (2020-10-30T14:57:14)
+### Features
+* Adjust query filters (#2065)
+* Adjust alembic migration (#2064)
+* add error flag to si-sync (#2054)
+* Fix cache handling and add ability to drop the cache (#2050)
+### Automatic Updates
+* :pushpin: Automatic update of dependency pytest from 6.1.1 to 6.1.2 (#2062)
+* :pushpin: Automatic update of dependency thoth-common from 0.20.2 to 0.20.4 (#2061)
+* :pushpin: Automatic update of dependency boto3 from 1.16.6 to 1.16.8 (#2060)
+* :pushpin: Automatic update of dependency boto3 from 1.16.0 to 1.16.6 (#2057)
+* :pushpin: Automatic update of dependency thoth-common from 0.20.1 to 0.20.2 (#2056)
+* :pushpin: Automatic update of dependency boto3 from 1.15.16 to 1.16.0 (#2055)
+* :pushpin: Automatic update of dependency pytest from 6.1.0 to 6.1.1 (#2053)
+* :pushpin: Automatic update of dependency pytest from 6.1.0 to 6.1.1 (#2052)
+* :pushpin: Automatic update of dependency sqlalchemy from 1.3.19 to 1.3.20 (#2051)
+* :pushpin: Automatic update of dependency thoth-common from 0.20.0 to 0.20.1
+* :pushpin: Automatic update of dependency boto3 from 1.15.11 to 1.15.16
