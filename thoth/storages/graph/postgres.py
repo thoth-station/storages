@@ -1683,11 +1683,11 @@ class GraphDatabase(SQLBase):
         conditions = [
             PythonPackageVersion.entity_id == SIAggregated.python_package_version_entity_id,
             SIAggregated.si_aggregated_run_id == SecurityIndicatorAggregatedRun.id,
-            SecurityIndicatorAggregatedRun.error == si_error,
         ]
 
         # Finally filter these out.
         query = query.filter(~exists().where(and_(*conditions)))
+        query = query.filter(exists().where(SecurityIndicatorAggregatedRun.error.is_(si_error)))
 
         return query
 
