@@ -1,7 +1,7 @@
 """Delete to refactor Schema for Python Software Stack
 
 Revision ID: 1a8150ac45e0
-Revises: 4461784e248a
+Revises: 342d45db2dc2
 Create Date: 2020-10-09 15:42:56.711181+00:00
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '1a8150ac45e0'
-down_revision = '4461784e248a'
+down_revision = '342d45db2dc2'
 branch_labels = None
 depends_on = None
 
