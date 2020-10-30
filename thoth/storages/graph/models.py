@@ -1467,6 +1467,7 @@ class SecurityIndicatorAggregatedRun(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
     si_aggregated_run_document_id = Column(Text, nullable=False)
     datetime = Column(DateTime(timezone=False), nullable=False)
+    error = Column(Boolean, default=False, nullable=False)
 
     # SI bandit
     severity_high_confidence_high = Column(Integer, nullable=False)
