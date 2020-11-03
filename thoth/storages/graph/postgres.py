@@ -1810,7 +1810,7 @@ class GraphDatabase(SQLBase):
     @lru_cache(maxsize=_GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE)
     def get_si_aggregated_python_package_version(
         self, package_name: str, package_version: str, index_url: str
-    ) -> Optional[Dict[str, int]]:
+    ) -> Dict[str, int]:
         """Get Aggregate Security Indicators (SI) results per Python package version.
 
         Examples:
@@ -1856,7 +1856,9 @@ class GraphDatabase(SQLBase):
             )
             result = query.order_by(SecurityIndicatorAggregatedRun.datetime.desc()).first()
             if result is None:
-                return None
+                raise NotFoundError(
+                    f"No record found for {package_name!r} in version {package_version!r} from {index_url!r}"
+                )
             result = result.to_dict()
             result.pop("si_aggregated_run_document_id")
             result.pop("datetime")
