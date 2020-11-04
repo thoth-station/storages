@@ -6238,3 +6238,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency sqlalchemy from 1.3.19 to 1.3.20 (#2051)
 * :pushpin: Automatic update of dependency thoth-common from 0.20.0 to 0.20.1
 * :pushpin: Automatic update of dependency boto3 from 1.15.11 to 1.15.16
+
+## Release 0.25.17 (2020-11-04T20:51:27)
+### Features
+* Match location where provenance-checker documents are stored (#2070)
+* :sparkles: ignore more
+### Improvements
+* :arrow_down: removed the files as they are no longer required
+### Automatic Updates
+* :pushpin: Automatic update of dependency boto3 from 1.16.8 to 1.16.9
