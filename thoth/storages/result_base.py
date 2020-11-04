@@ -104,6 +104,23 @@ class ResultStorageBase(StorageBase):
         self.ceph.store_document(document, document_id)
         return document_id
 
+    def store_request(self, document_id: str, request: typing.Dict[str, typing.Any]) -> str:
+        """Store the given request.
+
+        This function stores a request document for user request traceability.
+        """
+        document_id = f"{document_id}.request"
+        self.ceph.store_document(request, document_id)
+        return document_id
+
+    def retrieve_request(self, document_id: str) -> typing.Dict[str, typing.Any]:
+        """Retrieve document capturing requests."""
+        return self.ceph.retrieve_document(f"{document_id}.request")
+
+    def request_exists(self, document_id: str) -> bool:
+        """Check if a request exists for the given document id."""
+        return self.ceph.document_exists(f"{document_id}.request")
+
     def store_file(self, file_path: str, file_id: str) -> str:
         """Store the given file in Ceph."""
         self.ceph.store_file(file_path, file_id)
