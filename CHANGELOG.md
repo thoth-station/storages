@@ -6247,3 +6247,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_down: removed the files as they are no longer required
 ### Automatic Updates
 * :pushpin: Automatic update of dependency boto3 from 1.16.8 to 1.16.9
+
+## Release 0.26.0 (2020-11-05T12:47:00)
+### Features
+* Provide a method for storing user requests (#2078)
+### Automatic Updates
+* :pushpin: Automatic update of dependency boto3 from 1.16.10 to 1.16.11 (#2082)
+* :pushpin: Automatic update of dependency boto3 from 1.16.10 to 1.16.11 (#2081)
+* :pushpin: Automatic update of dependency boto3 from 1.16.9 to 1.16.10 (#2076)
