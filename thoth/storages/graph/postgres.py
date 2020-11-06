@@ -3700,7 +3700,7 @@ class GraphDatabase(SQLBase):
             )
 
             if inspection_run and inspection_run.dependency_monkey_run_id:
-                # If inspection was run through Dependency Monkey
+                # Inspection was run through Dependency Monkey
 
                 # INSERT…ON CONFLICT (Upsert)
                 # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html?highlight=conflict#insert-on-conflict-upsert
@@ -4943,6 +4943,7 @@ class GraphDatabase(SQLBase):
         """Sync reports of dependency monkey runs."""
         with self._session_scope() as session, session.begin(subtransactions=True):
             parameters = document["result"]["parameters"]
+
             run_hardware_information, run_software_environment = self._runtime_environment_conf2models(
                 session,
                 parameters["project"].get("runtime_environment", {}),
@@ -4984,23 +4985,30 @@ class GraphDatabase(SQLBase):
                     dependency_monkey_run_id=dependency_monkey_run.id,
                 )
 
+            # Number of times each inspection run will be run
+            count = document["result"]["parameters"]['count']
+
             for entry in document["result"]["report"]["responses"]:
                 inspection_document_id = entry["response"]
-                inspection_run = (
-                    session.query(InspectionRun)
-                    .filter(InspectionRun.inspection_document_id == inspection_document_id)
-                    .first()
-                )
 
-                if inspection_run is None:
-                    inspection_run = InspectionRun(
-                        inspection_document_id=inspection_document_id,
-                        inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
-                        dependency_monkey_run_id=dependency_monkey_run.id,
+                for inspection_result_number in range(count):
+                    inspection_run = (
+                        session.query(InspectionRun)
+                        .filter(InspectionRun.inspection_document_id == inspection_document_id)
+                        .filter(InspectionRun.inspection_result_number == inspection_result_number)
+                        .filter(InspectionRun.dependency_monkey_run_id == dependency_monkey_run.id)
+                        .first()
                     )
-                    session.add(inspection_run)
 
-                inspection_run.dependency_monkey_run_id = dependency_monkey_run.id
+                    if inspection_run is None:
+                        inspection_run = InspectionRun(
+                            inspection_document_id=inspection_document_id,
+                            inspection_sync_state=InspectionSyncStateEnum.PENDING.value,
+                            inspection_result_number=inspection_result_number,
+                            dependency_monkey_run_id=dependency_monkey_run.id,
+                        )
+                        session.add(inspection_run)
+
 
     @lru_cache(maxsize=_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE)
     def get_python_package_required_symbols(self, package_name: str, package_version: str, index_url: str) -> List[str]:
