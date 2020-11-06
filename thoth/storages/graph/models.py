@@ -434,7 +434,7 @@ class InspectionRun(Base, BaseExtension):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     inspection_document_id = Column(Text, nullable=False)
-    inspection_result_number = Column(Integer, nullable=False)
+    inspection_result_number = Column(Integer, nullable=True)
     datetime = Column(DateTime, nullable=True)
     amun_version = Column(Text, nullable=True)
     build_requests_cpu = Column(Float, nullable=True)
