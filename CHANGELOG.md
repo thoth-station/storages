@@ -6255,3 +6255,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :pushpin: Automatic update of dependency boto3 from 1.16.10 to 1.16.11 (#2082)
 * :pushpin: Automatic update of dependency boto3 from 1.16.10 to 1.16.11 (#2081)
 * :pushpin: Automatic update of dependency boto3 from 1.16.9 to 1.16.10 (#2076)
+
+## Release 0.26.1 (2020-11-10T23:33:13)
+### Features
+* Adjust DM sync (#2086)
+### Bug Fixes
+* Raise an exception when the given record was not found (#2069)
+### Automatic Updates
+* :pushpin: Automatic update of dependency boto3 from 1.16.11 to 1.16.12 (#2087)
