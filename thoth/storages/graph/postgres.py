@@ -4199,7 +4199,7 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
-                cuda_version=cuda_nvcc_version,
+                cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
                 environment_type=environment_type,
             )
 
