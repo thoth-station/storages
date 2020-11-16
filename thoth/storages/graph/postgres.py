@@ -4364,10 +4364,11 @@ class GraphDatabase(SQLBase):
         environment_name = document["metadata"]["arguments"]["extract-image"]["image"]
         os_name = document["result"]["operating-system"]["id"]
         os_version = OpenShift.normalize_os_version(os_name, document["result"]["operating-system"]["version_id"])
-        cuda_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
-        if cuda_version != document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None):
+        cuda_nvcc_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
+        cuda_found_in_file_version = document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None)
+        if cuda_nvcc_version is not None and cuda_found_in_file_version is not None and cuda_nvcc_version != cuda_found_in_file_version:
             raise CudaVersionDoesNotMatch(
-                f"Cuda version detected by nvcc {cuda_version!r} is different from the one found in "
+                f"Cuda version detected by nvcc {cuda_nvcc_version!r} is different from the one found in "
                 f"/usr/local/cuda/version.txt "
                 f"{document['result'].get('cuda-version', {}).get('/usr/local/cuda/version.txt', None)!r}"
             )
@@ -4402,7 +4403,7 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
-                cuda_version=cuda_version,
+                cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
                 environment_type=environment_type,
             )
 
