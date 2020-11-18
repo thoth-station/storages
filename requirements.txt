@@ -10,3 +10,4 @@ sqlalchemy
 psycopg2-binary
 sqlalchemy-utils
 alembic
+thoth-ssdeep
