@@ -6269,3 +6269,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Changes in schema for bug, internal trigger and data analysis (#2046)
 ### Improvements
 * check for cuda nvcc and found in file version (#2092)
+
+## Release 0.27.1 (2020-11-18T10:43:11)
+### Features
+* Install thoth-ssdeep requirement for thoth-storages
