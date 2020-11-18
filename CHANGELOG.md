@@ -6263,3 +6263,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Raise an exception when the given record was not found (#2069)
 ### Automatic Updates
 * :pushpin: Automatic update of dependency boto3 from 1.16.11 to 1.16.12 (#2087)
+
+## Release 0.27.0 (2020-11-18T06:35:16)
+### Features
+* Changes in schema for bug, internal trigger and data analysis (#2046)
+### Improvements
+* check for cuda nvcc and found in file version (#2092)
