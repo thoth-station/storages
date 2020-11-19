@@ -5397,7 +5397,8 @@ class GraphDatabase(SQLBase):
             try:
                 session.execute(run_amcheck_query)
                 return False
-            except:
+            except Exception as e:
+                _LOGGER.error(e)
                 return True
 
     def get_bloat_data(self) -> dict:
