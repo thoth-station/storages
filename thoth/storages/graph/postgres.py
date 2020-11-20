@@ -5363,6 +5363,44 @@ class GraphDatabase(SQLBase):
         for method in self._CACHED_METHODS:
             method.cache_clear()
 
+    def is_database_corrupted(self) -> bool:
+        """
+        Run the amcheck extension to check for DB corruption, false negatives are possible but false positives are not.
+
+        amcheck documenation: https://www.postgresql.org/docs/10/amcheck.html
+
+        Returns
+        -------
+        bool
+            False: No DB corruption detected by amcheck (not definitive)
+            True: Database is corrupted
+        """
+        check_for_ext_query = "SELECT * FROM pg_extension WHERE extname='amcheck'"
+        install_ext_query = "CREATE EXTENSION amcheck"
+        run_amcheck_query = """SELECT bt_index_check(index => c.oid),
+                    c.relname,
+                    c.relpages
+            FROM pg_index i
+            JOIN pg_opclass op ON i.indclass[0] = op.oid
+            JOIN pg_am am ON op.opcmethod = am.oid
+            JOIN pg_class c ON i.indexrelid = c.oid
+            WHERE am.amname = 'btree'
+            -- Don't check temp tables, which may be from another session:
+            AND c.relpersistence != 't'
+            -- Function may throw an error when this is omitted:
+            AND c.relkind = 'i' AND i.indisready AND i.indisvalid"""
+
+        with self._session_scope() as session:
+            if session.execute(check_for_ext_query) == []:
+                session.execute(install_ext_query)
+
+            try:
+                session.execute(run_amcheck_query)
+                return False
+            except Exception as e:
+                _LOGGER.error(e)
+                return True
+
     def get_bloat_data(self) -> dict:
         """Get bloat data."""
         # Reference: https://raw.githubusercontent.com/pgexperts/pgx_scripts/master/bloat/table_bloat_check.sql
