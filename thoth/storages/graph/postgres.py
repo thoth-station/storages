@@ -5391,7 +5391,7 @@ class GraphDatabase(SQLBase):
             AND c.relkind = 'i' AND i.indisready AND i.indisvalid"""
 
         with self._session_scope() as session:
-            if session.execute(check_for_ext_query) == []:
+            if list(session.execute(check_for_ext_query)) == []:
                 session.execute(install_ext_query)
 
             try:
