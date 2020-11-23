@@ -6273,3 +6273,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.27.1 (2020-11-18T10:43:11)
 ### Features
 * Install thoth-ssdeep requirement for thoth-storages
+
+## Release 0.28.0 (2020-11-23T14:53:41)
+### Features
+* add function to run amcheck and check for db corruption (#2105)
