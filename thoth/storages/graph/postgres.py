@@ -971,6 +971,42 @@ class GraphDatabase(SQLBase):
 
             return query.all()
 
+    def get_package_versions_count_all(self, package_name: str) -> int:
+        """Get number of versions for the given package regardless environment and regardless index."""
+        package_name = self.normalize_python_package_name(package_name)
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion.package_version) \
+                .filter(PythonPackageVersion.package_name == package_name) \
+                .distinct() \
+                .count()
+            return query
+
+    @lru_cache(maxsize=_GET_DEPENDS_ON_CACHE_SIZE)
+    def get_depends_on_package_names(
+        self,
+        package_name: str,
+    ) -> List[str]:
+        """Get dependencies for the given Python package name, get just their names."""
+        package_name = self.normalize_python_package_name(package_name)
+
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
+
+            # Mark the query here for later check, if we do not have any records for the given
+            # package for the given environment.
+            package_query = query
+
+            query = query.join(DependsOn)
+            query = query.filter(DependsOn.extra.is_(None))
+
+            dependencies = query.join(PythonPackageVersionEntity).with_entities(PythonPackageVersionEntity.package_name).distinct().all()
+
+            if not dependencies:
+                if package_query.count() == 0:
+                    raise NotFoundError(f"No package record for {package_name!r} found")
+
+            return list(itertools.chain(*dependencies))
+
     def get_solved_python_package_versions_count_all(
         self,
         package_name: Optional[str] = None,
