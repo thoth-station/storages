@@ -568,7 +568,7 @@ def sync_security_indicators_documents(
 # Corresponding mapping of document prefix (before the actual unique document identifier part) to
 # functions which can handle the given document sync.
 
-_HANDLERS_MAPPING = {
+HANDLERS_MAPPING = {
     "adviser": sync_adviser_documents,
     "build-report": sync_build_log_analysis_documents,
     "dependency-monkey": sync_dependency_monkey_documents,
