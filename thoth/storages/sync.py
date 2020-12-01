@@ -598,13 +598,13 @@ def sync_documents(
     >>> from thoth.storages.sync import sync_documents
     >>> sync_documents(["adviser-efa7213babd12911", "package-extract-f8e354d9597a1203"])
     """
-    stats = dict.fromkeys(_HANDLERS_MAPPING, (0, 0, 0, 0))
+    stats = dict.fromkeys(HANDLERS_MAPPING, (0, 0, 0, 0))
 
     if inspection_only_ceph_sync and inspection_only_graph_sync:
         raise ValueError("Parameters `inspection_only_ceph_sync' and `inspection_only_graph_sync' are disjoint")
 
-    for document_id in document_ids or [None] * len(_HANDLERS_MAPPING):
-        for document_prefix, handler in _HANDLERS_MAPPING.items():
+    for document_id in document_ids or [None] * len(HANDLERS_MAPPING):
+        for document_prefix, handler in HANDLERS_MAPPING.items():
             # Basename for local syncs, document_id should not have slash otherwise.
             if document_id is None or os.path.basename(document_id).startswith(document_prefix):
                 to_sync_document_id = [document_id] if document_id is not None else None
