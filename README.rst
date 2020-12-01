@@ -310,7 +310,7 @@ to provide such logic on each new workload registered in the system. To sync
 your own results of job results (workload) done in the cluster, implement
 related syncing logic in the `sync.py
 <https://github.com/thoth-station/storages/blob/master/thoth/storages/sync.py>`__
-and register handler in the ``_HANDLERS_MAPPING`` in the same file. The mapping
+and register handler in the ``HANDLERS_MAPPING`` in the same file. The mapping
 maps prefix of the document id to the handler (function) which is responsible
 for syncing data into the knowledge base (please mind signatures of existing
 syncing funcions to automatically integrate with ``sync_documents`` function
