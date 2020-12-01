@@ -10153,3 +10153,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Automatic update of dependency cython from 0.28.3 to 0.28.4
 * Automatic update of dependency thoth-common from 0.1.0 to 0.2.0
 * Automatic update of dependency boto3 from 1.7.51 to 1.7.52
+
+## Release 0.29.2 (2020-12-01T18:31:02)
+### Features
+* Adjust constraint
+* Update readme
+* substitute new parameter
+* Make parameter public
+* bump python version (#2121)
