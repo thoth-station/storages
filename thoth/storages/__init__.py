@@ -46,6 +46,7 @@ from .sync import sync_inspection_documents
 from .sync import sync_provenance_checker_documents
 from .sync import sync_security_indicators_documents
 from .sync import sync_solver_documents
+from .sync import HANDLERS_MAPPING
 
 
 __name__ = "thoth-storages"
