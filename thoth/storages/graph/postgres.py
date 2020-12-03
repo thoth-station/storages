@@ -3475,12 +3475,13 @@ class GraphDatabase(SQLBase):
                 return True
             return False
 
-    def get_kebechet_github_installations_active(self) -> List[str]:
-        """Return all of the repositories wiht the active Kebechet installation."""
+    def get_kebechet_github_installations_per_is_active(self) -> List[str]:
+        """Get all active repositories names with active Kebechet installation."""
         with self._session_scope() as session:
             active_managers = (
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .all()
             )
             return [m.repo_name for m in active_managers]
 
