@@ -3749,7 +3749,7 @@ class GraphDatabase(SQLBase):
         if requirements is not None:
             python_package_requirements = self._create_python_package_requirement(session, requirements)
             # Create unique hash for requirements to go into PythonRequirements
-            requirements_ids = [int(ppr.id) for ppr in python_package_requirements].sorted()
+            requirements_ids = [int(ppr.id) for ppr in python_package_requirements].sort()
             requirements_hash = self._create_fuzzy_hash(requirements_ids)
 
             if is_external:
@@ -3782,7 +3782,7 @@ class GraphDatabase(SQLBase):
                 session, requirements_lock, software_environment=software_environment, sync_only_entity=is_external
             )
             # Create unique hash for requirements locked to go to PythonRequirementsLock
-            requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions].sorted()
+            requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions].sort()
             requirements_lock_hash = self._create_fuzzy_hash(requirements_lock_ids)
 
             if is_external:
