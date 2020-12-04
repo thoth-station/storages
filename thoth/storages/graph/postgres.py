@@ -3475,7 +3475,7 @@ class GraphDatabase(SQLBase):
                 return True
             return False
 
-    def get_kebechet_github_installations_per_is_active(self) -> Dict[str, List[str]]:
+    def get_active_kebechet_github_installations_repos(self) -> Dict[str, List[str]]:
         """Get all active repositories names with active Kebechet installation."""
         with self._session_scope() as session:
             active_installations = (
