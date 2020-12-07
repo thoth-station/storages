@@ -3475,8 +3475,16 @@ class GraphDatabase(SQLBase):
                 return True
             return False
 
-    def get_kebechet_github_installations_count_per_is_active(self) -> int:
-        """Return the count of active repos with Kebechet installation."""
+    def get_active_kebechet_github_installations_repos_count_all(self) -> int:
+        """Return the count of active repos with Kebechet installation.
+        
+        Example:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.connect()
+        >>> graph.get_active_kebechet_github_installations_repos_count_all()
+        165
+        """
         with self._session_scope() as session:
             count = (
                 session.query(KebechetGithubAppInstallations)
