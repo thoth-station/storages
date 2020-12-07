@@ -3476,7 +3476,14 @@ class GraphDatabase(SQLBase):
             return False
 
     def get_active_kebechet_github_installations_repos(self) -> Dict[str, List[str]]:
-        """Get all active repositories names with active Kebechet installation."""
+        """Get all active repositories names with active Kebechet installation.
+        
+         Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_active_kebechet_github_installations_repos()
+        ['repository_foo_fullname', 'repository_bar_fullname', ...]
+        """
         with self._session_scope() as session:
             active_installations = (
                 session.query(KebechetGithubAppInstallations)
@@ -3484,7 +3491,7 @@ class GraphDatabase(SQLBase):
                 .all()
             )
 
-            return { i.slug:self.get_kebechet_github_installations_active_managers(slug=i.slug) for i in active_installations }
+            return [ i.slug for i in active_installations ]
 
     def get_kebechet_github_installations_count_per_is_active(self) -> int:
         """Return the count of active repos with Kebechet installation."""
