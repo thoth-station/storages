@@ -10161,3 +10161,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 * substitute new parameter
 * Make parameter public
 * bump python version (#2121)
+
+## Release 0.29.3 (2020-12-04T13:47:42)
+### Features
+* Use sort() (#2137)
+
+## Release 0.29.4 (2020-12-08T09:56:00)
+### Features
+* Use sort() correctly (#2144)
+* Use proper naming convention of type 6 (#2141)
+* included issue template to release missing module

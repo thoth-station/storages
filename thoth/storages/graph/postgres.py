@@ -3493,8 +3493,16 @@ class GraphDatabase(SQLBase):
 
             return [ i.slug for i in active_installations ]
 
-    def get_kebechet_github_installations_count_per_is_active(self) -> int:
-        """Return the count of active repos with Kebechet installation."""
+    def get_active_kebechet_github_installations_repos_count_all(self) -> int:
+        """Return the count of active repos with Kebechet installation.
+        
+        Example:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.connect()
+        >>> graph.get_active_kebechet_github_installations_repos_count_all()
+        165
+        """
         with self._session_scope() as session:
             count = (
                 session.query(KebechetGithubAppInstallations)
@@ -3767,7 +3775,8 @@ class GraphDatabase(SQLBase):
         if requirements is not None:
             python_package_requirements = self._create_python_package_requirement(session, requirements)
             # Create unique hash for requirements to go into PythonRequirements
-            requirements_ids = [int(ppr.id) for ppr in python_package_requirements].sorted()
+            requirements_ids = [int(ppr.id) for ppr in python_package_requirements]
+            requirements_ids.sort()
             requirements_hash = self._create_fuzzy_hash(requirements_ids)
 
             if is_external:
@@ -3800,7 +3809,8 @@ class GraphDatabase(SQLBase):
                 session, requirements_lock, software_environment=software_environment, sync_only_entity=is_external
             )
             # Create unique hash for requirements locked to go to PythonRequirementsLock
-            requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions].sorted()
+            requirements_lock_ids = [int(ppv.id) for ppv in python_package_versions]
+            requirements_lock_ids.sort()
             requirements_lock_hash = self._create_fuzzy_hash(requirements_lock_ids)
 
             if is_external:
@@ -5131,6 +5141,7 @@ class GraphDatabase(SQLBase):
                     do_update_stmt = insert_stmt.on_conflict_do_update(
                         index_elements=["id"], set_=dict(
                             last_run=document["metadata"]["datetime"],
+                            thoth_advise_manager=True,
                             external_python_software_stack_id=external_software_stack.id,
                             external_software_environment_id=external_run_software_environment.id,
                             advised_python_software_stack_id=advised_stacks[0].id
