@@ -4203,9 +4203,9 @@ class GraphDatabase(SQLBase):
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
-        >>> graph.get_users_count_per_spurce_type()
+        >>> graph.get_origin_count_per_source_type()
         {'GITHUB_APP': 1570, 'KEBECHET': 48, 'JUPYTER_NOTEBOOK': 18, 'CLI': 513}
-        >>> graph.get_users_count_per_spurce_type(distinct=True)
+        >>> graph.get_origin_count_per_source_type(distinct=True)
         {'GITHUB_APP': 145, 'KEBECHET': 5, 'JUPYTER_NOTEBOOK': 2, 'CLI': 78}
         """
         with self._session_scope() as session:
