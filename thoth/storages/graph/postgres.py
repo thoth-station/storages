@@ -4163,6 +4163,16 @@ class GraphDatabase(SQLBase):
 
             return result
 
+    @staticmethod
+    def _filter_source_type(
+        results: List[any]
+    ) -> Dict[str, int]:
+        """Filter results per source type."""
+        return {
+            source_result[0]: source_result[1] for source_result in results
+            if source_result[0] in ThothAdviserIntegrationEnum._member_names_
+        }
+
     def get_adviser_run_count_per_source_type(
         self,
     ) -> Dict[str, int]:
@@ -4182,10 +4192,48 @@ class GraphDatabase(SQLBase):
 
             results = query.all()
 
-            return {
-                source_result[0]: source_result[1] for source_result in results
-                if source_result[0] in ThothAdviserIntegrationEnum._member_names_
-            }
+        return self._filter_source_type(results=results)
+
+    def get_origin_count_per_source_type(
+        self,
+        distinct: bool = False,
+    ) -> Dict[str, Dict[Tuple[str, str], int]]:
+        """Retrieve number of users of adviser per source type.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_users_count_per_spurce_type()
+        {'GITHUB_APP': 1570, 'KEBECHET': 48, 'JUPYTER_NOTEBOOK': 18, 'CLI': 513}
+        >>> graph.get_users_count_per_spurce_type(distinct=True)
+        {'GITHUB_APP': 145, 'KEBECHET': 5, 'JUPYTER_NOTEBOOK': 2, 'CLI': 78}
+        """
+        with self._session_scope() as session:
+            query = (
+                session.query(AdviserRun.origin)
+            )
+
+            if distinct:
+                query = (
+                    query.with_entities(
+                        AdviserRun.source_type,
+                        func.count(AdviserRun.origin.distinct())
+                    )
+                )
+            else:
+                query = (
+                    query.with_entities(
+                        AdviserRun.source_type,
+                        func.count(AdviserRun.origin)
+                    )
+                )
+
+            query = query.group_by(AdviserRun.source_type)
+
+            results = query.all()
+
+        return self._filter_source_type(results=results)
+
 
     def update_python_package_hash_present_flag(
         self, package_name: str, package_version: str, index_url: str, sha256_hash: str
