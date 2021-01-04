@@ -10171,3 +10171,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Use sort() correctly (#2144)
 * Use proper naming convention of type 6 (#2141)
 * included issue template to release missing module
+
+## Release 0.30.0 (2021-01-04T10:34:25)
+### Features
+* Adjust docstring
+* Change return val to be lst of repos, add example docstring
+* Change return value
+* Rename according to conventions, add .all(), change docstring
+* Add get active installations method
+### Improvements
+* Add get_origin_count_per_source_type method
+* Change method name to follow convention type 7
