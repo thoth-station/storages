@@ -3475,7 +3475,7 @@ class GraphDatabase(SQLBase):
                 return True
             return False
 
-    def get_active_kebechet_github_installations_repos(self) -> Dict[str, List[str]]:
+    def get_active_kebechet_github_installations_repos(self) -> List[str]:
         """Get all active repositories names with active Kebechet installation.
         
          Examples:
@@ -3488,10 +3488,11 @@ class GraphDatabase(SQLBase):
             active_installations = (
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .with_entities(KebechetGithubAppInstallations.slug)
                 .all()
             )
 
-            return [ i.slug for i in active_installations ]
+            return active_installations
 
     def get_active_kebechet_github_installations_repos_count_all(self) -> int:
         """Return the count of active repos with Kebechet installation.
