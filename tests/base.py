@@ -103,6 +103,6 @@ class StorageBaseTest(ThothStoragesTest):
         flexmock(adapter.ceph). \
             should_receive('get_document_listing'). \
             with_args(). \
-            and_return(None). \
+            and_return([]). \
             once()
-        assert adapter.get_document_listing() is None
+        assert list(adapter.get_document_listing()) == []
