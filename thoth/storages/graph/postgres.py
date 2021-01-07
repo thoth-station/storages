@@ -4218,7 +4218,9 @@ class GraphDatabase(SQLBase):
         self,
         initial_date: Optional[str] = None,
         final_date: Optional[str] = None,
-        source_type: Optional[str] = None
+        source_type: Optional[str] = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
     ) -> List[str]:
         """Retrieve adviser run document ids.
 
@@ -4245,6 +4247,8 @@ class GraphDatabase(SQLBase):
             if source_type:
                 query = query.filter(AdviserRun.source_type == source_type)
 
+            query = query.offset(start_offset).limit(count)
+
             document_ids = query.all()
 
             return [obj[0] for obj in document_ids]
@@ -4256,6 +4260,8 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
     ) -> List[str]:
         """Retrieve solver run document ids.
 
@@ -4296,6 +4302,8 @@ class GraphDatabase(SQLBase):
 
             if conditions:
                 query = query.filter(exists().where(and_(*conditions)))
+
+            query = query.offset(start_offset).limit(count)
 
             document_ids = query.all()
 
