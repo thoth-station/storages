@@ -24,7 +24,6 @@ import json
 import os
 import itertools
 import weakref
-import sqlalchemy
 import ssdeep
 
 from typing import List
