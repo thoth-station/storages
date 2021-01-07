@@ -4271,7 +4271,7 @@ class GraphDatabase(SQLBase):
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
         >>> graph.get_solver_run_document_ids_all()
-        ['solver-343231d']
+        ['solver-rhel-8-py38-343231d']
         """
         with self._session_scope() as session:
             query = session.query(Solved.document_id).with_entities(Solved.document_id)
