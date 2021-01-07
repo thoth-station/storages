@@ -86,7 +86,10 @@ class ResultStorageBase(StorageBase):
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator."""
-        return self.ceph.get_document_listing()
+        for document_id in self.ceph.get_document_listing():
+            # Filter out stored requests.
+            if not document_id.endswith(".request"):
+                yield document_id
 
     def get_document_count(self) -> int:
         """Get number of documents present."""
