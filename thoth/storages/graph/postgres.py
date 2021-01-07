@@ -3492,7 +3492,7 @@ class GraphDatabase(SQLBase):
                 .all()
             )
 
-            return active_installations
+            return [obj[0] for obj in active_installations]
 
     def get_active_kebechet_github_installations_repos_count_all(self) -> int:
         """Return the count of active repos with Kebechet installation.
