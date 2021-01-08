@@ -37,7 +37,6 @@ from typing import Any
 from collections import deque
 from contextlib import contextmanager
 from datetime import datetime
-from datetime import date
 
 import attr
 from sqlalchemy import create_engine
@@ -4200,18 +4199,12 @@ class GraphDatabase(SQLBase):
     @staticmethod
     def _create_date_filter(
         date_: str
-    ) -> date:
+    ) -> datetime:
         """Create date filter.
 
         @params date_: DD-MM-YY
         """
-        day_month_year = date_.split('-')
-        date_filter = date(
-            year=int(day_month_year[2]),
-            month=int(day_month_year[1]),
-            day=int(day_month_year[0])
-        )
-        return date_filter
+        return datetime.strptime(date_, '%d-%m-%Y').date()
 
     def get_adviser_run_document_ids_all(
         self,
