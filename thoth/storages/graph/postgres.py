@@ -50,6 +50,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
+
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
@@ -4194,6 +4195,111 @@ class GraphDatabase(SQLBase):
             results = query.all()
 
         return self._filter_source_type(results=results)
+
+    @staticmethod
+    def _create_date_filter(
+        date_: str
+    ) -> datetime:
+        """Create date filter.
+
+        @params date_: DD-MM-YY
+        """
+        return datetime.strptime(date_, '%d-%m-%Y').date()
+
+    def get_adviser_run_document_ids_all(
+        self,
+        initial_date: Optional[str] = None,
+        final_date: Optional[str] = None,
+        source_type: Optional[str] = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+    ) -> List[str]:
+        """Retrieve adviser run document ids.
+
+        @params initial_date: DD-MM-YY
+        @params final_date: DD-MM-YY
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_adviser_run_document_ids_all()
+        ['adviser-343231d']
+        """
+        with self._session_scope() as session:
+            query = session.query(AdviserRun.adviser_document_id).with_entities(AdviserRun.adviser_document_id)
+
+            if initial_date:
+                date_filter = self._create_date_filter(initial_date)
+                query = query.filter(AdviserRun.datetime > date_filter)
+
+            if final_date:
+                date_filter = self._create_date_filter(final_date)
+                query = query.filter(AdviserRun.datetime < date_filter)
+
+            if source_type:
+                query = query.filter(AdviserRun.source_type == source_type)
+
+            query = query.offset(start_offset).limit(count)
+
+            document_ids = query.all()
+
+            return [obj[0] for obj in document_ids]
+
+    def get_solver_run_document_ids_all(
+        self,
+        initial_date: Optional[str] = None,
+        final_date: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+    ) -> List[str]:
+        """Retrieve solver run document ids.
+
+        @params initial_date: DD-MM-YY
+        @params final_date: DD-MM-YY
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_solver_run_document_ids_all()
+        ['solver-rhel-8-py38-343231d']
+        """
+        with self._session_scope() as session:
+            query = session.query(Solved.document_id).with_entities(Solved.document_id)
+
+            conditions = []
+
+            if initial_date:
+                date_filter = self._create_date_filter(initial_date)
+                conditions.append(Solved.datetime > date_filter)
+
+            if final_date:
+                date_filter = self._create_date_filter(final_date)
+                conditions.append(Solved.datetime < date_filter)
+
+            if os_name or os_version or python_version:
+                conditions.append(EcosystemSolver.id == Solved.ecosystem_solver_id)
+
+            if os_name:
+                conditions.append(EcosystemSolver.os_name == os_name)
+
+            if os_version:
+                os_version = OpenShift.normalize_os_version(os_name, os_version)
+                conditions.append(EcosystemSolver.os_version == os_version)
+
+            if python_version:
+                conditions.append(EcosystemSolver.python_version == python_version)
+
+            if conditions:
+                query = query.filter(exists().where(and_(*conditions)))
+
+            query = query.offset(start_offset).limit(count)
+
+            document_ids = query.all()
+
+            return [obj[0] for obj in document_ids]
 
     def get_origin_count_per_source_type(
         self,
