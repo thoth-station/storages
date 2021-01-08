@@ -10182,3 +10182,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Improvements
 * Add get_origin_count_per_source_type method
 * Change method name to follow convention type 7
+
+## Release 0.30.1 (2021-01-07T15:35:31)
+### Features
+* Correct-output (#2158)
+* Filter out stored requests from listing (#2155)
+* Remove coala from requirements (#2154)
+### Bug Fixes
+* Filter active installations in DB and fix method signature (#2156)
