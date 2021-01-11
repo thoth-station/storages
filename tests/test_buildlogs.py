@@ -105,7 +105,7 @@ class TestBuildLogsStore(StorageBaseTest):
         """Test storing results on Ceph."""
         # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
-        document_id = 'bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2'
+        document_id = 'buildlog-bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2'
         adapter.ceph = flexmock(dict2blob=lambda _: document)
         adapter.ceph. \
             should_receive('store_blob'). \
