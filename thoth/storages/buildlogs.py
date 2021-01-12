@@ -64,7 +64,7 @@ class BuildLogsStore(StorageBase):
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
         blob = self.ceph.dict2blob(document)
-        document_id = hashlib.sha256(blob).hexdigest()
+        document_id = "buildlog-" + hashlib.sha256(blob).hexdigest()
         self.ceph.store_blob(blob, document_id)
         return document_id
 
