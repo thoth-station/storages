@@ -10190,3 +10190,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Remove coala from requirements (#2154)
 ### Bug Fixes
 * Filter active installations in DB and fix method signature (#2156)
+
+## Release 0.31.0 (2021-01-12T10:50:28)
+### Features
+* Add prefix for buildlog documents (#2164)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2166)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2163)
+* Introduce queries to retrieve specifc document ids according to parameters (#2160)
+### Improvements
+* Normalization functions have been moved to common (#2153)
