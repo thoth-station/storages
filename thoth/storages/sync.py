@@ -28,7 +28,6 @@ from pathlib import Path
 
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
-from .buildlogs_analyses import BuildLogsAnalysisResultsStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .inspections import InspectionStore
 from .provenance import ProvenanceResultsStore
@@ -240,61 +239,6 @@ def sync_analysis_documents(
                 failed += 1
         else:
             _LOGGER.info(f"Sync of analysis document with id {document_id!r} skipped - already synced")
-            skipped += 1
-
-    return processed, synced, skipped, failed
-
-
-def sync_build_log_analysis_documents(
-    document_ids: Optional[List[str]] = None,
-    force: bool = False,
-    graceful: bool = False,
-    graph: Optional[GraphDatabase] = None,
-    is_local: bool = False,
-) -> tuple:
-    """Sync build log analysis documents into graph."""
-    if is_local and not document_ids:
-        raise ValueError(
-            "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
-        )
-
-    if not graph:
-        graph = GraphDatabase()
-        graph.connect()
-
-    if not is_local:
-        build_log_analysis_store = BuildLogsAnalysisResultsStore()
-        build_log_analysis_store.connect()
-
-    processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or buildlog_analysis_store.get_document_listing():
-        processed += 1
-
-        if force or not graph.build_log_analysis_document_id_exist(os.path.basename(document_id)):
-            try:
-                if is_local:
-                    _LOGGER.debug("Loading document from a local file: %r", document_id)
-                    with open(document_id, "r") as document_file:
-                        document = json.loads(document_file.read())
-                else:
-                    _LOGGER.info(
-                        "Syncing build log analysis document from %r with id %r to graph",
-                        build_log_analysis_store.ceph.host,
-                        document_id,
-                    )
-                    document = build_log_analysis_store.retrieve_document(document_id)
-                # Analysis results with no information are not required
-                if document["result"]["build_breaker"]:
-                    graph.sync_build_log_analysis_result(document)
-                    synced += 1
-            except Exception:
-                if not graceful:
-                    raise
-
-                _LOGGER.exception("Failed to sync build log analysis result with document id %r", document_id)
-                failed += 1
-        else:
-            _LOGGER.info("Sync of build log analysis document with id %r skipped - already synced", document_id)
             skipped += 1
 
     return processed, synced, skipped, failed
@@ -570,7 +514,6 @@ def sync_security_indicators_documents(
 
 HANDLERS_MAPPING = {
     "adviser": sync_adviser_documents,
-    "build-report": sync_build_log_analysis_documents,
     "dependency-monkey": sync_dependency_monkey_documents,
     "inspection": sync_inspection_documents,
     "package-extract": sync_analysis_documents,
