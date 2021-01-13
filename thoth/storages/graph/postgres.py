@@ -4247,6 +4247,7 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
+        has_error: bool = False
     ) -> List[str]:
         """Retrieve solver run document ids.
 
@@ -4264,14 +4265,6 @@ class GraphDatabase(SQLBase):
 
             conditions = []
 
-            if initial_date:
-                date_filter = self._create_date_filter(initial_date)
-                conditions.append(Solved.datetime > date_filter)
-
-            if final_date:
-                date_filter = self._create_date_filter(final_date)
-                conditions.append(Solved.datetime < date_filter)
-
             if os_name or os_version or python_version:
                 conditions.append(EcosystemSolver.id == Solved.ecosystem_solver_id)
 
@@ -4287,6 +4280,17 @@ class GraphDatabase(SQLBase):
 
             if conditions:
                 query = query.filter(exists().where(and_(*conditions)))
+
+            if initial_date:
+                date_filter = self._create_date_filter(initial_date)
+                query = query.filter(Solved.datetime > date_filter)
+
+            if final_date:
+                date_filter = self._create_date_filter(final_date)
+                query = query.filter(Solved.datetime < date_filter)
+
+            if has_error:
+                query = query.filter(Solved.error.is_(True))
 
             query = query.offset(start_offset).limit(count)
 
