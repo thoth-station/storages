@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Adapter for storing buildlog analysis results onto a persistence remote store."""
+"""Adapter for manipulating with parsed buildlogs."""
 
 from .result_base import ResultStorageBase
 
 
-class BuildLogsAnalysisResultsStore(ResultStorageBase):
-    """Store results of buildlog analyzes."""
+class BuildLogsParsedResultsStore(ResultStorageBase):
+    """Store results of buildlog parser."""
 
-    RESULT_TYPE = "buildlogs-analysis"
+    RESULT_TYPE = "buildlogs-parsed"
