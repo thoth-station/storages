@@ -61,7 +61,6 @@ from thoth.common import map_os_name
 
 from .models_base import BaseExtension
 from .models import AdviserRun
-from .models import BuildLogAnalyzerRun
 from .models import CVE
 from .models import DebDependency
 from .models import DebPackageVersion
@@ -152,7 +151,6 @@ from .enums import QuerySortTypeEnum
 from .enums import ThothAdviserIntegrationEnum
 
 from ..analyses import AnalysisResultsStore
-from ..buildlogs_analyses import BuildLogsAnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
 from ..inspections import InspectionResultsStore
@@ -2447,16 +2445,6 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
-    def build_log_analysis_document_id_exist(self, build_log_analysis_document_id: str) -> bool:
-        """Check if there is a build log analysis document record with the given id."""
-        with self._session_scope() as session:
-            return (
-                session.query(BuildLogAnalyzerRun)
-                .filter(BuildLogAnalyzerRun.build_log_analysis_document_id == build_log_analysis_document_id)
-                .count()
-                > 0
-            )
-
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
         with self._session_scope() as session:
@@ -4615,31 +4603,6 @@ class GraphDatabase(SQLBase):
                 session, package_extract_run, document, software_environment, is_external=is_external
             )
             self._python_interpreters_sync_analysis_result(session, package_extract_run, document, software_environment)
-
-    def sync_build_log_analysis_result(self, document: dict) -> None:
-        """Sync the given build log analysis result to the graph database."""
-        build_log_analysis_document_id = BuildLogsAnalysisResultsStore.get_document_id(document)
-        package_name = document["result"]["build_breaker"]["target"]
-        package_name = self.normalize_python_package_name(package_name)
-        package_version = document["result"]["build_breaker"]["version_specified"]
-        package_version = self.normalize_python_package_version(package_version)
-
-        _LOGGER.info("Syncing package analysis for package %r in version %r", package_name, package_version)
-        with self._session_scope() as session, session.begin(subtransactions=True):
-            python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
-                session, package_name=package_name, package_version=package_version
-            )
-            build_log_analyzer_run, _ = BuildLogAnalyzerRun.get_or_create(
-                session,
-                build_log_analyzer_name=document["metadata"]["analyzer"],
-                build_log_analyzer_version=document["metadata"]["analyzer_version"],
-                build_log_analysis_document_id=build_log_analysis_document_id,
-                datetime=document["metadata"]["datetime"],
-                debug=document["metadata"]["arguments"]["thoth-build-analyzer"]["verbose"],
-                build_log_analyzer_error_reason=document["result"]["build_breaker"]["reason"]["msg"],
-                duration=document["metadata"].get("duration"),
-                input_python_package_version_entity_id=python_package_version_entity.id,
-            )
 
     @staticmethod
     def _get_or_create_python_package_index(
