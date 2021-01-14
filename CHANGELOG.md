@@ -10199,3 +10199,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Introduce queries to retrieve specifc document ids according to parameters (#2160)
 ### Improvements
 * Normalization functions have been moved to common (#2153)
+
+## Release 0.32.0 (2021-01-14T15:50:09)
+### Features
+* Add flters for solver query to retrieve document ids by error (#2171)
+* Provide adapter for manipulating with parsed build logs (#2170)
+### Improvements
+* removed bissenbay, thanks for your contributions!
