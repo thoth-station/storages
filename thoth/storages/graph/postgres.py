@@ -306,10 +306,20 @@ class GraphDatabase(SQLBase):
         except DatabaseNotInitialized as exc:
             _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
 
-    def initialize_schema(self):
-        """Initialize schema of database."""
+    @staticmethod
+    def _get_alembic_configuration():
         import thoth.storages
         from alembic import config
+        alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
+        alembic_cfg.attributes["configure_logger"] = False
+        alembic_cfg.set_section_option(
+            "alembic", "script_location", os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic")
+        )
+
+        return alembic_cfg
+
+    def initialize_schema(self):
+        """Initialize schema of database."""
         from alembic import command
 
         if not self.is_connected():
@@ -319,13 +329,10 @@ class GraphDatabase(SQLBase):
             _LOGGER.info("The database has not been created yet, it will be created now...")
             create_database(self._engine.url)
 
-        alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
-        alembic_cfg.attributes["configure_logger"] = False
+        alembic_cfg = self._get_alembic_configuration()
+
         # Overwrite URL based on deployment configuration.
         alembic_cfg.set_main_option("sqlalchemy.url", self.construct_connection_string())
-        alembic_cfg.set_section_option(
-            "alembic", "script_location", os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic")
-        )
         command.upgrade(alembic_cfg, "head")
 
     def drop_all(self):
@@ -334,40 +341,44 @@ class GraphDatabase(SQLBase):
         # Drop alembic version to be able re-run alembic migrations next time.
         self._engine.execute("DROP TABLE alembic_version;")
 
-    def is_schema_up2date(self) -> bool:
-        """Check if the current schema is up2date with the one configured on database side."""
-        import thoth.storages
-        from alembic import config
+    def _get_script_directory_revisions(self):
         from alembic import script
+        alembic_cfg = self._get_alembic_configuration()
+        directory = script.ScriptDirectory.from_config(alembic_cfg)
+        return directory
+
+    def get_script_alembic_version_head(self) -> str:
+        """Get alembic version head from alembic folder scripts."""
+        directory = self._get_script_directory_revisions()
+        head_revision = directory.get_current_head()
+
+        return head_revision
+
+    def get_table_alembic_version_head(self) -> str:
+        """Get alembic version head from database table."""
         from alembic.runtime import migration
 
         if not self.is_connected():
             raise NotConnected("Cannot check schema: the adapter is not connected yet")
 
-        alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
-        alembic_cfg.attributes["configure_logger"] = False
-        alembic_cfg.set_section_option(
-            "alembic", "script_location", os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic")
-        )
-        directory = script.ScriptDirectory.from_config(alembic_cfg)
         connection = self._engine.connect()
         context = migration.MigrationContext.configure(connection)
+        current_rev = context.get_current_revision()
+        return current_rev
 
-        database_heads = set(context.get_current_heads())
-        if not database_heads:
-            raise DatabaseNotInitialized("Database is not initialized yet")
+    def is_schema_up2date(self) -> bool:
+        """Check if the current schema is up2date with the one configured on database side."""
+        database_head = self.get_table_alembic_version_head()
+        script_head = self.get_script_alembic_version_head()
 
-        revision_heads = set(directory.get_heads())
-
-        # Multiple heads can be available, handle such case.
-        is_up2date = revision_heads == database_heads
+        is_up2date = database_head == script_head
 
         if not is_up2date:
             _LOGGER.warning(
-                "The database schema is not in sync with library revisions, the current library revision "
-                "heads: %r, database heads: %r",
-                revision_heads,
-                database_heads,
+                "The database schema is not in sync with library head revision, the current library revision "
+                "head: %r, database head: %r",
+                script_head,
+                database_head,
             )
 
         return is_up2date
