@@ -371,7 +371,6 @@ class GraphDatabase(SQLBase):
         database_head = self.get_table_alembic_version_head()
         script_head = self.get_script_alembic_version_head()
 
-        # Multiple heads can be available, handle such case.
         is_up2date = database_head == script_head
 
         if not is_up2date:
