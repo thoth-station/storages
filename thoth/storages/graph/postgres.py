@@ -368,7 +368,21 @@ class GraphDatabase(SQLBase):
 
     def is_schema_up2date(self) -> bool:
         """Check if the current schema is up2date with the one configured on database side."""
-        return self.get_table_alembic_version_head() == self.get_script_alembic_version_head()
+        database_head = self.get_table_alembic_version_head()
+        script_head = self.get_script_alembic_version_head()
+
+        # Multiple heads can be available, handle such case.
+        is_up2date = database_head == script_head
+
+        if not is_up2date:
+            _LOGGER.warning(
+                "The database schema is not in sync with library head revision, the current library revision "
+                "head: %r, database head: %r",
+                script_head,
+                database_head,
+            )
+
+        return is_up2date
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
