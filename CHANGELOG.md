@@ -10206,3 +10206,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Provide adapter for manipulating with parsed build logs (#2170)
 ### Improvements
 * removed bissenbay, thanks for your contributions!
+
+## Release 0.33.0 (2021-01-19T15:57:38)
+### Features
+* :arrow_up: Automatic update of dependencies by kebechet. (#2178)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2177)
+* Refactor method for schema check (#2176)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2175)
