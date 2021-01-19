@@ -368,33 +368,7 @@ class GraphDatabase(SQLBase):
 
     def is_schema_up2date(self) -> bool:
         """Check if the current schema is up2date with the one configured on database side."""
-        from alembic.runtime import migration
-
-        if not self.is_connected():
-            raise NotConnected("Cannot check schema: the adapter is not connected yet")
-
-        directory = self._get_script_directory_revisions()
-        connection = self._engine.connect()
-        context = migration.MigrationContext.configure(connection)
-
-        database_heads = set(context.get_current_heads())
-        if not database_heads:
-            raise DatabaseNotInitialized("Database is not initialized yet")
-
-        revision_heads = set(directory.get_heads())
-
-        # Multiple heads can be available, handle such case.
-        is_up2date = revision_heads == database_heads
-
-        if not is_up2date:
-            _LOGGER.warning(
-                "The database schema is not in sync with library revisions, the current library revision "
-                "heads: %r, database heads: %r",
-                revision_heads,
-                database_heads,
-            )
-
-        return is_up2date
+        return self.get_table_alembic_version_head() == self.get_script_alembic_version_head()
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
