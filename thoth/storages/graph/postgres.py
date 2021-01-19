@@ -348,14 +348,14 @@ class GraphDatabase(SQLBase):
         return directory
 
     def get_script_alembic_version_head(self) -> str:
-        """Get script alembic version head."""
+        """Get alembic version head from alembic folder scripts."""
         directory = self._get_script_directory_revisions()
         head_revision = directory.get_current_head()
 
         return head_revision
 
     def get_table_alembic_version_head(self) -> str:
-        """Get table alembic version head."""
+        """Get alembic version head from database table."""
         from alembic.runtime import migration
 
         if not self.is_connected():
