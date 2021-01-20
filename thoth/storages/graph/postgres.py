@@ -5539,7 +5539,6 @@ class GraphDatabase(SQLBase):
             True: Database is corrupted
         """
         check_for_ext_query = "SELECT * FROM pg_extension WHERE extname='amcheck'"
-        install_ext_query = "CREATE EXTENSION amcheck"
         run_amcheck_query = """SELECT bt_index_check(index => c.oid),
                     c.relname,
                     c.relpages
@@ -5555,7 +5554,8 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             if list(session.execute(check_for_ext_query)) == []:
-                session.execute(install_ext_query)
+                _LOGGER.error("amcheck extension not found.")
+                return False  # do not want to accidentally mistake this state with the DB being corrupted
 
             try:
                 session.execute(run_amcheck_query)
