@@ -5339,6 +5339,13 @@ class GraphDatabase(SQLBase):
 
     def sync_dependency_monkey_result(self, document: dict) -> None:
         """Sync reports of dependency monkey runs."""
+        if "ERROR" in document["result"]["report"]:
+            _LOGGER.warning(
+                "No entries to be synced for Dependency Monkey %r as Dependency Monkey failed",
+                DependencyMonkeyReportsStore.get_document_id(document),
+            )
+            return
+
         with self._session_scope() as session, session.begin(subtransactions=True):
             parameters = document["result"]["parameters"]
 
