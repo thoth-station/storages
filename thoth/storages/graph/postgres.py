@@ -4542,6 +4542,17 @@ class GraphDatabase(SQLBase):
                 session, python_interpreter=python_interpreter, package_extract_run=package_extract_run
             )
 
+    @staticmethod
+    def _package_extract_get_env_vars(document: Dict[str, Any]) -> Dict[str, str]:
+        """Obtain Thoth specific environment variables present in the container image."""
+        result = {}
+        for entry in (document["result"].get("skopeo-inspect") or {}).get("Env") or []:
+            if entry.startswith(("THAMOS_", "THOTH_")):
+                env_name, env_val = entry.split("=", maxsplit=1)
+                result[env_name] = env_val
+
+        return result
+
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
         analysis_document_id = AnalysisResultsStore.get_document_id(document)
@@ -4599,6 +4610,8 @@ class GraphDatabase(SQLBase):
             else:
                 sw_id = dict(software_environment_id=software_environment.id)
 
+            env_vars = self._package_extract_get_env_vars(document)
+
             package_extract_run, _ = PackageExtractRun.get_or_create(
                 session,
                 analysis_document_id=analysis_document_id,
@@ -4610,6 +4623,8 @@ class GraphDatabase(SQLBase):
                 debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
                 package_extract_error=False,
                 image_tag=image_tag,
+                thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
+                thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
                 duration=document["metadata"].get("duration"),
                 os_id=document["result"].get("operating-system", {}).get("id"),
                 os_name=os_name,
