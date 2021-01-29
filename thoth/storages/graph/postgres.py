@@ -1780,7 +1780,7 @@ class GraphDatabase(SQLBase):
 
         return query
 
-    def get_ecosystem_solver_all(self) -> int:
+    def get_ecosystem_solver_all(self) -> List[str]:
         """Get all solvers.
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -1802,8 +1802,7 @@ class GraphDatabase(SQLBase):
             query = self._construct_get_solver_query(
                 session,
             )
-            count = query.count()
-            return count
+            return query.count()
 
     def get_solver_documents_count_all(self) -> int:
         """Get number of solver documents synced into graph."""
