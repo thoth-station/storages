@@ -1781,7 +1781,13 @@ class GraphDatabase(SQLBase):
         return query
 
     def get_ecosystem_solver_all(self) -> int:
-        """Get all solvers."""
+        """Get all solvers.
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_ecosystem_solver_all()
+        ['solver-fedora-31-py38', 'solver-fedora-32-py37', 'solver-fedora-32-py38', 'solver-ubi-8-py36']
+        """
         with self._session_scope() as session:
             query = self._construct_get_solver_query(
                 session,
