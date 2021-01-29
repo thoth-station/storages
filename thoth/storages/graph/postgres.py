@@ -1767,6 +1767,38 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+    def _construct_get_solver_query(
+        self,
+        session: Session
+    ) -> Query:
+        """Construct query to retrieve solvers."""
+        query = (
+            session.query(EcosystemSolver)
+            .filter(EcosystemSolver.os_name != 'rhel')   # Thoth considers rhel == ubi
+            .distinct(EcosystemSolver.solver_name)
+        )
+
+        return query
+
+    def get_ecosystem_solver_all(self) -> int:
+        """Get all solvers."""
+        with self._session_scope() as session:
+            query = self._construct_get_solver_query(
+                session,
+            )
+            solvers = query.with_entities(EcosystemSolver.solver_name).all()
+
+            return [s[0] for s in solvers]
+
+    def get_ecosystem_solver_count_all(self) -> int:
+        """Get number of solvers."""
+        with self._session_scope() as session:
+            query = self._construct_get_solver_query(
+                session,
+            )
+            count = query.count()
+            return count
+
     def get_solver_documents_count_all(self) -> int:
         """Get number of solver documents synced into graph."""
         with self._session_scope() as session:
@@ -4880,8 +4912,10 @@ class GraphDatabase(SQLBase):
                 ecosystem="python",
                 solver_name=solver_name,
                 solver_version=solver_version,
-                os_name=os_name,
-                os_version=os_version,
+                os_name=map_os_name(
+                    os_name
+                ),
+                os_version=normalize_os_version(os_version),
                 python_version=python_version,
             )
 
