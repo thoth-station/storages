@@ -4593,6 +4593,8 @@ class GraphDatabase(SQLBase):
                 if not re.match(r"^\d\.\d+$", python_version):
                     raise ValueError("Python Version does not match pattern")
 
+            env_vars = self._package_extract_get_env_vars(document)
+
             software_environment, _ = sw_class.get_or_create(
                 session,
                 environment_name=environment_name,
@@ -4601,6 +4603,8 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
+                thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
+                thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
                 cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
                 environment_type=environment_type,
             )
@@ -4609,8 +4613,6 @@ class GraphDatabase(SQLBase):
                 sw_id = dict(external_software_environment_id=software_environment.id)
             else:
                 sw_id = dict(software_environment_id=software_environment.id)
-
-            env_vars = self._package_extract_get_env_vars(document)
 
             package_extract_run, _ = PackageExtractRun.get_or_create(
                 session,
@@ -4623,8 +4625,6 @@ class GraphDatabase(SQLBase):
                 debug=document["metadata"]["arguments"]["thoth-package-extract"]["verbose"],
                 package_extract_error=False,
                 image_tag=image_tag,
-                thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
-                thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
                 duration=document["metadata"].get("duration"),
                 os_id=document["result"].get("operating-system", {}).get("id"),
                 os_name=os_name,
