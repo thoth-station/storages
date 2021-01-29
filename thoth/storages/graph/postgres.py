@@ -5477,6 +5477,25 @@ class GraphDatabase(SQLBase):
             # Query returns list of single tuples (empty if bad request)
             return [i[0] for i in query.all()]
 
+    def get_thoth_s2i_analyzed_image_symbols_all(
+        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
+    ) -> List[str]:
+        """Get symbols associated with a given Thoth s2i container image."""
+        model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            query = (
+                session.query(model)
+                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
+                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .join(HasSymbol)
+                .join(VersionedSymbol)
+                .with_entities(VersionedSymbol.symbol)
+                .distinct(VersionedSymbol.symbol)
+            )
+
+            # Query returns list of single tuples (empty if bad request)
+            return [i[0] for i in query.all()]
+
     def get_pi_count(self, component: str) -> Dict[str, int]:
         """Get dictionary with number of Performance Indicators per type for the PI component selected."""
         result = {}
