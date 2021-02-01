@@ -10213,3 +10213,23 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_up: Automatic update of dependencies by kebechet. (#2177)
 * Refactor method for schema check (#2176)
 * :arrow_up: Automatic update of dependencies by kebechet. (#2175)
+
+## Release 0.34.0 (2021-02-01T10:05:32)
+### Features
+* Introduce queries to query Thoth s2i container images (#2201)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2200)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2198)
+* Create query for querying Thoth's s2i container image symbols
+* Sync s2i specific attributes to the right table
+* Move Thoth s2i specific env vars to software environment models
+* Sync Thoth specific environment variables from package-extract runs (#2192)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2190)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2186)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2184)
+* remove call to install amcheck on postgres (#2183)
+* :arrow_up: Automatic update of dependencies by kebechet. (#2182)
+### Bug Fixes
+* Do not sync Dependency Monkey document if any error is reported (#2187)
+### Improvements
+* Add migration for index
+* Create index for Thoth's s2i base image attributes
