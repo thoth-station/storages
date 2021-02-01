@@ -5496,6 +5496,38 @@ class GraphDatabase(SQLBase):
             # Query returns list of single tuples (empty if bad request)
             return [i[0] for i in query.all()]
 
+    def get_thoth_s2i_all(self, is_external: bool = False) -> List[Tuple[str, str]]:
+        """Get all the Thoth s2i container images available."""
+        model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            query = (
+                session.query(model)
+                .with_entities(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
+                .distinct(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
+            )
+
+            # Query returns list of single tuples (empty if bad request)
+            return [tuple(i) for i in query.all()]
+
+    def get_thoth_s2i_package_extract_analysis_document_id_all(
+        self,
+        thoth_s2i_image_name: str,
+        thoth_s2i_image_version: str,
+        is_external: bool = False
+    ) -> List[str]:
+        """Get package-extract analysis ids for the given Thoth s2i."""
+        model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            query = (
+                session.query(PackageExtractRun)
+                .join(model)
+                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
+                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .with_entities(PackageExtractRun.analysis_document_id)
+            )
+
+            return [i[0] for i in query.all()]
+
     def get_pi_count(self, component: str) -> Dict[str, int]:
         """Get dictionary with number of Performance Indicators per type for the PI component selected."""
         result = {}
