@@ -794,6 +794,13 @@ class SoftwareEnvironment(Base, BaseExtension):
     package_extract_runs = relationship("PackageExtractRun", back_populates="software_environment")
     versioned_symbols = relationship("HasSymbol", back_populates="software_environment")
 
+    __table_args__ = (
+        Index(
+            "thoth_s2i_image_name",
+            "thoth_s2i_image_version",
+        ),
+    )
+
 
 class ExternalSoftwareEnvironment(Base, BaseExtension):
     """A base class for environment types."""
