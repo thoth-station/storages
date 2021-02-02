@@ -5352,6 +5352,28 @@ class GraphDatabase(SQLBase):
                 user_software_stack_id=software_stack.id,
             )
 
+            # Mark down packages that were not solved and missed in provenance checker.
+
+            report = document["result"]["report"]
+
+            message_id = "MISSING-PACKAGE"
+
+            for package in report:
+
+                # Discover unresolved package matching the message ID
+                if package["id"] == message_id:
+
+                    python_package_version_entity = self._create_python_package_version(
+                        session,
+                        package_name=package["package_name"],
+                        package_version=package["package_version"].lstrip("=="),
+                        index_url=package["source"]["url"],
+                        os_name=None,
+                        os_version=None,
+                        python_version=None,
+                        sync_only_entity=True,
+                    )
+
     def sync_dependency_monkey_result(self, document: dict) -> None:
         """Sync reports of dependency monkey runs."""
         if "ERROR" in document["result"]["report"]:
