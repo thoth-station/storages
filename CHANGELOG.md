@@ -10233,3 +10233,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Improvements
 * Add migration for index
 * Create index for Thoth's s2i base image attributes
+
+## Release 0.35.0 (2021-02-02T21:49:44)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet (#2208)
+* Fix sync solver (#2207)
+### Bug Fixes
+* Add queries and fix bug discovered (#2197)
+### Improvements
+* Create methods for manipulating with hardware environments (#2204)
