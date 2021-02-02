@@ -2593,7 +2593,12 @@ class GraphDatabase(SQLBase):
             return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
 
     def get_hardware_environments_all(
-        self, is_external: bool = False, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        without_id: bool = True,
     ) -> List[Dict]:
         """Get hardware environments (external or internal) registered in the graph database."""
         if is_external:
@@ -2603,7 +2608,7 @@ class GraphDatabase(SQLBase):
 
         with self._session_scope() as session:
             result = session.query(hardware_environment).offset(start_offset).limit(count).all()
-            return [model.to_dict() for model in result]
+            return [model.to_dict(without_id=without_id) for model in result]
 
     def get_software_environments_all(
         self, is_external: bool = False, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
@@ -3408,6 +3413,45 @@ class GraphDatabase(SQLBase):
         )
 
         return hardware_information, software_environment
+
+    def create_hardware_information(self, hardware: Dict[str, Any], is_external: bool = True) -> int:
+        """Create hardware information in the database."""
+        hardware_info = dict(hardware)
+
+        hardware_information_type = ExternalHardwareInformation if is_external else HardwareInformation
+
+        with self._session_scope() as session:
+            hardware_information, _ = hardware_information_type.get_or_create(
+                session,
+                cpu_vendor=hardware_info.pop("cpu_vendor"),
+                cpu_model=hardware_info.pop("cpu_model"),
+                cpu_cores=hardware_info.pop("cpu_cores"),
+                cpu_model_name=hardware_info.pop("cpu_model_name"),
+                cpu_family=hardware_info.pop("cpu_family"),
+                cpu_physical_cpus=hardware_info.pop("cpu_physical_cpus"),
+                gpu_model_name=hardware_info.pop("gpu_model_name"),
+                gpu_vendor=hardware_info.pop("gpu_vendor"),
+                gpu_cores=hardware_info.pop("gpu_cores"),
+                gpu_memory_size=hardware_info.pop("gpu_memory_size"),
+                ram_size=hardware_info.pop("ram_size"),
+            )
+
+            hardware_information_id = hardware_information.id
+
+        if hardware_info:
+            _LOGGER.warning("Unknown parts of the hardware not synced into the database: %r", hardware_info)
+
+        return hardware_information_id
+
+    def delete_hardware_information(self, hardware_information_id: int, is_external: bool = True) -> None:
+        """Delete hardware information entry with the given id."""
+        hardware_information_type = ExternalHardwareInformation if is_external else HardwareInformation
+
+        with self._session_scope() as session:
+            session.query(hardware_information_type).filter(
+                hardware_information_type.id == hardware_information_id
+            ).delete()
+            session.commit()
 
     def create_github_app_installation(self, slug: str, repo_name: str, private: bool, installation_id: str) -> bool:
         """Create a record for new installation or reactivate uninstalled installation.
