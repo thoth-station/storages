@@ -1774,7 +1774,6 @@ class GraphDatabase(SQLBase):
         """Construct query to retrieve solvers."""
         query = (
             session.query(EcosystemSolver)
-            .filter(EcosystemSolver.os_name != 'rhel')   # Thoth considers rhel == ubi
             .distinct(EcosystemSolver.solver_name)
         )
 
@@ -4268,7 +4267,7 @@ class GraphDatabase(SQLBase):
             if source_type:
                 query = query.filter(AdviserRun.source_type == source_type)
 
-            query = query.offset(start_offset).limit(count)
+            # query = query.offset(start_offset).limit(count)
 
             document_ids = query.all()
 
