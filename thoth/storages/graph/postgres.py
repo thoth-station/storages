@@ -5353,15 +5353,11 @@ class GraphDatabase(SQLBase):
             )
 
             # Mark down packages that were not solved and missed in provenance checker.
-
             report = document["result"]["report"]
 
-            message_id = "MISSING-PACKAGE"
-
             for package in report:
-
                 # Discover unresolved package matching the message ID
-                if package["id"] == message_id:
+                if package["id"] == "MISSING-PACKAGE":
 
                     python_package_version_entity = self._create_python_package_version(
                         session,
