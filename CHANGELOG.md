@@ -10242,3 +10242,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add queries and fix bug discovered (#2197)
 ### Improvements
 * Create methods for manipulating with hardware environments (#2204)
+
+## Release 0.35.1 (2021-02-03T07:22:44)
+### Bug Fixes
+* fix: the arguments for the normalize_os_version function
