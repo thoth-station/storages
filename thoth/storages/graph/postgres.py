@@ -3957,6 +3957,13 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
+    def get_external_python_software_stack_count_all(self) -> int:
+        """Get number of User Python software stacks available."""
+        with self._session_scope() as session:
+            query = session.query(ExternalPythonSoftwareStack)
+
+            return query.count()
+
     def sync_inspection_result(self, document) -> None:
         """Sync the given inspection document into the graph database."""
         # Check if we have such performance model before creating any other records.
