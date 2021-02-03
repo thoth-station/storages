@@ -10246,3 +10246,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.35.1 (2021-02-03T07:22:44)
 ### Bug Fixes
 * fix: the arguments for the normalize_os_version function
+
+## Release 0.36.0 (2021-02-03T11:18:01)
+### Features
+* Merge queries to maintain consistency
+* Adjust after review
+* Adjust query for user software stack
+* Sync unresolved from provenance checker report
