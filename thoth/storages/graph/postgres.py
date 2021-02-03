@@ -3945,15 +3945,18 @@ class GraphDatabase(SQLBase):
 
         return software_stack
 
-    def get_python_software_stack_count_all(self, software_stack_type: str, distinct: bool = False) -> int:
+    def get_python_software_stack_count_all(self, is_external: bool = False, software_stack_type: Optional[str] = None, distinct: bool = False) -> int:
         """Get number of Python software stacks available filtered by type."""
         with self._session_scope() as session:
-            query = session.query(PythonSoftwareStack.software_stack_type).filter(
-                PythonSoftwareStack.software_stack_type == software_stack_type
-            )
+            if is_external:
+                query = session.query(ExternalPythonSoftwareStack)
+            else:
+                query = session.query(PythonSoftwareStack.software_stack_type).filter(
+                    PythonSoftwareStack.software_stack_type == software_stack_type
+                )
 
-            if distinct:
-                return query.distinct().count()
+                if distinct:
+                    return query.distinct().count()
 
             return query.count()
 
