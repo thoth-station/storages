@@ -10253,3 +10253,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Adjust after review
 * Adjust query for user software stack
 * Sync unresolved from provenance checker report
+
+## Release 0.37.0 (2021-02-15T10:52:58)
+### Features
+* Create an adapter for persisting requests to Dependency Monkey
+* :arrow_up: Automatic update of dependencies by Kebechet (#2214)
+* add marker file PEP561
