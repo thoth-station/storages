@@ -27,6 +27,7 @@ from .buildlogs_parsed import BuildLogsParsedResultsStore
 from .buildlogs_analyses_cache import BuildLogsAnalysesCacheStore
 from .ceph import CephStore
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
+from .dependency_monkey_requests import DependencyMonkeyRequestsStore
 from .graph import GraphDatabase
 from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
