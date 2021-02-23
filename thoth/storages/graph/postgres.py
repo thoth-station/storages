@@ -5421,8 +5421,6 @@ class GraphDatabase(SQLBase):
                         index_elements=["id"], set_=dict(
                             last_run=document["metadata"]["datetime"],
                             thoth_advise_manager=True,
-                            external_python_software_stack_id=external_software_stack.id,
-                            external_software_environment_id=external_run_software_environment.id,
                             advised_python_software_stack_id=advised_stacks[0].id
                         )
                     )
