@@ -3693,6 +3693,51 @@ class GraphDatabase(SQLBase):
 
         return self._group_by_slug(result)
 
+    def update_kebechet_installation_using_files(
+        self,
+        slug: str,
+        requirements: Optional[dict] = None,
+        requirements_lock: Optional[dict] = None,
+        thoth_config: Optional[dict] = None,
+    ):
+        """Update info about kebechet installation."""
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            if "runtime_environments" in thoth_config:
+                env_dict = thoth_config["runtime_environments"][0]
+                software_env = ExternalSoftwareEnvironment.get_or_create(
+                    environment_name=env_dict["name"],
+                    os_name=env_dict["operating_system"]["name"],
+                    os_version=env_dict["operating_system"]["version"],
+                    python_version=env_dict.get("python_version"),
+                    cuda_version= env_dict.get("cuda_version"),
+                    environment_type=EnvironmentTypeEnum.RUNTIME.value,
+                )
+            else:
+                software_env = None
+
+            python_stack = self._create_python_software_stack(
+                session=session,
+                requirements=requirements,
+                requirements_lock=requirements_lock,
+                software_env=software_env,
+                is_external=True,
+            )
+
+            manager_info = thoth_config.get("managers") or {}
+
+            all_managers = [i["name"] for i in manager_info]
+            session.query(KebechetGitHubAppInstallation).filter(KebechetGithubAppInstallations.slug == slug).first().update(
+                external_python_software_stack_id = python_stack.id,
+                external_software_environment = software_env,
+                info_manager="info" in all_managers,
+                pipfile_requirements_manager="pipfile-requirements" in all_managers,
+                update_manager="update" in all_managers,
+                version_manager="version" in all_managers,
+                thoth_advise_manager="thoth-advise" in all_managers,
+                thoth_provenance_manager="thoth-provenance" in all_managers,
+            )
+
+
     def get_index_url_from_id(self, package_index_id: int) -> list:
         """Return index URL from id."""
         with self._session_scope() as session:
