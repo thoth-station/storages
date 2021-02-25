@@ -799,6 +799,46 @@ class GraphDatabase(SQLBase):
         kwargs.pop("self", None)  # static method
         return self.__class__._construct_python_packages_query(**kwargs)
 
+    def get_solver_document_id_for_package_version(
+        self,
+        package_name: str,
+        package_version: Optional[str] = None,
+        *,
+        index_url: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        distinct: bool = True,
+    ) -> List[str]:
+        """Get all solver document ids that correspond to solving the given package."""
+        package_name = self.normalize_python_package_name(package_name)
+
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
+
+            if package_version:
+                self.normalize_python_package_version(package_version)
+                query = query.filter(PythonPackageVersion.package_version == package_version)
+
+            if os_name:
+                os_name = normalize_os_version(os_name, os_version)
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            if index_url:
+                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+
+            query = query.join(Solved).with_entities(Solved.document_id)
+            if distinct:
+                query = query.distinct()
+
+            return [i[0] for i in query.all()]
+
     def get_solved_python_packages_count_all(
         self,
         *,
