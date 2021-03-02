@@ -383,6 +383,14 @@ class GraphDatabase(SQLBase):
 
         return is_up2date
 
+    def get_alembic_version_count_all(self) -> int:
+        """Get number of records in alembic version table (1 expected)."""
+        query = f"SELECT COUNT(*) FROM alembic_version"
+
+        with self._session_scope() as session:
+            result = session.execute(query).fetchone()
+            return result[0]
+
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
