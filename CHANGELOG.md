@@ -10259,3 +10259,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Create an adapter for persisting requests to Dependency Monkey
 * :arrow_up: Automatic update of dependencies by Kebechet (#2214)
 * add marker file PEP561
+
+## Release 0.38.0 (2021-03-04T19:54:36)
+### Features
+* Introduce a query for obtaining database size
+* Add query for number of rows in alembic table
+* update with pip, piplock, and .thoth.config dicts (#2227)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2225)
