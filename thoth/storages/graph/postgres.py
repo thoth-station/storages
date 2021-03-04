@@ -5752,6 +5752,15 @@ class GraphDatabase(SQLBase):
         """Drop cache of records."""
         for method in self._CACHED_METHODS:
             method.cache_clear()
+            
+    def get_database_size(self) -> int:
+        """Get size of the database in bytes."""
+        query = f"SELECT pg_database_size(pg_database.datname) AS size_in_bytes FROM "\
+                f"pg_database WHERE pg_database.datname='{self._engine.url.database}'"
+
+        with self._session_scope() as session:
+            result = session.execute(query).fetchone()
+            return result[0]
 
     def is_database_corrupted(self) -> bool:
         """
