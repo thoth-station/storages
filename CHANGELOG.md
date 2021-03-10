@@ -10266,3 +10266,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add query for number of rows in alembic table
 * update with pip, piplock, and .thoth.config dicts (#2227)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2225)
+
+## Release 0.39.0 (2021-03-10T08:58:17)
+### Features
+* Add filters filtering based on image name
+* Store information about images produced by AICoE CI on sync
+* Add information about container images stored in env variables
+* :arrow_up: Automatic update of dependencies by Kebechet (#2236)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2233)
