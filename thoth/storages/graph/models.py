@@ -767,6 +767,8 @@ class SoftwareEnvironment(Base, BaseExtension):
     os_version = Column(Text, nullable=True)
     thoth_s2i_image_name = Column(Text, nullable=True)
     thoth_s2i_image_version = Column(Text, nullable=True)
+    env_image_name = Column(Text, nullable=True)
+    env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
     environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
 
@@ -817,6 +819,8 @@ class ExternalSoftwareEnvironment(Base, BaseExtension):
     os_version = Column(Text, nullable=True)
     thoth_s2i_image_name = Column(Text, nullable=True)
     thoth_s2i_image_version = Column(Text, nullable=True)
+    env_image_name = Column(Text, nullable=True)
+    env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
     environment_type = Column(_ENVIRONMENT_TYPE_ENUM, nullable=False)
 
