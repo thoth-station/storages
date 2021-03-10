@@ -2655,7 +2655,13 @@ class GraphDatabase(SQLBase):
             return [model.to_dict(without_id=without_id) for model in result]
 
     def get_software_environments_all(
-        self, is_external: bool = False, *, start_offset: int = 0, count: Optional[int] = DEFAULT_COUNT
+        self,
+        is_external: bool = False,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database."""
         if is_external:
@@ -2664,8 +2670,16 @@ class GraphDatabase(SQLBase):
             software_environment = SoftwareEnvironment
 
         with self._session_scope() as session:
-            result = session.query(software_environment).offset(start_offset).limit(count).all()
-            return [model.to_dict() for model in result]
+            query = session.query(software_environment)
+
+            if env_image_name:
+                query = query.filter(software_environment.env_image_name == env_image_name)
+
+            if env_image_tag:
+                query = query.filter(software_environment.env_image_tag == env_image_tag)
+
+            query = query.offset(start_offset).limit(count)
+            return [model.to_dict() for model in query.all()]
 
     def get_python_package_index_urls_all(self, enabled: Optional[bool] = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
@@ -4480,7 +4494,6 @@ class GraphDatabase(SQLBase):
             results = query.all()
 
         return self._filter_source_type(results=results)
-
 
     def update_python_package_hash_present_flag(
         self, package_name: str, package_version: str, index_url: str, sha256_hash: str
