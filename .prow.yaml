@@ -27,7 +27,7 @@ presubmits:
       containers:
         - image: quay.io/goern/thoth-pytest:v0.13.0-dev
           command:
-             - "/bin/run-pytest"
+            - "/bin/run-pytest"
           resources:
             requests:
               memory: "1Gi"

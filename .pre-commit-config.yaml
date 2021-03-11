@@ -45,7 +45,6 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-
   # - repo: https://gitlab.com/PyCQA/flake8 TODO: Fix flake8 errors
   #   rev: '3.8.4'
   #   hooks:
