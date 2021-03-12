@@ -10274,3 +10274,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Add information about container images stored in env variables
 * :arrow_up: Automatic update of dependencies by Kebechet (#2236)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2233)
+
+## Release 0.39.1 (2021-03-12T21:03:49)
+### Features
+* Do not enforce Python version being set for non-external images (#2244)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2243)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2237)
