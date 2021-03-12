@@ -4738,9 +4738,11 @@ class GraphDatabase(SQLBase):
             else:
                 sw_class = SoftwareEnvironment
                 python_version = image_name.rsplit("-", maxsplit=1)[1]  # pyXX
-                python_version = python_version[2:3] + "." + python_version[3:]  # take first digit and put . after it
-                if not re.match(r"^\d\.\d+$", python_version):
-                    raise ValueError("Python Version does not match pattern")
+                if not re.match(r"^py\d\d$", python_version):
+                    _LOGGER.warning("No Python version information found in the the image name %r", image_name)
+                    python_version = None
+                else:
+                    python_version = python_version[2:3] + "." + python_version[3:]  # take first digit and put . after it
 
             env_vars = self._package_extract_get_env_vars(document)
 
