@@ -30,28 +30,24 @@ from .test_ceph import CEPH_INIT_KWARGS
 from .utils import with_adjusted_env
 
 _BUILDLOGS_INIT_KWARGS = {
-    'deployment_name': 'testenv',
+    "deployment_name": "testenv",
 }
 
-_BUILDLOGS_INIT_KWARGS_EXP = {
-    'bucket_prefix': 'thoth-test'
-}
+_BUILDLOGS_INIT_KWARGS_EXP = {"bucket_prefix": "thoth-test"}
 
 
 _BUILDLOGS_INIT_ENV = {
-    'THOTH_DEPLOYMENT_NAME': 'testenv',
+    "THOTH_DEPLOYMENT_NAME": "testenv",
 }
 
 
-_BUILDLOGS_INIT_ENV_EXP = {
-    'THOTH_CEPH_BUCKET_PREFIX': 'thoth-test'
-}
+_BUILDLOGS_INIT_ENV_EXP = {"THOTH_CEPH_BUCKET_PREFIX": "thoth-test"}
 
 
 _ENV = {**CEPH_INIT_ENV, **_BUILDLOGS_INIT_ENV, **_BUILDLOGS_INIT_ENV_EXP}
 
 
-@pytest.fixture(name='adapter')
+@pytest.fixture(name="adapter")
 @with_adjusted_env(_ENV)
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
@@ -63,23 +59,24 @@ class TestBuildLogsStore(StorageBaseTest):
 
     def test_init_kwargs(self):
         """Test adapter initialization from explicit arguments supplied to constructor."""
-        adapter = BuildLogsStore(
-            **_BUILDLOGS_INIT_KWARGS, **CEPH_INIT_KWARGS, **_BUILDLOGS_INIT_KWARGS_EXP)
+        adapter = BuildLogsStore(**_BUILDLOGS_INIT_KWARGS, **CEPH_INIT_KWARGS, **_BUILDLOGS_INIT_KWARGS_EXP)
         assert not adapter.is_connected()
         for key, value in _BUILDLOGS_INIT_KWARGS.items():
-            assert getattr(adapter, key) == value, \
-                f"Build log's adapter attribute {key!r} should have value {value!r} but " \
+            assert getattr(adapter, key) == value, (
+                f"Build log's adapter attribute {key!r} should have value {value!r} but "
                 f"got {getattr(adapter, key)!r} instead"
+            )
 
         assert adapter.ceph is not None
         assert not adapter.ceph.is_connected()
 
         for key, value in CEPH_INIT_KWARGS.items():
-            assert getattr(adapter.ceph, key) == value, \
-                f"Ceph's adapter key {key!r} should have value {value!r} but " \
+            assert getattr(adapter.ceph, key) == value, (
+                f"Ceph's adapter key {key!r} should have value {value!r} but "
                 f"got {getattr(adapter.ceph, key)!r} instead"
+            )
 
-        bucket_prefix = _BUILDLOGS_INIT_KWARGS_EXP['bucket_prefix']
+        bucket_prefix = _BUILDLOGS_INIT_KWARGS_EXP["bucket_prefix"]
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
         assert adapter.ceph.prefix == adapter.prefix
 
@@ -89,27 +86,24 @@ class TestBuildLogsStore(StorageBaseTest):
         assert adapter.ceph is not None
         assert not adapter.ceph.is_connected()
 
-        assert adapter.deployment_name == _BUILDLOGS_INIT_ENV['THOTH_DEPLOYMENT_NAME']
+        assert adapter.deployment_name == _BUILDLOGS_INIT_ENV["THOTH_DEPLOYMENT_NAME"]
 
-        bucket_prefix = _BUILDLOGS_INIT_ENV_EXP['THOTH_CEPH_BUCKET_PREFIX']
+        bucket_prefix = _BUILDLOGS_INIT_ENV_EXP["THOTH_CEPH_BUCKET_PREFIX"]
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
         assert adapter.ceph.prefix == adapter.prefix
 
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
-            assert getattr(adapter.ceph, attribute) == value, \
-                f"Ceph's adapter attribute {attribute!r} should have value {value!r} but " \
+            assert getattr(adapter.ceph, attribute) == value, (
+                f"Ceph's adapter attribute {attribute!r} should have value {value!r} but "
                 f"got {getattr(adapter.ceph, key)!r} instead (env: {key})"
+            )
 
     def test_store_document(self, adapter):
         """Test storing results on Ceph."""
         # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
-        document_id = 'buildlog-bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2'
+        document_id = "buildlog-bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2"
         adapter.ceph = flexmock(dict2blob=lambda _: document)
-        adapter.ceph. \
-            should_receive('store_blob'). \
-            with_args(document, document_id). \
-            and_return(document_id). \
-            once()
+        adapter.ceph.should_receive("store_blob").with_args(document, document_id).and_return(document_id).once()
         assert adapter.store_document(document) == document_id

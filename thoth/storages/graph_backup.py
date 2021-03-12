@@ -49,28 +49,28 @@ class GraphBackupStore(ResultStorageBase):
                 _LOGGER.error(
                     "Unknown backup file name %r - the file name does not start with "
                     "'pg_dump-' prefix, skipping maintaining this file",
-                    backup_file
+                    backup_file,
                 )
                 continue
 
             try:
-                datetime_obj = datetime.strptime(backup_file[len("pg_dump-"):], self._BACKUP_FILE_DATETIME_FORMAT)
+                datetime_obj = datetime.strptime(backup_file[len("pg_dump-") :], self._BACKUP_FILE_DATETIME_FORMAT)
             except Exception as exc:
                 _LOGGER.exception(
                     "Failed to parse datetime from the backup file name %r, skipping maintaining this file: %s",
                     backup_file,
-                    str(exc)
+                    str(exc),
                 )
                 continue
 
             backup_files_maintained.append((datetime_obj, backup_file))
 
         backup_files_maintained.sort(key=operator.itemgetter(0), reverse=True)
-        for backup_file in backup_files_maintained[self.GRAPH_BACKUP_STORE_ROTATE:]:
+        for backup_file in backup_files_maintained[self.GRAPH_BACKUP_STORE_ROTATE :]:
             _LOGGER.info(
                 "Removing backup file %r based on rotation configuration (keeping %d dumps)",
                 backup_file[1],
-                self.GRAPH_BACKUP_STORE_ROTATE
+                self.GRAPH_BACKUP_STORE_ROTATE,
             )
             self.ceph.delete(backup_file[1])
 

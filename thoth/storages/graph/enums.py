@@ -20,6 +20,7 @@
 from enum import Enum
 from enum import auto
 
+
 class EnvironmentTypeEnum(Enum):
     """Class for the environment types."""
 

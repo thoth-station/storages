@@ -25,11 +25,11 @@ from thoth.storages import SolverResultsStore
 from .test_result_base import ResultBaseTest
 from .test_ceph import CEPH_INIT_KWARGS
 
-_DEPLOYMENT_NAME = 'thoth-test-deployment'
-_BUCKET_PREFIX = 'some-solver'
+_DEPLOYMENT_NAME = "thoth-test-deployment"
+_BUCKET_PREFIX = "some-solver"
 
 
-@pytest.fixture(name='adapter')
+@pytest.fixture(name="adapter")
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
     return SolverResultsStore(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
@@ -40,7 +40,7 @@ class TestSolverResultsStore(ResultBaseTest):
         """Test that results stored on Ceph are correctly prefixed."""
         assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
-    @pytest.mark.parametrize('document,document_id', ResultBaseTest.get_solver_results())
+    @pytest.mark.parametrize("document,document_id", ResultBaseTest.get_solver_results())
     def test_store_document(self, adapter, document, document_id):
         """Test to store document."""
         return self.store_retrieve_document_test(adapter, document, document_id)

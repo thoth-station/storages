@@ -38,9 +38,9 @@ def _get_inspection_prefix(inspection_id: Optional[str] = None) -> str:
     deployment_name = os.environ["THOTH_DEPLOYMENT_NAME"]
 
     if inspection_id is None:
-        return f'{bucket_prefix}/{deployment_name}/inspections'
+        return f"{bucket_prefix}/{deployment_name}/inspections"
 
-    return f'{bucket_prefix}/{deployment_name}/inspections/{inspection_id}'
+    return f"{bucket_prefix}/{deployment_name}/inspections/{inspection_id}"
 
 
 class _InspectionBase:
