@@ -30,4 +30,3 @@ Crossroad
 
 This documentation corresponds to implementation in version |version|,
 documentation was generated on |today|.
-

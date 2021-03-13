@@ -310,6 +310,7 @@ class GraphDatabase(SQLBase):
     def _get_alembic_configuration():
         import thoth.storages
         from alembic import config
+
         alembic_cfg = config.Config(os.path.join(os.path.dirname(thoth.storages.__file__), "data", "alembic.ini"))
         alembic_cfg.attributes["configure_logger"] = False
         alembic_cfg.set_section_option(
@@ -343,6 +344,7 @@ class GraphDatabase(SQLBase):
 
     def _get_script_directory_revisions(self):
         from alembic import script
+
         alembic_cfg = self._get_alembic_configuration()
         directory = script.ScriptDirectory.from_config(alembic_cfg)
         return directory
@@ -746,7 +748,9 @@ class GraphDatabase(SQLBase):
         return query_result
 
     @staticmethod
-    def _count_per_version(result: Union[List, Dict[str, Any]],) -> Dict[str, Dict[str, int]]:
+    def _count_per_version(
+        result: Union[List, Dict[str, Any]],
+    ) -> Dict[str, Dict[str, int]]:
         """Format Query result to count per version."""
         query_result = {}
         for item in result:
@@ -762,7 +766,9 @@ class GraphDatabase(SQLBase):
         return query_result
 
     @staticmethod
-    def _group_by_package_name(result: Union[List, Dict[str, Any]],) -> Dict[str, List[Tuple[str, str]]]:
+    def _group_by_package_name(
+        result: Union[List, Dict[str, Any]],
+    ) -> Dict[str, List[Tuple[str, str]]]:
         """Format Query result to group by package name."""
         query_result = {}
         for item in result:
@@ -1612,16 +1618,14 @@ class GraphDatabase(SQLBase):
 
     # SI Analyzed Python Packages
 
-    def _construct_si_analyzed_python_package_versions_query(
-        self, session: Session
-    ) -> Query:
+    def _construct_si_analyzed_python_package_versions_query(self, session: Session) -> Query:
         """Construct query for packages analyzed by solver and analyzed by SI."""
         query = session.query(SecurityIndicatorAggregatedRun)
 
         # We find all rows that are same in PythonPackageVersion and SIAggregated table.
         conditions = [
             SIAggregated.python_package_version_id == PythonPackageVersion.id,
-            PythonPackageVersion.python_package_index_id == PythonPackageIndex.id
+            PythonPackageVersion.python_package_index_id == PythonPackageIndex.id,
         ]
 
         query = query.filter(exists().where(and_(*conditions)))
@@ -1641,9 +1645,7 @@ class GraphDatabase(SQLBase):
         [('fbprophet', '0.4', 'https://pypi.org/simple')]
         """
         with self._session_scope() as session:
-            query = self._construct_si_analyzed_python_package_versions_query(
-                session
-            )
+            query = self._construct_si_analyzed_python_package_versions_query(session)
 
             query = query.with_entities(
                 PythonPackageVersion.package_name,
@@ -1663,9 +1665,7 @@ class GraphDatabase(SQLBase):
     ) -> int:
         """Get SI analyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
-            query = self._construct_si_analyzed_python_package_versions_query(
-                session
-            )
+            query = self._construct_si_analyzed_python_package_versions_query(session)
 
             query = query.with_entities(
                 PythonPackageVersion.package_name,
@@ -1683,7 +1683,7 @@ class GraphDatabase(SQLBase):
         session: Session,
         index_url: Optional[str] = None,
         provides_source_distro: bool = True,
-        si_error : bool = False
+        si_error: bool = False,
     ) -> Query:
         """Construct query for packages analyzed by solver, but unanalyzed by SI."""
         index_url = self.normalize_python_index_url(index_url)
@@ -1718,7 +1718,7 @@ class GraphDatabase(SQLBase):
         provides_source_distro: bool = True,
         si_error: bool = False,
     ) -> List[Tuple[str, str, str]]:
-        """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI. 
+        """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI.
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -1754,7 +1754,7 @@ class GraphDatabase(SQLBase):
         *,
         distinct: bool = False,
         provides_source_distro: bool = True,
-        si_error: bool = False
+        si_error: bool = False,
     ) -> int:
         """Get SI unanalyzed Python package versions number in Thoth Database."""
         with self._session_scope() as session:
@@ -1775,15 +1775,9 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
-    def _construct_get_solver_query(
-        self,
-        session: Session
-    ) -> Query:
+    def _construct_get_solver_query(self, session: Session) -> Query:
         """Construct query to retrieve solvers."""
-        query = (
-            session.query(EcosystemSolver)
-            .distinct(EcosystemSolver.solver_name)
-        )
+        query = session.query(EcosystemSolver).distinct(EcosystemSolver.solver_name)
 
         return query
 
@@ -2058,7 +2052,12 @@ class GraphDatabase(SQLBase):
         stack = deque((initial_stack_entry,))
         seen_tuples = {(package_name, package_version, index_url)}
         while stack:
-            extras, package_name, package_version, index_url, = stack.pop()
+            (
+                extras,
+                package_name,
+                package_version,
+                index_url,
+            ) = stack.pop()
             package_tuple = (package_name, package_version, index_url)
 
             configurations = self.get_python_package_version_records(
@@ -2347,10 +2346,7 @@ class GraphDatabase(SQLBase):
         package_requested.pop("self")
 
         with self._session_scope() as session:
-            query = (
-                session.query(PythonPackageVersion)
-                .filter(PythonPackageVersion.package_name == package_name)
-            )
+            query = session.query(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
 
             if package_version is not None:
                 query = query.filter(PythonPackageVersion.package_version == package_version)
@@ -2718,7 +2714,9 @@ class GraphDatabase(SQLBase):
 
             return query.count()
 
-    def get_python_package_version_entities_names_all(self,) -> List[str]:
+    def get_python_package_version_entities_names_all(
+        self,
+    ) -> List[str]:
         """Retrieve names of Python package entities in the Thoth's knowledge base."""
         with self._session_scope() as session:
             query = session.query(PythonPackageVersionEntity.package_name)
@@ -3545,7 +3543,7 @@ class GraphDatabase(SQLBase):
                     private=private,
                     installation_id=installation_id,
                     is_active=True,
-                    last_run=datetime.utcnow()
+                    last_run=datetime.utcnow(),
                 )
                 return newly_added
 
@@ -3572,7 +3570,7 @@ class GraphDatabase(SQLBase):
 
     def get_active_kebechet_github_installations_repos(self) -> List[str]:
         """Get all active repositories names with active Kebechet installation.
-        
+
          Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -3591,7 +3589,7 @@ class GraphDatabase(SQLBase):
 
     def get_active_kebechet_github_installations_repos_count_all(self) -> int:
         """Return the count of active repos with Kebechet installation.
-        
+
         Example:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -3616,15 +3614,15 @@ class GraphDatabase(SQLBase):
         """
         with self._session_scope() as session:
             instance = (
-                    session.query(KebechetGithubAppInstallations)
-                    .filter(KebechetGithubAppInstallations.is_active.is_(True))
-                    .filter(KebechetGithubAppInstallations.slug == slug)
-                    .first()
-                )
+                session.query(KebechetGithubAppInstallations)
+                .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .filter(KebechetGithubAppInstallations.slug == slug)
+                .first()
+            )
             if instance:
                 active_managers = []
                 for attr in dir(instance):
-                    if attr.endswith('manager') and not callable(getattr(instance, attr)):
+                    if attr.endswith("manager") and not callable(getattr(instance, attr)):
                         if getattr(instance, attr) == True:
                             active_managers.append(attr)
                 return active_managers
@@ -3651,7 +3649,7 @@ class GraphDatabase(SQLBase):
         )
 
         {
-            'thoth-station/jupyter-nbrequirements': 
+            'thoth-station/jupyter-nbrequirements':
                 {
                     'installation_id': '193650988',
                     'private': False,
@@ -3673,13 +3671,12 @@ class GraphDatabase(SQLBase):
                 .filter(PythonPackageVersionEntity.package_name == package_name)
             )
 
-
             if index_url:
                 index_url = self.normalize_python_index_url(index_url)
 
                 conditions = [
                     PythonPackageVersionEntity.python_package_index_id == PythonPackageIndex.id,
-                    PythonPackageVersionEntity.python_package_index_id.is_(None)
+                    PythonPackageVersionEntity.python_package_index_id.is_(None),
                 ]
 
             if package_version:
@@ -3731,7 +3728,7 @@ class GraphDatabase(SQLBase):
                     os_name=env_dict["operating_system"]["name"],
                     os_version=env_dict["operating_system"]["version"],
                     python_version=env_dict.get("python_version"),
-                    cuda_version= env_dict.get("cuda_version"),
+                    cuda_version=env_dict.get("cuda_version"),
                     environment_type=EnvironmentTypeEnum.RUNTIME.value,
                 )
             else:
@@ -3748,9 +3745,11 @@ class GraphDatabase(SQLBase):
             manager_info = thoth_config.get("managers") or {}
 
             all_managers = [i["name"] for i in manager_info]
-            session.query(KebechetGitHubAppInstallation).filter(KebechetGithubAppInstallations.slug == slug).first().update(
-                external_python_software_stack_id = python_stack.id,
-                external_software_environment = software_env,
+            session.query(KebechetGitHubAppInstallation).filter(
+                KebechetGithubAppInstallations.slug == slug
+            ).first().update(
+                external_python_software_stack_id=python_stack.id,
+                external_software_environment=software_env,
                 info_manager="info" in all_managers,
                 pipfile_requirements_manager="pipfile-requirements" in all_managers,
                 update_manager="update" in all_managers,
@@ -3759,22 +3758,22 @@ class GraphDatabase(SQLBase):
                 thoth_provenance_manager="thoth-provenance" in all_managers,
             )
 
-
     def get_index_url_from_id(self, package_index_id: int) -> list:
         """Return index URL from id."""
         with self._session_scope() as session:
             output = (
-                    session.query(PythonPackageIndex)
-                    .filter(PythonPackageIndex.id == package_index_id)
-                    .with_entities(
-                        PythonPackageIndex.url
-                    )
-                    .first()
-                )
+                session.query(PythonPackageIndex)
+                .filter(PythonPackageIndex.id == package_index_id)
+                .with_entities(PythonPackageIndex.url)
+                .first()
+            )
 
         return output[0]
 
-    def _group_by_slug(self, result: Union[List, Dict[str, Any]],) -> Dict[str, List[Tuple[str, str]]]:
+    def _group_by_slug(
+        self,
+        result: Union[List, Dict[str, Any]],
+    ) -> Dict[str, List[Tuple[str, str]]]:
         """Format Query result to group by package name."""
         query_result = {}
 
@@ -3790,7 +3789,7 @@ class GraphDatabase(SQLBase):
                 "package_name": item[3],
                 "package_version": item[4],
                 "index_url": index_url,
-                }
+            }
 
         return query_result
 
@@ -3897,7 +3896,7 @@ class GraphDatabase(SQLBase):
             # length of bytes required for the integer
             length = (object_id.bit_length() + 7) // 8
             # no negative ids are passed
-            hash_ += ssdeep.hash(object_id.to_bytes(length=length, byteorder='big'))
+            hash_ += ssdeep.hash(object_id.to_bytes(length=length, byteorder="big"))
         return hash_
 
     def _create_python_software_stack(
@@ -3992,13 +3991,13 @@ class GraphDatabase(SQLBase):
                 software_stack, _ = ExternalPythonSoftwareStack.get_or_create(
                     session,
                     external_python_requirements_id=python_requirements.id,
-                    external_python_requirements_lock_id=external_python_requirements_lock.id
+                    external_python_requirements_lock_id=external_python_requirements_lock.id,
                 )
             else:
                 software_stack, _ = ExternalPythonSoftwareStack.get_or_create(
                     session,
                     external_python_requirements_id=python_requirements.id,
-                    external_python_requirements_lock_id=external_python_requirements_lock.id
+                    external_python_requirements_lock_id=external_python_requirements_lock.id,
                 )
         else:
             software_stack, _ = PythonSoftwareStack.get_or_create(
@@ -4007,12 +4006,14 @@ class GraphDatabase(SQLBase):
                 overall_score=overall_score,
                 software_stack_type=software_stack_type,
                 python_requirements_id=python_requirements.id,
-                python_requirements_lock_id=python_requirements_lock.id
+                python_requirements_lock_id=python_requirements_lock.id,
             )
 
         return software_stack
 
-    def get_python_software_stack_count_all(self, is_external: bool = False, software_stack_type: Optional[str] = None, distinct: bool = False) -> int:
+    def get_python_software_stack_count_all(
+        self, is_external: bool = False, software_stack_type: Optional[str] = None, distinct: bool = False
+    ) -> int:
         """Get number of Python software stacks available filtered by type."""
         with self._session_scope() as session:
             if is_external:
@@ -4308,12 +4309,11 @@ class GraphDatabase(SQLBase):
             return result
 
     @staticmethod
-    def _filter_source_type(
-        results: List[any]
-    ) -> Dict[str, int]:
+    def _filter_source_type(results: List[any]) -> Dict[str, int]:
         """Filter results per source type."""
         return {
-            source_result[0]: source_result[1] for source_result in results
+            source_result[0]: source_result[1]
+            for source_result in results
             if source_result[0] in ThothAdviserIntegrationEnum._member_names_
         }
 
@@ -4329,9 +4329,8 @@ class GraphDatabase(SQLBase):
         {'GITHUB_APP': 154, 'CLI': 71}
         """
         with self._session_scope() as session:
-            query = (
-                session.query(AdviserRun.source_type, func.count(AdviserRun.source_type))
-                .group_by(AdviserRun.source_type)
+            query = session.query(AdviserRun.source_type, func.count(AdviserRun.source_type)).group_by(
+                AdviserRun.source_type
             )
 
             results = query.all()
@@ -4339,14 +4338,12 @@ class GraphDatabase(SQLBase):
         return self._filter_source_type(results=results)
 
     @staticmethod
-    def _create_date_filter(
-        date_: str
-    ) -> datetime:
+    def _create_date_filter(date_: str) -> datetime:
         """Create date filter.
 
         @params date_: DD-MM-YY
         """
-        return datetime.strptime(date_, '%d-%m-%Y').date()
+        return datetime.strptime(date_, "%d-%m-%Y").date()
 
     def get_adviser_run_document_ids_all(
         self,
@@ -4398,7 +4395,7 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         has_error: bool = False,
         unsolvable: bool = False,
-        unparseable: bool = False
+        unparseable: bool = False,
     ) -> List[str]:
         """Retrieve solver run document ids.
 
@@ -4470,24 +4467,12 @@ class GraphDatabase(SQLBase):
         {'GITHUB_APP': 145, 'KEBECHET': 5, 'JUPYTER_NOTEBOOK': 2, 'CLI': 78}
         """
         with self._session_scope() as session:
-            query = (
-                session.query(AdviserRun.origin)
-            )
+            query = session.query(AdviserRun.origin)
 
             if distinct:
-                query = (
-                    query.with_entities(
-                        AdviserRun.source_type,
-                        func.count(AdviserRun.origin.distinct())
-                    )
-                )
+                query = query.with_entities(AdviserRun.source_type, func.count(AdviserRun.origin.distinct()))
             else:
-                query = (
-                    query.with_entities(
-                        AdviserRun.source_type,
-                        func.count(AdviserRun.origin)
-                    )
-                )
+                query = query.with_entities(AdviserRun.source_type, func.count(AdviserRun.origin))
 
             query = query.group_by(AdviserRun.source_type)
 
@@ -4713,7 +4698,11 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, document["result"]["operating-system"]["version_id"])
         cuda_nvcc_version = document["result"].get("cuda-version", {}).get("nvcc_version", None)
         cuda_found_in_file_version = document["result"].get("cuda-version", {}).get("/usr/local/cuda/version.txt", None)
-        if cuda_nvcc_version is not None and cuda_found_in_file_version is not None and cuda_nvcc_version != cuda_found_in_file_version:
+        if (
+            cuda_nvcc_version is not None
+            and cuda_found_in_file_version is not None
+            and cuda_nvcc_version != cuda_found_in_file_version
+        ):
             raise CudaVersionDoesNotMatch(
                 f"Cuda version detected by nvcc {cuda_nvcc_version!r} is different from the one found in "
                 f"/usr/local/cuda/version.txt "
@@ -4742,7 +4731,9 @@ class GraphDatabase(SQLBase):
                     _LOGGER.warning("No Python version information found in the the image name %r", image_name)
                     python_version = None
                 else:
-                    python_version = python_version[2:3] + "." + python_version[3:]  # take first digit and put . after it
+                    python_version = (
+                        python_version[2:3] + "." + python_version[3:]
+                    )  # take first digit and put . after it
 
             env_vars = self._package_extract_get_env_vars(document)
 
@@ -4937,8 +4928,9 @@ class GraphDatabase(SQLBase):
                     platform=entry["platform"],
                 )
 
-    def _check_package_solved(self, session: Session, package_name: str, package_version: str,
-                              package_index: str) -> Tuple:
+    def _check_package_solved(
+        self, session: Session, package_name: str, package_version: str, package_index: str
+    ) -> Tuple:
         """Check if the package has been solved before syncing SI analysis to the database."""
         # Check if a package have been solved by any of the solver
         python_package_version = (
@@ -4952,12 +4944,10 @@ class GraphDatabase(SQLBase):
 
         if not python_package_version:
             raise SolverNotRun(
-                f"Trying to sync package {package_name!r} in version {package_version!r} "
-                f"not solved by any solver."
+                f"Trying to sync package {package_name!r} in version {package_version!r} " f"not solved by any solver."
             )
 
         return python_package_version.entity_id, python_package_version.id
-
 
     def sync_security_indicator_aggregated_result(self, document: dict) -> None:
         """Sync the given security-indicator aggregated result to the graph database."""
@@ -4972,7 +4962,8 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session, session.begin(subtransactions=True):
 
             python_package_version_entity_id, python_package_version_id = self._check_package_solved(
-                session=session, package_name=package_name, package_version=package_version, package_index=index_url)
+                session=session, package_name=package_name, package_version=package_version, package_index=index_url
+            )
 
             si_aggregated_run, _ = SecurityIndicatorAggregatedRun.get_or_create(
                 session,
@@ -5033,9 +5024,7 @@ class GraphDatabase(SQLBase):
                 ecosystem="python",
                 solver_name=solver_name,
                 solver_version=solver_version,
-                os_name=map_os_name(
-                    os_name
-                ),
+                os_name=map_os_name(os_name),
                 os_version=normalize_os_version(os_name, os_version),
                 python_version=python_version,
             )
@@ -5214,7 +5203,7 @@ class GraphDatabase(SQLBase):
 
                 package_name = self.normalize_python_package_name(unsolvable["package_name"])
                 index_url = unsolvable.get("index_url") or unsolvable["index"]
-                package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("==="):])
+                package_version = self.normalize_python_package_version(unsolvable["version_spec"][len("===") :])
 
                 _LOGGER.info(
                     "Syncing unsolvable package %r in version %r from %r found by solver %r",
@@ -5429,7 +5418,11 @@ class GraphDatabase(SQLBase):
                     advised_stacks.append(advised_software_stack)
 
             if source_type == "KEBECHET" and advised_stacks:
-                slug = "/".join(origin.split("/", )[-2:])
+                slug = "/".join(
+                    origin.split(
+                        "/",
+                    )[-2:]
+                )
                 _LOGGER.info("Kebechet reference slug is %r", slug)
 
                 kebechet_installed = (
@@ -5440,14 +5433,17 @@ class GraphDatabase(SQLBase):
 
                 if kebechet_installed:
 
-                    insert_stmt = insert(KebechetGithubAppInstallations).values(**kebechet_installed.to_dict(without_id=False))
+                    insert_stmt = insert(KebechetGithubAppInstallations).values(
+                        **kebechet_installed.to_dict(without_id=False)
+                    )
 
                     do_update_stmt = insert_stmt.on_conflict_do_update(
-                        index_elements=["id"], set_=dict(
+                        index_elements=["id"],
+                        set_=dict(
                             last_run=document["metadata"]["datetime"],
                             thoth_advise_manager=True,
-                            advised_python_software_stack_id=advised_stacks[0].id
-                        )
+                            advised_python_software_stack_id=advised_stacks[0].id,
+                        ),
                     )
 
                     session.execute(do_update_stmt)
@@ -5577,7 +5573,7 @@ class GraphDatabase(SQLBase):
                 )
 
             # Number of times each inspection run will be run
-            count = document["result"]["parameters"]['count']
+            count = document["result"]["parameters"]["count"]
 
             for entry in document["result"]["report"]["responses"]:
                 inspection_document_id = entry["response"]
@@ -5599,7 +5595,6 @@ class GraphDatabase(SQLBase):
                             dependency_monkey_run_id=dependency_monkey_run.id,
                         )
                         session.add(inspection_run)
-
 
     @lru_cache(maxsize=_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE)
     def get_python_package_required_symbols(self, package_name: str, package_version: str, index_url: str) -> List[str]:
@@ -5681,10 +5676,7 @@ class GraphDatabase(SQLBase):
             return [tuple(i) for i in query.all()]
 
     def get_thoth_s2i_package_extract_analysis_document_id_all(
-        self,
-        thoth_s2i_image_name: str,
-        thoth_s2i_image_version: str,
-        is_external: bool = False
+        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
     ) -> List[str]:
         """Get package-extract analysis ids for the given Thoth s2i."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
@@ -5769,11 +5761,13 @@ class GraphDatabase(SQLBase):
         """Drop cache of records."""
         for method in self._CACHED_METHODS:
             method.cache_clear()
-            
+
     def get_database_size(self) -> int:
         """Get size of the database in bytes."""
-        query = f"SELECT pg_database_size(pg_database.datname) AS size_in_bytes FROM "\
-                f"pg_database WHERE pg_database.datname='{self._engine.url.database}'"
+        query = (
+            f"SELECT pg_database_size(pg_database.datname) AS size_in_bytes FROM "
+            f"pg_database WHERE pg_database.datname='{self._engine.url.database}'"
+        )
 
         with self._session_scope() as session:
             result = session.execute(query).fetchone()

@@ -837,7 +837,9 @@ class ExternalSoftwareEnvironment(Base, BaseExtension):
 
     external_package_extract_runs = relationship("PackageExtractRun", back_populates="external_software_environment")
     versioned_symbols = relationship("HasSymbol", back_populates="external_software_environment")
-    kebechet_github_installation = relationship("KebechetGithubAppInstallations", back_populates="external_software_environment")
+    kebechet_github_installation = relationship(
+        "KebechetGithubAppInstallations", back_populates="external_software_environment"
+    )
 
 
 class IncludedFile(Base, BaseExtension):
@@ -881,9 +883,7 @@ class HasVulnerability(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="cves")
     cve = relationship("CVE", back_populates="python_package_version_entities")
 
-    __table_args__ = (
-        Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id"),
-    )
+    __table_args__ = (Index("has_vulnerability_python_package_version_entity_idx", "python_package_version_entity_id"),)
 
 
 class PythonSoftwareStack(Base, BaseExtension):
@@ -905,12 +905,8 @@ class PythonSoftwareStack(Base, BaseExtension):
     # TODO: Add security score
     overall_score = Column(Float, nullable=True)
 
-    python_requirements_id = Column(
-        Integer, ForeignKey("python_requirements.id", ondelete="CASCADE")
-    )
-    python_requirements_lock_id = Column(
-        Integer, ForeignKey("python_requirements_lock.id", ondelete="CASCADE")
-    )
+    python_requirements_id = Column(Integer, ForeignKey("python_requirements.id", ondelete="CASCADE"))
+    python_requirements_lock_id = Column(Integer, ForeignKey("python_requirements_lock.id", ondelete="CASCADE"))
 
     python_package_requirements = relationship("PythonRequirements", back_populates="python_software_stack")
     python_package_requirements_locked = relationship("PythonRequirementsLock", back_populates="python_software_stack")
@@ -918,7 +914,10 @@ class PythonSoftwareStack(Base, BaseExtension):
     advised_by = relationship("Advised", back_populates="python_software_stack")
     inspection_runs = relationship("InspectionRun", back_populates="inspection_software_stack")
 
-    kebechet_github_installation = relationship("KebechetGithubAppInstallations", back_populates="advised_software_stack")
+    kebechet_github_installation = relationship(
+        "KebechetGithubAppInstallations", back_populates="advised_software_stack"
+    )
+
 
 class ExternalPythonSoftwareStack(Base, BaseExtension):
     """A Python software stack definition from users."""
@@ -927,15 +926,21 @@ class ExternalPythonSoftwareStack(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    external_python_requirements_id = Column(
-        Integer, ForeignKey("external_python_requirements.id", ondelete="CASCADE")
+    external_python_requirements_id = Column(Integer, ForeignKey("external_python_requirements.id", ondelete="CASCADE"))
+    external_python_package_requirements = relationship(
+        "ExternalPythonRequirements",
+        back_populates="external_python_software_stack",
+        foreign_keys=[external_python_requirements_id],
     )
-    external_python_package_requirements = relationship("ExternalPythonRequirements", back_populates="external_python_software_stack", foreign_keys=[external_python_requirements_id])
 
     external_python_requirements_lock_id = Column(
         Integer, ForeignKey("external_python_requirements_lock.id", ondelete="CASCADE")
     )
-    external_python_requirements_lock = relationship("ExternalPythonRequirementsLock", back_populates="external_python_software_stack", foreign_keys=[external_python_requirements_lock_id])
+    external_python_requirements_lock = relationship(
+        "ExternalPythonRequirementsLock",
+        back_populates="external_python_software_stack",
+        foreign_keys=[external_python_requirements_lock_id],
+    )
 
     adviser_runs = relationship("AdviserRun", back_populates="user_software_stack")
     provenance_checker_runs = relationship("ProvenanceCheckerRun", back_populates="user_software_stack")
@@ -955,22 +960,19 @@ class PythonRequirements(Base, BaseExtension):
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_requirements")
     requirements = relationship("HasPythonRequirements", back_populates="python_requirements")
 
+
 class HasPythonRequirements(Base, BaseExtension):
     """The requirement from Pipfile."""
 
     __tablename__ = "has_python_requirements"
 
-    python_requirements_id = Column(
-        Integer, ForeignKey("python_requirements.id", ondelete="CASCADE"), primary_key=True
-    )
+    python_requirements_id = Column(Integer, ForeignKey("python_requirements.id", ondelete="CASCADE"), primary_key=True)
     python_package_requirement_id = Column(
         Integer, ForeignKey("python_package_requirement.id", ondelete="CASCADE"), primary_key=True
     )
 
     python_requirements = relationship("PythonRequirements", back_populates="requirements")
-    python_package_requirement = relationship(
-        "PythonPackageRequirement", back_populates="python_requirement"
-    )
+    python_package_requirement = relationship("PythonPackageRequirement", back_populates="python_requirement")
 
 
 class PythonPackageRequirement(Base, BaseExtension):
@@ -989,11 +991,14 @@ class PythonPackageRequirement(Base, BaseExtension):
 
     python_requirement = relationship("HasPythonRequirements", back_populates="python_package_requirement")
 
-    external_python_requirement = relationship("HasExternalPythonRequirements", back_populates="external_python_package_requirement")
+    external_python_requirement = relationship(
+        "HasExternalPythonRequirements", back_populates="external_python_package_requirement"
+    )
 
     dependency_monkey_runs = relationship(
         "PythonDependencyMonkeyRequirements", back_populates="python_package_requirement"
     )
+
 
 class ExternalPythonRequirements(Base, BaseExtension):
     """Requirements for a user software stack."""
@@ -1005,7 +1010,10 @@ class ExternalPythonRequirements(Base, BaseExtension):
     requirements_hash = Column(Text, nullable=False, unique=True)
 
     external_python_requirements = relationship("HasExternalPythonRequirements", back_populates="external_requirements")
-    external_python_software_stack = relationship("ExternalPythonSoftwareStack", back_populates="external_python_package_requirements")
+    external_python_software_stack = relationship(
+        "ExternalPythonSoftwareStack", back_populates="external_python_package_requirements"
+    )
+
 
 class HasExternalPythonRequirements(Base, BaseExtension):
     """The requirement from user Pipfile."""
@@ -1023,6 +1031,7 @@ class HasExternalPythonRequirements(Base, BaseExtension):
     external_python_package_requirement = relationship(
         "PythonPackageRequirement", back_populates="external_python_requirement"
     )
+
 
 class PythonDependencyMonkeyRequirements(Base, BaseExtension):
     """Requirements for a software stack as run on Dependency Monkey."""
@@ -1054,6 +1063,7 @@ class PythonRequirementsLock(Base, BaseExtension):
     python_requirements_lock = relationship("HasPythonRequirementsLock", back_populates="python_requirements_lock")
     python_software_stack = relationship("PythonSoftwareStack", back_populates="python_package_requirements_locked")
 
+
 class HasPythonRequirementsLock(Base, BaseExtension):
     """The requirement from Pipfile.lock."""
 
@@ -1067,9 +1077,8 @@ class HasPythonRequirementsLock(Base, BaseExtension):
     )
 
     python_requirements_lock = relationship("PythonRequirementsLock", back_populates="python_requirements_lock")
-    python_package_version = relationship(
-        "PythonPackageVersion", back_populates="python_software_stacks"
-    )
+    python_package_version = relationship("PythonPackageVersion", back_populates="python_software_stacks")
+
 
 class ExternalPythonRequirementsLock(Base, BaseExtension):
     """A pinned down requirements for a user application."""
@@ -1080,8 +1089,13 @@ class ExternalPythonRequirementsLock(Base, BaseExtension):
 
     requirements_lock_hash = Column(Text, nullable=False, unique=True)
 
-    external_python_software_stack = relationship("ExternalPythonSoftwareStack", back_populates="external_python_requirements_lock")
-    external_python_requirements_locks = relationship("HasExternalPythonRequirementsLock", back_populates="external_python_requirements_lock")
+    external_python_software_stack = relationship(
+        "ExternalPythonSoftwareStack", back_populates="external_python_requirements_lock"
+    )
+    external_python_requirements_locks = relationship(
+        "HasExternalPythonRequirementsLock", back_populates="external_python_requirements_lock"
+    )
+
 
 class HasExternalPythonRequirementsLock(Base, BaseExtension):
     """The requirement from Pipfile.lock."""
@@ -1095,10 +1109,13 @@ class HasExternalPythonRequirementsLock(Base, BaseExtension):
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
 
-    external_python_requirements_lock = relationship("ExternalPythonRequirementsLock", back_populates="external_python_requirements_locks")
+    external_python_requirements_lock = relationship(
+        "ExternalPythonRequirementsLock", back_populates="external_python_requirements_locks"
+    )
     python_package_version_entity = relationship(
         "PythonPackageVersionEntity", back_populates="external_python_software_stacks"
     )
+
 
 class DebPackageVersion(Base, BaseExtension):
     """Debian-specific package version."""
@@ -1189,7 +1206,11 @@ class VersionedSymbol(Base, BaseExtension):
     python_artifacts = relationship("RequiresSymbol", back_populates="versioned_symbol")
 
     __table_args__ = (
-        Index("versioned_symbol_id_idx", "id", unique=True,),
+        Index(
+            "versioned_symbol_id_idx",
+            "id",
+            unique=True,
+        ),
     )
 
 
@@ -1224,9 +1245,7 @@ class RequiresSymbol(Base, BaseExtension):
     python_artifact = relationship("PythonArtifact", back_populates="versioned_symbols")
     versioned_symbol = relationship("VersionedSymbol", back_populates="python_artifacts")
 
-    __table_args__ = (
-        Index("requires_symbol_python_artifact_id_idx", "python_artifact_id"),
-    )
+    __table_args__ = (Index("requires_symbol_python_artifact_id_idx", "python_artifact_id"),)
 
 
 class DetectedSymbol(Base, BaseExtension):
@@ -1535,12 +1554,12 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     installation_id = Column(Text, nullable=False)
     is_active = Column(Boolean, nullable=False)
     # Kebechet managers activated per repo
-    info_manager = Column(Boolean, nullable=False, server_default='false')
-    pipfile_requirements_manager = Column(Boolean, nullable=False, server_default='false')
-    update_manager = Column(Boolean, nullable=False, server_default='false')
-    version_manager = Column(Boolean, nullable=False, server_default='false')
-    thoth_advise_manager = Column(Boolean, nullable=False, server_default='false')
-    thoth_provenance_manager = Column(Boolean, nullable=False, server_default='false')
+    info_manager = Column(Boolean, nullable=False, server_default="false")
+    pipfile_requirements_manager = Column(Boolean, nullable=False, server_default="false")
+    update_manager = Column(Boolean, nullable=False, server_default="false")
+    version_manager = Column(Boolean, nullable=False, server_default="false")
+    thoth_advise_manager = Column(Boolean, nullable=False, server_default="false")
+    thoth_provenance_manager = Column(Boolean, nullable=False, server_default="false")
     # Last run time-stamp
     last_run = Column(DateTime(timezone=False), nullable=True)
 
@@ -1556,12 +1575,12 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
         Integer, ForeignKey("external_software_environment.id", ondelete="CASCADE")
     )
 
-    external_software_environment = relationship("ExternalSoftwareEnvironment", back_populates="kebechet_github_installation")
+    external_software_environment = relationship(
+        "ExternalSoftwareEnvironment", back_populates="kebechet_github_installation"
+    )
 
     # Software stack (Advised)
-    advised_python_software_stack_id = Column(
-        Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE")
-    )
+    advised_python_software_stack_id = Column(Integer, ForeignKey("python_software_stack.id", ondelete="CASCADE"))
 
     advised_software_stack = relationship("PythonSoftwareStack", back_populates="kebechet_github_installation")
 
@@ -1663,7 +1682,7 @@ ALL_MAIN_MODELS = frozenset(
         RPMRequirement,
         SecurityIndicatorAggregatedRun,
         SoftwareEnvironment,
-        VersionedSymbol
+        VersionedSymbol,
     )
 )
 

@@ -70,12 +70,10 @@ def cli(ctx=None, verbose: bool = False):
     help=(
         "Models to be included in the generated schema. Accepts regular expression. "
         "If not provided, all models will be included."
-    )
+    ),
 )
 @click.option(
-    "--include_performance_models",
-    default=True,
-    help="Whether to include performance models in the generated schema."
+    "--include_performance_models", default=True, help="Whether to include performance models in the generated schema."
 )
 @click.argument("schema_file", type=str, required=False, default="schema.png", metavar="schema.png")
 def generate_schema(schema_file: str, include=None, include_performance_models=True):
@@ -84,8 +82,7 @@ def generate_schema(schema_file: str, include=None, include_performance_models=T
         import sadisplay
         import pydot
     except ImportError:
-        _LOGGER.error(
-            "Failed to import required libraries to perform schema generation")
+        _LOGGER.error("Failed to import required libraries to perform schema generation")
         raise
 
     import thoth.storages.graph.models_performance as performance_models
@@ -96,10 +93,7 @@ def generate_schema(schema_file: str, include=None, include_performance_models=T
     all_models = list(ALL_MAIN_MODELS.union(ALL_RELATION_MODELS))
 
     if include:
-        desc_models = [
-            m for m in all_models
-            if any(re.fullmatch(p, m.__name__) for p in include)
-        ]
+        desc_models = [m for m in all_models if any(re.fullmatch(p, m.__name__) for p in include)]
     else:
         desc_models = all_models
 
@@ -115,7 +109,7 @@ def generate_schema(schema_file: str, include=None, include_performance_models=T
         show_columns_of_indexes=False,
     )
     dot_data = sadisplay.dot(desc)
-    graph, = pydot.graph_from_dot_data(dot_data)
+    (graph,) = pydot.graph_from_dot_data(dot_data)
     _LOGGER.info("Writing schema to %r...", schema_file)
     graph.write_png(schema_file)
 

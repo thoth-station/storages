@@ -21,4 +21,3 @@ services:
     environment:
       # sslmode=disable because: https://github.com/sosedoff/pgweb/issues/23#issuecomment-60840307
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
-

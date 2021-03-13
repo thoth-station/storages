@@ -26,15 +26,14 @@ from .test_result_base import ResultBaseTest
 from .test_ceph import CEPH_INIT_KWARGS
 
 
-_DEPLOYMENT_NAME = 'thoth-my-deployment'
-_BUCKET_PREFIX = 'some-analyses/'
+_DEPLOYMENT_NAME = "thoth-my-deployment"
+_BUCKET_PREFIX = "some-analyses/"
 
 
-@pytest.fixture(name='adapter')
+@pytest.fixture(name="adapter")
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
-    return AnalysisResultsStore(deployment_name=_DEPLOYMENT_NAME,
-                                prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    return AnalysisResultsStore(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
 
 class TestAnalysisResultsStore(ResultBaseTest):
@@ -44,6 +43,6 @@ class TestAnalysisResultsStore(ResultBaseTest):
         """Test that results stored on Ceph are correctly prefixed."""
         assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
-    @pytest.mark.parametrize('document,document_id', ResultBaseTest.get_analyzer_results())
+    @pytest.mark.parametrize("document,document_id", ResultBaseTest.get_analyzer_results())
     def test_store_document(self, adapter, document, document_id):
         self.store_retrieve_document_test(adapter, document, document_id)

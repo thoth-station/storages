@@ -78,7 +78,11 @@ class PerformanceIndicatorBase:
 
     @classmethod
     def create_from_report(
-        cls, session: Session, inspection_specification: Dict[str, Any], inspection_result: Dict[str, Any], inspection_run_id: int
+        cls,
+        session: Session,
+        inspection_specification: Dict[str, Any],
+        inspection_result: Dict[str, Any],
+        inspection_run_id: int,
     ) -> "PerformanceIndicatorBase":
         """Create performance indicator record together with related observed performance edge based on inspection."""
         # Place core parts of the base class into the model.
@@ -92,8 +96,7 @@ class PerformanceIndicatorBase:
             inspection_run_id=inspection_run_id,
             component=inspection_result.get("component"),
             origin=inspection_specification["script"],
-            version=inspection_result.get("version")
-            or inspection_result["script_sha256"],
+            version=inspection_result.get("version") or inspection_result["script_sha256"],
             overall_score=overall_score,
             exit_code=inspection_result.get("exit_code"),
             ru_utime=inspection_result.get("usage", {}).get("ru_utime"),

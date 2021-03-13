@@ -64,7 +64,7 @@ the following code snippet as a starting point:
 .. code-block:: python
 
   from thoth.storages import GraphDatabase
-  
+
   graph = GraphDatabase()
   graph.connect()
   # To clear database:

@@ -27,11 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 class PythonQueryResult:
     """Class for managing queries' results for Python Packages."""
 
-    def __init__(
-        self,
-        result: Union[List, Dict[str, Any]],
-        count: Optional[int] = None
-    ):
+    def __init__(self, result: Union[List, Dict[str, Any]], count: Optional[int] = None):
         """Query result initialization."""
         self._result = result
         self._count = count

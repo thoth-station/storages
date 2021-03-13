@@ -2,7 +2,7 @@ Thoth Storages syncs into Thoth Databse
 ----------------------------------------
 
 Thoth collects several type of observations and sync them using `graph-sync-job <https://github.com/thoth-station/graph-sync-job>`_
-To make sure that everything is consistent, we use schemas describing the syncing logic 
+To make sure that everything is consistent, we use schemas describing the syncing logic
 for each of the components that created a document result to be synced into Thoth database:
 
 `solver <https://github.com/thoth-station/storages/tree/master/docs/thoth_sync_solver.jpg>`_,

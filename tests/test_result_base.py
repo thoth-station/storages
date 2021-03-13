@@ -28,11 +28,11 @@ from .test_ceph import CEPH_INIT_ENV
 from .test_ceph import CEPH_INIT_KWARGS
 from .utils import connected_ceph_adapter
 
-_DEPLOYMENT_NAME = 'my-deployment'
-_RESULT_TYPE = 'TEST'
-_BUCKET_PREFIX = 'prefix'
+_DEPLOYMENT_NAME = "my-deployment"
+_RESULT_TYPE = "TEST"
+_BUCKET_PREFIX = "prefix"
 
-_ENV = {'THOTH_DEPLOYMENT_NAME': _DEPLOYMENT_NAME, **CEPH_INIT_ENV}
+_ENV = {"THOTH_DEPLOYMENT_NAME": _DEPLOYMENT_NAME, **CEPH_INIT_ENV}
 
 
 class MyResultStorage(ResultStorageBase):
@@ -41,7 +41,7 @@ class MyResultStorage(ResultStorageBase):
     RESULT_TYPE = _RESULT_TYPE
 
 
-@pytest.fixture(name='adapter')
+@pytest.fixture(name="adapter")
 def _fixture_adapter():
     """Retrieve an adapter to build logs."""
     return MyResultStorage(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
@@ -49,26 +49,23 @@ def _fixture_adapter():
 
 class ResultBaseTest(StorageBaseTest):
     """The Base Class for Result Tests."""
+
     def test_get_document_id(self):
         # Make sure we pick document id from right place.
-        document = {'metadata': {'document_id': 'foo'}}
-        assert ResultStorageBase.get_document_id(document) == 'foo'
+        document = {"metadata": {"document_id": "foo"}}
+        assert ResultStorageBase.get_document_id(document) == "foo"
 
-    @pytest.mark.parametrize('document,document_id', StorageBaseTest.get_all_results())
+    @pytest.mark.parametrize("document,document_id", StorageBaseTest.get_all_results())
     def test_store_document(self, adapter, document, document_id):
         # pytest does not support fixtures and parameters at the same time
         adapter.ceph = flexmock(get_document_id=ResultStorageBase.get_document_id)
-        adapter.ceph. \
-            should_receive('store_document'). \
-            with_args(document, document_id). \
-            and_return(document_id). \
-            once()
+        adapter.ceph.should_receive("store_document").with_args(document, document_id).and_return(document_id).once()
         assert adapter.store_document(document) == document_id
 
     def test_assertion_error(self):
         """Test assertion error if a developer RESULT_TYPE is empty."""
         with pytest.raises(AssertionError):
-            ResultStorageBase(deployment_name=_DEPLOYMENT_NAME,prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+            ResultStorageBase(deployment_name=_DEPLOYMENT_NAME, prefix=_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
     @staticmethod
     def store_retrieve_document_test(adapter, document, document_id):
