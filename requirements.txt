@@ -6,7 +6,7 @@ amun
 python-dateutil
 thoth-python
 pyyaml
-sqlalchemy
+sqlalchemy<1.4.0
 psycopg2-binary
 sqlalchemy-utils
 alembic
