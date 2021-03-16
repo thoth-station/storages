@@ -10280,3 +10280,12 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Do not enforce Python version being set for non-external images (#2244)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2243)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2237)
+
+## Release 0.39.2 (2021-03-16T20:55:30)
+### Features
+* Pin down sqlalchmey to be less than 1.4.0 version (#2255)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2253)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2249)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2246)
+* remove goern as an approve
+* Introduce pre-commit checks for storages (#2248)
