@@ -194,6 +194,7 @@ class DependsOn(Base, BaseExtension):
         Index("depends_on_version_id_idx", "version_id"),
         Index("depends_on_entity_id_idx", "entity_id"),
         Index("depends_on_platform", "platform"),
+        Index("depends_on_extra_marker_evaluation_result_idx", "extra", "marker_evaluation_result"),
     )
 
 
