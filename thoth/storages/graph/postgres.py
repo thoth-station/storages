@@ -358,15 +358,11 @@ class GraphDatabase(SQLBase):
 
     def get_table_alembic_version_head(self) -> str:
         """Get alembic version head from database table."""
-        from alembic.runtime import migration
+        query = f"SELECT * FROM alembic_version"
 
-        if not self.is_connected():
-            raise NotConnected("Cannot check schema: the adapter is not connected yet")
-
-        connection = self._engine.connect()
-        context = migration.MigrationContext.configure(connection)
-        current_rev = context.get_current_revision()
-        return current_rev
+        with self._session_scope() as session:
+            result = session.execute(query).fetchone()
+            return result[0]
 
     def is_schema_up2date(self) -> bool:
         """Check if the current schema is up2date with the one configured on database side."""
