@@ -10289,3 +10289,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_up: Automatic update of dependencies by Kebechet (#2246)
 * remove goern as an approve
 * Introduce pre-commit checks for storages (#2248)
+
+## Release 0.39.3 (2021-03-19T17:54:19)
+### Other
+* Fix/avoid duplicate heads (#2258)
