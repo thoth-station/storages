@@ -59,7 +59,7 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.datetime_ = f"{datetime_:%y%m%d}"
+        self.datetime_ = f"{datetime_:%y%m%d}" if datetime_ else ""
 
         if self.datetime_:
             self.prefix = "{}/{}/{}/{}".format(
