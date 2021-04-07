@@ -58,7 +58,7 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.document_id_prefix = document_id_prefix or os.environ["THOTH_FILE_ID_PREFIX"]
+        self.document_id_prefix = document_id_prefix
 
         if self.document_id_prefix:
             self.prefix = "{}/{}/{}/{}".format(
@@ -72,7 +72,7 @@ class ResultStorageBase(StorageBase):
             )
 
         self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
+            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, document_id_prefix=document_id_prefix
         )
 
     @classmethod
