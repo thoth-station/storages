@@ -19,6 +19,7 @@
 
 import os
 import typing
+import datetime
 
 from .base import StorageBase
 from .ceph import CephStore
@@ -45,7 +46,7 @@ class ResultStorageBase(StorageBase):
         bucket: typing.Optional[str] = None,
         region: typing.Optional[str] = None,
         prefix: typing.Optional[str] = None,
-        datetime: typing.Optional[str] = None
+        datetime_: typing.Optional[datetime.datetime] = None
     ):
         """Initialize result storage database.
 
@@ -58,14 +59,14 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.datetime = datetime
+        self.datetime_ = f"{datetime_:%y%m%d}"
 
-        if self.datetime:
+        if self.datetime_:
             self.prefix = "{}/{}/{}/{}".format(
                     prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"],
                     self.deployment_name,
                     self.RESULT_TYPE,
-                    f"{self.RESULT_TYPE}-{self.datetime}"
+                    f"{self.RESULT_TYPE}-{self.datetime_}"
                 )
 
         else:
@@ -75,7 +76,7 @@ class ResultStorageBase(StorageBase):
             )
 
         self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, file_id_prefix=datetime
+            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, file_id_prefix=datetime_
         )
 
     @classmethod
@@ -104,8 +105,8 @@ class ResultStorageBase(StorageBase):
         for document_id in self.ceph.get_document_listing():
             # Filter out stored requests.
             if not document_id.endswith(".request"):
-                if self.datetime:
-                    yield f"{self.RESULT_TYPE}-" + self.datetime + document_id
+                if self.datetime_:
+                    yield f"{self.RESULT_TYPE}-" + self.datetime_ + document_id
                 else:
                     yield document_id
 
