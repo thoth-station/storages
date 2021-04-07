@@ -40,7 +40,7 @@ class CephStore(StorageBase):
         secret_key: typing.Optional[str] = None,
         bucket: typing.Optional[str] = None,
         region: typing.Optional[str] = None,
-        document_id_prefix: typing.Optional[str] = None,
+        file_id_prefix: typing.Optional[str] = None,
     ):
         """Initialize adapter to Ceph.
 
@@ -54,9 +54,9 @@ class CephStore(StorageBase):
         self.region = region or os.getenv("THOTH_CEPH_REGION", None)
         self._s3 = None
         self.prefix = prefix
-        self.document_id_prefix = document_id_prefix
+        self.file_id_prefix = file_id_prefix
 
-        if not self.document_id_prefix and not self.prefix.endswith("/"):
+        if not self.file_id_prefix and not self.prefix.endswith("/"):
             self.prefix += "/"
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:

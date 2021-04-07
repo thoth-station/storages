@@ -45,7 +45,7 @@ class ResultStorageBase(StorageBase):
         bucket: typing.Optional[str] = None,
         region: typing.Optional[str] = None,
         prefix: typing.Optional[str] = None,
-        document_id_prefix: typing.Optional[str] = None
+        datetime: typing.Optional[str] = None
     ):
         """Initialize result storage database.
 
@@ -58,11 +58,14 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.document_id_prefix = document_id_prefix
+        self.datetime = datetime
 
-        if self.document_id_prefix:
+        if self.datetime:
             self.prefix = "{}/{}/{}/{}".format(
-                    prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE, self.document_id_prefix
+                    prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"],
+                    self.deployment_name,
+                    self.RESULT_TYPE,
+                    f"{self.RESULT_TYPE}-{self.datetime}"
                 )
 
         else:
@@ -72,7 +75,7 @@ class ResultStorageBase(StorageBase):
             )
 
         self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, document_id_prefix=document_id_prefix
+            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, file_id_prefix=datetime
         )
 
     @classmethod
@@ -101,8 +104,8 @@ class ResultStorageBase(StorageBase):
         for document_id in self.ceph.get_document_listing():
             # Filter out stored requests.
             if not document_id.endswith(".request"):
-                if self.document_id_prefix:
-                    yield self.document_id_prefix + document_id
+                if self.datetime:
+                    yield f"{self.RESULT_TYPE}-" + self.datetime + document_id
                 else:
                     yield document_id
 
