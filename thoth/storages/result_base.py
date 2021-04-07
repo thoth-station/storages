@@ -39,12 +39,13 @@ class ResultStorageBase(StorageBase):
         self,
         deployment_name=None,
         *,
-        host: str = None,
-        key_id: str = None,
-        secret_key: str = None,
-        bucket: str = None,
-        region: str = None,
-        prefix: str = None,
+        host: typing.Optional[str] = None,
+        key_id: typing.Optional[str] = None,
+        secret_key: typing.Optional[str] = None,
+        bucket: typing.Optional[str] = None,
+        region: typing.Optional[str] = None,
+        prefix: typing.Optional[str] = None,
+        document_id_prefix: typing.Optional[str] = None
     ):
         """Initialize result storage database.
 
@@ -56,9 +57,20 @@ class ResultStorageBase(StorageBase):
         ), "Make sure RESULT_TYPE in derived classes to distinguish between adapter type instances is non-empty."
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
-        self.prefix = "{}/{}/{}".format(
-            prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
-        )
+
+        self.document_id_prefix = document_id_prefix or os.environ["THOTH_FILE_ID_PREFIX"]
+
+        if self.document_id_prefix:
+            self.prefix = "{}/{}/{}/{}".format(
+                    prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE, self.document_id_prefix
+                )
+
+        else:
+
+            self.prefix = "{}/{}/{}".format(
+                prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
+            )
+
         self.ceph = CephStore(
             self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
         )
@@ -89,7 +101,10 @@ class ResultStorageBase(StorageBase):
         for document_id in self.ceph.get_document_listing():
             # Filter out stored requests.
             if not document_id.endswith(".request"):
-                yield document_id
+                if self.document_id_prefix:
+                    yield self.document_id_prefix + document_id
+                else:
+                    yield document_id
 
     def get_document_count(self) -> int:
         """Get number of documents present."""
