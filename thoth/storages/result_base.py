@@ -59,7 +59,7 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.datetime_ = f"{datetime_:%y%m%d}" if datetime_ else ""
+        self.datetime_ = f"{datetime_:%y%m%d}" if datetime_ else None
 
         if self.datetime_:
             self.prefix = "{}/{}/{}/{}".format(
@@ -74,6 +74,7 @@ class ResultStorageBase(StorageBase):
             self.prefix = "{}/{}/{}".format(
                 prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
             )
+
 
         self.ceph = CephStore(
             self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, file_id_prefix=datetime_
