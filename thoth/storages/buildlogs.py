@@ -20,6 +20,7 @@
 import hashlib
 import os
 import typing
+import datetime
 
 from .ceph import CephStore
 from .base import StorageBase
@@ -76,6 +77,7 @@ class BuildLogsStore(StorageBase):
         """Iterate over results available in the Ceph."""
         return self.ceph.iterate_results()
 
-    def get_document_listing(self) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, datetime_: typing.Optional[datetime.datetime] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        return self.ceph.get_document_listing()
+        filter_ = self.ceph.prefix + f"{self.ceph.prefix.split('/')[-2]}-{datetime_:%y%m%d}" if datetime_ else None
+        return self.ceph.get_document_listing(filter_=filter_)
