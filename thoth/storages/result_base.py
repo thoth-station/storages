@@ -101,8 +101,7 @@ class ResultStorageBase(StorageBase):
 
     def get_document_count(self, datetime_: typing.Optional[datetime.datetime] = None) -> int:
         """Get number of documents present."""
-        filter_ = self.ceph.prefix + f"{self.ceph.prefix.split('/')[-2]}-{datetime_:%y%m%d}" if datetime_ else None
-        return len(tuple(self.get_document_listing(filter_=filter_)))
+        return len(tuple(self.get_document_listing(datetime_=datetime_)))
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
