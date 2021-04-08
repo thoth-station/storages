@@ -46,7 +46,6 @@ class ResultStorageBase(StorageBase):
         bucket: typing.Optional[str] = None,
         region: typing.Optional[str] = None,
         prefix: typing.Optional[str] = None,
-        datetime_: typing.Optional[datetime.datetime] = None
     ):
         """Initialize result storage database.
 
@@ -59,25 +58,12 @@ class ResultStorageBase(StorageBase):
 
         self.deployment_name = deployment_name or os.environ["THOTH_DEPLOYMENT_NAME"]
 
-        self.datetime_ = f"{datetime_:%y%m%d}" if datetime_ else None
-
-        if self.datetime_:
-            self.prefix = "{}/{}/{}/{}".format(
-                    prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"],
-                    self.deployment_name,
-                    self.RESULT_TYPE,
-                    f"{self.RESULT_TYPE}-{self.datetime_}"
-                )
-
-        else:
-
-            self.prefix = "{}/{}/{}".format(
-                prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
-            )
-
+        self.prefix = "{}/{}/{}".format(
+            prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
+        )
 
         self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region, file_id_prefix=datetime_
+            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
         )
 
     @classmethod
@@ -101,13 +87,13 @@ class ResultStorageBase(StorageBase):
         """Connect the given storage adapter."""
         self.ceph.connect()
 
-    def get_document_listing(self) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, datetime_: typing.Optional[datetime.datetime] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator."""
-        for document_id in self.ceph.get_document_listing():
+        for document_id in self.ceph.get_document_listing(datetime_=datetime_):
             # Filter out stored requests.
             if not document_id.endswith(".request"):
-                if self.datetime_:
-                    yield f"{self.RESULT_TYPE}-" + self.datetime_ + document_id
+                if datetime_:
+                    yield f"{self.RESULT_TYPE}-" + f'{datetime_:%y%m%d}' + document_id
                 else:
                     yield document_id
 

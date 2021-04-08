@@ -20,6 +20,7 @@
 import json
 import os
 import typing
+import datetime
 
 import boto3
 import botocore
@@ -40,7 +41,6 @@ class CephStore(StorageBase):
         secret_key: typing.Optional[str] = None,
         bucket: typing.Optional[str] = None,
         region: typing.Optional[str] = None,
-        file_id_prefix: typing.Optional[str] = None,
     ):
         """Initialize adapter to Ceph.
 
@@ -54,15 +54,15 @@ class CephStore(StorageBase):
         self.region = region or os.getenv("THOTH_CEPH_REGION", None)
         self._s3 = None
         self.prefix = prefix
-        self.file_id_prefix = file_id_prefix
 
-        if not self.file_id_prefix and not self.prefix.endswith("/"):
+        if not self.prefix.endswith("/"):
             self.prefix += "/"
 
-    def get_document_listing(self) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, datetime_: typing.Optional[datetime.datetime] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
-            yield obj.key[len(self.prefix) :]  # Ignore PycodestyleBear (E203)
+        prefix = self.prefix + f"{self.prefix.split('/')[-2]}-{datetime_:%y%m%d}" if datetime_ else self.prefix
+        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
+            yield obj.key[len(prefix) :]  # Ignore PycodestyleBear (E203)
 
     def store_file(self, document_path: str, document_id: str) -> dict:
         """Store a file on Ceph."""
