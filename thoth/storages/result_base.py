@@ -89,7 +89,9 @@ class ResultStorageBase(StorageBase):
 
     def get_document_listing(self, datetime_: typing.Optional[datetime.datetime] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator."""
-        for document_id in self.ceph.get_document_listing(datetime_=datetime_):
+        filter_ = self.ceph.prefix + f"{self.ceph.prefix.split('/')[-2]}-{datetime_:%y%m%d}"
+
+        for document_id in self.ceph.get_document_listing(filter_=filter_):
             # Filter out stored requests.
             if not document_id.endswith(".request"):
                 if datetime_:

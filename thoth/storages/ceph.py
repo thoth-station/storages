@@ -58,9 +58,9 @@ class CephStore(StorageBase):
         if not self.prefix.endswith("/"):
             self.prefix += "/"
 
-    def get_document_listing(self, datetime_: typing.Optional[datetime.datetime] = None) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, filter_: typing.Optional[str] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        prefix = self.prefix + f"{self.prefix.split('/')[-2]}-{datetime_:%y%m%d}" if datetime_ else self.prefix
+        prefix = filter_ if filter_ else self.prefix
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
             yield obj.key[len(prefix) :]  # Ignore PycodestyleBear (E203)
 
