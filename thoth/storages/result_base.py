@@ -19,6 +19,8 @@
 
 import os
 import typing
+from datetime import date
+from datetime import timedelta
 
 from .base import StorageBase
 from .ceph import CephStore
@@ -84,12 +86,38 @@ class ResultStorageBase(StorageBase):
         """Connect the given storage adapter."""
         self.ceph.connect()
 
-    def get_document_listing(self) -> typing.Generator[str, None, None]:
-        """Get listing of documents available in Ceph as a generator."""
-        for document_id in self.ceph.get_document_listing():
-            # Filter out stored requests.
-            if not document_id.endswith(".request"):
-                yield document_id
+    def _iter_dates_prefix_addition(
+        self, start_date: date, end_date: typing.Optional[date] = None
+    ) -> typing.Generator[str, None, None]:
+        """Create prefix based on dates supplied."""
+        if end_date is None:
+            end_date = date.today() + timedelta(days=1)  # Today inclusively.
+
+        walker = start_date
+        step = timedelta(days=1)
+        while walker < end_date:
+            yield walker.strftime(f"{self.RESULT_TYPE}-%y%m%d")
+            walker += step
+
+    def get_document_listing(
+        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+    ) -> typing.Generator[str, None, None]:
+        """Get listing of documents available in Ceph as a generator.
+
+        Additional parameters can filter results. If start_date is supplied
+        and no end_date is supplied explicitly, the current date is
+        considered as end_date (inclusively).
+        """
+        if start_date:
+            for prefix_addition in self._iter_dates_prefix_addition(start_date=start_date, end_date=end_date):
+                for document_id in self.ceph.get_document_listing(prefix_addition):
+                    if not document_id.endswith(".request"):
+                        yield document_id
+        else:
+            for document_id in self.ceph.get_document_listing():
+                # Filter out stored requests.
+                if not document_id.endswith(".request"):
+                    yield document_id
 
     def get_document_count(self) -> int:
         """Get number of documents present."""
@@ -133,9 +161,20 @@ class ResultStorageBase(StorageBase):
         """Retrieve a document from Ceph by its id."""
         return self.ceph.retrieve_document(document_id)
 
-    def iterate_results(self) -> typing.Generator[tuple, None, None]:
-        """Iterate over results available in the Ceph."""
-        return self.ceph.iterate_results()
+    def iterate_results(
+        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+    ) -> typing.Generator[tuple, None, None]:
+        """Iterate over results available in the Ceph.
+
+        Additional parameters can filter results. If start_date is supplied
+        and no end_date is supplied explicitly, the current date is
+        considered as end_date (inclusively).
+        """
+        if start_date:
+            for prefix_addition in self._iter_dates_prefix_addition(start_date=start_date, end_date=end_date):
+                yield from self.ceph.iterate_results(prefix_addition)
+        else:
+            yield from self.ceph.iterate_results()
 
     def document_exists(self, document_id: str) -> bool:
         """Check if the there is an object with the given key in bucket."""
