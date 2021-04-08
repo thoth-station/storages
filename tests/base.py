@@ -84,5 +84,5 @@ class StorageBaseTest(ThothStoragesTest):
     def test_get_document_listing(self, adapter):
         """Test document listing for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph).should_receive("get_document_listing").with_args().and_return([]).once()
-        assert list(adapter.get_document_listing()) == []
+        flexmock(adapter.ceph).should_receive("get_document_listing").with_args(filter_=None).and_return([]).once()
+        assert list(adapter.get_document_listing(datetime_=None)) == []

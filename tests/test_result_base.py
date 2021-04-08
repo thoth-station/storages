@@ -82,7 +82,7 @@ class ResultBaseTest(StorageBaseTest):
 class TestResultBase(ResultBaseTest):
     """Test base class for result types.
 
-    We need to rename class to rename the class so it starts with Test prefix and is correctly picked by pytest.
+    We need to rename class so it starts with Test prefix and is correctly picked by pytest.
     We cannot directly use this class to derive from in result-specific adapters as pytest will run tests multiple
     times for it due to Test prefix. This is a simple workaround to avoid running tests multiple times.
     """
