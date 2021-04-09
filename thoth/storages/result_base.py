@@ -92,6 +92,8 @@ class ResultStorageBase(StorageBase):
         """Create prefix based on dates supplied."""
         if end_date is None:
             end_date = date.today() + timedelta(days=1)  # Today inclusively.
+        elif end_date < start_date:
+            raise ValueError("end_date cannot precede start_date")
 
         walker = start_date
         step = timedelta(days=1)
