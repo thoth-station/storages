@@ -57,9 +57,10 @@ class CephStore(StorageBase):
         if not self.prefix.endswith("/"):
             self.prefix += "/"
 
-    def get_document_listing(self) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=self.prefix).all():
+        prefix = f"{self.prefix}{prefix_addition}" if prefix_addition else self.prefix
+        for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
             yield obj.key[len(self.prefix) :]  # Ignore PycodestyleBear (E203)
 
     def store_file(self, document_path: str, document_id: str) -> dict:
@@ -96,9 +97,9 @@ class CephStore(StorageBase):
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 
-    def iterate_results(self) -> typing.Generator[tuple, None, None]:
+    def iterate_results(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
-        for document_id in self.get_document_listing():
+        for document_id in self.get_document_listing(prefix_addition=prefix_addition):
             document = self.retrieve_document(document_id)
             yield document_id, document
 

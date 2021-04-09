@@ -78,8 +78,8 @@ class StorageBaseTest(ThothStoragesTest):
     def test_iterate_results(self, adapter):
         """Test iterating over results for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph).should_receive("iterate_results").with_args().and_return(None).once()
-        assert adapter.iterate_results() is None
+        flexmock(adapter.ceph).should_receive("iterate_results").with_args().and_yield().once()
+        assert list(adapter.iterate_results()) == []
 
     def test_get_document_listing(self, adapter):
         """Test document listing for build logs stored on Ceph."""
