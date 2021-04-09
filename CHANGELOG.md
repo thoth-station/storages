@@ -10293,3 +10293,16 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.39.3 (2021-03-19T17:54:19)
 ### Other
 * Fix/avoid duplicate heads (#2258)
+
+## Release 0.40.0 (2021-04-09T11:08:37)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet (#2278)
+* Query results on Ceph based on date (#2277)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2276)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2274)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2271)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2268)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2262)
+### Improvements
+* Minor improvements in docs (#2275)
+* Create index for depends_on considering is_missing and extras (#2263)
