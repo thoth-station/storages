@@ -121,9 +121,11 @@ class ResultStorageBase(StorageBase):
                 if not document_id.endswith(".request"):
                     yield document_id
 
-    def get_document_count(self) -> int:
+    def get_document_count(
+        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+    ) -> int:
         """Get number of documents present."""
-        return len(tuple(self.get_document_listing()))
+        return sum(1 for _ in self.get_document_listing(start_date=start_date, end_date=end_date))
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
