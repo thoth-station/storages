@@ -94,6 +94,8 @@ class ResultStorageBase(StorageBase):
             end_date = date.today() + timedelta(days=1)  # Today inclusively.
         elif end_date < start_date:
             raise ValueError("end_date cannot precede start_date")
+        elif end_date == start_date:
+            end_date = start_date + timedelta(days=1)
 
         walker = start_date
         step = timedelta(days=1)
