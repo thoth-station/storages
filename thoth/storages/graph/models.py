@@ -903,7 +903,6 @@ class PythonSoftwareStack(Base, BaseExtension):
     )
 
     performance_score = Column(Float, nullable=True)
-    # TODO: Add security score
     overall_score = Column(Float, nullable=True)
 
     python_requirements_id = Column(Integer, ForeignKey("python_requirements.id", ondelete="CASCADE"))
