@@ -102,7 +102,7 @@ class ResultStorageBase(StorageBase):
             walker += step
 
     def get_document_listing(
-        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None, only_requests: bool = False
     ) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator.
 
@@ -113,19 +113,27 @@ class ResultStorageBase(StorageBase):
         if start_date:
             for prefix_addition in self._iter_dates_prefix_addition(start_date=start_date, end_date=end_date):
                 for document_id in self.ceph.get_document_listing(prefix_addition):
-                    if not document_id.endswith(".request"):
-                        yield document_id
+                    if not only_requests:
+                        if not document_id.endswith(".request"):
+                            yield document_id
+                    else:
+                        if document_id.endswith(".request"):
+                            yield document_id
+
         else:
             for document_id in self.ceph.get_document_listing():
-                # Filter out stored requests.
-                if not document_id.endswith(".request"):
-                    yield document_id
+                if not only_requests:
+                    if not document_id.endswith(".request"):
+                        yield document_id
+                else:
+                    if document_id.endswith(".request"):
+                        yield document_id
 
     def get_document_count(
-        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None, only_requests: bool = False
     ) -> int:
         """Get number of documents present."""
-        return sum(1 for _ in self.get_document_listing(start_date=start_date, end_date=end_date))
+        return sum(1 for _ in self.get_document_listing(start_date=start_date, end_date=end_date, only_requests=only_requests))
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
