@@ -87,17 +87,22 @@ class ResultStorageBase(StorageBase):
         self.ceph.connect()
 
     def _iter_dates_prefix_addition(
-        self, start_date: date, end_date: typing.Optional[date] = None
+        self, start_date: date, end_date: typing.Optional[date] = None, *, include_end_date: bool = False
     ) -> typing.Generator[str, None, None]:
         """Create prefix based on dates supplied."""
         if end_date is None:
             end_date = date.today() + timedelta(days=1)  # Today inclusively.
-        elif end_date <= start_date:
-            raise ValueError("end_date cannot precede or equal to start_date")
+        elif end_date < start_date:
+            raise ValueError("end_date cannot precede start_date")
+        elif not include_end_date and end_date == start_date:
+            raise ValueError("end_date cannot equal to start_date unless include_end_date supplied")
 
         walker = start_date
         step = timedelta(days=1)
-        while walker < end_date:
+        while walker <= end_date:
+            if not include_end_date and walker == end_date:
+                break
+
             yield walker.strftime(f"{self.RESULT_TYPE}-%y%m%d")
             walker += step
 
@@ -106,6 +111,7 @@ class ResultStorageBase(StorageBase):
         *,
         start_date: typing.Optional[date] = None,
         end_date: typing.Optional[date] = None,
+        include_end_date: bool = False,
         only_requests: bool = False,
     ) -> typing.Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator.
@@ -115,7 +121,9 @@ class ResultStorageBase(StorageBase):
         considered as end_date (inclusively).
         """
         if start_date:
-            for prefix_addition in self._iter_dates_prefix_addition(start_date=start_date, end_date=end_date):
+            for prefix_addition in self._iter_dates_prefix_addition(
+                start_date=start_date, end_date=end_date, include_end_date=include_end_date
+            ):
                 for document_id in self.ceph.get_document_listing(prefix_addition):
                     if not only_requests:
                         if not document_id.endswith(".request"):
@@ -139,10 +147,14 @@ class ResultStorageBase(StorageBase):
         start_date: typing.Optional[date] = None,
         end_date: typing.Optional[date] = None,
         only_requests: bool = False,
+        include_end_date: bool = False,
     ) -> int:
         """Get number of documents present."""
         return sum(
-            1 for _ in self.get_document_listing(start_date=start_date, end_date=end_date, only_requests=only_requests)
+            1
+            for _ in self.get_document_listing(
+                start_date=start_date, end_date=end_date, include_end_date=include_end_date, only_requests=only_requests
+            )
         )
 
     def store_document(self, document: dict) -> str:
@@ -184,7 +196,11 @@ class ResultStorageBase(StorageBase):
         return self.ceph.retrieve_document(document_id)
 
     def iterate_results(
-        self, *, start_date: typing.Optional[date] = None, end_date: typing.Optional[date] = None
+        self,
+        *,
+        start_date: typing.Optional[date] = None,
+        end_date: typing.Optional[date] = None,
+        include_end_date: bool = False,
     ) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph.
 
@@ -193,7 +209,9 @@ class ResultStorageBase(StorageBase):
         considered as end_date (inclusively).
         """
         if start_date:
-            for prefix_addition in self._iter_dates_prefix_addition(start_date=start_date, end_date=end_date):
+            for prefix_addition in self._iter_dates_prefix_addition(
+                start_date=start_date, end_date=end_date, include_end_date=include_end_date
+            ):
                 yield from self.ceph.iterate_results(prefix_addition)
         else:
             yield from self.ceph.iterate_results()
