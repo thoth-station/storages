@@ -10306,3 +10306,13 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Improvements
 * Minor improvements in docs (#2275)
 * Create index for depends_on considering is_missing and extras (#2263)
+
+## Release 0.41.0 (2021-04-28T13:01:54)
+### Features
+* Provide ability to include end_date in the results listing (#2283)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2287)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2284)
+* Add check for same date supplied for date iteration
+### Improvements
+* Extend methods to handle requests (#2286)
+* Remove unused comment (#2285)
