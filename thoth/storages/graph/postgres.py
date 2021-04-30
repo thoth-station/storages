@@ -5941,3 +5941,74 @@ class GraphDatabase(SQLBase):
         bloat_data = [table for table in result if table["pct_bloat"] is not None or table["mb_bloat"] is not None]
 
         return bloat_data
+
+    def delete_solved(self, *, os_name: str, os_version: str, python_version: str) -> int:
+        """Delete corresponding solver data."""
+        with self._session_scope() as session:
+            return (
+                session.query(EcosystemSolver)
+                .filter(
+                    EcosystemSolver.os_name == os_name,
+                    EcosystemSolver.os_version == os_version,
+                    EcosystemSolver.python_version == python_version,
+                )
+                .delete()
+            )
+
+    def delete_solver_result(self, solver_document_id: str) -> int:
+        """Delete the corresponding solver result."""
+        with self._session_scope() as session:
+            return session.query(Solved).filter(Solved.document_id == solver_document_id).delete()
+
+    def delete_adviser_run(
+        self,
+        *,
+        end_datetime: Optional[datetime] = None,
+        adviser_version: Optional[str] = None,
+    ) -> int:
+        """Delete corresponding adviser data."""
+        delete_filter = []
+
+        if end_datetime:
+            delete_filter.append(AdviserRun.datetime < end_datetime)
+
+        if adviser_version:
+            delete_filter.append(AdviserRun.adviser_version == adviser_version)
+
+        if not delete_filter:
+            raise ValueError("No filter provided to delete adviser data")
+
+        with self._session_scope() as session:
+            return session.query(AdviserRun).filter(*delete_filter).delete()
+
+    def delete_adviser_result(self, adviser_document_id: str) -> int:
+        """Delete the corresponding adviser result."""
+        with self._session_scope() as session:
+            return session.query(AdviserRun).filter(AdviserRun.adviser_document_id == adviser_document_id).delete()
+
+    def delete_package_extract_run(
+        self,
+        *,
+        end_datetime: Optional[datetime] = None,
+        package_extract_version: Optional[str] = None,
+    ) -> int:
+        """Delete corresponding container image analysis data."""
+        delete_filter = []
+
+        if end_datetime:
+            delete_filter.append(PackageExtractRun.datetime < end_datetime)
+
+        if package_extract_version:
+            delete_filter.append(PackageExtractRun.package_extract_version == package_extract_version)
+
+        with self._session_scope() as session:
+            return session.query(PackageExtractRun).filter(*delete_filter).delete()
+
+    def delete_analysis_result(self, analysis_document_id: str) -> int:
+        """Delete the given package-extract entry."""
+        with self._session_scope() as session:
+            return (
+                session.query(PackageExtractRun)
+                .filter(PackageExtractRun.analysis_document_id == analysis_document__id)
+                .delete()
+            )
