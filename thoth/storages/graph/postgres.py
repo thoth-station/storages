@@ -6009,6 +6009,6 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return (
                 session.query(PackageExtractRun)
-                .filter(PackageExtractRun.analysis_document_id == analysis_document__id)
+                .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
                 .delete()
             )
