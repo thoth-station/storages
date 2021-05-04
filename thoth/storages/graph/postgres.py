@@ -6001,6 +6001,9 @@ class GraphDatabase(SQLBase):
         if package_extract_version:
             delete_filter.append(PackageExtractRun.package_extract_version == package_extract_version)
 
+        if not delete_filter:
+            raise ValueError("No filter provided to delete package-extract data")
+
         with self._session_scope() as session:
             return session.query(PackageExtractRun).filter(*delete_filter).delete()
 
