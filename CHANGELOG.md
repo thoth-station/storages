@@ -10316,3 +10316,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Improvements
 * Extend methods to handle requests (#2286)
 * Remove unused comment (#2285)
+
+## Release 0.42.0 (2021-05-03T07:05:48)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet (#2294)
+* Provide methods for deleting data from the database (#2292)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2290)
