@@ -50,6 +50,7 @@ from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm.exc import NoResultFound
 
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
@@ -69,7 +70,6 @@ from .models import EcosystemSolver
 from .models import ExternalHardwareInformation
 from .models import ExternalPythonRequirements
 from .models import ExternalPythonRequirementsLock
-from .models import ExternalPythonSoftwareStack
 from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
 from .models import InspectionRun
@@ -3862,6 +3862,39 @@ class GraphDatabase(SQLBase):
                     )
                     return entity, existed
 
+    def _delete_python_package_version(
+        self,
+        *,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        os_name: str,
+        os_version: str,
+        python_version: str,
+    ) -> int:
+        """Delete the given package-version entry."""
+        # We use join so raw delete() cannot be used.
+        deleted_count = 0
+        with self._session_scope() as session:
+            for pv_id in (
+                session.query(PythonPackageVersion)
+                .join(PythonPackageIndex)
+                .filter(
+                    PythonPackageVersion.package_name == package_name,
+                    PythonPackageVersion.package_version == package_version,
+                    PythonPackageVersion.os_name == os_name,
+                    PythonPackageVersion.os_version == os_version,
+                    PythonPackageVersion.python_version == python_version,
+                    PythonPackageIndex.url == index_url,
+                )
+                .with_entities(PythonPackageVersion.id)
+                .all()
+            ):
+                session.query(PythonPackageVersion).filter(PythonPackageVersion.id == pv_id).delete()
+                deleted_count += 1
+
+        return deleted_count
+
     def _create_python_package_version(
         self,
         session: Session,
@@ -5032,7 +5065,7 @@ class GraphDatabase(SQLBase):
                 python_package_version_id=python_package_version_id,
             )
 
-    def sync_solver_result(self, document: dict) -> None:
+    def sync_solver_result(self, document: dict, *, force: bool = False) -> None:
         """Sync the given solver result to the graph database."""
         solver_document_id = SolverResultsStore.get_document_id(document)
         solver_name = SolverResultsStore.get_solver_name_from_document_id(solver_document_id)
@@ -5106,17 +5139,45 @@ class GraphDatabase(SQLBase):
                         f"No related columns for {list(importlib_metadata.keys())!r} "
                         "found in PythonPackageMetadata table, the error is not fatal"
                     )
+                try:
+                    python_package_version = self._create_python_package_version(
+                        session,
+                        package_name,
+                        package_version,
+                        os_name=ecosystem_solver.os_name,
+                        os_version=ecosystem_solver.os_version,
+                        python_version=ecosystem_solver.python_version,
+                        index_url=index_url,
+                        python_package_metadata_id=package_metadata.id,
+                    )
+                except NoResultFound:
+                    if not force:
+                        raise
 
-                python_package_version = self._create_python_package_version(
-                    session,
-                    package_name,
-                    package_version,
-                    os_name=ecosystem_solver.os_name,
-                    os_version=ecosystem_solver.os_version,
-                    python_version=ecosystem_solver.python_version,
-                    index_url=index_url,
-                    python_package_metadata_id=package_metadata.id,
-                )
+                    _LOGGER.warning(
+                        "Removing old PythonPackageVersion entry based on previous results stored and "
+                        "force parameter supplied"
+                    )
+                    # Try to delete the given package-version and continue with the sync.
+                    self._delete_python_package_version(
+                        package_name=package_name,
+                        package_version=package_version,
+                        os_name=ecosystem_solver.os_name,
+                        os_version=ecosystem_solver.os_version,
+                        python_version=ecosystem_solver.python_version,
+                        index_url=index_url,
+                    )
+
+                    python_package_version = self._create_python_package_version(
+                        session,
+                        package_name,
+                        package_version,
+                        os_name=ecosystem_solver.os_name,
+                        os_version=ecosystem_solver.os_version,
+                        python_version=ecosystem_solver.python_version,
+                        index_url=index_url,
+                        python_package_metadata_id=package_metadata.id,
+                    )
 
                 for sha256 in python_package_info["sha256"]:
                     artifact, _ = PythonArtifact.get_or_create(
