@@ -128,7 +128,7 @@ def sync_solver_documents(
                     )
                     document = solver_store.retrieve_document(document_id)
 
-                graph.sync_solver_result(document)
+                graph.sync_solver_result(document, force=force)
                 synced += 1
             except Exception:
                 if not graceful:
