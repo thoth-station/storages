@@ -16,6 +16,7 @@ psycopg2-binary = "*"
 sqlalchemy-utils = "*"
 alembic = "*"
 thoth-ssdeep = "*"
+packaging = "*"
 
 [dev-packages]
 pytest = "*"
