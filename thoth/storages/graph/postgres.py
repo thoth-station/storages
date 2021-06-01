@@ -3849,18 +3849,17 @@ class GraphDatabase(SQLBase):
                 if seen_count == 0:
                     return None
 
-                with session.begin(subtransactions=True):
-                    index = None
-                    if index_url:
-                        index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
+            index = None
+            if index_url:
+                index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
 
-                    entity, existed = PythonPackageVersionEntity.get_or_create(
-                        session,
-                        package_name=package_name,
-                        package_version=package_version,
-                        python_package_index_id=index.id if index else None,
-                    )
-                    return entity, existed
+            entity, existed = PythonPackageVersionEntity.get_or_create(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id if index else None,
+            )
+            return entity, existed
 
     def _delete_python_package_version(
         self,
