@@ -10322,3 +10322,14 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_up: Automatic update of dependencies by Kebechet (#2294)
 * Provide methods for deleting data from the database (#2292)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2290)
+
+## Release 0.43.0 (2021-06-01T19:04:08)
+### Features
+* Reorder imports alphabetically
+* Introduce routines for manipulating with rules
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Fix only_if_package_seen logic handling
+* Provide force_sync option to solver syncing logic (#2310)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2312)
+* :whale: update the prow jobs resource requests (#2311)
+* :arrow_up: Automatic update of dependencies by Kebechet (#2309)
