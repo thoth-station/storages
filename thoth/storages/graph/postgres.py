@@ -80,7 +80,6 @@ from .models import KebechetGithubAppInstallations
 from .models import PackageExtractRun
 from .models import ProvenanceCheckerRun
 from .models import PythonArtifact
-from .models import PythonPackageVersionEntityRulesAssociation
 from .models import PythonFileDigest
 from .models import PythonInterpreter
 from .models import PythonPackageIndex
@@ -96,6 +95,7 @@ from .models import PythonPackageRequirement
 from .models import PythonPackageVersion
 from .models import PythonPackageVersionEntity
 from .models import PythonPackageVersionEntityRule
+from .models import PythonPackageVersionEntityRulesAssociation
 from .models import PythonRequirements
 from .models import PythonRequirementsLock
 from .models import PythonSoftwareStack
