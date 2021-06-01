@@ -39,6 +39,8 @@ from contextlib import contextmanager
 from datetime import datetime
 
 import attr
+from packaging.specifiers import SpecifierSet
+from packaging.version import parse as parse_version
 from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
@@ -62,6 +64,7 @@ from thoth.common import map_os_name
 
 from .models_base import BaseExtension
 from .models import AdviserRun
+from .models import ALL_MAIN_MODELS
 from .models import CVE
 from .models import DebDependency
 from .models import DebPackageVersion
@@ -73,9 +76,11 @@ from .models import ExternalPythonRequirementsLock
 from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
 from .models import InspectionRun
+from .models import KebechetGithubAppInstallations
 from .models import PackageExtractRun
 from .models import ProvenanceCheckerRun
 from .models import PythonArtifact
+from .models import PythonPackageVersionEntityRulesAssociation
 from .models import PythonFileDigest
 from .models import PythonInterpreter
 from .models import PythonPackageIndex
@@ -90,6 +95,7 @@ from .models import PythonPackageMetadataSupportedPlatform
 from .models import PythonPackageRequirement
 from .models import PythonPackageVersion
 from .models import PythonPackageVersionEntity
+from .models import PythonPackageVersionEntityRule
 from .models import PythonRequirements
 from .models import PythonRequirementsLock
 from .models import PythonSoftwareStack
@@ -98,8 +104,6 @@ from .models import RPMRequirement
 from .models import SecurityIndicatorAggregatedRun
 from .models import SoftwareEnvironment
 from .models import VersionedSymbol
-from .models import KebechetGithubAppInstallations
-from .models import ALL_MAIN_MODELS
 
 from .models import Advised
 from .models import DebDepends
@@ -127,7 +131,6 @@ from .models import HasSymbol
 from .models import HasUnresolved
 from .models import HasVulnerability
 from .models import Identified
-from .models import IncludedFile
 from .models import PythonDependencyMonkeyRequirements
 from .models import RequiresSymbol
 from .models import RPMRequires
@@ -153,7 +156,6 @@ from .enums import ThothAdviserIntegrationEnum
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
 from ..provenance import ProvenanceResultsStore
-from ..inspections import InspectionResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
 from ..exceptions import NotFoundError
@@ -1052,8 +1054,7 @@ class GraphDatabase(SQLBase):
             index_url = self.normalize_python_index_url(index_url)
             query = query.filter(PythonPackageIndex.url == index_url)
 
-        conditions = [Solved.version_id == PythonPackageVersion.id]
-        conditions.append(Solved.error.is_(True))
+        conditions = [Solved.version_id == PythonPackageVersion.id, Solved.error.is_(True)]
 
         if unsolvable:
             conditions.append(Solved.error_unsolvable.is_(True))
@@ -1243,8 +1244,10 @@ class GraphDatabase(SQLBase):
     ) -> Query:
         """Construct query for unsolved Python packages versions functions, the query is not executed."""
         index_url = self.normalize_python_index_url(index_url)
+        rules_association = session.query(PythonPackageVersionEntityRulesAssociation.python_package_version_entity_id)
         query = session.query(PythonPackageVersionEntity).filter(
             PythonPackageVersionEntity.package_version.isnot(None),
+            PythonPackageVersionEntity.id.notin_(rules_association),
             PythonPackageIndex.url.isnot(None),
             PythonPackageIndex.enabled.is_(True),
         )
@@ -3786,7 +3789,7 @@ class GraphDatabase(SQLBase):
                     }
                 )
 
-    def get_index_url_from_id(self, package_index_id: int) -> list:
+    def get_index_url_from_id(self, package_index_id: int) -> str:
         """Return index URL from id."""
         with self._session_scope() as session:
             output = (
@@ -3859,6 +3862,7 @@ class GraphDatabase(SQLBase):
                 package_version=package_version,
                 python_package_index_id=index.id if index else None,
             )
+            self._refresh_rules_python_entity(session, entity)
             return entity, existed
 
     def _delete_python_package_version(
@@ -3926,6 +3930,7 @@ class GraphDatabase(SQLBase):
             package_version=package_version,
             python_package_index_id=index.id if index else None,
         )
+        self._refresh_rules_python_entity(session, entity)
 
         if sync_only_entity:
             return entity
@@ -4247,6 +4252,7 @@ class GraphDatabase(SQLBase):
                     package_version=package_version,
                     python_package_index_id=index.id,
                 )
+                self._refresh_rules_python_entity(session, entity)
                 HasVulnerability.get_or_create(
                     session, cve_id=cve_instance.id, python_package_version_entity_id=entity.id
                 )
@@ -4963,6 +4969,7 @@ class GraphDatabase(SQLBase):
             python_package_version_entity, _ = PythonPackageVersionEntity.get_or_create(
                 session, package_name=dependency_name, package_version=dependency_version, python_package_index_id=None
             )
+            self._refresh_rules_python_entity(session, python_package_version_entity)
 
             for entry in document["result"]:
                 python_package_version = (
@@ -5209,6 +5216,7 @@ class GraphDatabase(SQLBase):
                                 package_version=self.normalize_python_package_version(dependency_version),
                                 python_package_index_id=None,
                             )
+                            self._refresh_rules_python_entity(session, dependency_entity)
 
                             if len(dependency.get("extra") or []) > 1:
                                 # Not sure if this can happen in the ecosystem, report error
@@ -6107,3 +6115,158 @@ class GraphDatabase(SQLBase):
                 .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
                 .delete()
             )
+
+    @staticmethod
+    def _refresh_python_entities_rule(session: Session, rule: PythonPackageVersionEntityRule) -> None:
+        """Assign the given rule to entities stored in the database if the rule applies."""
+        query = session.query(PythonPackageVersionEntity).filter(
+            PythonPackageVersionEntity.package_name == rule.package_name
+        )
+
+        if rule.index:
+            query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == rule.index.url)
+
+        specifier = None
+        if rule.version_range:
+            specifier = SpecifierSet(rule.version_range)
+            specifier.prereleases = True
+
+        for entity in query.all():
+            if specifier is None or parse_version(entity.package_version) in specifier:
+                PythonPackageVersionEntityRulesAssociation.get_or_create(
+                    session, python_package_version_entity_id=entity.id, python_package_version_entity_rule_id=rule.id
+                )
+
+    def _refresh_rules_python_entity(self, session: Session, entity: PythonPackageVersionEntity) -> None:
+        """Add all rules that applies to the given entity stored in the database."""
+        version = parse_version(entity.package_version)
+
+        for rule in self.get_python_rule_all(package_name=entity.package_name, index_url=entity.index.url, count=None):
+            specifier = SpecifierSet(rule["version_range"])
+            specifier.prereleases = True
+
+            if not rule["version_range"] or version in specifier:
+                PythonPackageVersionEntityRulesAssociation.get_or_create(
+                    session,
+                    python_package_version_entity_id=entity.id,
+                    python_package_version_entity_rule_id=rule["id"],
+                )
+
+    def _rule_to_dict(self, rule: PythonPackageVersionEntityRule) -> Dict[str, Any]:
+        """Convert a rule model to a dict representation."""
+        rule_dict = rule.to_dict(without_id=False)
+        index_id = rule_dict.pop("python_package_index_id")
+        rule_dict["index_url"] = self.get_index_url_from_id(index_id) if index_id else None
+        return rule_dict
+
+    def create_python_rule(
+        self,
+        package_name: str,
+        *,
+        version_specifier: Optional[str] = None,
+        index_url: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create the given Python rule."""
+        package_name = self.normalize_python_package_name(package_name) if package_name is not None else None
+        index_url = self.normalize_python_index_url(index_url) if index_url is not None else None
+        version_specifier = version_specifier if version_specifier != "*" else ""
+
+        with self._session_scope() as session:
+            existing_rule_query = session.query(PythonPackageVersionEntityRule).filter(
+                PythonPackageVersionEntityRule.package_name == package_name,
+                PythonPackageVersionEntityRule.description == description,
+            )
+
+            if index_url:
+                existing_rule_query = existing_rule_query.join(PythonPackageIndex).filter(
+                    PythonPackageIndex.url == index_url
+                )
+            else:
+                existing_rule_query = existing_rule_query.filter(
+                    PythonPackageVersionEntityRule.python_package_index_id.is_(None)
+                )
+
+            existing_rule = existing_rule_query.first()
+
+            if existing_rule:
+                # SpecifierSet(",,,,") == SpecifierSet("")
+                existing_rule.version_range = str(
+                    SpecifierSet(",".join([existing_rule.version_range or "", version_specifier or ""]))
+                )
+                session.add(existing_rule)
+                session.commit()
+                self._refresh_python_entities_rule(session, existing_rule)
+                return self._rule_to_dict(existing_rule)
+
+            index = None
+            if index_url:
+                index = session.query(PythonPackageIndex).filter(PythonPackageIndex.url == index_url).first()
+                if not index:
+                    raise NotFoundError(f"No index with url {index_url!r} registered")
+
+            rule = PythonPackageVersionEntityRule(
+                package_name=package_name,
+                version_range=str(SpecifierSet(version_specifier or "")),
+                index=index,
+                description=description,
+            )
+            session.add(rule)
+            session.commit()
+            self._refresh_python_entities_rule(session, rule)
+            return self._rule_to_dict(rule)
+
+    def delete_python_rule(self, rule_id: int) -> int:
+        """Delete the given Python rule."""
+        with self._session_scope() as session:
+            return (
+                session.query(PythonPackageVersionEntityRule)
+                .filter(PythonPackageVersionEntityRule.id == rule_id)
+                .delete()
+            )
+
+    def get_python_rule(self, rule_id: int) -> Dict[str, Any]:
+        """Get the given Python rule."""
+        with self._session_scope() as session:
+            result = (
+                session.query(PythonPackageVersionEntityRule)
+                .filter(PythonPackageVersionEntityRule.id == rule_id)
+                .first()
+            )
+
+            if not result:
+                raise NotFoundError(f"No Python rule with id {rule_id!r} found")
+
+            return self._rule_to_dict(result)
+
+    def get_python_rule_all(
+        self,
+        *,
+        package_name: Optional[str] = None,
+        index_url: Optional[str] = None,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+    ) -> List[Dict[str, Any]]:
+        """Get all the Python rules matching the given query criteria."""
+        package_name = self.normalize_python_package_name(package_name) if package_name is not None else None
+        index_url = self.normalize_python_index_url(index_url) if index_url is not None else None
+
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersionEntityRule)
+
+            if package_name:
+                query = query.filter(PythonPackageVersionEntityRule.package_name == package_name)
+
+            if index_url:
+                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+
+            query = query.order_by(desc(PythonPackageVersionEntityRule.id)).offset(start_offset)
+
+            if count is not None:
+                query = query.limit(count)
+
+            result = []
+            for rule in query.all():
+                result.append(self._rule_to_dict(rule))
+
+            return result

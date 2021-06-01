@@ -17,12 +17,13 @@
 
 """Models for SQL based database."""
 
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import ForeignKey
-from sqlalchemy import Float
-from sqlalchemy import DateTime
 from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import Table
 from sqlalchemy import Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -133,6 +134,24 @@ class Solved(Base, BaseExtension):
     __table_args__ = (Index("solver_document_id_idx", "document_id"), Index("solved_version_id_idx", "version_id"))
 
 
+class PythonPackageVersionEntityRulesAssociation(Base, BaseExtension):
+    """Connect Python rules with corresponding package entities."""
+
+    __tablename__ = "python_package_version_entity_rules_association"
+
+    python_package_version_entity_id = Column(
+        Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
+    )
+    python_package_version_entity_rule_id = Column(
+        Integer, ForeignKey("python_package_version_entity_rule.id", ondelete="CASCADE"), primary_key=True
+    )
+
+    entity = relationship("PythonPackageVersionEntity", back_populates="rules")
+    rule = relationship("PythonPackageVersionEntityRule", back_populates="entities")
+
+    __table_args__ = (Index("python_entity_rules_association_table_idx", "python_package_version_entity_id"),)
+
+
 class PythonPackageVersionEntity(Base, BaseExtension):
     """Representation of a Python package not running in any environment."""
 
@@ -145,6 +164,7 @@ class PythonPackageVersionEntity(Base, BaseExtension):
     package_version = Column(Text, nullable=True)
     # Nullable if coming from user or cross-index resolution.
     python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
+    rules = relationship("PythonPackageVersionEntityRulesAssociation", back_populates="entity")
 
     versions = relationship("DependsOn", back_populates="entity")
     adviser_runs = relationship("HasUnresolved", back_populates="python_package_version_entity")
@@ -171,6 +191,26 @@ class PythonPackageVersionEntity(Base, BaseExtension):
         Index("python_package_version_entity_id_idx", "id", unique=True),
         Index("python_package_version_entity_package_name_idx", "package_name"),
     )
+
+
+class PythonPackageVersionEntityRule(Base, BaseExtension):
+    """Rules for packages which can occur in the system."""
+
+    __tablename__ = "python_package_version_entity_rule"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, unique=True)
+
+    package_name = Column(Text, nullable=False)
+    # Nullable if applying to any version.
+    version_range = Column(Text, nullable=True)
+    # Nullable if applying to any index.
+    python_package_index_id = Column(Integer, ForeignKey("python_package_index.id", ondelete="CASCADE"), nullable=True)
+
+    index = relationship("PythonPackageIndex")
+    entities = relationship("PythonPackageVersionEntityRulesAssociation", back_populates="rule")
+    description = Column(Text, nullable=True)
+
+    __table_args__ = (Index("python_package_version_entity_rule_package_name_idx", "package_name"),)
 
 
 class DependsOn(Base, BaseExtension):
