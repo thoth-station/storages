@@ -10341,3 +10341,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Adjust CVE model to consume vulnerabilities from pypa/advisory-db
 * :arrow_up: Automatic update of dependencies by Kebechet
 * :arrow_up: Automatic update of dependencies by Kebechet
+
+## Release 0.44.1 (2021-06-03T20:05:50)
+### Features
+* Cache solver rules retrieval
