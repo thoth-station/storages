@@ -4223,41 +4223,38 @@ class GraphDatabase(SQLBase):
         package_version: str,
         index_url: str,
         *,
-        record_id: str,
-        version_range: str,
-        advisory: str,
-        cve: Optional[str] = None,
+        cve_id: str,
+        details: str,
     ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
         package_version = self.normalize_python_package_version(package_version)
         index_url = self.normalize_python_index_url(index_url)
-        with self._session_scope() as session, session.begin(subtransactions=True):
-            if session.query(exists().where(CVE.cve_id == record_id)).scalar():
-                return True
-            else:
-                cve_instance = CVE(
-                    advisory=advisory,
-                    cve_name=cve,
-                    cve_id=record_id,
-                    version_range=version_range,
+
+        with self._session_scope() as session:
+            cve = session.query(CVE).filter(CVE.cve_id == cve_id).first()
+            if not cve:
+                cve, _ = CVE.get_or_create(
+                    session,
+                    cve_id=cve_id,
+                    details=details,
                     aggregated_at=datetime.utcnow(),
                 )
-                session.add(cve_instance)
 
-                index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
-                entity, _ = PythonPackageVersionEntity.get_or_create(
-                    session,
-                    package_name=package_name,
-                    package_version=package_version,
-                    python_package_index_id=index.id,
-                )
-                self._refresh_rules_python_entity(session, entity)
-                HasVulnerability.get_or_create(
-                    session, cve_id=cve_instance.id, python_package_version_entity_id=entity.id
-                )
+            index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
+            entity, e = PythonPackageVersionEntity.get_or_create(
+                session,
+                package_name=package_name,
+                package_version=package_version,
+                python_package_index_id=index.id,
+            )
 
-                return False
+            self._refresh_rules_python_entity(session, entity)
+            _, existed = HasVulnerability.get_or_create(
+                session, cve_id=cve.id, python_package_version_entity_id=entity.id
+            )
+
+            return existed
 
     def update_missing_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool

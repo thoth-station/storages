@@ -384,11 +384,9 @@ class CVE(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
-    advisory = Column(Text, nullable=True)
-    cve_name = Column(Text, nullable=True)
-    cve_id = Column(Text, nullable=False, unique=True)
-    version_range = Column(Text, nullable=True)
     aggregated_at = Column(DateTime, nullable=True)
+    cve_id = Column(Text, nullable=False, unique=True)
+    details = Column(Text, nullable=False)
 
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
