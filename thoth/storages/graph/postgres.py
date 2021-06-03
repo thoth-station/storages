@@ -187,7 +187,9 @@ _GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVI
 _GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(
     os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096)
 )
-
+_GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE = int(
+    os.getenv("THOTH_GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE", 4096)
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -6268,6 +6270,7 @@ class GraphDatabase(SQLBase):
 
             return result
 
+    @lru_cache(maxsize=_GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE)
     def get_python_package_version_solver_rules_all(
         self,
         package_name: str,
