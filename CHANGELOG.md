@@ -10333,3 +10333,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_up: Automatic update of dependencies by Kebechet (#2312)
 * :whale: update the prow jobs resource requests (#2311)
 * :arrow_up: Automatic update of dependencies by Kebechet (#2309)
+
+## Release 0.44.0 (2021-06-03T10:57:21)
+### Features
+* Create a query for listing rules assigned for a specific package
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Adjust CVE model to consume vulnerabilities from pypa/advisory-db
+* :arrow_up: Automatic update of dependencies by Kebechet
+* :arrow_up: Automatic update of dependencies by Kebechet
