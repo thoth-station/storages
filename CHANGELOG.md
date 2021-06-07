@@ -10345,3 +10345,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.44.1 (2021-06-03T20:05:50)
 ### Features
 * Cache solver rules retrieval
+
+## Release 0.45.0 (2021-06-07T07:35:06)
+### Improvements
+* Implement adapter for accessing Argo Workflow logs
