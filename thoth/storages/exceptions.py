@@ -47,7 +47,7 @@ class DatabaseNotInitialized(ThothStorageException):
 
 
 class MultipleFoundError(ThothStorageException):
-    """Raised if there are multiple entities in the graph database when querying for a single one."""
+    """Raised if there are multiple entities when a method used requires just one present."""
 
 
 class PythonIndexNotRegistered(ThothStorageException):

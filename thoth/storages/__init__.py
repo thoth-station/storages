@@ -33,6 +33,7 @@ from .graph_backup import GraphBackupStore
 from .inspections import InspectionResultsStore
 from .inspections import InspectionBuildsStore
 from .inspections import InspectionStore
+from .logs import WorkflowLogsStore
 from .provenance import ProvenanceResultsStore
 from .provenance_cache import ProvenanceCacheStore
 from .result_schema import RESULT_SCHEMA
