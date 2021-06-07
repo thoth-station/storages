@@ -73,6 +73,7 @@ from .models import EcosystemSolver
 from .models import ExternalHardwareInformation
 from .models import ExternalPythonRequirements
 from .models import ExternalPythonRequirementsLock
+from .models import ExternalPythonSoftwareStack
 from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
 from .models import InspectionRun
