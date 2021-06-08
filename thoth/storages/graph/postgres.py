@@ -6141,7 +6141,15 @@ class GraphDatabase(SQLBase):
         """Add all rules that applies to the given entity stored in the database."""
         version = parse_version(entity.package_version)
 
-        for rule in self.get_python_rule_all(package_name=entity.package_name, index_url=entity.index.url, count=None):
+        rules = self.get_python_rule_all(package_name=entity.package_name, index_url=None, count=None)
+
+        if entity.index:
+            rules = itertools.chain(
+                rules,
+                self.get_python_rule_all(package_name=entity.package_name, index_url=entity.index.url, count=None),
+            )
+
+        for rule in rules:
             specifier = SpecifierSet(rule["version_range"])
             specifier.prereleases = True
 
