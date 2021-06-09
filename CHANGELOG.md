@@ -10349,3 +10349,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.45.0 (2021-06-07T07:35:06)
 ### Improvements
 * Implement adapter for accessing Argo Workflow logs
+
+## Release 0.45.1 (2021-06-09T11:12:48)
+### Features
+* missing model import for ExternalPythonSoftwareStack
+### Bug Fixes
+* Fix unknown index_url in entity when a rule is assigned
