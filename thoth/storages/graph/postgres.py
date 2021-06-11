@@ -3630,6 +3630,74 @@ class GraphDatabase(SQLBase):
                 return active_managers
             return []
 
+    def get_kebechet_github_installation_info_with_software_environment_all(
+        self,
+        *,
+        python_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+        image_sha: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        thoth_s2i_image_name: Optional[str] = None,
+        thoth_s2i_image_version: Optional[str] = None,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        environment_type: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get all github kebechet installations with optional filters on software environment
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_kebechet_github_installation_info_with_software_environment_all()
+        [
+            {
+                "id": 0,
+                "slug": "thoth-station/storages",
+                "repo_name": "storages",
+                "private": False,
+                "is_active": True,
+                "info_manager": True,
+                "pipfile_requirements_manager": True,
+                ...
+            },
+            ...
+        ]
+        :rtype: List[Dict[str, Any]]
+        :returns: A list of kebechet installations which match the applied filters
+        """
+        with self._session_scope() as session, session.begin(subtransactions=True):
+            query = (
+                session.query(KebechetGithubAppInstallations)
+                .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .join(ExternalSoftwareEnvironment)
+            )
+
+            if python_version:
+                query = query.filter(ExternalSoftwareEnvironment.python_version == python_version)
+            if image_name:
+                query = query.filter(ExternalSoftwareEnvironment.image_name == image_name)
+            if image_sha:
+                query = query.filter(ExternalSoftwareEnvironment.image_sha == image_sha)
+            if os_name:
+                query = query.filter(ExternalSoftwareEnvironment.os_name == map_os_name(os_name))
+            if os_version:
+                os_version = normalize_os_version(os_name, os_version)
+                query = query.filter(ExternalSoftwareEnvironment.os_version == os_version)
+            if thoth_s2i_image_name:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_name == thoth_s2i_image_name)
+            if thoth_s2i_image_version:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_version == thoth_s2i_image_version)
+            if env_image_name:
+                query = query.filter(ExternalSoftwareEnvironment.env_image_name == env_image_name)
+            if env_image_tag:
+                query = query.filter(ExternalSoftwareEnvironment.cuda_version == cuda_version)
+            if environment_type:
+                query = query.filter(ExternalSoftwareEnvironment.environment_type == environment_type)
+
+            return [i.to_dict() for i in query.all()]
+
     def get_kebechet_github_installations_info_for_python_package_version(
         self,
         package_name: str,
