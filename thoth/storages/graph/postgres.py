@@ -5091,7 +5091,7 @@ class GraphDatabase(SQLBase):
                 ecosystem="python",
                 solver_name=solver_name,
                 solver_version=solver_version,
-                os_name=map_os_name(os_name),
+                os_name=os_name,
                 os_version=normalize_os_version(os_name, os_version),
                 python_version=python_version,
             )
