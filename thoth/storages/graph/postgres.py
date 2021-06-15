@@ -153,6 +153,7 @@ from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
 from .enums import QuerySortTypeEnum
 from .enums import ThothAdviserIntegrationEnum
+from .enums import PlatformEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -2293,17 +2294,24 @@ class GraphDatabase(SQLBase):
 
             return result
 
-    def python_package_version_depends_on_platform_exists(self, platform: str) -> bool:
+    @staticmethod
+    def python_package_version_depends_on_platform_exists(platform: str) -> bool:
         """Check if the given platform has some records in the database."""
-        with self._session_scope() as session:
-            return session.query(exists().where(DependsOn.platform == platform)).scalar()
+        if platform in [p.value for p in PlatformEnum]:
+            return True
+        return False
 
-    def get_python_package_version_platform_all(self) -> List[str]:
-        """Retrieve all platforms stored in the database."""
-        with self._session_scope() as session:
-            result = session.query(DependsOn).with_entities(DependsOn.platform).distinct().all()
+    @staticmethod
+    def get_python_package_version_platform_all() -> List[str]:
+        """Retrieve all platforms stored in the database.
 
-            return list(itertools.chain(*result))
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_platform_all()
+        ['linux-x86_64']
+        """
+        return [p.value for p in PlatformEnum]
 
     @lru_cache(maxsize=_GET_DEPENDS_ON_CACHE_SIZE)
     def get_depends_on(
@@ -5238,6 +5246,9 @@ class GraphDatabase(SQLBase):
                                     dependency.get("marker"),
                                     dependency.get("extra"),
                                 )
+
+                            if not self.python_package_version_depends_on_platform_exists(platform=platform):
+                                raise NotFoundError(f"No platform {platform!r} registered")
 
                             DependsOn.get_or_create(
                                 session,
