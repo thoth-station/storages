@@ -1286,11 +1286,9 @@ class GraphDatabase(SQLBase):
         conditions = [PythonPackageVersionEntity.id == PythonPackageVersion.entity_id]
 
         if os_name:
-            os_name = map_os_name(os_name)
             conditions.append(PythonPackageVersion.os_name == os_name)
 
         if os_version:
-            os_version = normalize_os_version(os_name, os_version)
             conditions.append(PythonPackageVersion.os_version == os_version)
 
         if python_version:
@@ -1318,6 +1316,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_packages_all()
         [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1352,6 +1352,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_packages_all_versions()
         {'absl-py': [('0.1.10', 'https://pypi.org/simple'), ('0.2.1', 'https://pypi.org/simple')]}
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1398,6 +1400,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count()
         {('absl-py', '0.1.10', 'https://pypi.org/simple'): 1, ('absl-py', '0.2.1', 'https://pypi.org/simple'): 1}
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1452,6 +1456,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count_per_index(index_url='https://pypi.org/simple')
         {'https://pypi.org/simple': {('absl-py', '0.1.10'): 1, ('absl-py', '0.2.1'): 1}}
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session, index_url=index_url, os_name=os_name, os_version=os_version, python_version=python_version
@@ -1506,6 +1512,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_count_per_version(package_name='tensorflow')
         {'1.14.0rc0': {'https://pypi.org/simple': 1}, '1.13.0rc2': {'https://pypi.org/simple': 1}}
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1567,6 +1575,8 @@ class GraphDatabase(SQLBase):
         >>> graph.get_unsolved_python_package_versions_all()
         [('regex', '2018.11.7', 'https://pypi.org/simple'), ('tensorflow', '1.11.0', 'https://pypi.org/simple')]
         """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
@@ -1606,6 +1616,8 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> int:
         """Retrieve unsolved Python package versions number in Thoth Database."""
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_unsolved_python_package_versions_query(
                 session,
