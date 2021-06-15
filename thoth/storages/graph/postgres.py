@@ -2538,10 +2538,15 @@ class GraphDatabase(SQLBase):
 
             return [cve.to_dict() for cve in result]
 
-    def get_python_cve_records_count(self) -> int:
+    def get_python_cve_records_count(self, distinct: bool = True) -> int:
         """Get number of CVE in Thoth database."""
         with self._session_scope() as session:
-            return session.query(CVE.id).count()
+            query = session.query(CVE.cve_id)
+
+            if distinct:
+                query.distinct()
+
+            return query.count()
 
     def get_python_package_hashes_sha256(
         self, package_name: str, package_version: str, index_url: str, *, distinct: bool = False
