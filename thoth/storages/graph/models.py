@@ -42,6 +42,7 @@ from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
 from .enums import ThothAdviserIntegrationEnum
+from .enums import PlatformEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(
@@ -225,7 +226,14 @@ class DependsOn(Base, BaseExtension):
     marker = Column(Text, nullable=True)
     extra = Column(Text, nullable=True)
     marker_evaluation_result = Column(Boolean, nullable=False)
-    platform = Column(Text, nullable=False)
+    platform = Column(
+        ENUM(
+            *(e.name for e in PlatformEnum),
+            name="platform",
+            create_type=True,
+        ),
+        nullable=False,
+    )
 
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
