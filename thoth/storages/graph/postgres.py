@@ -5098,6 +5098,9 @@ class GraphDatabase(SQLBase):
         # Older solver documents did not provide platform explictly.
         platform = document["result"].get("platform") or "linux-x86_64"
 
+        if not self.python_package_version_depends_on_platform_exists(platform=platform):
+            raise NotFoundError(f"No platform {platform!r} registered")
+
         with self._session_scope() as session, session.begin(subtransactions=True):
             ecosystem_solver, _ = EcosystemSolver.get_or_create(
                 session,
@@ -5246,9 +5249,6 @@ class GraphDatabase(SQLBase):
                                     dependency.get("marker"),
                                     dependency.get("extra"),
                                 )
-
-                            if not self.python_package_version_depends_on_platform_exists(platform=platform):
-                                raise NotFoundError(f"No platform {platform!r} registered")
 
                             DependsOn.get_or_create(
                                 session,
