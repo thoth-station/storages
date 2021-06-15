@@ -10355,3 +10355,9 @@ Starting with this release we have a Zuul-CI pipeline that:
 * missing model import for ExternalPythonSoftwareStack
 ### Bug Fixes
 * Fix unknown index_url in entity when a rule is assigned
+
+## Release 0.46.0 (2021-06-15T08:39:54)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Add method for CVE count
+* :arrow_up: Automatic update of dependencies by Kebechet
