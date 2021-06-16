@@ -228,7 +228,7 @@ class DependsOn(Base, BaseExtension):
     marker_evaluation_result = Column(Boolean, nullable=False)
     platform = Column(
         ENUM(
-            *(e.name for e in PlatformEnum),
+            *(e.value for e in PlatformEnum),
             name="platform",
             create_type=True,
         ),
@@ -241,7 +241,6 @@ class DependsOn(Base, BaseExtension):
     __table_args__ = (
         Index("depends_on_version_id_idx", "version_id"),
         Index("depends_on_entity_id_idx", "entity_id"),
-        Index("depends_on_platform", "platform"),
         Index("depends_on_extra_marker_evaluation_result_idx", "extra", "marker_evaluation_result"),
     )
 
