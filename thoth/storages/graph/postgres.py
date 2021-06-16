@@ -2297,9 +2297,7 @@ class GraphDatabase(SQLBase):
     @staticmethod
     def python_package_version_depends_on_platform_exists(platform: str) -> bool:
         """Check if the given platform has some records in the database."""
-        if platform in [p.value for p in PlatformEnum]:
-            return True
-        return False
+        return platform in (p.value for p in PlatformEnum)
 
     @staticmethod
     def get_python_package_version_platform_all() -> List[str]:
