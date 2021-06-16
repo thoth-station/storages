@@ -88,5 +88,4 @@ class ThothAdviserIntegrationEnum(Enum):
 class PlatformEnum(Enum):
     """Class for platform enum."""
 
-    LINUX_X86_64 = 'linux-x86_64'
-
+    LINUX_X86_64 = "linux-x86_64"
