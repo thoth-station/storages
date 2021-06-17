@@ -10361,3 +10361,23 @@ Starting with this release we have a Zuul-CI pipeline that:
 * :arrow_up: Automatic update of dependencies by Kebechet
 * Add method for CVE count
 * :arrow_up: Automatic update of dependencies by Kebechet
+
+## Release 0.47.0 (2021-06-17T15:59:54)
+### Features
+* Introduce query for retrieving RPM packages for a container image analysis
+* add priority/critical-urgent label to all bot related issue templates
+* Adjust migrations
+* Fail as soon as possible
+* Add enum for platform and create migration
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Filter before session
+* make sure os_name is synced correctly in the database
+* this is redundant
+* :arrow_up: updated labels of issue templates
+* :arrow_up: update CI/CD configuration
+### Improvements
+* adjust method
+* make pre-commit happy
+* Adjust query and sync logic
+* adjust all methods
+* :arrow_up: some standard updates or reformatting
