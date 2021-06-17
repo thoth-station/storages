@@ -6368,3 +6368,16 @@ class GraphDatabase(SQLBase):
                 .with_entities(PythonPackageVersionEntityRule.description)
                 .all()
             ]
+
+    def get_rpm_package_version_all(self, analysis_document_id: str) -> List[Dict[str, str]]:
+        """Retrieve RPM package information for the given container image analysis."""
+        with self._session_scope() as session:
+            query = (
+                session.query(PackageExtractRun)
+                .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
+                .join(FoundRPM)
+                .join(RPMPackageVersion)
+                .with_entities(RPMPackageVersion)
+            )
+
+            return [i.to_dict() for i in query.all()]
