@@ -185,6 +185,7 @@ _GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE = int(
     os.getenv("THOTH_STORAGE_GET_PYTHON_PACKAGE_REQUIRED_SYMBOLS_CACHE_SIZE", 4096)
 )
 _GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096))
+_GET_S2I_ANALYZED_IMAGE_SYMBOLS = int(os.getenv("THOTH_S2I_ANALYZED_IMAGE_SYMBOLS_CACHE_SIZE", 1))
 _GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(
     os.getenv("THOTH_GET_PYTHON_ENVIRONMENT_MARKER_CACHE_SIZE", 4096)
 )
@@ -5791,6 +5792,7 @@ class GraphDatabase(SQLBase):
             # Query returns list of single tuples (empty if bad request)
             return [i[0] for i in query.all()]
 
+    @lru_cache(maxsize=_GET_S2I_ANALYZED_IMAGE_SYMBOLS)
     def get_thoth_s2i_analyzed_image_symbols_all(
         self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
     ) -> List[str]:
