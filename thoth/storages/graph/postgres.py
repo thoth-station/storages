@@ -2532,6 +2532,26 @@ class GraphDatabase(SQLBase):
                 > 0
             )
 
+    def get_last_analysis_document_id(
+        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, *, is_external: bool = False
+    ) -> Optional[Dict[str, str]]:
+        """Get last image analysis (if any) for the given container image."""
+        model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            result = (
+                session.query(PackageExtractRun)
+                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
+                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .order_by(PackageExtractRun.datetime.desc())
+                .with_entities(PackageExtractRun.analysis_document_id)
+                .first()
+            )
+
+            if not result:
+                return None
+
+            return result[0]
+
     def inspection_document_id_exist(self, inspection_document_id: str) -> bool:
         """Check if there is an inspection document record with the given id."""
         with self._session_scope() as session:
