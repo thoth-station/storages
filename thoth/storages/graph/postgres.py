@@ -192,6 +192,8 @@ _GET_SI_AGGREGATED_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(
 _GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE = int(
     os.getenv("THOTH_GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE", 4096)
 )
+_GET_RPM_PACKAGE_VERSION_CACHE_SIZE = int(os.getenv("THOTH_GET_RPM_PACKAGE_VERSION_CACHE_SIZE", 1))
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -6389,6 +6391,7 @@ class GraphDatabase(SQLBase):
                 .all()
             ]
 
+    @lru_cache(maxsize=_GET_RPM_PACKAGE_VERSION_CACHE_SIZE)
     def get_rpm_package_version_all(self, analysis_document_id: str) -> List[Dict[str, str]]:
         """Retrieve RPM package information for the given container image analysis."""
         with self._session_scope() as session:
