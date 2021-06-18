@@ -10381,3 +10381,10 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Adjust query and sync logic
 * adjust all methods
 * :arrow_up: some standard updates or reformatting
+
+## Release 0.48.0 (2021-06-18T08:00:25)
+### Features
+* Introduce query for obtaining last container image analysis
+* Cache query for retrieving RPM versions from the database
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Cache S2I image symbols query
