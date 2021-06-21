@@ -1,6 +1,22 @@
 Thoth Storages
 --------------
 
+.. image:: https://img.shields.io/github/v/tag/thoth-station/storages?style=plastic
+  :target: https://github.com/thoth-station/storages/releases
+  :alt: GitHub tag (latest by date)
+
+.. image:: https://img.shields.io/pypi/v/thoth-storages?style=plastic
+  :target: https://pypi.org/project/thoth-storages
+  :alt: PyPI - Module Version
+
+.. image:: https://img.shields.io/pypi/l/thoth-storages?style=plastic
+  :target: https://pypi.org/project/thoth-storages
+  :alt: PyPI - License
+
+.. image:: https://img.shields.io/pypi/dm/thoth-storages?style=plastic
+  :target: https://pypi.org/project/thoth-storages
+  :alt: PyPI - Downloads
+
 This library provides a library called `thoth-storages
 <https://pypi.org/project/thoth-storages>`__ used in project `Thoth
 <https://thoth-station.ninja>`__.  The library exposes core queries and methods
