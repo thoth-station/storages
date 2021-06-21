@@ -799,11 +799,11 @@
         },
         "thoth-common": {
             "hashes": [
-                "sha256:61208804215c7bd703f062f80212a55e58c600f384de32c442fac19a90402020",
-                "sha256:af8c2379d66591e08d1bc19c5415045a39daf13b0fedcf1d6338a193a8c9135b"
+                "sha256:4bcefb14c3a2cbf315edcc029b48ce0c5db60ed274ae6e5fe2b5d530b0491321",
+                "sha256:ff0fd009cac961666507a61d67a6ae49b721a3cab4e799e68675a9218e60df06"
             ],
             "index": "pypi",
-            "version": "==0.29.1"
+            "version": "==0.30.0"
         },
         "thoth-python": {
             "hashes": [
