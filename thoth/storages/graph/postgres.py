@@ -26,6 +26,7 @@ import itertools
 import weakref
 import ssdeep
 
+from decimal import Decimal
 from typing import List
 from typing import Set
 from typing import Tuple
@@ -5992,10 +5993,206 @@ class GraphDatabase(SQLBase):
                 _LOGGER.error(e)
                 return True
 
-    def get_bloat_data(self) -> dict:
-        """Get bloat data."""
-        # Reference: https://raw.githubusercontent.com/pgexperts/pgx_scripts/master/bloat/table_bloat_check.sql
+    def get_index_bloat_data(self) -> List[Dict[str, Any]]:
+        """Get index bloat data.
 
+        documenation: https://raw.githubusercontent.com/pgexperts/pgx_scripts/master/bloat/index_bloat_check.sql
+        It returns data for each index/table present in the database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_index_bloat_data()
+        [
+            {
+                'database_name': 'postgres',
+                'schema_name': 'public',
+                'table_name': 'depends_on',
+                'index_name': 'depends_on_entity_id_idx',
+                'bloat_pct': 11.0,
+                'bloat_mb': 623.0,
+                'index_mb': 5821.516,
+                'table_mb': 14053.625,
+                'index_scans': 2
+            },
+            {
+                'database_name': 'postgres',
+                'schema_name': 'public',
+                'table_name': 'python_package_version',
+                'index_name': 'python_package_version_package_name_package_version_python__key',
+                'bloat_pct': 43.0,
+                'bloat_mb': 35.0,
+                'index_mb': 35.0,
+                'table_mb': 111.344,
+                'index_scans': 0
+            }, ...
+        ]
+        """
+        # btree index stats query estimates bloat for btree indexes
+        btree_index_atts = """SELECT nspname,
+            indexclass.relname as index_name,
+            indexclass.reltuples,
+            indexclass.relpages,
+            indrelid, indexrelid,
+            indexclass.relam,
+            tableclass.relname as tablename,
+            regexp_split_to_table(indkey::text, ' ')::smallint AS attnum,
+            indexrelid as index_oid
+        FROM pg_index
+        JOIN pg_class AS indexclass ON pg_index.indexrelid = indexclass.oid
+        JOIN pg_class AS tableclass ON pg_index.indrelid = tableclass.oid
+        JOIN pg_namespace ON pg_namespace.oid = indexclass.relnamespace
+        JOIN pg_am ON indexclass.relam = pg_am.oid
+        WHERE pg_am.amname = 'btree' and indexclass.relpages > 0
+            AND nspname NOT IN ('pg_catalog','information_schema')"""
+
+        index_item_sizes = """SELECT
+            ind_atts.nspname, ind_atts.index_name,
+            ind_atts.reltuples, ind_atts.relpages, ind_atts.relam,
+            indrelid AS table_oid, index_oid,
+            current_setting('block_size')::numeric AS bs,
+            8 AS maxalign,
+            24 AS pagehdr,
+            CASE WHEN max(coalesce(pg_stats.null_frac,0)) = 0
+                THEN 2
+                ELSE 6
+            END AS index_tuple_hdr,
+            sum( (1-coalesce(pg_stats.null_frac, 0)) * coalesce(pg_stats.avg_width, 1024) ) AS nulldatawidth
+            FROM pg_attribute
+            JOIN btree_index_atts AS ind_atts ON pg_attribute.attrelid = ind_atts.indexrelid AND pg_attribute.attnum = ind_atts.attnum
+            JOIN pg_stats ON pg_stats.schemaname = ind_atts.nspname
+                -- stats for regular index columns
+                AND ( (pg_stats.tablename = ind_atts.tablename AND pg_stats.attname = pg_catalog.pg_get_indexdef(pg_attribute.attrelid, pg_attribute.attnum, TRUE))
+                -- stats for functional indexes
+                OR   (pg_stats.tablename = ind_atts.index_name AND pg_stats.attname = pg_attribute.attname))
+            WHERE pg_attribute.attnum > 0
+            GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9"""
+
+        index_aligned_est = """SELECT maxalign, bs, nspname, index_name, reltuples,
+            relpages, relam, table_oid, index_oid,
+            coalesce (
+                ceil (
+                    reltuples * ( 6
+                        + maxalign
+                        - CASE
+                            WHEN index_tuple_hdr%maxalign = 0 THEN maxalign
+                            ELSE index_tuple_hdr%maxalign
+                        END
+                        + nulldatawidth
+                        + maxalign
+                        - CASE /* Add padding to the data to align on MAXALIGN */
+                            WHEN nulldatawidth::integer%maxalign = 0 THEN maxalign
+                            ELSE nulldatawidth::integer%maxalign
+                        END
+                    )::numeric
+                / ( bs - pagehdr::NUMERIC )
+                +1 )
+            , 0 )
+        as expected
+        FROM index_item_sizes"""
+
+        raw_bloat = """SELECT current_database() as dbname, nspname, pg_class.relname AS table_name, index_name,
+            bs*(index_aligned_est.relpages)::bigint AS totalbytes, expected,
+            CASE
+                WHEN index_aligned_est.relpages <= expected
+                    THEN 0
+                    ELSE bs*(index_aligned_est.relpages-expected)::bigint
+                END AS wastedbytes,
+            CASE
+                WHEN index_aligned_est.relpages <= expected
+                    THEN 0
+                    ELSE bs*(index_aligned_est.relpages-expected)::bigint * 100 / (bs*(index_aligned_est.relpages)::bigint)
+                END AS realbloat,
+            pg_relation_size(index_aligned_est.table_oid) as table_bytes,
+            stat.idx_scan as index_scans
+            FROM index_aligned_est
+            JOIN pg_class ON pg_class.oid=index_aligned_est.table_oid
+            JOIN pg_stat_user_indexes AS stat ON index_aligned_est.index_oid = stat.indexrelid"""
+
+        format_bloat = """SELECT dbname as database_name, nspname as schema_name, table_name, index_name,
+            round(realbloat) as bloat_pct, round(wastedbytes/(1024^2)::NUMERIC) as bloat_mb,
+            round(totalbytes/(1024^2)::NUMERIC,3) as index_mb,
+            round(table_bytes/(1024^2)::NUMERIC,3) as table_mb,
+            index_scans
+            FROM raw_bloat"""
+
+        with self._session_scope() as session:
+            tables = session.execute(
+                f"WITH btree_index_atts AS ({btree_index_atts}),\
+                index_item_sizes AS ({index_item_sizes}),\
+                index_aligned_est AS ({index_aligned_est}),\
+                raw_bloat AS ({raw_bloat}),\
+                format_bloat AS ({format_bloat})\
+                SELECT *\
+                FROM format_bloat\
+                ORDER BY bloat_mb DESC; "
+            )
+
+        return self._process_bloat_data_results(tables=tables)
+
+    @staticmethod
+    def _process_bloat_data_results(tables: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        processed_bloat_data = []
+
+        for table in tables:
+            bloat_data = {}
+
+            if "pct_bloat" in table.keys() or "mb_bloat" in table.keys():
+                if table["pct_bloat"] is None:
+                    continue
+
+                if table["mb_bloat"] is None:
+                    continue
+
+            for column, value in table.items():
+                if isinstance(value, Decimal):
+                    bloat_data[column] = float(value)
+                else:
+                    bloat_data[column] = value
+
+            processed_bloat_data.append(bloat_data)
+
+        return processed_bloat_data
+
+    def get_bloat_data(self) -> List[Dict[str, Any]]:
+        """Get table bloat data.
+
+        documenation: https://raw.githubusercontent.com/pgexperts/pgx_scripts/master/bloat/table_bloat_check.sql
+        It returns data for each table present in the database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_bloat_data()
+        [
+            {
+                'databasename': 'postgres',
+                'schemaname': 'public',
+                'tablename': 'advised',
+                'can_estimate': True,
+                'table_bytes': 49152.0,
+                'table_mb': 0.047,
+                'expected_bytes': 49152.0,
+                'expected_mb': 0.047,
+                'pct_bloat': 0.0,
+                'mb_bloat': 0.0,
+                'est_rows': 1158.0
+            },
+            {
+                'databasename': 'postgres',
+                'schemaname': 'public',
+                'tablename': 'adviser_run',
+                'can_estimate': True,
+                'table_bytes': 720896.0,
+                'table_mb': 0.688,
+                'expected_bytes': 712704.0,
+                'expected_mb': 0.68,
+                'pct_bloat': 1.0,
+                'mb_bloat': 0.01,
+                'est_rows': 3600.0
+            }, ...
+        ]
+        """
         # define some constants for sizes of things
         # for reference down the query and easy maintenance
         constants = "SELECT current_setting('block_size')::numeric AS bs, 23 AS hdr, 8 AS ma"
@@ -6110,7 +6307,7 @@ class GraphDatabase(SQLBase):
         FROM table_estimates_plus"""
 
         with self._session_scope() as session:
-            resultproxy = session.execute(
+            tables = session.execute(
                 f"WITH constants AS ({constants}),\
                 no_stats AS ({no_stats}),\
                 null_headers AS ({null_headers}),\
@@ -6121,11 +6318,7 @@ class GraphDatabase(SQLBase):
                 + bloat_data
             )
 
-            result = [{column: value for column, value in rowproxy.items()} for rowproxy in resultproxy]
-
-        bloat_data = [table for table in result if table["pct_bloat"] is not None or table["mb_bloat"] is not None]
-
-        return bloat_data
+        return self._process_bloat_data_results(tables=tables)
 
     def delete_solved(self, *, os_name: str, os_version: str, python_version: str) -> int:
         """Delete corresponding solver data."""
