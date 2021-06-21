@@ -10388,3 +10388,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Cache query for retrieving RPM versions from the database
 * :arrow_up: Automatic update of dependencies by Kebechet
 * Cache S2I image symbols query
+
+## Release 0.49.0 (2021-06-21T10:39:47)
+### Features
+* Introduce query for index bloat data
