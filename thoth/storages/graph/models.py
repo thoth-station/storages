@@ -226,15 +226,6 @@ class DependsOn(Base, BaseExtension):
     marker = Column(Text, nullable=True)
     extra = Column(Text, nullable=True)
     marker_evaluation_result = Column(Boolean, nullable=False)
-    platform = Column(
-        ENUM(
-            *(e.value for e in PlatformEnum),
-            name="platform",
-            create_type=True,
-        ),
-        nullable=False,
-    )
-
     entity = relationship("PythonPackageVersionEntity", back_populates="versions")
     version = relationship("PythonPackageVersion", back_populates="dependencies")
 
