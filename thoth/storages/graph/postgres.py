@@ -2301,7 +2301,6 @@ class GraphDatabase(SQLBase):
                     DependsOn.marker_evaluation_result,
                     DependsOn.marker,
                     DependsOn.extra,
-                    DependsOn.platform,
                 )
                 .all()
             )
@@ -2317,7 +2316,6 @@ class GraphDatabase(SQLBase):
                         "marker_evaluation_result": entry[4],
                         "marker": entry[5],
                         "extra": entry[6],
-                        "platform": entry[7],
                     }
                 )
 
@@ -2352,7 +2350,6 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         extras: FrozenSet[Optional[str]] = None,
         marker_evaluation_result: Optional[bool] = None,
-        platform: Optional[str] = None,
         is_missing: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
         """Get dependencies for the given Python package respecting environment and extras.
@@ -2418,9 +2415,6 @@ class GraphDatabase(SQLBase):
 
             if marker_evaluation_result is not None:
                 query = query.filter(DependsOn.marker_evaluation_result == marker_evaluation_result)
-
-            if platform is not None:
-                query = query.filter(DependsOn.platform == platform)
 
             dependencies = (
                 query.join(PythonPackageVersionEntity)
@@ -5141,7 +5135,6 @@ class GraphDatabase(SQLBase):
                     marker=entry["marker"],
                     extra=entry["extra"],
                     marker_evaluation_result=entry["marker_evaluation_result"],
-                    platform=entry["platform"],
                 )
 
     def _check_package_solved(
@@ -5394,7 +5387,6 @@ class GraphDatabase(SQLBase):
                                 marker=dependency.get("marker"),
                                 extra=dependency["extra"][0] if dependency.get("extra") else None,
                                 marker_evaluation_result=dependency.get("marker_evaluation_result", True),
-                                platform=platform,
                             )
 
             for error_info in document["result"]["errors"]:
