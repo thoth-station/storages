@@ -81,7 +81,6 @@ class ThothAdviserIntegrationEnum(Enum):
     CLI = auto()
     KEBECHET = auto()
     S2I = auto()
-    GITHUB_APP = auto()
     JUPYTER_NOTEBOOK = auto()
 
 
