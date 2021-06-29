@@ -10392,3 +10392,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.49.0 (2021-06-21T10:39:47)
 ### Features
 * Introduce query for index bloat data
+
+## Release 0.50.0 (2021-06-29T17:57:39)
+### Features
+* :cloud: Deprecated the platform column form the dependsOn table
+* :arrow_up: Automatic update of dependencies by Kebechet
+* add query for filtering git app installations by software environments used
+* :medal_sports: set badges for easy access to content (#2372)
+* :arrow_up: Automatic update of dependencies by Kebechet
