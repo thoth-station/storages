@@ -1585,12 +1585,18 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
 
     __tablename__ = "kebechet_github_installations"
 
+    __table_args__ = (
+        # this can be db.PrimaryKeyConstraint if you want it to be a primary key
+        UniqueConstraint("slug", "runtime_environment_name"),
+    )
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     slug = Column(Text, nullable=False, unique=True)
     repo_name = Column(Text, nullable=False)
     private = Column(Boolean, nullable=False)
     installation_id = Column(Text, nullable=False)
     is_active = Column(Boolean, nullable=False)
+    runtime_environment_name = Column(Text, nullable=True)
     # Kebechet managers activated per repo
     info_manager = Column(Boolean, nullable=False, server_default="false")
     pipfile_requirements_manager = Column(Boolean, nullable=False, server_default="false")
