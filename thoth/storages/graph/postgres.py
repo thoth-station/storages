@@ -195,6 +195,7 @@ _GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE = int(
     os.getenv("THOTH_GET_PYTHON_PYTHON_PACKAGE_VERSION_SOLVER_RULES_CACHE_SIZE", 4096)
 )
 _GET_RPM_PACKAGE_VERSION_CACHE_SIZE = int(os.getenv("THOTH_GET_RPM_PACKAGE_VERSION_CACHE_SIZE", 1))
+_GET_PYTHON_PACKAGE_VERSION_CACHE_SIZE = int(os.getenv("THOTH_GET_PYTHON_PACKAGE_VERSION_CACHE_SIZE", 1))
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -4810,31 +4811,11 @@ class GraphDatabase(SQLBase):
         software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment],
     ) -> None:
         """Sync results of Python packages found in the given container image."""
-        for python_package_info in document["result"]["mercator"] or []:
-            if python_package_info["ecosystem"] == "Python-RequirementsTXT":
-                # We don't want to sync found requirement.txt artifacts as
-                # they do not carry any valuable information for us.
-                continue
-
-            if "result" not in python_package_info or "error" in python_package_info["result"]:
-                # Mercator was unable to process this - e.g. there was a
-                # setup.py that is not distutils setup.py
-                _LOGGER.info("Skipping error entry - %r", python_package_info)
-                continue
-
-            if not python_package_info["result"].get("name"):
-                analysis_document_id = AnalysisResultsStore.get_document_id(document)
-                _LOGGER.warning(
-                    "No package name found in entry %r when syncing document %r",
-                    python_package_info,
-                    analysis_document_id,
-                )
-                continue
-
+        for python_package_info in document["result"].get("python-packages") or []:
             python_package_version_entity = self._create_python_package_version(
                 session,
-                package_name=python_package_info["result"]["name"],
-                package_version=python_package_info["result"]["version"],
+                package_name=python_package_info["package_name"],
+                package_version=python_package_info["package_version"],
                 os_name=software_environment.os_name,
                 os_version=software_environment.os_version,
                 python_version=software_environment.python_version,
@@ -4846,6 +4827,7 @@ class GraphDatabase(SQLBase):
                 session,
                 package_extract_run_id=package_extract_run.id,
                 python_package_version_entity_id=python_package_version_entity.id,
+                location=python_package_info["location"],
             )
 
     @staticmethod
@@ -6659,3 +6641,21 @@ class GraphDatabase(SQLBase):
             )
 
             return [i.to_dict() for i in query.all()]
+
+    @lru_cache(maxsize=_GET_RPM_PACKAGE_VERSION_CACHE_SIZE)
+    def get_python_package_version_all(self, analysis_document_id: str) -> List[Dict[str, str]]:
+        """Retrieve Python package information for the given container image analysis."""
+        with self._session_scope() as session:
+            query = (
+                session.query(PackageExtractRun)
+                .filter(PackageExtractRun.analysis_document_id == analysis_document_id)
+                .join(Identified)
+                .join(PythonPackageVersionEntity)
+                .with_entities(
+                    Identified.location,
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                )
+            )
+
+            return [{"package_name": i[1], "package_version": i[2], "location": i[0]} for i in query.all()]
