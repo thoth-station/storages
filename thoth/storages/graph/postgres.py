@@ -62,6 +62,7 @@ from thoth.common.helpers import format_datetime
 from thoth.common import OpenShift
 from thoth.common import normalize_os_version
 from thoth.common import map_os_name
+from thoth.common.enums import ThothAdviserIntegrationEnum
 
 from .models_base import BaseExtension
 from .models import AdviserRun
@@ -153,7 +154,6 @@ from .enums import SoftwareStackTypeEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
 from .enums import QuerySortTypeEnum
-from .enums import ThothAdviserIntegrationEnum
 from .enums import PlatformEnum
 
 from ..analyses import AnalysisResultsStore

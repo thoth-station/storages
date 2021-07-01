@@ -31,6 +31,8 @@ from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import Index
 
+from thoth.common.enums import ThothAdviserIntegrationEnum
+
 from .models_base import BaseExtension
 from .models_base import Base
 from .models_base import get_python_package_version_index_combinations
@@ -41,7 +43,6 @@ from .enums import RecommendationTypeEnum
 from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
-from .enums import ThothAdviserIntegrationEnum
 from .enums import PlatformEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
