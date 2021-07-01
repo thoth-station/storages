@@ -75,16 +75,6 @@ class QuerySortTypeEnum(Enum):
     PACKAGE_VERSION = "package_version"
 
 
-class ThothAdviserIntegrationEnum(Enum):
-    """Class for source type enum."""
-
-    CLI = auto()
-    KEBECHET = auto()
-    S2I = auto()
-    GITHUB_APP = auto()
-    JUPYTER_NOTEBOOK = auto()
-
-
 class PlatformEnum(Enum):
     """Class for platform enum."""
 
