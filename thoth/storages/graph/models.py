@@ -902,6 +902,7 @@ class Identified(Base, BaseExtension):
     python_package_version_entity_id = Column(
         Integer, ForeignKey("python_package_version_entity.id", ondelete="CASCADE"), primary_key=True
     )
+    location = Column(Text, nullable=False)
 
     package_extract_run = relationship("PackageExtractRun", back_populates="python_package_version_entities")
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="package_extract_runs")
