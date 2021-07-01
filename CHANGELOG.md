@@ -10400,3 +10400,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 * add query for filtering git app installations by software environments used
 * :medal_sports: set badges for easy access to content (#2372)
 * :arrow_up: Automatic update of dependencies by Kebechet
+
+## Release 0.51.0 (2021-07-01T16:10:08)
+### Improvements
+* Adjust Python package syncing logic and query for Python packages present
