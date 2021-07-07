@@ -3706,7 +3706,7 @@ class GraphDatabase(SQLBase):
     def get_kebechet_github_installations_active_managers_count_all(
         self,
         kebechet_manager: str,
-    ) -> list:
+    ) -> int:
         """Return the number of repos with specific manager active.
 
         :rtype: int
