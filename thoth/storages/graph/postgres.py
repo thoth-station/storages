@@ -155,6 +155,7 @@ from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
 from .enums import QuerySortTypeEnum
 from .enums import PlatformEnum
+from .enums import KebechetManagerEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
@@ -3675,26 +3676,71 @@ class GraphDatabase(SQLBase):
 
     def get_kebechet_github_installations_active_managers(self, slug: str) -> list:
         """Return the list of active managers for a particular repository.
-        Passed a slug name to be deactivated.
-        Example - slug:'thoth-station/advisor'
-        :rtype: List
-        :returns List of manager currently activated for the repo.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_kebechet_github_installations_active_managers(
+            slug="thoth-station/srcops-testing"
+        )
+        ['thoth_advise_manager']
         """
         with self._session_scope() as session:
             instance = (
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.is_active.is_(True))
                 .filter(KebechetGithubAppInstallations.slug == slug)
+                .with_entities(
+                    KebechetGithubAppInstallations.info_manager,
+                    KebechetGithubAppInstallations.pipfile_requirements_manager,
+                    KebechetGithubAppInstallations.update_manager,
+                    KebechetGithubAppInstallations.version_manager,
+                    KebechetGithubAppInstallations.thoth_advise_manager,
+                    KebechetGithubAppInstallations.thoth_provenance_manager,
+                )
                 .first()
             )
-            if instance:
-                active_managers = []
-                for attr in dir(instance):
-                    if attr.endswith("manager") and not callable(getattr(instance, attr)):
-                        if getattr(instance, attr) == True:
-                            active_managers.append(attr)
-                return active_managers
-            return []
+
+            return [manager for manager, is_active in instance._asdict().items() if is_active == True]
+
+    def get_kebechet_github_installations_active_managers_count_all(
+        self,
+        kebechet_manager: str,
+    ) -> list:
+        """Return the number of repos with specific manager active.
+
+        :rtype: int
+        :returns Number of active records for registered Kebechet manager.
+        """
+        if kebechet_manager not in KebechetManagerEnum._member_names_:
+            raise NotFoundError(
+                f"Manager {kebechet_manager!r} is not valid manager name. "
+                f"Registered managers names are: {KebechetManagerEnum._member_names_!r}"
+            )
+        with self._session_scope() as session:
+            query = session.query(KebechetGithubAppInstallations).filter(
+                KebechetGithubAppInstallations.is_active.is_(True)
+            )
+
+            if kebechet_manager == KebechetManagerEnum.info_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.info_manager.is_(True))
+
+            if kebechet_manager == KebechetManagerEnum.pipfile_requirements_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.pipfile_requirements_manager.is_(True))
+
+            if kebechet_manager == KebechetManagerEnum.update_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.update_manager.is_(True))
+
+            if kebechet_manager == KebechetManagerEnum.version_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.version_manager.is_(True))
+
+            if kebechet_manager == KebechetManagerEnum.thoth_advise_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.thoth_advise_manager.is_(True))
+
+            if kebechet_manager == KebechetManagerEnum.thoth_provenance_manager.name:
+                query = query.filter(KebechetGithubAppInstallations.thoth_provenance_manager.is_(True))
+
+            return query.count()
 
     def get_kebechet_github_installation_info_with_software_environment_all(
         self,
