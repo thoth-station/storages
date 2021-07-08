@@ -10404,3 +10404,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ## Release 0.51.0 (2021-07-01T16:10:08)
 ### Improvements
 * Adjust Python package syncing logic and query for Python packages present
+
+## Release 0.52.0 (2021-07-08T17:17:10)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Adjust return type
+* Adjust/Add kebechet managers queries
+* Use common enums
+* Remove qeb-hwt integration
