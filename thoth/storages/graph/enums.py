@@ -79,3 +79,14 @@ class PlatformEnum(Enum):
     """Class for platform enum."""
 
     LINUX_X86_64 = "linux-x86_64"
+
+
+class KebechetManagerEnum(Enum):
+    """Class for Kebechet manager enum."""
+
+    info_manager = 1
+    pipfile_requirements_manager = 2
+    update_manager = 3
+    version_manager = 4
+    thoth_advise_manager = 5
+    thoth_provenance_manager = 6
