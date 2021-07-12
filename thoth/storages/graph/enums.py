@@ -84,9 +84,9 @@ class PlatformEnum(Enum):
 class KebechetManagerEnum(Enum):
     """Class for Kebechet manager enum."""
 
-    info_manager = 1
-    pipfile_requirements_manager = 2
-    update_manager = 3
-    version_manager = 4
-    thoth_advise_manager = 5
-    thoth_provenance_manager = 6
+    INFO_MANAGER = 1
+    PIPFILE_REQUIREMENTS_MANAGER = 2
+    UPDATE_MANAGER = 3
+    VERSION_MANAGER = 4
+    THOTH_ADVISE_MANAGER = 5
+    THOTH_PROVENANCE_MANAGER = 6
