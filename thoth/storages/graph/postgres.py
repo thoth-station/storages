@@ -3704,8 +3704,7 @@ class GraphDatabase(SQLBase):
             return [manager for manager, is_active in instance._asdict().items() if is_active == True]
 
     def get_kebechet_github_installations_active_managers_count_all(
-        self,
-        kebechet_manager: str,
+        self, kebechet_manager: str, distinct: bool = False
     ) -> int:
         """Return the number of repos with specific manager active.
 
@@ -3722,23 +3721,26 @@ class GraphDatabase(SQLBase):
                 KebechetGithubAppInstallations.is_active.is_(True)
             )
 
-            if kebechet_manager == KebechetManagerEnum.info_manager.name:
+            if kebechet_manager == KebechetManagerEnum.INFO_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.info_manager.is_(True))
 
-            if kebechet_manager == KebechetManagerEnum.pipfile_requirements_manager.name:
+            if kebechet_manager == KebechetManagerEnum.PIPFILE_REQUIREMENTS_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.pipfile_requirements_manager.is_(True))
 
-            if kebechet_manager == KebechetManagerEnum.update_manager.name:
+            if kebechet_manager == KebechetManagerEnum.UPDATE_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.update_manager.is_(True))
 
-            if kebechet_manager == KebechetManagerEnum.version_manager.name:
+            if kebechet_manager == KebechetManagerEnum.VERSION_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.version_manager.is_(True))
 
-            if kebechet_manager == KebechetManagerEnum.thoth_advise_manager.name:
+            if kebechet_manager == KebechetManagerEnum.THOTH_ADVISE_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.thoth_advise_manager.is_(True))
 
-            if kebechet_manager == KebechetManagerEnum.thoth_provenance_manager.name:
+            if kebechet_manager == KebechetManagerEnum.THOTH_PROVENANCE_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.thoth_provenance_manager.is_(True))
+
+            if distinct:
+                query = query.distinct()
 
             return query.count()
 
