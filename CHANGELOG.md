@@ -10412,3 +10412,8 @@ Starting with this release we have a Zuul-CI pipeline that:
 * Adjust/Add kebechet managers queries
 * Use common enums
 * Remove qeb-hwt integration
+
+## Release 0.52.1 (2021-07-12T08:28:15)
+### Features
+* Adjust query and enums
+* :arrow_up: Automatic update of dependencies by Kebechet
