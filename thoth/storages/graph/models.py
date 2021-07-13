@@ -740,6 +740,7 @@ class PythonPackageIndex(Base, BaseExtension):
     warehouse_api_url = Column(Text, nullable=True, default=None)
     verify_ssl = Column(Boolean, nullable=False, default=True)
     enabled = Column(Boolean, default=False)
+    only_if_package_seen = Column(Boolean, nullable=False, default=True)
 
     python_package_versions = relationship("PythonPackageVersion", back_populates="index")
     python_package_requirements = relationship("PythonPackageRequirement", back_populates="index")
