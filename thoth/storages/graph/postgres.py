@@ -6584,7 +6584,7 @@ class GraphDatabase(SQLBase):
             rule = PythonPackageVersionEntityRule(
                 package_name=package_name,
                 version_range=str(SpecifierSet(version_specifier or "")),
-                index=index,
+                python_package_index_id=index.id,
                 description=description,
             )
             session.add(rule)
