@@ -2691,7 +2691,7 @@ class GraphDatabase(SQLBase):
                     session.add(python_package_index)
                     return False
 
-    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, str]]:
+    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, Any]]:
         """Get listing of Python package indexes registered in the graph database."""
         with self._session_scope() as session:
             query = session.query(
