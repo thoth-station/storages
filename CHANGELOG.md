@@ -10417,3 +10417,11 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Features
 * Adjust query and enums
 * :arrow_up: Automatic update of dependencies by Kebechet
+
+## Release 0.53.0 (2021-07-14T10:47:08)
+### Features
+* Adjust return value type
+* :arrow_up: Automatic update of dependencies by Kebechet
+### Improvements
+* Extend Python package index with only_packages_seen attribute
+* Fix index assignment in solver rule creation
