@@ -2661,7 +2661,12 @@ class GraphDatabase(SQLBase):
             session.commit()
 
     def register_python_package_index(
-        self, url: str, warehouse_api_url: Optional[str] = None, verify_ssl: bool = True, enabled: bool = False
+        self,
+        url: str,
+        warehouse_api_url: Optional[str] = None,
+        verify_ssl: bool = True,
+        enabled: bool = False,
+        only_if_package_seen: bool = True,
     ) -> bool:
         """Register the given Python package index in the graph database."""
         with self._session_scope() as session:
@@ -2669,7 +2674,11 @@ class GraphDatabase(SQLBase):
             if python_package_index is None:
                 with session.begin(subtransactions=True):
                     python_package_index = PythonPackageIndex(
-                        url=url, warehouse_api_url=warehouse_api_url, verify_ssl=verify_ssl, enabled=enabled
+                        url=url,
+                        warehouse_api_url=warehouse_api_url,
+                        verify_ssl=verify_ssl,
+                        enabled=enabled,
+                        only_if_package_seen=only_if_package_seen,
                     )
                     session.add(python_package_index)
                     return True
@@ -2677,21 +2686,28 @@ class GraphDatabase(SQLBase):
                 python_package_index.warehouse_api_url = warehouse_api_url
                 python_package_index.verify_ssl = verify_ssl
                 python_package_index.enabled = enabled
+                python_package_index.only_if_package_seen = only_if_package_seen
                 with session.begin(subtransactions=True):
                     session.add(python_package_index)
                     return False
 
-    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, str]]:
+    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, Any]]:
         """Get listing of Python package indexes registered in the graph database."""
         with self._session_scope() as session:
             query = session.query(
-                PythonPackageIndex.url, PythonPackageIndex.warehouse_api_url, PythonPackageIndex.verify_ssl
+                PythonPackageIndex.url,
+                PythonPackageIndex.warehouse_api_url,
+                PythonPackageIndex.verify_ssl,
+                PythonPackageIndex.only_if_package_seen,
             )
 
             if enabled is not None:
                 query = query.filter(PythonPackageIndex.enabled == enabled)
 
-            return [{"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2]} for item in query.all()]
+            return [
+                {"url": item[0], "warehouse_api_url": item[1], "verify_ssl": item[2], "only_if_package_seen": item[3]}
+                for item in query.all()
+            ]
 
     def get_hardware_environments_all(
         self,
