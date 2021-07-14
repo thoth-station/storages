@@ -52,4 +52,4 @@ from .sync import HANDLERS_MAPPING
 
 
 __name__ = "thoth-storages"
-__version__ = "0.52.1"
+__version__ = "0.53.0"
