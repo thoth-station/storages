@@ -19,3 +19,4 @@
 
 
 from .postgres import GraphDatabase
+from .enums import KebechetManagerEnum
