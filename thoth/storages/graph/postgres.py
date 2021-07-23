@@ -4724,6 +4724,48 @@ class GraphDatabase(SQLBase):
 
             return [obj[0] for obj in document_ids]
 
+    def get_python_package_version_trove_classifiers_all(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        os_name: str,
+        os_version: str,
+        python_version: str,
+    ) -> List[str]:
+        """Get Python trove classifiers.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_trove_classifiers_all( \
+            "cowsay", "4.0", "https://pypi.org/simple", os_name="rhel", os_version="9", python_version="3.9")
+        ["PROGRAMMING LANGUAGE :: PYTHON :: 3.9", "OPERATING SYSTEM :: OS INDEPENDENT"]
+        """
+        self.normalize_python_package_version(package_version)
+        self.normalize_python_package_name(package_name)
+        self.normalize_python_index_url(index_url)
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .filter(
+                    PythonPackageVersion.package_name == package_name,
+                    PythonPackageVersion.package_version == package_version,
+                    PythonPackageVersion.os_name == os_name,
+                    PythonPackageVersion.os_version == os_version,
+                    PythonPackageVersion.python_version == python_version,
+                )
+                .join(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+                .join(PythonPackageMetadata)
+                .join(HasMetadataClassifier)
+                .join(PythonPackageMetadataClassifier)
+                .with_entities(PythonPackageMetadataClassifier.classifier)
+            )
+
+            return [i[0] for i in query.all()]
+
     def get_origin_count_per_source_type(
         self,
         distinct: bool = False,
