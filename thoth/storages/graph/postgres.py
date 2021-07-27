@@ -79,6 +79,7 @@ from .models import ExternalPythonSoftwareStack
 from .models import ExternalSoftwareEnvironment
 from .models import HardwareInformation
 from .models import InspectionRun
+from .models import ImportPackage
 from .models import KebechetGithubAppInstallations
 from .models import PackageExtractRun
 from .models import ProvenanceCheckerRun
@@ -115,6 +116,7 @@ from .models import DebReplaces
 from .models import DependsOn
 from .models import DetectedSymbol
 from .models import FoundDeb
+from .models import FoundImportPackage
 from .models import FoundPythonFile
 from .models import FoundPythonInterpreter
 from .models import FoundRPM
@@ -5440,6 +5442,27 @@ class GraphDatabase(SQLBase):
                     error_unsolvable=False,
                 )
 
+                # Sync imoprted package from result:tree
+                _LOGGER.info(
+                    "Syncing imported packages for package %r in version %r from %r found by solver %r",
+                    package_name,
+                    package_version,
+                    index_url,
+                    solver_info,
+                )
+
+                for package_call in python_package_info["packages"]:
+                    import_package, _ = ImportPackage.get_or_create(
+                        session,
+                        import_package_name=package_call,
+                    )
+
+                    FoundImportPackage.get_or_create(
+                        session,
+                        python_package_version_id=python_package_version.id,
+                        import_package_id=import_package.id,
+                    )
+
                 for dependency in python_package_info["dependencies"]:
                     for index_entry in dependency["resolved_versions"]:
                         for dependency_version in index_entry["versions"]:
@@ -6765,3 +6788,15 @@ class GraphDatabase(SQLBase):
             )
 
             return [{"package_name": i[1], "package_version": i[2], "location": i[0]} for i in query.all()]
+
+    def get_python_package_version_import_packages_all(self, import_name: str) -> List[str]:
+        """Retrieve Python package name for the given import package name."""
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .join(FoundImportPackage)
+                .join(ImportPackage)
+                .filter(ImportPackage.import_package_name == import_name)
+                .filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
+            )
+            return [i.package_name for i in query.all()]
