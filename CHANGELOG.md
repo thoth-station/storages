@@ -10425,3 +10425,7 @@ Starting with this release we have a Zuul-CI pipeline that:
 ### Improvements
 * Extend Python package index with only_packages_seen attribute
 * Fix index assignment in solver rule creation
+
+## Release 0.54.0 (2021-07-27T05:47:19)
+### Features
+* Introduce query for obtaining trove classfiers
