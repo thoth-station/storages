@@ -72,7 +72,6 @@ class PythonPackageVersion(Base, BaseExtension):
     )
     is_missing = Column(Boolean, nullable=False, default=False)
     provides_source_distro = Column(Boolean, nullable=False, default=True)
-
     # Relations
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
@@ -80,8 +79,8 @@ class PythonPackageVersion(Base, BaseExtension):
     index = relationship("PythonPackageIndex", back_populates="python_package_versions")
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="python_package_versions")
     si_aggregated = relationship("SIAggregated", back_populates="python_package_version")
-
     python_software_stacks = relationship("HasPythonRequirementsLock", back_populates="python_package_version")
+    import_packages = relationship("FoundImportPackage", back_populates="python_package_version")
 
     __table_args__ = tuple(
         get_python_package_version_index_combinations()
@@ -1688,6 +1687,31 @@ class SIAggregated(Base, BaseExtension):
     python_package_version_entity = relationship("PythonPackageVersionEntity", back_populates="si_aggregated_runs")
 
 
+class ImportPackage(Base, BaseExtension):
+    """Packages imported as a result of solver run"""
+
+    __tablename__ = "import_package"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    import_package_name = Column(Text, nullable=True)
+
+    python_package_versions = relationship("FoundImportPackage", back_populates="import_package")
+
+    __table_args__ = (Index("import_package_import_package_name_idx", "import_package_name"),)
+
+
+class FoundImportPackage(Base, BaseExtension):
+    """State an PPV for import package."""
+
+    __tablename__ = "found_import_package"
+
+    python_package_version_id = Column(ForeignKey("python_package_version.id", ondelete="CASCADE"), primary_key=True)
+    import_package_id = Column(ForeignKey("import_package.id", ondelete="CASCADE"), primary_key=True)
+
+    import_package = relationship("ImportPackage", back_populates="python_package_versions")
+    python_package_version = relationship("PythonPackageVersion", back_populates="import_packages")
+
+
 ALL_MAIN_MODELS = frozenset(
     (
         CVE,
@@ -1700,6 +1724,7 @@ ALL_MAIN_MODELS = frozenset(
         ExternalPythonSoftwareStack,
         ExternalSoftwareEnvironment,
         HardwareInformation,
+        ImportPackage,
         KebechetGithubAppInstallations,
         PackageExtractRun,
         PythonArtifact,
@@ -1733,6 +1758,7 @@ ALL_RELATION_MODELS = frozenset(
         DependsOn,
         DetectedSymbol,
         FoundDeb,
+        FoundImportPackage,
         FoundPythonFile,
         FoundPythonInterpreter,
         FoundRPM,
