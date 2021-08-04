@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.54.1 (2021-08-04T12:47:19)
+### Features
+* Set default value for only_if_package_seen (#2413)
+* :arrow_up: Automatic update of dependencies by Kebechet
+
 ## [0.1.0] - 2018-Jul-17 - goern
 
 ### Fixed
