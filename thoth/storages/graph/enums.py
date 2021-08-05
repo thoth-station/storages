@@ -18,7 +18,6 @@
 """Enum types used in thoth-storages code."""
 
 from enum import Enum
-from enum import auto
 
 
 class EnvironmentTypeEnum(Enum):
