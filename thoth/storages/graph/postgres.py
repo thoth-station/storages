@@ -1270,12 +1270,14 @@ class GraphDatabase(SQLBase):
     ) -> Query:
         """Construct query for unsolved Python packages versions functions, the query is not executed."""
         index_url = self.normalize_python_index_url(index_url)
-        rules_association = session.query(PythonPackageVersionEntityRulesAssociation.python_package_version_entity_id)
         query = session.query(PythonPackageVersionEntity).filter(
             PythonPackageVersionEntity.package_version.isnot(None),
-            PythonPackageVersionEntity.id.notin_(rules_association),
             PythonPackageIndex.url.isnot(None),
             PythonPackageIndex.enabled.is_(True),
+        )
+
+        query = query.join(PythonPackageVersionEntityRulesAssociation, isouter=True).filter(
+            PythonPackageVersionEntityRulesAssociation.python_package_version_entity_id.is_(None)
         )
 
         if package_name is not None:
