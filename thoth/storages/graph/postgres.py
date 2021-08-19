@@ -1272,12 +1272,14 @@ class GraphDatabase(SQLBase):
     ) -> Query:
         """Construct query for unsolved Python packages versions functions, the query is not executed."""
         index_url = self.normalize_python_index_url(index_url)
-        rules_association = session.query(PythonPackageVersionEntityRulesAssociation.python_package_version_entity_id)
         query = session.query(PythonPackageVersionEntity).filter(
             PythonPackageVersionEntity.package_version.isnot(None),
-            PythonPackageVersionEntity.id.notin_(rules_association),
             PythonPackageIndex.url.isnot(None),
             PythonPackageIndex.enabled.is_(True),
+        )
+
+        query = query.join(PythonPackageVersionEntityRulesAssociation, isouter=True).filter(
+            PythonPackageVersionEntityRulesAssociation.python_package_version_entity_id.is_(None)
         )
 
         if package_name is not None:
@@ -3644,16 +3646,16 @@ class GraphDatabase(SQLBase):
         :returns False: if installation was not found.
         """
         with self._session_scope() as session:
-            instance = (
-                session.query(KebechetGithubAppInstallations)
-                .filter(KebechetGithubAppInstallations.slug == slug)
-                .first()
+            instances = session.query(KebechetGithubAppInstallations).filter(
+                KebechetGithubAppInstallations.slug == slug
             )
-            if instance:
-                instance.is_active = False
-                session.commit()
-                return True
-            return False
+            if instances.all() == []:
+                return False
+
+            instances.update({"is_active": False}, synchronize_session="fetch")
+
+            session.commit()
+            return True
 
     def get_active_kebechet_github_installations_repos(self) -> List[str]:
         """Get all active repositories names with active Kebechet installation.
@@ -3688,11 +3690,14 @@ class GraphDatabase(SQLBase):
             count = (
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .distinct(KebechetGithubAppInstallations.slug)  # so we only get one entry from each installation
                 .count()
             )
             return count
 
-    def get_kebechet_github_installations_active_managers(self, slug: str) -> list:
+    def get_kebechet_github_installations_active_managers(
+        self, slug: str, runtime_environment_name: Optional[str] = None
+    ) -> list:
         """Return the list of active managers for a particular repository.
 
         Examples:
@@ -3708,6 +3713,7 @@ class GraphDatabase(SQLBase):
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.is_active.is_(True))
                 .filter(KebechetGithubAppInstallations.slug == slug)
+                .filter(KebechetGithubAppInstallations.runtime_environment_name == runtime_environment_name)
                 .with_entities(
                     KebechetGithubAppInstallations.info_manager,
                     KebechetGithubAppInstallations.pipfile_requirements_manager,
@@ -3735,9 +3741,12 @@ class GraphDatabase(SQLBase):
                 f"Registered managers names are: {KebechetManagerEnum._member_names_!r}"
             )
         with self._session_scope() as session:
-            query = session.query(KebechetGithubAppInstallations).filter(
-                KebechetGithubAppInstallations.is_active.is_(True)
+            query = (
+                session.query(KebechetGithubAppInstallations)
+                .filter(KebechetGithubAppInstallations.is_active.is_(True))
+                .distinct(KebechetGithubAppInstallations.slug)
             )
+            # we make slug distinct here so that we don't double count when the repo has multiple runtime environments
 
             if kebechet_manager == KebechetManagerEnum.INFO_MANAGER.name:
                 query = query.filter(KebechetGithubAppInstallations.info_manager.is_(True))
@@ -3922,12 +3931,20 @@ class GraphDatabase(SQLBase):
         requirements: Optional[dict] = None,
         requirements_lock: Optional[dict] = None,
         thoth_config: Optional[dict] = None,
+        runtime_environment_name: Optional[str] = None,
         private: bool = False,
     ):
         """Update info about kebechet installation."""
         with self._session_scope() as session, session.begin(subtransactions=True):
             if "runtime_environments" in thoth_config:
-                env_dict = thoth_config["runtime_environments"][0]
+                if runtime_environment_name is None:
+                    env_dict = thoth_config["runtime_environments"][0]
+                else:
+                    for env in thoth_config["runtime_environments"]:
+                        if env["name"] == runtime_environment_name:
+                            env_dict = env
+                    else:
+                        raise ValueError(f"No environment {runtime_environment_name} found in thoth configuration")
 
                 os_name = map_os_name(env_dict["operating_system"]["name"])
                 os_version = env_dict["operating_system"]["version"]
@@ -3958,6 +3975,7 @@ class GraphDatabase(SQLBase):
             item = (
                 session.query(KebechetGithubAppInstallations)
                 .filter(KebechetGithubAppInstallations.slug == slug)
+                .filter(KebechetGithubAppInstallations.runtime_environment_name == runtime_environment_name)
                 .first()
             )
             if item is None:
@@ -3968,6 +3986,7 @@ class GraphDatabase(SQLBase):
                     installation_id=installation_id,
                     private=private,
                     is_active=True,
+                    runtime_environment_name=runtime_environment_name,
                     external_python_software_stack_id=python_stack.id,
                     external_software_environment_id=software_env.id,
                     info_manager="info" in all_managers,
@@ -3987,8 +4006,10 @@ class GraphDatabase(SQLBase):
                         "installation_id": installation_id,
                         "private": private,
                         "is_active": True,
+                        "runtime_environment_name": runtime_environment_name,
                         "external_python_software_stack_id": python_stack.id,
                         "external_software_environment_id": software_env.id,
+                        "info_manager": "info" in all_managers,
                         "pipfile_requirements_manager": "pipfile-requirements" in all_managers,
                         "update_manager": "update" in all_managers,
                         "version_manager": "version" in all_managers,

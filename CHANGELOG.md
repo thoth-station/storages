@@ -1,5 +1,18 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.54.2 (2021-08-18T08:48:39)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet
+* :arrow_up: Automatic update of dependencies by Kebechet (#2412)
+* Remove unused import
+### Non-functional
+* Improve performance of the unsolved Python packages query
+
+## Release 0.54.1 (2021-08-04T12:47:19)
+### Features
+* Set default value for only_if_package_seen (#2413)
+* :arrow_up: Automatic update of dependencies by Kebechet
+
 ## [0.1.0] - 2018-Jul-17 - goern
 
 ### Fixed
