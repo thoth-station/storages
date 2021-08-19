@@ -1,7 +1,7 @@
 """Add ImportPackage, FoundImportPackage classes and get_python_package_version_import_packages_all function
 
 Revision ID: aba59a2fec95
-Revises: 65ae36e5c38a
+Revises: 5c1e7425ce60
 Create Date: 2021-08-13 13:26:04.445039+00:00
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "aba59a2fec95"
-down_revision = "65ae36e5c38a"
+down_revision = "5c1e7425ce60"
 branch_labels = None
 depends_on = None
 
