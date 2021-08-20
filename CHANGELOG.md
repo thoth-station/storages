@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.55.0 (2021-08-20T08:15:56)
+### Features
+* add runtime_environment_name to KebechetGithubInstallation
+* add runtime_environment_name to KebechetGithubInstallation
+
 ## Release 0.54.2 (2021-08-18T08:48:39)
 ### Features
 * :arrow_up: Automatic update of dependencies by Kebechet
