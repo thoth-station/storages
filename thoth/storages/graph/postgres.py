@@ -2693,6 +2693,11 @@ class GraphDatabase(SQLBase):
                     session.add(python_package_index)
                     return False
 
+    def delete_python_package_index(self, index_url: str) -> None:
+        """Delete the given Python package index."""
+        with self._session_scope() as session:
+            return session.query(PythonPackageIndex).filter(PythonPackageIndex.url == index_url).delete()
+
     def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, Any]]:
         """Get listing of Python package indexes registered in the graph database."""
         with self._session_scope() as session:
