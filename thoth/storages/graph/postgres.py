@@ -6819,5 +6819,10 @@ class GraphDatabase(SQLBase):
                 .join(ImportPackage)
                 .filter(ImportPackage.import_package_name == import_name)
                 .filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
+                .join(PythonPackageIndex)
+                .filter(PythonPackageVersion.python_package_index_id == PythonPackageIndex.id)
+                .with_entities(
+                    PythonPackageVersion.package_name, PythonPackageVersion.package_version, PythonPackageIndex.url
+                )
             )
-            return [i.package_name for i in query.all()]
+            return [{"package_name": i[0], "package_version": i[1], "index_url": i[2]} for i in query.all()]
