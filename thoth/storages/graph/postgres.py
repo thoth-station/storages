@@ -6830,4 +6830,9 @@ class GraphDatabase(SQLBase):
                     PythonPackageVersion.package_name, PythonPackageVersion.package_version, PythonPackageIndex.url
                 )
             )
-            return [{"package_name": i[0], "package_version": i[1], "index_url": i[2]} for i in query.all()]
+            result = [{"package_name": i[0], "package_version": i[1], "index_url": i[2]} for i in query.all()]
+
+            if not result:
+                raise NotFoundError(f"No package matching import {import_name!r} found")
+
+            return result
