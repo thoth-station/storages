@@ -671,10 +671,8 @@ class GraphDatabase(SQLBase):
         """Retrieve software environment configurations used to solve Python packages."""
         with self._session_scope() as session:
             result = (
-                session.query(PythonPackageVersion)
-                .with_entities(
-                    PythonPackageVersion.os_name, PythonPackageVersion.os_version, PythonPackageVersion.python_version
-                )
+                session.query(EcosystemSolver)
+                .with_entities(EcosystemSolver.os_name, EcosystemSolver.os_version, EcosystemSolver.python_version)
                 .distinct()
                 .all()
             )
@@ -4804,9 +4802,9 @@ class GraphDatabase(SQLBase):
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
         >>> graph.get_origin_count_per_source_type()
-        {'GITHUB_APP': 1570, 'KEBECHET': 48, 'JUPYTER_NOTEBOOK': 18, 'CLI': 513}
+        {'KEBECHET': 48, 'JUPYTER_NOTEBOOK': 18, 'CLI': 513}
         >>> graph.get_origin_count_per_source_type(distinct=True)
-        {'GITHUB_APP': 145, 'KEBECHET': 5, 'JUPYTER_NOTEBOOK': 2, 'CLI': 78}
+        {'KEBECHET': 5, 'JUPYTER_NOTEBOOK': 2, 'CLI': 78}
         """
         with self._session_scope() as session:
             query = session.query(AdviserRun.origin)
