@@ -1,5 +1,27 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.56.0 (2021-09-14T07:32:02)
+### Features
+* Fix unsolved query causing stage ingestion to halt
+* Change get_python_package_version_import_packages_all() output
+* Correct down_revision of migration
+* add runtime_environment_name to KebechetGithubInstallation
+* add runtime_environment_name to KebechetGithubInstallation
+* Release of version 0.54.2
+* :arrow_up: Automatic update of dependencies by Kebechet
+* Remove unused import
+* Add packages and populate with module names
+* Add packages and populate with module names
+### Bug Fixes
+* Raise if no matching package for the given import was found
+### Improvements
+* Fix get_solved_python_package_versions_software_environment_all method
+* Provide a method for deleting index
+* corrected with black for prow tests
+* corrected with black for prow tests
+### Non-functional
+* Improve performance of the unsolved Python packages query
+
 ## Release 0.55.0 (2021-08-20T08:15:56)
 ### Features
 * add runtime_environment_name to KebechetGithubInstallation
