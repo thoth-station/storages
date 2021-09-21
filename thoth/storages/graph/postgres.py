@@ -429,7 +429,7 @@ class GraphDatabase(SQLBase):
         >>> graph = GraphDatabase()
         >>> graph.get_analysis_metadata()
         {
-            'analysis_datetime': datetime.datetime(2019, 10, 7, 18, 57, 22, 658131),
+            'analysis_datetime': datetime(2019, 10, 7, 18, 57, 22, 658131),
             'analysis_document_id': 'package-extract-2ef02c9cea8b1ef7',
             'package_extract_name': 'thoth-package-extract',
             'package_extract_version': '1.0.1'
@@ -567,7 +567,7 @@ class GraphDatabase(SQLBase):
         >>> graph = GraphDatabase()
         >>> graph.get_run_software_environment_analyses_all()
         [{
-            'analysis_datetime': datetime.datetime(2019, 10, 7, 18, 57, 22, 658131),
+            'analysis_datetime': datetime(2019, 10, 7, 18, 57, 22, 658131),
             'analysis_document_id': 'package-extract-2ef02c9cea8b1ef7',
             'package_extract_name': 'thoth-package-extract',
             'package_extract_version': '1.0.1'
@@ -3619,6 +3619,197 @@ class GraphDatabase(SQLBase):
                 )
                 return newly_added
 
+    def get_kebechet_github_app_installations_all(
+        self,
+        *,
+        id: Optional[int] = None,
+        slug: Optional[str] = None,
+        private: Optional[bool] = None,
+        installation_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        runtime_environment_name: Optional[str] = None,
+        info_manager: Optional[bool] = None,
+        pipfile_requirements_manager: Optional[bool] = None,
+        udpate_manager: Optional[bool] = None,
+        version_manager: Optional[bool] = None,
+        thoth_advise_manager: Optional[bool] = None,
+        thoth_provenance_manager: Optional[bool] = None,
+        last_run_before: Optional[datetime] = None,
+        last_run_after: Optional[datetime] = None,
+        external_python_software_stack_id: Optional[int] = None,
+        external_software_environment_id: Optional[int] = None,
+        advised_python_software_stack_id: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get all github kebechet installations with optional filters on values
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_kebechet_github_installations_all()
+        [
+            {
+                "id": 0,
+                "slug": "thoth-station/storages",
+                "repo_name": "storages",
+                "private": False,
+                "is_active": True,
+                "info_manager": True,
+                "pipfile_requirements_manager": True,
+                ...
+            },
+            ...
+        ]
+        :rtype: List[Dict[str, Any]]
+        :returns: A list of kebechet installations which match the applied filters
+        """
+        with self._session_scope() as session:
+            query = session.query(KebechetGithubAppInstallations)
+            if id is not None:
+                query = query.filter(KebechetGithubAppInstallations.id == id)
+            if slug is not None:
+                query = query.filter(KebechetGithubAppInstallations.slug == slug)
+            if private is not None:
+                query = query.filter(KebechetGithubAppInstallations.private == private)
+            if installation_id is not None:
+                query = query.filter(KebechetGithubAppInstallations.installation_id == installation_id)
+            if is_active is not None:
+                query = query.filter(KebechetGithubAppInstallations.is_active == is_active)
+            if runtime_environment_name is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.runtime_environment_name == runtime_environment_name
+                )
+            if info_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.info_manager == info_manager)
+            if pipfile_requirements_manager is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.pipfile_requirements_manager == pipfile_requirements_manager
+                )
+            if update_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.update_manager == update_manager)
+            if version_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.version_manager == version_manager)
+            if thoth_advise_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.thoth_advise_manager == thoth_advise_manager)
+            if thoth_provenance_manager is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.thoth_provenance_manager == thoth_provenance_manager
+                )
+            if last_run_before is not None:
+                query = query.filter(KebechetGithubAppInstallations.last_run <= last_run_before)
+            if last_run_after is not None:
+                query = query.filter(KebechetGithubAppInstallations.last_run >= last_run_after)
+            if external_python_software_stack_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.external_python_software_stack_id
+                    == external_python_software_stack_id
+                )
+            if external_software_environment_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.external_software_environment_id == external_software_environment_id
+                )
+            if advised_python_software_stack_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.advised_python_software_stack_id == advised_python_software_stack_id
+                )
+
+            return [i.to_dict() for i in query.all()]
+
+    def delete_kebechet_github_app_installations(
+        self,
+        *,
+        id: Optional[int] = None,
+        slug: Optional[str] = None,
+        private: Optional[bool] = None,
+        installation_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        runtime_environment_name: Optional[str] = None,
+        info_manager: Optional[bool] = None,
+        pipfile_requirements_manager: Optional[bool] = None,
+        udpate_manager: Optional[bool] = None,
+        version_manager: Optional[bool] = None,
+        thoth_advise_manager: Optional[bool] = None,
+        thoth_provenance_manager: Optional[bool] = None,
+        last_run_before: Optional[datetime] = None,
+        last_run_after: Optional[datetime] = None,
+        external_python_software_stack_id: Optional[int] = None,
+        external_software_environment_id: Optional[int] = None,
+        advised_python_software_stack_id: Optional[int] = None,
+    ) -> int:
+        """Delete github kebechet installations which match the given filters
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.delete_kebechet_github_app_installations(slug="foo/bar", runtime_environment_name="baz")
+        [
+            {
+                "id": 0,
+                "slug": "thoth-station/storages",
+                "repo_name": "storages",
+                "private": False,
+                "is_active": True,
+                "info_manager": True,
+                "pipfile_requirements_manager": True,
+                ...
+            },
+            ...
+        ]
+        :rtype: int
+        :returns: Number of entries which have been deleted
+        """
+        with self._session_scope() as session:
+            query = session.query(KebechetGithubAppInstallations)
+            if id is not None:
+                query = query.filter(KebechetGithubAppInstallations.id == id)
+            if slug is not None:
+                query = query.filter(KebechetGithubAppInstallations.slug == slug)
+            if private is not None:
+                query = query.filter(KebechetGithubAppInstallations.private == private)
+            if installation_id is not None:
+                query = query.filter(KebechetGithubAppInstallations.installation_id == installation_id)
+            if is_active is not None:
+                query = query.filter(KebechetGithubAppInstallations.is_active == is_active)
+            if runtime_environment_name is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.runtime_environment_name == runtime_environment_name
+                )
+            if info_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.info_manager == info_manager)
+            if pipfile_requirements_manager is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.pipfile_requirements_manager == pipfile_requirements_manager
+                )
+            if update_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.update_manager == update_manager)
+            if version_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.version_manager == version_manager)
+            if thoth_advise_manager is not None:
+                query = query.filter(KebechetGithubAppInstallations.thoth_advise_manager == thoth_advise_manager)
+            if thoth_provenance_manager is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.thoth_provenance_manager == thoth_provenance_manager
+                )
+            if last_run_before is not None:
+                query = query.filter(KebechetGithubAppInstallations.last_run <= last_run_before)
+            if last_run_after is not None:
+                query = query.filter(KebechetGithubAppInstallations.last_run >= last_run_after)
+            if external_python_software_stack_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.external_python_software_stack_id
+                    == external_python_software_stack_id
+                )
+            if external_software_environment_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.external_software_environment_id == external_software_environment_id
+                )
+            if advised_python_software_stack_id is not None:
+                query = query.filter(
+                    KebechetGithubAppInstallations.advised_python_software_stack_id == advised_python_software_stack_id
+                )
+            count = query.count()
+            query.delete()
+            return count
+
     def update_kebechet_github_installations_on_is_active(self, slug: str) -> bool:
         """Deactivate the app on getting an uninstall event.
 
@@ -3633,7 +3824,7 @@ class GraphDatabase(SQLBase):
                 KebechetGithubAppInstallations.slug == slug
             )
             if instances.all() == []:
-                return False
+                raise NotFoundError(f"No entries found for slug={slug}")
 
             instances.update({"is_active": False}, synchronize_session="fetch")
 
