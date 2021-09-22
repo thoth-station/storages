@@ -1330,7 +1330,9 @@ class GraphDatabase(SQLBase):
                 session, os_name=os_name, os_version=os_version, python_version=python_version
             )
 
-            query = query.with_entities(PythonPackageVersionEntity.package_name, PythonPackageIndex.url)
+            query = query.join(PythonPackageIndex).with_entities(
+                PythonPackageVersionEntity.package_name, PythonPackageIndex.url
+            )
 
             query = query.offset(start_offset).limit(count)
 
@@ -1364,14 +1366,18 @@ class GraphDatabase(SQLBase):
                 session, os_name=os_name, os_version=os_version, python_version=python_version
             )
 
-            query = query.with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
-            ).group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
+            query = (
+                query.join(PythonPackageIndex)
+                .with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                )
+                .group_by(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                )
             )
 
             query = query.offset(start_offset).limit(count)
@@ -1408,21 +1414,25 @@ class GraphDatabase(SQLBase):
                 session, os_name=os_name, os_version=os_version, python_version=python_version
             )
 
-            query = query.with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
-                func.count(
-                    tuple_(
-                        PythonPackageVersionEntity.package_name,
-                        PythonPackageVersionEntity.package_version,
-                        PythonPackageIndex.url,
-                    )
-                ),
-            ).group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
+            query = (
+                query.join(PythonPackageIndex)
+                .with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                    func.count(
+                        tuple_(
+                            PythonPackageVersionEntity.package_name,
+                            PythonPackageVersionEntity.package_version,
+                            PythonPackageIndex.url,
+                        )
+                    ),
+                )
+                .group_by(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                )
             )
 
             query = query.offset(start_offset).limit(count)
@@ -1460,21 +1470,25 @@ class GraphDatabase(SQLBase):
                 session, index_url=index_url, os_name=os_name, os_version=os_version, python_version=python_version
             )
 
-            query = query.with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
-                func.count(
-                    tuple_(
-                        PythonPackageVersionEntity.package_name,
-                        PythonPackageVersionEntity.package_version,
-                        PythonPackageIndex.url,
-                    )
-                ),
-            ).group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
+            query = (
+                query.join(PythonPackageIndex)
+                .with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                    func.count(
+                        tuple_(
+                            PythonPackageVersionEntity.package_name,
+                            PythonPackageVersionEntity.package_version,
+                            PythonPackageIndex.url,
+                        )
+                    ),
+                )
+                .group_by(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                )
             )
 
             query = query.offset(start_offset).limit(count)
@@ -1516,21 +1530,25 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
             )
 
-            query = query.with_entities(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
-                func.count(
-                    tuple_(
-                        PythonPackageVersionEntity.package_name,
-                        PythonPackageVersionEntity.package_version,
-                        PythonPackageIndex.url,
-                    )
-                ),
-            ).group_by(
-                PythonPackageVersionEntity.package_name,
-                PythonPackageVersionEntity.package_version,
-                PythonPackageIndex.url,
+            query = (
+                query.join(PythonPackageIndex)
+                .with_entities(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                    func.count(
+                        tuple_(
+                            PythonPackageVersionEntity.package_name,
+                            PythonPackageVersionEntity.package_version,
+                            PythonPackageIndex.url,
+                        )
+                    ),
+                )
+                .group_by(
+                    PythonPackageVersionEntity.package_name,
+                    PythonPackageVersionEntity.package_version,
+                    PythonPackageIndex.url,
+                )
             )
 
             query = query.offset(start_offset).limit(count)
@@ -1577,7 +1595,7 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
             )
 
-            query = query.with_entities(
+            query = query.join(PythonPackageIndex).with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
@@ -1618,7 +1636,7 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
             )
 
-            query = query.with_entities(
+            query = query.join(PythonPackageIndex).with_entities(
                 PythonPackageVersionEntity.package_name,
                 PythonPackageVersionEntity.package_version,
                 PythonPackageIndex.url,
