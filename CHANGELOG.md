@@ -1,5 +1,11 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.57.0 (2021-09-22T11:00:40)
+### Features
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Revert removing index from join
+* add ability to filter github app installations as well as delete them
+
 ## Release 0.56.0 (2021-09-14T07:32:02)
 ### Features
 * Fix unsolved query causing stage ingestion to halt
