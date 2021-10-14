@@ -2643,6 +2643,23 @@ class GraphDatabase(SQLBase):
 
             return result[0]
 
+    def set_python_package_index_source_analysis(self, url: str, *, only_if_package_seen: bool) -> None:
+        """Set if packages to be analyzed are checked from Thoth database or directly from the python package index."""
+        session = self._sessionmaker()
+        try:
+            with session.begin(subtransactions=True):
+                python_package_index = session.query(PythonPackageIndex).filter(PythonPackageIndex.url == url).first()
+                if python_package_index is None:
+                    raise NotFoundError(f"Python package index {url!r} not found")
+
+                python_package_index.only_if_package_seen = only_if_package_seen
+                session.add(python_package_index)
+        except Exception:
+            session.rollback()
+            raise
+        else:
+            session.commit()
+
     def set_python_package_index_state(self, url: str, *, enabled: bool) -> None:
         """Enable or disable Python package index."""
         session = self._sessionmaker()
