@@ -2669,27 +2669,28 @@ class GraphDatabase(SQLBase):
         only_if_package_seen: bool = True,
     ) -> bool:
         """Register the given Python package index in the graph database."""
-        with self._session_scope() as session:
+        with self._session_scope() as session, session.begin(subtransactions=True):
             python_package_index = session.query(PythonPackageIndex).filter(PythonPackageIndex.url == url).first()
             if python_package_index is None:
-                with session.begin(subtransactions=True):
-                    python_package_index = PythonPackageIndex(
-                        url=url,
-                        warehouse_api_url=warehouse_api_url,
-                        verify_ssl=verify_ssl,
-                        enabled=enabled,
-                        only_if_package_seen=only_if_package_seen,
-                    )
-                    session.add(python_package_index)
-                    return True
+                PythonPackageIndex.get_or_create(
+                    session=session,
+                    url=url,
+                    warehouse_api_url=warehouse_api_url,
+                    verify_ssl=verify_ssl,
+                    enabled=enabled,
+                    only_if_package_seen=only_if_package_seen,
+                )
+                return True
             else:
-                python_package_index.warehouse_api_url = warehouse_api_url
-                python_package_index.verify_ssl = verify_ssl
-                python_package_index.enabled = enabled
-                python_package_index.only_if_package_seen = only_if_package_seen
-                with session.begin(subtransactions=True):
-                    session.add(python_package_index)
-                    return False
+                session.query(PythonPackageIndex).filter(PythonPackageIndex.id == python_package_index.id).update(
+                    {
+                        "warehouse_api_url": warehouse_api_url,
+                        "verify_ssl": verify_ssl,
+                        "enabled": enabled,
+                        "only_if_package_seen": only_if_package_seen,
+                    }
+                )
+                return False
 
     def delete_python_package_index(self, index_url: str) -> None:
         """Delete the given Python package index."""
