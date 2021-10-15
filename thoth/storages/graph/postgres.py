@@ -2573,22 +2573,21 @@ class GraphDatabase(SQLBase):
             )
 
     @lru_cache(maxsize=_GET_PYTHON_CVE_RECORDS_ALL_CACHE_SIZE)
-    def get_python_cve_records_all(self, package_name: str, package_version: str) -> List[dict]:
+    def get_python_cve_records_all(self, package_name: str, package_version: Optional[str] = None) -> List[dict]:
         """Get known vulnerabilities for the given package-version."""
         package_name = self.normalize_python_package_name(package_name)
-        package_version = self.normalize_python_package_version(package_version)
+        if package_version:
+            package_version = self.normalize_python_package_version(package_version)
 
         with self._session_scope() as session:
-            result = (
-                session.query(PythonPackageVersionEntity)
-                .filter(PythonPackageVersionEntity.package_name == package_name)
-                .filter(PythonPackageVersionEntity.package_version == package_version)
-                .join(HasVulnerability)
-                .join(CVE)
-                .with_entities(CVE)
-                .distinct()
-                .all()
+            query = session.query(PythonPackageVersionEntity).filter(
+                PythonPackageVersionEntity.package_name == package_name
             )
+
+            if package_version:
+                query = query.filter(PythonPackageVersionEntity.package_version == package_version)
+
+            result = query.join(HasVulnerability).join(CVE).with_entities(CVE).distinct().all()
 
             return [cve.to_dict() for cve in result]
 
