@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.57.1 (2021-10-15T15:47:47)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Update method to register or update package index
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+
 ## Release 0.57.0 (2021-09-22T11:00:40)
 ### Features
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
