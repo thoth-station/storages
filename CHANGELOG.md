@@ -1,5 +1,8 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.57.2 (2021-10-18T10:37:08)
+* Use update on conflict method
+
 ## Release 0.57.1 (2021-10-15T15:47:47)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
 * Update method to register or update package index
