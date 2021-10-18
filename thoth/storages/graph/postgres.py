@@ -7008,7 +7008,7 @@ class GraphDatabase(SQLBase):
 
             return [{"package_name": i[1], "package_version": i[2], "location": i[0]} for i in query.all()]
 
-    def get_python_package_version_import_packages_all(self, import_name: str) -> List[str]:
+    def get_python_package_version_import_packages_all(self, import_name: str) -> List[Dict[str, str]]:
         """Retrieve Python package name for the given import package name."""
         with self._session_scope() as session:
             query = (
