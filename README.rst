@@ -353,3 +353,27 @@ Query Naming conventions in Thoth
 For query naming conventions, please read all the docs in `conventions for
 query name
 <https://github.com/thoth-station/storages/blob/master/docs/conventions/README.md>`__.
+
+Accessing data on Ceph
+=========================================
+To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials.
+Absolute file path is then constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
+
+.. code-block:: console
+    from thoth.storages.ceph import CephStore
+
+    s3 = CephStore(
+        key_id=<aws_access_key_id>,
+        secret_key=<aws_secret_access_key>,
+        prefix=<prefix_name>,
+        host=<endpoint_url>,
+        bucket=<bucket_name>)
+
+    s3.connect()
+
+    try:
+        data = s3.retrieve_document(<file_path>)
+    except NotFoundError:
+        # File does not exist
+
+
