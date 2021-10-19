@@ -375,5 +375,3 @@ Absolute file path is then constructed as: ``s3://<bucket_name>/<prefix_name>/<f
         data = s3.retrieve_document(<file_path>)
     except NotFoundError:
         # File does not exist
-
-
