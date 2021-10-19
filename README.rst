@@ -356,8 +356,10 @@ query name
 
 Accessing data on Ceph
 =========================================
-To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials.
-Absolute file path is then constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
+To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
+of endpoint you are connecting to.
+
+Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
 .. code-block:: console
     from thoth.storages.ceph import CephStore
