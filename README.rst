@@ -355,15 +355,41 @@ query name
 <https://github.com/thoth-station/storages/blob/master/docs/conventions/README.md>`__.
 
 Accessing data on Ceph
-=========================================
+======================
 To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
 of endpoint you are connecting to.
 
 Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
-.. code-block:: console
-    from thoth.storages.ceph import CephStore
+You can either configure these environemnt variables to initilaize the data handler:
 
+.. list-table::
+   :widths: 25 25
+   :header-rows: 1
+
+   * - Variable name
+     - Content
+   * - ``S3_ENDPOINT_URL``
+     - Ceph Host name
+   * - ``CEPH_BUCKET``
+     - Ceph Bucket name
+   * - ``CEPH_BUCKET_PREFIX``
+     - Ceph Prefix
+   * - ``CEPH_KEY_ID``
+     - Ceph Key ID
+   * - ``CEPH_SECRET_KEY``
+     - Ceph Secret Key
+
+.. code-block:: python
+
+    from thoth.storages.ceph import CephStore
+    s3 = CephStore()
+
+Or you can initialize the object directly with them:
+
+.. code-block:: python
+
+    from thoth.storages.ceph import CephStore
     s3 = CephStore(
         key_id=<aws_access_key_id>,
         secret_key=<aws_secret_access_key>,
@@ -371,9 +397,18 @@ Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_
         host=<endpoint_url>,
         bucket=<bucket_name>)
 
+After initialization, you are ready to retrieve data
+
+.. code-block:: python
+
     s3.connect()
 
     try:
-        data = s3.retrieve_document(<file_path>)
+        # For dictionary stored as json
+        json_data = s3.retrieve_document(<file_path>)
+
+        # For general blob
+        blob = s3.retrieve_blob(<file_path>)
+
     except NotFoundError:
         # File does not exist
