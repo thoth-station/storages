@@ -1,5 +1,14 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.57.3 (2021-10-21T12:39:28)
+* Do not use colon in overlays name (#2451)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Adjust query to return also additional solver rule information
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Fix signature
+
 ## Release 0.57.2 (2021-10-18T10:37:08)
 * Use update on conflict method
 
