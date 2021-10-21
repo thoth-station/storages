@@ -6951,28 +6951,39 @@ class GraphDatabase(SQLBase):
     def get_python_package_version_solver_rules_all(
         self,
         package_name: str,
-        package_version: str,
+        package_version: Optional[str] = None,
         index_url: Optional[str] = None,
-    ) -> List[str]:
+    ) -> List[Tuple[int, Optional[str], Optional[str], str]]:
         """Get rules assigned for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
-        self.normalize_python_package_version(package_version)
+        if package_version:
+            self.normalize_python_package_version(package_version)
         index_url = self.normalize_python_index_url(index_url) if index_url is not None else None
 
         with self._session_scope() as session:
             query = session.query(PythonPackageVersionEntity).filter(
                 PythonPackageVersionEntity.package_name == package_name,
-                PythonPackageVersionEntity.package_version == package_version,
             )
 
+            if package_version:
+                query = query.filter(
+                    PythonPackageVersionEntity.package_version == package_version,
+                )
+
+            query = query.join(PythonPackageIndex)
             if index_url:
-                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+                query = query.filter(PythonPackageIndex.url == index_url)
 
             return [
-                i[0]
+                tuple(i)
                 for i in query.join(PythonPackageVersionEntityRulesAssociation)
                 .join(PythonPackageVersionEntityRule)
-                .with_entities(PythonPackageVersionEntityRule.description)
+                .with_entities(
+                    PythonPackageVersionEntityRule.id,
+                    PythonPackageVersionEntityRule.version_range,
+                    PythonPackageIndex.url,
+                    PythonPackageVersionEntityRule.description,
+                )
                 .all()
             ]
 
