@@ -51,18 +51,20 @@ from sqlalchemy import tuple_
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm.exc import NoResultFound
 
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
-from thoth.common.helpers import format_datetime
 from thoth.common import OpenShift
 from thoth.common import normalize_os_version
 from thoth.common import map_os_name
 from thoth.common.enums import ThothAdviserIntegrationEnum
+from thoth.common.helpers import format_datetime
+from thoth.license_solver import detect_license
+from thoth.license_solver import SolverLicense
 
 from .models_base import BaseExtension
 from .models import AdviserRun
@@ -100,6 +102,7 @@ from .models import PythonPackageVersion
 from .models import PythonPackageVersionEntity
 from .models import PythonPackageVersionEntityRule
 from .models import PythonPackageVersionEntityRulesAssociation
+from .models import PythonPackageLicense
 from .models import PythonRequirements
 from .models import PythonRequirementsLock
 from .models import PythonSoftwareStack
@@ -4082,6 +4085,7 @@ class GraphDatabase(SQLBase):
         *,
         package_name: str,
         package_version: str,
+        package_license_id: int,
         index_url: str,
         os_name: str,
         os_version: str,
@@ -4097,6 +4101,7 @@ class GraphDatabase(SQLBase):
                 .filter(
                     PythonPackageVersion.package_name == package_name,
                     PythonPackageVersion.package_version == package_version,
+                    PythonPackageVersion.package_license_id == package_license_id,
                     PythonPackageVersion.os_name == os_name,
                     PythonPackageVersion.os_version == os_version,
                     PythonPackageVersion.python_version == python_version,
@@ -4115,6 +4120,7 @@ class GraphDatabase(SQLBase):
         session: Session,
         package_name: str,
         package_version: Union[str, None],
+        package_license_id: int,
         index_url: Union[str, None],
         *,
         os_name: Union[str, None],
@@ -4151,6 +4157,7 @@ class GraphDatabase(SQLBase):
             session,
             package_name=package_name,
             package_version=package_version,
+            package_license=package_license_id,
             python_package_index_id=index.id if index else None,
             os_name=os_name,
             os_version=os_version,
@@ -5315,10 +5322,11 @@ class GraphDatabase(SQLBase):
         solver_datetime = document["metadata"]["datetime"]
         solver_version = document["metadata"]["analyzer_version"]
         solver_duration = (document["metadata"].get("duration"),)
+        solver_license: SolverLicense = detect_license(document, raise_on_error=False)
         os_name = solver_info["os_name"]
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
-        # Older solver documents did not provide platform explictly.
+        # Older solver documents did not provide platform explicitly.
         platform = document["result"].get("platform") or "linux-x86_64"
 
         if not self.python_package_version_depends_on_platform_exists(platform=platform):
@@ -5349,6 +5357,13 @@ class GraphDatabase(SQLBase):
                     index_url,
                     solver_info,
                 )
+
+                license_id = PythonPackageLicense.get_or_create(
+                    session,
+                    license_name=solver_license.get_license_full_name(package_name, package_version),
+                    license_identifier=solver_license.get_license_idetentifier(package_name, package_version),
+                    license_version=solver_license.get_license_version(package_name, package_version),
+                ).id
 
                 package_metadata, _ = PythonPackageMetadata.get_or_create(
                     session,
@@ -5389,6 +5404,7 @@ class GraphDatabase(SQLBase):
                         session,
                         package_name,
                         package_version,
+                        package_license_id=license_id,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -5407,6 +5423,7 @@ class GraphDatabase(SQLBase):
                     self._delete_python_package_version(
                         package_name=package_name,
                         package_version=package_version,
+                        package_license_id=license_id,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -5417,6 +5434,7 @@ class GraphDatabase(SQLBase):
                         session,
                         package_name,
                         package_version,
+                        package_license_id=license_id,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -5446,7 +5464,7 @@ class GraphDatabase(SQLBase):
                     error_unsolvable=False,
                 )
 
-                # Sync imoprted package from result:tree
+                # Sync imported package from result:tree
                 _LOGGER.info(
                     "Syncing imported packages for package %r in version %r from %r found by solver %r",
                     package_name,

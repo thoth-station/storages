@@ -60,6 +60,7 @@ class PythonPackageVersion(Base, BaseExtension):
 
     package_name = Column(Text, nullable=False)
     package_version = Column(Text, nullable=True)
+    package_license_id = Column(Integer, ForeignKey("python_package_license.id", ondelete="CASCADE"), nullable=True)
     # Only solved packages can be synced.
     os_name = Column(Text, nullable=False)
     os_version = Column(Text, nullable=False)
@@ -78,6 +79,7 @@ class PythonPackageVersion(Base, BaseExtension):
     entity = relationship("PythonPackageVersionEntity", back_populates="python_package_versions")
     index = relationship("PythonPackageIndex", back_populates="python_package_versions")
     python_package_metadata = relationship("PythonPackageMetadata", back_populates="python_package_versions")
+    python_package_license = relationship("PythonPackageLicense", back_populates="python_package_license")
     si_aggregated = relationship("SIAggregated", back_populates="python_package_version")
     python_software_stacks = relationship("HasPythonRequirementsLock", back_populates="python_package_version")
     import_packages = relationship("FoundImportPackage", back_populates="python_package_version")
@@ -91,6 +93,20 @@ class PythonPackageVersion(Base, BaseExtension):
             Index("python_package_version_environment_idx", "os_name", "os_version", "python_version"),
         ]
     )
+
+
+class PythonPackageLicense(Base, BaseExtension):
+    """Representation of License and their version."""
+
+    __tablename__ = "python_package_license"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+
+    license_name = Column(Text, nullable=False)
+    license_identifier = Column(Text, nullable=False)
+    license_version = Column(Text, nullable=False)
+    # relationship
+    python_package_version = relationship("PythonPackageVersion", back_populates="python_package_license")
 
 
 class HasArtifact(Base, BaseExtension):
@@ -1732,6 +1748,7 @@ ALL_MAIN_MODELS = frozenset(
         HardwareInformation,
         ImportPackage,
         KebechetGithubAppInstallations,
+        PythonPackageLicense,
         PackageExtractRun,
         PythonArtifact,
         PythonFileDigest,
