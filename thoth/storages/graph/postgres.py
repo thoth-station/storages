@@ -68,6 +68,7 @@ from .models_base import BaseExtension
 from .models import AdviserRun
 from .models import ALL_MAIN_MODELS
 from .models import CVE
+from .models import CVETimestamp
 from .models import DebDependency
 from .models import DebPackageVersion
 from .models import DependencyMonkeyRun
@@ -4682,6 +4683,31 @@ class GraphDatabase(SQLBase):
             )
 
             return existed
+
+    def set_cve_timestamp(self, timestamp: datetime) -> None:
+        """Set CVE timestamp record."""
+        with self._session_scope() as session:
+            instance = session.query(CVETimestamp).first()
+            if instance:
+                instance.timestamp = timestamp
+            else:
+                instance = CVETimestamp(timestamp=timestamp)
+
+            session.add(instance)
+            session.commit()
+
+    def get_cve_timestamp(self) -> Optional[datetime]:
+        """Get CVE timestamp record."""
+        with self._session_scope() as session:
+            query_result = session.query(CVETimestamp).with_entities(CVETimestamp.timestamp).all()
+
+            if not query_result or not query_result[0]:
+                return None
+
+            if len(query_result) > 1:
+                _LOGGER.error("Inconsistent CVE timestamp found in the database: %r", query_result)
+
+            return query_result[0][0] if query_result and query_result[0] else None
 
     def update_missing_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
