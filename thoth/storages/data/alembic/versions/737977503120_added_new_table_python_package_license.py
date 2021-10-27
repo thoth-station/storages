@@ -26,13 +26,6 @@ def upgrade():
         sa.Column("license_version", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.alter_column("has_symbol", "software_environment_id", existing_type=sa.INTEGER(), nullable=False)
-    op.alter_column("has_symbol", "versioned_symbol_id", existing_type=sa.INTEGER(), nullable=False)
-    op.add_column("python_package_version", sa.Column("package_license_id", sa.Integer(), nullable=True))
-    op.create_foreign_key(
-        None, "python_package_version", "python_package_license", ["package_license_id"], ["id"], ondelete="CASCADE"
-    )
-    op.create_unique_constraint(None, "python_package_version_entity_rule", ["id"])
     # ### end Alembic commands ###
 
 
@@ -41,7 +34,5 @@ def downgrade():
     op.drop_constraint(None, "python_package_version_entity_rule", type_="unique")
     op.drop_constraint(None, "python_package_version", type_="foreignkey")
     op.drop_column("python_package_version", "package_license_id")
-    op.alter_column("has_symbol", "versioned_symbol_id", existing_type=sa.INTEGER(), nullable=True)
-    op.alter_column("has_symbol", "software_environment_id", existing_type=sa.INTEGER(), nullable=True)
     op.drop_table("python_package_license")
     # ### end Alembic commands ###
