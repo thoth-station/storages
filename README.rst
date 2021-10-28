@@ -390,7 +390,7 @@ Or you can initialize the object directly with them:
 .. code-block:: python
 
     from thoth.storages.ceph import CephStore
-    s3 = CephStore(
+    ceph = CephStore(
         key_id=<aws_access_key_id>,
         secret_key=<aws_secret_access_key>,
         prefix=<prefix_name>,
