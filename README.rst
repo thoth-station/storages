@@ -361,43 +361,45 @@ of endpoint you are connecting to.
 
 Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
-You can either configure these environemnt variables to initilaize the data handler:
+There are two ways to initialize the data handler:
 
-.. list-table::
+1. Configure environment variables
+   .. list-table::
    :widths: 25 25
    :header-rows: 1
-
+   
    * - Variable name
-     - Content
+       - Content
    * - ``S3_ENDPOINT_URL``
-     - Ceph Host name
+       - Ceph Host name
    * - ``CEPH_BUCKET``
-     - Ceph Bucket name
+       - Ceph Bucket name
    * - ``CEPH_BUCKET_PREFIX``
-     - Ceph Prefix
+       - Ceph Prefix
    * - ``CEPH_KEY_ID``
-     - Ceph Key ID
+       - Ceph Key ID
    * - ``CEPH_SECRET_KEY``
-     - Ceph Secret Key
+       - Ceph Secret Key
+   
+   .. code-block:: python
+   
+       from thoth.storages.ceph import CephStore
+       s3 = CephStore()
 
-.. code-block:: python
 
-    from thoth.storages.ceph import CephStore
-    s3 = CephStore()
+2. Initialize the object directly with parameters
 
-Or you can initialize the object directly with them:
+   .. code-block:: python
+   
+       from thoth.storages.ceph import CephStore
+       s3 = CephStore(
+           key_id=<aws_access_key_id>,
+           secret_key=<aws_secret_access_key>,
+           prefix=<prefix_name>,
+           host=<endpoint_url>,
+           bucket=<bucket_name>)
 
-.. code-block:: python
-
-    from thoth.storages.ceph import CephStore
-    s3 = CephStore(
-        key_id=<aws_access_key_id>,
-        secret_key=<aws_secret_access_key>,
-        prefix=<prefix_name>,
-        host=<endpoint_url>,
-        bucket=<bucket_name>)
-
-After initialization, you are ready to retrieve data
+Once the data handler is initialized, you can use the following methods for data operations:
 
 .. code-block:: python
 
@@ -411,4 +413,4 @@ After initialization, you are ready to retrieve data
         blob = s3.retrieve_blob(<file_path>)
 
     except NotFoundError:
-        # File does not exist
+        # For case that data does not exist
