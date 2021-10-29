@@ -49,8 +49,6 @@ You can run prepared test-suite via the following command:
   pipenv install --dev
   pipenv run python3 setup.py test
 
-  # To generate docs:
-  pipenv run python3 setup.py build_sphinx
 
 Running PostgreSQL locally
 ==========================
