@@ -362,27 +362,28 @@ of endpoint you are connecting to.
 There are two ways to initialize the data handler:
 
 1. Configure environment variables
+
    .. list-table::
-   :widths: 25 25
-   :header-rows: 1
-   
-   * - Variable name
-       - Content
-   * - ``S3_ENDPOINT_URL``
-       - Ceph Host name
-   * - ``CEPH_BUCKET``
-       - Ceph Bucket name
-   * - ``CEPH_BUCKET_PREFIX``
-       - Ceph Prefix
-   * - ``CEPH_KEY_ID``
-       - Ceph Key ID
-   * - ``CEPH_SECRET_KEY``
-       - Ceph Secret Key
+      :widths: 25 25
+      :header-rows: 1
+
+      * - Variable name
+        - Content
+      * - ``S3_ENDPOINT_URL``
+        - Ceph Host name
+      * - ``CEPH_BUCKET``
+        - Ceph Bucket name
+      * - ``CEPH_BUCKET_PREFIX``
+        - Ceph Prefix
+      * - ``CEPH_KEY_ID``
+        - Ceph Key ID
+      * - ``CEPH_SECRET_KEY``
+        - Ceph Secret Key
    
    .. code-block:: python
    
        from thoth.storages.ceph import CephStore
-       s3 = CephStore()
+       ceph = CephStore()
 
 
 2. Initialize the object directly with parameters
@@ -390,25 +391,25 @@ There are two ways to initialize the data handler:
    .. code-block:: python
    
        from thoth.storages.ceph import CephStore
-       s3 = CephStore(
+       ceph = CephStore(
            key_id=<aws_access_key_id>,
            secret_key=<aws_secret_access_key>,
            prefix=<prefix_name>,
            host=<endpoint_url>,
            bucket=<bucket_name>)
 
-Once the data handler is initialized, you can use the following methods for data operations:
+After initialization, you are ready to retrieve data
 
 .. code-block:: python
 
-    s3.connect()
+    ceph.connect()
 
     try:
         # For dictionary stored as json
-        json_data = s3.retrieve_document(<file_path>)
+        json_data = ceph.retrieve_document(<file_path>)
 
         # For general blob
-        blob = s3.retrieve_blob(<file_path>)
+        blob = ceph.retrieve_blob(<file_path>)
 
     except NotFoundError:
         # For case that data does not exist
