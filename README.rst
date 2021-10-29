@@ -359,8 +359,6 @@ Accessing data on Ceph
 To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
 of endpoint you are connecting to.
 
-Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
-
 There are two ways to initialize the data handler:
 
 1. Configure environment variables
@@ -414,3 +412,5 @@ Once the data handler is initialized, you can use the following methods for data
 
     except NotFoundError:
         # For case that data does not exist
+
+Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
