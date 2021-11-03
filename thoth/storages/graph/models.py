@@ -375,6 +375,15 @@ class FoundDeb(Base, BaseExtension):
     package_extract_run = relationship("PackageExtractRun", back_populates="found_debs")
 
 
+class CVETimestamp(Base, BaseExtension):
+    """Information about CVE aggregation maintained by cve-update-job."""
+
+    __tablename__ = "cve_timestamp"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False)
+
+
 class CVE(Base, BaseExtension):
     """Information about a CVE."""
 
@@ -385,6 +394,7 @@ class CVE(Base, BaseExtension):
     aggregated_at = Column(DateTime, nullable=True)
     cve_id = Column(Text, nullable=False, unique=True)
     details = Column(Text, nullable=False)
+    link = Column(Text, nullable=True)
 
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
@@ -1721,6 +1731,7 @@ class FoundImportPackage(Base, BaseExtension):
 ALL_MAIN_MODELS = frozenset(
     (
         CVE,
+        CVETimestamp,
         DebDependency,
         DebPackageVersion,
         DependencyMonkeyRun,

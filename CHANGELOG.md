@@ -1,5 +1,18 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.58.0 (2021-11-08T09:20:00)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Removed the build_sphinx command to generate docs in README.rst
+* Change variable name from s3 to ceph
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add CVE link to CVE table
+* Provide primitives for manipulating with CVE timestamp
+* Add both envvar and direct init example
+* Rephrase sentences
+* Fix EOF
+* Add data retrieval example
+
 ## Release 0.57.3 (2021-10-21T12:39:28)
 * Do not use colon in overlays name (#2451)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment

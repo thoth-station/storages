@@ -59,6 +59,7 @@ from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
+from thoth.common.helpers import datetime2datetime_str
 from thoth.common import OpenShift
 from thoth.common import normalize_os_version
 from thoth.common import map_os_name
@@ -68,6 +69,7 @@ from .models_base import BaseExtension
 from .models import AdviserRun
 from .models import ALL_MAIN_MODELS
 from .models import CVE
+from .models import CVETimestamp
 from .models import DebDependency
 from .models import DebPackageVersion
 from .models import DependencyMonkeyRun
@@ -175,6 +177,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
+from ..ceph import CephStore
 
 
 # Name of environment variables are long
@@ -4652,6 +4655,7 @@ class GraphDatabase(SQLBase):
         *,
         cve_id: str,
         details: str,
+        link: Optional[str],
     ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -4666,6 +4670,7 @@ class GraphDatabase(SQLBase):
                     cve_id=cve_id,
                     details=details,
                     aggregated_at=datetime.utcnow(),
+                    link=link,
                 )
 
             index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
@@ -4682,6 +4687,31 @@ class GraphDatabase(SQLBase):
             )
 
             return existed
+
+    def set_cve_timestamp(self, timestamp: datetime) -> None:
+        """Set CVE timestamp record."""
+        with self._session_scope() as session:
+            instance = session.query(CVETimestamp).first()
+            if instance:
+                instance.timestamp = timestamp
+            else:
+                instance = CVETimestamp(timestamp=timestamp)
+
+            session.add(instance)
+            session.commit()
+
+    def get_cve_timestamp(self) -> Optional[datetime]:
+        """Get CVE timestamp record."""
+        with self._session_scope() as session:
+            query_result = session.query(CVETimestamp).with_entities(CVETimestamp.timestamp).all()
+
+            if not query_result or not query_result[0]:
+                return None
+
+            if len(query_result) > 1:
+                _LOGGER.error("Inconsistent CVE timestamp found in the database: %r", query_result)
+
+            return query_result[0][0] if query_result and query_result[0] else None
 
     def update_missing_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
@@ -6722,6 +6752,32 @@ class GraphDatabase(SQLBase):
                 )
                 .delete()
             )
+
+    def purge_solver_documents(
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted solver documents to Ceph"""
+        self.connect()
+        solver_store = SolverResultsStore()
+        solver_store.connect()
+
+        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/solver-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        solver_document_ids = self.get_solver_run_document_ids_all(
+            os_version=os_version, os_name=os_name, python_version=python_version
+        )
+
+        deleted_solver_documents_count = 0
+
+        for solver_document_id in solver_document_ids:
+            document = solver_store.retrieve_document(document_id=solver_document_id)
+            target_store.store_document(document, document_id=solver_document_id)
+            solver_store.ceph.delete(object_key=solver_document_id)
+            deleted_solver_documents_count += self.delete_solver_result(solver_document_id=solver_document_id)
+
+        return deleted_solver_documents_count
 
     def delete_solver_result(self, solver_document_id: str) -> int:
         """Delete the corresponding solver result."""
