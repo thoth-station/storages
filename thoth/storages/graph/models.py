@@ -394,6 +394,7 @@ class CVE(Base, BaseExtension):
     aggregated_at = Column(DateTime, nullable=True)
     cve_id = Column(Text, nullable=False, unique=True)
     details = Column(Text, nullable=False)
+    link = Column(Text, nullable=True)
 
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 

@@ -4653,6 +4653,7 @@ class GraphDatabase(SQLBase):
         *,
         cve_id: str,
         details: str,
+        link: Optional[str],
     ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -4667,6 +4668,7 @@ class GraphDatabase(SQLBase):
                     cve_id=cve_id,
                     details=details,
                     aggregated_at=datetime.utcnow(),
+                    link=link,
                 )
 
             index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
