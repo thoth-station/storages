@@ -6779,6 +6779,82 @@ class GraphDatabase(SQLBase):
 
         return deleted_solver_documents_count
 
+    def purge_adviser_documents(
+        self, *, end_datetime: Optional[str] = None, adviser_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted adviser documents to Ceph"""
+        self.connect()
+        adviser_store = AdvisersResultsStore()
+        adviser_store.connect()
+
+        target_prefix = (
+            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/adviser-purge-{datetime2datetime_str()}/"
+        )
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(AdviserRun.adviser_document_id).with_entities(AdviserRun.adviser_document_id)
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(AdviserRun.datetime < date_filter)
+
+            if adviser_version:
+                query = query.filter(AdviserRun.adviser_version == adviser_version)
+
+            adviser_document_ids = query.all()
+            adviser_document_ids = [obj[0] for obj in adviser_document_ids]
+
+        deleted_adviser_documents_count = 0
+
+        for adviser_document_id in adviser_document_ids:
+            document = adviser_store.retrieve_document(document_id=adviser_document_id)
+            target_store.store_document(document, document_id=adviser_document_id)
+            adviser_store.ceph.delete(object_key=adviser_document_id)
+            deleted_adviser_documents_count += self.delete_adviser_result(adviser_document_id=adviser_document_id)
+
+        return deleted_adviser_documents_count
+
+    def purge_package_extract_documents(
+        self, *, end_datetime: Optional[str] = None, package_extract_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted package extract documents to Ceph"""
+        self.connect()
+        package_extract_store = AnalysisResultsStore()
+        package_extract_store.connect()
+
+        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(PackageExtractRun.package_extract_version).with_entities(
+                PackageExtractRun.package_extract_version
+            )
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(PackageExtractRun.datetime < date_filter)
+
+            if package_extract_version:
+                query = query.filter(PackageExtractRun.package_extract_version == package_extract_version)
+
+            package_extract_document_ids = query.all()
+            package_extract_document_ids = [obj[0] for obj in package_extract_document_ids]
+
+        deleted_package_extract_documents_count = 0
+
+        for package_extract_document_id in package_extract_document_ids:
+            document = package_extract_store.retrieve_document(document_id=package_extract_document_id)
+            target_store.store_document(document, document_id=package_extract_document_id)
+            package_extract_store.ceph.delete(object_key=package_extract_document_id)
+            deleted_package_extract_documents_count += self.delete_analysis_result(
+                analysis_document_id=package_extract_document_id
+            )
+
+        return deleted_package_extract_documents_count
+
     def delete_solver_result(self, solver_document_id: str) -> int:
         """Delete the corresponding solver result."""
         with self._session_scope() as session:
