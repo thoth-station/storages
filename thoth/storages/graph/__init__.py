@@ -19,3 +19,5 @@
 
 
 from .postgres import GraphDatabase
+
+__all__ = [GraphDatabase.__name__]
