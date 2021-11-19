@@ -1,5 +1,12 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.59.0 (2021-11-19T03:05:03)
+* Add distinct option to method
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Use explicit exports
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Adjust flexmock import to respect new flexmock release notes
+
 ## Release 0.58.0 (2021-11-08T09:20:00)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
