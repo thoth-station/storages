@@ -6751,7 +6751,6 @@ class GraphDatabase(SQLBase):
         self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted solver documents to Ceph"""
-        self.connect()
         solver_store = SolverResultsStore()
         solver_store.connect()
 
@@ -6777,7 +6776,6 @@ class GraphDatabase(SQLBase):
         self, *, end_datetime: Optional[str] = None, adviser_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted adviser documents to Ceph"""
-        self.connect()
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
@@ -6814,7 +6812,6 @@ class GraphDatabase(SQLBase):
         self, *, end_datetime: Optional[str] = None, package_extract_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted package extract documents to Ceph"""
-        self.connect()
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 
