@@ -2150,6 +2150,7 @@ class GraphDatabase(SQLBase):
         os_name: str,
         os_version: str,
         python_version: str,
+        marker_evaluation_result: Optional[bool] = None,
     ) -> Optional[str]:
         """Get Python evaluation marker as per PEP-0508.
 
@@ -2162,7 +2163,7 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
-            result = (
+            query = (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .filter(PythonPackageVersion.package_version == package_version)
@@ -2172,7 +2173,13 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(DependsOn)
-                .join(PythonPackageVersionEntity)
+            )
+
+            if isinstance(marker_evaluation_result, bool):
+                query = query.filter(DependsOn.marker_evaluation_result.is_(marker_evaluation_result))
+
+            result = (
+                query.join(PythonPackageVersionEntity)
                 .filter(PythonPackageVersionEntity.package_name == dependency_name)
                 .filter(PythonPackageVersionEntity.package_version == dependency_version)
                 .with_entities(DependsOn.marker)
