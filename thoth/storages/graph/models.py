@@ -61,6 +61,7 @@ class PythonPackageVersion(Base, BaseExtension):
     package_name = Column(Text, nullable=False)
     package_version = Column(Text, nullable=True)
     package_license_id = Column(Integer, ForeignKey("python_package_license.id", ondelete="CASCADE"), nullable=True)
+    package_license_warning = Column(Boolean, nullable=False)
     # Only solved packages can be synced.
     os_name = Column(Text, nullable=False)
     os_version = Column(Text, nullable=False)

@@ -4086,6 +4086,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         package_version: str,
         package_license_id: int,
+        package_license_id_warning: bool,
         index_url: str,
         os_name: str,
         os_version: str,
@@ -4102,6 +4103,7 @@ class GraphDatabase(SQLBase):
                     PythonPackageVersion.package_name == package_name,
                     PythonPackageVersion.package_version == package_version,
                     PythonPackageVersion.package_license_id == package_license_id,
+                    PythonPackageVersion.package_license_warning == package_license_id_warning,
                     PythonPackageVersion.os_name == os_name,
                     PythonPackageVersion.os_version == os_version,
                     PythonPackageVersion.python_version == python_version,
@@ -4121,6 +4123,7 @@ class GraphDatabase(SQLBase):
         package_name: str,
         package_version: Union[str, None],
         package_license_id: int,
+        package_license_warning: bool,
         index_url: Union[str, None],
         *,
         os_name: Union[str, None],
@@ -4158,6 +4161,7 @@ class GraphDatabase(SQLBase):
             package_name=package_name,
             package_version=package_version,
             package_license=package_license_id,
+            package_license_warning=package_license_warning,
             python_package_index_id=index.id if index else None,
             os_name=os_name,
             os_version=os_version,
@@ -5322,7 +5326,6 @@ class GraphDatabase(SQLBase):
         solver_datetime = document["metadata"]["datetime"]
         solver_version = document["metadata"]["analyzer_version"]
         solver_duration = (document["metadata"].get("duration"),)
-        solver_license: SolverLicense = detect_license(document, raise_on_error=False)
         os_name = solver_info["os_name"]
         os_version = solver_info["os_version"]
         python_version = solver_info["python_version"]
@@ -5347,6 +5350,8 @@ class GraphDatabase(SQLBase):
                 # Normalized in `_create_python_package_version'.
                 package_name = python_package_info["package_name"]
                 package_version = python_package_info["package_version_requested"]
+                package_license = python_package_info["package_license"]
+                package_license_warning = python_package_info["package_license"][package_name][package_version]["warning"]
                 index_url = python_package_info["index_url"]
                 importlib_metadata = python_package_info["importlib_metadata"]["metadata"]
 
@@ -5360,9 +5365,9 @@ class GraphDatabase(SQLBase):
 
                 license_id = PythonPackageLicense.get_or_create(
                     session,
-                    license_name=solver_license.get_license_full_name(package_name, package_version),
-                    license_identifier=solver_license.get_license_idetentifier(package_name, package_version),
-                    license_version=solver_license.get_license_version(package_name, package_version),
+                    license_name=package_license[package_name][package_version]["license"][0],
+                    license_identifier=package_license[package_name][package_version]["license"][1],
+                    license_version=package_license[package_name][package_version]["license_version"],
                 ).id
 
                 package_metadata, _ = PythonPackageMetadata.get_or_create(
@@ -5405,6 +5410,7 @@ class GraphDatabase(SQLBase):
                         package_name,
                         package_version,
                         package_license_id=license_id,
+                        package_license_warning=package_license_warning,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -5424,6 +5430,7 @@ class GraphDatabase(SQLBase):
                         package_name=package_name,
                         package_version=package_version,
                         package_license_id=license_id,
+                        package_license_warning=package_license_warning,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
@@ -5435,6 +5442,7 @@ class GraphDatabase(SQLBase):
                         package_name,
                         package_version,
                         package_license_id=license_id,
+                        package_license_warning=package_license_warning,
                         os_name=ecosystem_solver.os_name,
                         os_version=ecosystem_solver.os_version,
                         python_version=ecosystem_solver.python_version,
