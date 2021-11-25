@@ -289,7 +289,7 @@ class GraphDatabase(SQLBase):
         finally:
             session.close()
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to the database."""
         if self.is_connected():
             raise AlreadyConnected("Cannot connect, the adapter is already connected")

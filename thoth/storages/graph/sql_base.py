@@ -38,14 +38,14 @@ class SQLBase:
     _DECLARATIVE_BASE = None
 
     @abc.abstractmethod
-    def connect(self):
+    def connect(self) -> None:
         """Connect to the database."""
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Check if the database is connected."""
         return self._engine is not None
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """Disconnect from the connected database."""
         if not self.is_connected():
             raise NotConnected("Cannot disconnect, the adapter is not connected")
