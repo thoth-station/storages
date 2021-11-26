@@ -60,8 +60,8 @@ from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
 from thoth.common.helpers import datetime2datetime_str
+from thoth.common.helpers import normalize_os_version
 from thoth.common import OpenShift
-from thoth.common import normalize_os_version
 from thoth.common import map_os_name
 from thoth.common.enums import ThothAdviserIntegrationEnum
 
@@ -4950,7 +4950,7 @@ class GraphDatabase(SQLBase):
                 conditions.append(EcosystemSolver.os_name == os_name)
 
             if os_version:
-                os_version = OpenShift.normalize_os_version(os_name, os_version)
+                os_version = normalize_os_version(os_name, os_version)
                 conditions.append(EcosystemSolver.os_version == os_version)
 
             if python_version:
