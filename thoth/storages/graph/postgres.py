@@ -6773,7 +6773,7 @@ class GraphDatabase(SQLBase):
         return deleted_solver_documents_count
 
     def purge_adviser_documents(
-        self, *, end_datetime: Optional[str] = None, adviser_version: Optional[str] = None
+        self, *, end_datetime: Optional[datetime] = None, adviser_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted adviser documents to Ceph"""
         adviser_store = AdvisersResultsStore()
@@ -6809,7 +6809,7 @@ class GraphDatabase(SQLBase):
         return deleted_adviser_documents_count
 
     def purge_package_extract_documents(
-        self, *, end_datetime: Optional[str] = None, package_extract_version: Optional[str] = None
+        self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted package extract documents to Ceph"""
         package_extract_store = AnalysisResultsStore()
