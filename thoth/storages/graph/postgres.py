@@ -7057,25 +7057,58 @@ class GraphDatabase(SQLBase):
     def get_python_package_version_import_packages_all(
         self, import_name: str, distinct: bool = False
     ) -> List[Dict[str, str]]:
-        """Retrieve Python package name for the given import package name."""
+        """Retrieve Python package name for the given import package name.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_import_packages_all("faust.*")
+        [
+           {'import': 'faust.web.apps',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.cache',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.cache.backends',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.drivers',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'}
+            ...
+        ]
+        """
         with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).join(FoundImportPackage).join(ImportPackage)
+
+            if import_name.endswith("*"):
+                query = query.filter(ImportPackage.import_package_name.like(f"{import_name[:-1]}%"))
+            else:
+                query = query.filter(ImportPackage.import_package_name == import_name)
+
             query = (
-                session.query(PythonPackageVersion)
-                .join(FoundImportPackage)
-                .join(ImportPackage)
-                .filter(ImportPackage.import_package_name == import_name)
-                .filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
+                query.filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
                 .join(PythonPackageIndex)
                 .filter(PythonPackageVersion.python_package_index_id == PythonPackageIndex.id)
                 .with_entities(
-                    PythonPackageVersion.package_name, PythonPackageVersion.package_version, PythonPackageIndex.url
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url,
+                    ImportPackage.import_package_name,
                 )
             )
 
             if distinct:
                 query = query.distinct()
 
-            result = [{"package_name": i[0], "package_version": i[1], "index_url": i[2]} for i in query.all()]
+            result = [
+                {"package_name": i[0], "package_version": i[1], "index_url": i[2], "import": i[3]} for i in query.all()
+            ]
 
             if not result:
                 raise NotFoundError(f"No package matching import {import_name!r} found")
