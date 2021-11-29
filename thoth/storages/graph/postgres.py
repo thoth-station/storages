@@ -6820,8 +6820,8 @@ class GraphDatabase(SQLBase):
         target_store.connect()
 
         with self._session_scope() as session:
-            query = session.query(PackageExtractRun.package_extract_version).with_entities(
-                PackageExtractRun.package_extract_version
+            query = session.query(PackageExtractRun.analysis_document_id).with_entities(
+                PackageExtractRun.analysis_document_id
             )
 
             if end_datetime:
