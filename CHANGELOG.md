@@ -1,5 +1,12 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.60.0 (2021-11-29T11:52:15)
+* Allow querying module imports
+* Obtain environment markers based on evaluation result
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add missing types
+* add kebechet to crossroads in docs
+
 ## Release 0.59.0 (2021-11-19T03:05:03)
 * Add distinct option to method
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
