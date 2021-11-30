@@ -59,8 +59,9 @@ from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
+from thoth.common.helpers import datetime2datetime_str
+from thoth.common.helpers import normalize_os_version
 from thoth.common import OpenShift
-from thoth.common import normalize_os_version
 from thoth.common import map_os_name
 from thoth.common.enums import ThothAdviserIntegrationEnum
 
@@ -176,6 +177,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
+from ..ceph import CephStore
 
 
 # Name of environment variables are long
@@ -4948,7 +4950,7 @@ class GraphDatabase(SQLBase):
                 conditions.append(EcosystemSolver.os_name == os_name)
 
             if os_version:
-                os_version = OpenShift.normalize_os_version(os_name, os_version)
+                os_version = normalize_os_version(os_name, os_version)
                 conditions.append(EcosystemSolver.os_version == os_version)
 
             if python_version:
@@ -6744,6 +6746,105 @@ class GraphDatabase(SQLBase):
             )
 
         return self._process_bloat_data_results(tables=tables)
+
+    def purge_solver_documents(
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted solver documents to Ceph"""
+        solver_store = SolverResultsStore()
+        solver_store.connect()
+
+        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/solver-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        solver_document_ids = self.get_solver_run_document_ids_all(
+            os_version=os_version, os_name=os_name, python_version=python_version
+        )
+
+        deleted_solver_documents_count = 0
+
+        for solver_document_id in solver_document_ids:
+            document = solver_store.retrieve_document(document_id=solver_document_id)
+            target_store.store_document(document, document_id=solver_document_id)
+            solver_store.ceph.delete(object_key=solver_document_id)
+            deleted_solver_documents_count += self.delete_solver_result(solver_document_id=solver_document_id)
+
+        return deleted_solver_documents_count
+
+    def purge_adviser_documents(
+        self, *, end_datetime: Optional[datetime] = None, adviser_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted adviser documents to Ceph"""
+        adviser_store = AdvisersResultsStore()
+        adviser_store.connect()
+
+        target_prefix = (
+            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/adviser-purge-{datetime2datetime_str()}/"
+        )
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(AdviserRun.adviser_document_id).with_entities(AdviserRun.adviser_document_id)
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(AdviserRun.datetime < date_filter)
+
+            if adviser_version:
+                query = query.filter(AdviserRun.adviser_version == adviser_version)
+
+            adviser_document_ids = query.all()
+            adviser_document_ids = [obj[0] for obj in adviser_document_ids]
+
+        deleted_adviser_documents_count = 0
+
+        for adviser_document_id in adviser_document_ids:
+            document = adviser_store.retrieve_document(document_id=adviser_document_id)
+            target_store.store_document(document, document_id=adviser_document_id)
+            adviser_store.ceph.delete(object_key=adviser_document_id)
+            deleted_adviser_documents_count += self.delete_adviser_result(adviser_document_id=adviser_document_id)
+
+        return deleted_adviser_documents_count
+
+    def purge_package_extract_documents(
+        self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted package extract documents to Ceph"""
+        package_extract_store = AnalysisResultsStore()
+        package_extract_store.connect()
+
+        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(PackageExtractRun.analysis_document_id).with_entities(
+                PackageExtractRun.analysis_document_id
+            )
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(PackageExtractRun.datetime < date_filter)
+
+            if package_extract_version:
+                query = query.filter(PackageExtractRun.package_extract_version == package_extract_version)
+
+            package_extract_document_ids = query.all()
+            package_extract_document_ids = [obj[0] for obj in package_extract_document_ids]
+
+        deleted_package_extract_documents_count = 0
+
+        for package_extract_document_id in package_extract_document_ids:
+            document = package_extract_store.retrieve_document(document_id=package_extract_document_id)
+            target_store.store_document(document, document_id=package_extract_document_id)
+            package_extract_store.ceph.delete(object_key=package_extract_document_id)
+            deleted_package_extract_documents_count += self.delete_analysis_result(
+                analysis_document_id=package_extract_document_id
+            )
+
+        return deleted_package_extract_documents_count
 
     def delete_solved(self, *, os_name: str, os_version: str, python_version: str) -> int:
         """Delete corresponding solver data."""
