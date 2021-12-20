@@ -888,6 +888,54 @@ class GraphDatabase(SQLBase):
 
             return query_result
 
+    def get_solved_python_package_version_environments_all(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> List[Dict[str, str]]:
+        """Retrieve all the environments that were used to solve the given package.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_solved_python_package_version_environments_all( \
+                package_name="flask", package_version="2.0.2", index_url="https://pypi.org/simple")
+        [
+            {"os_name": "rhel", "os_version": "8", "python_version": "3.8"},
+            {"os_name": "fedora", "os_version": "35", "python_version": "3.9"},
+        ]
+        """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+        index_url = self.normalize_python_index_url(index_url)
+
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .filter(
+                    PythonPackageVersion.package_name == package_name,
+                    PythonPackageVersion.package_version == package_version,
+                )
+                .join(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+            )
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            result = query.with_entities(
+                PythonPackageVersion.os_name, PythonPackageVersion.os_version, PythonPackageVersion.python_version
+            ).all()
+
+            return [{"os_name": i[0], "os_version": i[1], "python_version": i[2]} for i in result]
+
     def get_solved_python_package_versions_count(
         self,
         *,
