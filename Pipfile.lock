@@ -1033,11 +1033,11 @@
         },
         "sqlalchemy-utils": {
             "hashes": [
-                "sha256:72b00a99941c376e03e4b4dd4df128b8237b1fc4f36601ab116ceab18cb22e1b",
-                "sha256:8ed14babfd05c40884d416cf7719c92cec390bb8ee9e5c4a3eb8e603e15fe784"
+                "sha256:7bed3396f4103dc8663f05751065284c2e3d529f20ebd4a80847e1281fccb1fe",
+                "sha256:a484ccfdc7f9298df49d2558a5309691e5e3e51c815a23a33b3355989176cb3e"
             ],
             "index": "pypi",
-            "version": "==0.38.0"
+            "version": "==0.38.1"
         },
         "thoth-analyzer": {
             "hashes": [
