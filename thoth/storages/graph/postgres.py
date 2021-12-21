@@ -2896,7 +2896,7 @@ class GraphDatabase(SQLBase):
                 processed_results.append(
                     {
                         "cuda_version": r[0],
-                        "datetime": r[12],
+                        "datetime": format_datetime(r[12]),
                         "env_image_name": r[1],
                         "env_image_tag": r[2],
                         "environment_name": r[3],
