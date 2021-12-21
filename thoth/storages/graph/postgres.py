@@ -2831,7 +2831,7 @@ class GraphDatabase(SQLBase):
                 'image_sha': 'bcf4fa447e5dc889015afb4d3c54ef4a3aaddc3260fce072311602df34ffac3c',
                 'os_name': 'rhel',
                 'os_version': '8',
-                'package_extract_run_id': 'package-extract-211215162259-33c8d9c730b775eb',
+                'package_extract_document_id': 'package-extract-211215162259-33c8d9c730b775eb',
                 'python_version': '3.9',
                 'thoth_s2i_image_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39',
                 'thoth_s2i_image_version': '0.32.3'
@@ -2904,7 +2904,7 @@ class GraphDatabase(SQLBase):
                         "image_sha": r[5],
                         "os_name": r[6],
                         "os_version": r[7],
-                        "package_extract_run_id": r[11],
+                        "package_extract_document_id": r[11],
                         "python_version": r[8],
                         "thoth_s2i_image_name": r[9],
                         "thoth_s2i_image_version": r[10],
