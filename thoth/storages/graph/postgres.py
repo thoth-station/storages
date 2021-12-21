@@ -2756,8 +2756,15 @@ class GraphDatabase(SQLBase):
         count: Optional[int] = DEFAULT_COUNT,
         env_image_name: Optional[str] = None,
         env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database."""
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
         if is_external:
             software_environment = ExternalSoftwareEnvironment
         else:
@@ -2771,6 +2778,21 @@ class GraphDatabase(SQLBase):
 
             if env_image_tag:
                 query = query.filter(software_environment.env_image_tag == env_image_tag)
+
+            if os_name:
+                query = query.filter(software_environment.os_name == os_name)
+
+            if os_version:
+                query = query.filter(software_environment.os_version == os_version)
+
+            if python_version:
+                query = query.filter(software_environment.python_version == python_version)
+
+            if cuda_version:
+                query = query.filter(software_environment.cuda_version == cuda_version)
+
+            if image_name:
+                query = query.filter(software_environment.image_name == image_name)
 
             query = query.offset(start_offset).limit(count)
             return [model.to_dict() for model in query.all()]
