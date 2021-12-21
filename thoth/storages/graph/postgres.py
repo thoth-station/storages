@@ -801,14 +801,14 @@ class GraphDatabase(SQLBase):
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
-    ) -> List[Tuple[str, str]]:
+    ) -> List[str]:
         """Retrieve solved Python package with index in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
         >>> graph.get_solved_python_packages_all()
-        [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
+        ['regex', 'tensorflow', 'flask']
         """
         os_name = map_os_name(os_name)
         os_version = normalize_os_version(os_name, os_version)
@@ -2935,14 +2935,14 @@ class GraphDatabase(SQLBase):
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
-    ) -> List[Tuple[str, str]]:
+    ) -> List[str]:
         """Retrieve Python packages with index in Thoth Database.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
         >>> graph.get_python_packages_all()
-        [('regex', 'https://pypi.org/simple'), ('tensorflow', 'https://pypi.org/simple')]
+        ['regex', 'tensorflow', 'flask']
         """
         os_name = map_os_name(os_name)
         os_version = normalize_os_version(os_name, os_version)
@@ -2950,7 +2950,7 @@ class GraphDatabase(SQLBase):
             query = (
                 session.query(PythonPackageVersion)
                 .join(PythonPackageIndex)
-                .with_entities(PythonPackageVersion.package_name, PythonPackageIndex.url)
+                .with_entities(PythonPackageVersion.package_name)
             )
 
             if os_name is not None:
@@ -2967,7 +2967,7 @@ class GraphDatabase(SQLBase):
             if distinct:
                 query = query.distinct()
 
-            return query.all()
+            return [i[0] for i in query.all()]
 
     @staticmethod
     def _construct_python_packages_query(
