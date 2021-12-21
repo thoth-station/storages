@@ -1,5 +1,24 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.62.0 (2021-12-21T12:49:44)
+* Be consistent across library
+* Make sure datetime returned is string
+* Update thoth/storages/graph/postgres.py
+* Extend output query with package extract id and date
+* make Package Extract Run table image size column datatype BigInteger
+* Update thoth/storages/graph/postgres.py
+* Allow syncing non-Thoth env variables
+* Introduce a query for obtaining environments used to solve a package
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Parametrize query obtaining software environments
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix v0.61.0 changelog computed (#2499)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Update pyproject.toml to use Python 3.8
+* Fix v0.61.0 changelog computed
+
 ## Release 0.61.0 (2021-11-30T14:24:51)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * Modified package_extract_version to analysis_document_id in purge_package_extract_documents query
