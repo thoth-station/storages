@@ -5375,7 +5375,10 @@ class GraphDatabase(SQLBase):
         result = {}
 
         for entry in (document["result"].get("skopeo-inspect") or {}).get("Env") or []:
-            if entry.startswith(("THAMOS_", "THOTH_")) or entry in ("IMAGE_NAME", "IMAGE_VERSION"):
+            if entry.startswith(("THAMOS_", "THOTH_")) or entry.split("=", maxsplit=1)[0] in [
+                "IMAGE_NAME",
+                "IMAGE_TAG",
+            ]:
                 env_name, env_val = entry.split("=", maxsplit=1)
                 result[env_name] = env_val
 
