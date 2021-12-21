@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.62.1 (2021-12-21T18:50:24)
+* Fix condition to identify env vars
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.62.0 (2021-12-21T12:49:44)
 * Be consistent across library
 * Make sure datetime returned is string
