@@ -5300,11 +5300,14 @@ class GraphDatabase(SQLBase):
             )
 
     @staticmethod
-    def _package_extract_get_env_vars(document: Dict[str, Any]) -> Dict[str, str]:
-        """Obtain Thoth specific environment variables present in the container image."""
+    def _package_extract_get_env_vars(
+        document: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """Obtain environment variables present in the container image."""
         result = {}
+
         for entry in (document["result"].get("skopeo-inspect") or {}).get("Env") or []:
-            if entry.startswith(("THAMOS_", "THOTH_")):
+            if entry.startswith(("THAMOS_", "THOTH_")) or entry in ("IMAGE_NAME", "IMAGE_VERSION"):
                 env_name, env_val = entry.split("=", maxsplit=1)
                 result[env_name] = env_val
 
