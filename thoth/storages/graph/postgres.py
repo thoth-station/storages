@@ -2813,6 +2813,32 @@ class GraphDatabase(SQLBase):
         """Get software environments (external or internal) registered in the graph database."""
         os_name = map_os_name(os_name)
         os_version = normalize_os_version(os_name, os_version)
+        """Get software environments (external or internal) registered in the graph database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_software_environments_all()
+
+        [
+            {
+                'cuda_version': None,
+                'datetime': datetime.datetime(2021, 12, 15, 19, 27, 52, 803266),
+                'env_image_name': None,
+                'env_image_tag': None,
+                'environment_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39:v0.32.3',
+                'environment_type': 'RUNTIME',
+                'image_sha': 'bcf4fa447e5dc889015afb4d3c54ef4a3aaddc3260fce072311602df34ffac3c',
+                'os_name': 'rhel',
+                'os_version': '8',
+                'package_extract_run_id': 'package-extract-211215162259-33c8d9c730b775eb',
+                'python_version': '3.9',
+                'thoth_s2i_image_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39',
+                'thoth_s2i_image_version': '0.32.3'
+                }
+            ]
+
+        """
         if is_external:
             software_environment = ExternalSoftwareEnvironment
         else:
@@ -2842,8 +2868,49 @@ class GraphDatabase(SQLBase):
             if image_name:
                 query = query.filter(software_environment.image_name == image_name)
 
+            query = query.join(PackageExtractRun)
+            query = query.order_by(PackageExtractRun.datetime.desc())
+            query = query.with_entities(
+                software_environment.cuda_version,
+                software_environment.env_image_name,
+                software_environment.env_image_tag,
+                software_environment.environment_name,
+                software_environment.environment_type,
+                software_environment.image_sha,
+                software_environment.os_name,
+                software_environment.os_version,
+                software_environment.python_version,
+                software_environment.thoth_s2i_image_name,
+                software_environment.thoth_s2i_image_version,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.datetime,
+            )
+
             query = query.offset(start_offset).limit(count)
-            return [model.to_dict() for model in query.all()]
+
+            results = query.all()
+
+            processed_results = []
+
+            for r in results:
+                processed_results.append(
+                    {
+                        "cuda_version": r[0],
+                        "datetime": r[12],
+                        "env_image_name": r[1],
+                        "env_image_tag": r[2],
+                        "environment_name": r[3],
+                        "environment_type": r[4],
+                        "image_sha": r[5],
+                        "os_name": r[6],
+                        "os_version": r[7],
+                        "package_extract_run_id": r[11],
+                        "python_version": r[8],
+                        "thoth_s2i_image_name": r[9],
+                        "thoth_s2i_image_version": r[10],
+                    }
+                )
+            return processed_results
 
     def get_python_package_index_urls_all(self, enabled: Optional[bool] = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
