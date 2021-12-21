@@ -5221,15 +5221,23 @@ class GraphDatabase(SQLBase):
             )
 
     @staticmethod
-    def _package_extract_get_env_vars(document: Dict[str, Any]) -> Dict[str, str]:
-        """Obtain Thoth specific environment variables present in the container image."""
+    def _package_extract_get_env_vars(
+        document: Dict[str, Any],
+    ) -> Tuple[Dict[str, str], Dict[str, str]]:
+        """Obtain environment variables present in the container image."""
         result = {}
+        result_no_thoth = {}
+
         for entry in (document["result"].get("skopeo-inspect") or {}).get("Env") or []:
             if entry.startswith(("THAMOS_", "THOTH_")):
                 env_name, env_val = entry.split("=", maxsplit=1)
                 result[env_name] = env_val
 
-        return result
+            if entry in ["IMAGE_NAME", "IMAGE_VERSION"]:
+                env_name, env_val = entry.split("=", maxsplit=1)
+                result_no_thoth[env_name] = env_val
+
+        return result, result_no_thoth
 
     def sync_analysis_result(self, document: dict) -> None:
         """Sync the given analysis result to the graph database."""
@@ -5279,7 +5287,7 @@ class GraphDatabase(SQLBase):
                         python_version[2:3] + "." + python_version[3:]
                     )  # take first digit and put . after it
 
-            env_vars = self._package_extract_get_env_vars(document)
+            env_vars, external_env_vars = self._package_extract_get_env_vars(document)
 
             software_environment, _ = sw_class.get_or_create(
                 session,
@@ -5291,8 +5299,8 @@ class GraphDatabase(SQLBase):
                 os_version=os_version,
                 thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
                 thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
-                env_image_name=env_vars.get("IMAGE_NAME"),
-                env_image_tag=env_vars.get("IMAGE_TAG"),
+                env_image_name=external_env_vars.get("IMAGE_NAME"),
+                env_image_tag=external_env_vars.get("IMAGE_TAG"),
                 cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
                 environment_type=environment_type,
             )
