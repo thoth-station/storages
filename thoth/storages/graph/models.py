@@ -24,6 +24,7 @@ from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Table
+from sqlalchemy import BigInteger
 from sqlalchemy import Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -281,7 +282,7 @@ class PackageExtractRun(Base, BaseExtension):
     origin = Column(Text, nullable=True)
     debug = Column(Boolean, nullable=False, default=False)
     package_extract_error = Column(Boolean, nullable=False, default=False)
-    image_size = Column(Integer, nullable=True)
+    image_size = Column(BigInteger, nullable=True)
     # An image tag which was used during image analysis. As this tag can change (e.g. latest is always changing
     # on new builds), it's part of this class instead of Runtime/Buildtime environment to keep correct
     # linkage for same container images.
