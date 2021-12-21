@@ -2961,10 +2961,13 @@ class GraphDatabase(SQLBase):
     def get_python_package_version_names_all(
         self,
         *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
+        sort: bool = False,
     ) -> List[str]:
         """Retrieve names of Python Packages known by Thoth.
 
@@ -2988,11 +2991,15 @@ class GraphDatabase(SQLBase):
             if python_version is not None:
                 query = query.filter(PythonPackageVersion.python_version == python_version)
 
+            if sort:
+                query = query.order_by(PythonPackageVersion.package_name)
+
+            query = query.offset(start_offset).limit(count)
+
             if distinct:
                 query = query.distinct()
 
-            result = query.all()
-            return [item[0] for item in result]
+            return [item[0] for item in query.all()]
 
     def get_python_packages_all(
         self,
