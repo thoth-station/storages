@@ -2799,6 +2799,7 @@ class GraphDatabase(SQLBase):
     def get_software_environments_all(
         self,
         is_external: bool = False,
+        convert_datetime: bool = True,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
@@ -2896,7 +2897,7 @@ class GraphDatabase(SQLBase):
                 processed_results.append(
                     {
                         "cuda_version": r[0],
-                        "datetime": format_datetime(r[12]),
+                        "datetime": r[12] if not convert_datetime else format_datetime(r[12]),
                         "env_image_name": r[1],
                         "env_image_tag": r[2],
                         "environment_name": r[3],
