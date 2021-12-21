@@ -814,6 +814,49 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, os_version)
         return self.__class__.get_python_packages_all(**locals())
 
+    def get_solved_python_package_names_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        distinct: bool = False,
+        sort: bool = False,
+    ) -> List[Tuple[str, str]]:
+        """Retrieve solved Python package names from Thoth database.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_solved_python_package_names_all()
+        ['regex', 'tensorflow', 'flask']
+        """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
+
+            if os_name is not None:
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version is not None:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version is not None:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            if sort:
+                query = query.order_by(PythonPackageVersion.package_name)
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            return [i[0] for i in query.all()]
+
     def _construct_solved_python_packages_query(
         self,
         session: Session,
