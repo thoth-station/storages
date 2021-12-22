@@ -5015,7 +5015,7 @@ class GraphDatabase(SQLBase):
 
         @params date_: DD-MM-YY
         """
-        return datetime.strptime(date_, "%d-%m-%Y").date()
+        return datetime.strptime(date_, "%d-%m-%Y")
 
     def get_adviser_run_document_ids_all(
         self,
