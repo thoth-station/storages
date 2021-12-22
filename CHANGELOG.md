@@ -1,5 +1,11 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.63.0 (2021-12-22T12:11:56)
+* Introduce query for obtaining solver documents for the given package
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix returning date when creating filters
+* Allow sorting and pagination of get_python_package_version_names_all
+
 ## Release 0.62.1 (2021-12-21T18:50:24)
 * Fix condition to identify env vars
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
