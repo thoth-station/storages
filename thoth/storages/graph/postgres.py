@@ -2537,6 +2537,57 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return session.query(Solved).filter(Solved.document_id == solver_document_id).count() > 0
 
+    def get_solver_document_id_all(
+        self,
+        package_name: str,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        sort: bool = False,
+    ) -> List[str]:
+        """Get the solver document specific to the given package that has been solved.
+
+        If sorted, the latest solver document is at index 0.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.graph.get_solver_document_id_all("selinon", "1.0.0", "https://pypi.org/simple", \
+              os_name="rhel", os_version="8", python_version="3.8", sort=True)
+        [
+            "solver-rhel-8-py38-210713010253-a24759ebdaa1442c",
+            "solver-rhel-8-py38-210711003643-187580eee457bb3f",
+            "solver-rhel-8-py38-210707005412-4965667a05a39006"
+        ]
+        """
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).filter(
+                PythonPackageVersion.package_name == package_name,
+            )
+
+            if package_version:
+                query = query.filter(PythonPackageVersion.package_version == package_version)
+
+            if os_name:
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            if index_url:
+                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+
+            if sort:
+                query = query.order_by(Solved.datetime.desc())
+
+            return [i[0] for i in query.join(Solved).with_entities(Solved.document_id).all()]
+
     def dependency_monkey_document_id_exists(self, dependency_monkey_document_id: str) -> bool:
         """Check if the given dependency monkey report record exists in the graph database."""
         with self._session_scope() as session:
