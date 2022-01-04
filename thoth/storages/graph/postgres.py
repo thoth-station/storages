@@ -2847,6 +2847,34 @@ class GraphDatabase(SQLBase):
             result = session.query(hardware_environment).offset(start_offset).limit(count).all()
             return [model.to_dict(without_id=without_id) for model in result]
 
+    def get_software_environments_count_all(
+        self,
+        is_external: bool = False,
+        *,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+    ) -> int:
+        """Get number of software environments stored."""
+        software_environment = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            query = self._construct_software_environments_query(
+                session=session,
+                software_environment=software_environment,
+                env_image_name=env_image_name,
+                env_image_tag=env_image_tag,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                cuda_version=cuda_version,
+                image_name=image_name,
+            )
+            return query.count()
+
     def get_software_environments_all(
         self,
         is_external: bool = False,
@@ -2862,9 +2890,6 @@ class GraphDatabase(SQLBase):
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
     ) -> List[Dict]:
-        """Get software environments (external or internal) registered in the graph database."""
-        os_name = map_os_name(os_name)
-        os_version = normalize_os_version(os_name, os_version)
         """Get software environments (external or internal) registered in the graph database.
 
         Examples:
@@ -2891,34 +2916,19 @@ class GraphDatabase(SQLBase):
             ]
 
         """
-        if is_external:
-            software_environment = ExternalSoftwareEnvironment
-        else:
-            software_environment = SoftwareEnvironment
-
+        software_environment = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
-            query = session.query(software_environment)
-
-            if env_image_name:
-                query = query.filter(software_environment.env_image_name == env_image_name)
-
-            if env_image_tag:
-                query = query.filter(software_environment.env_image_tag == env_image_tag)
-
-            if os_name:
-                query = query.filter(software_environment.os_name == os_name)
-
-            if os_version:
-                query = query.filter(software_environment.os_version == os_version)
-
-            if python_version:
-                query = query.filter(software_environment.python_version == python_version)
-
-            if cuda_version:
-                query = query.filter(software_environment.cuda_version == cuda_version)
-
-            if image_name:
-                query = query.filter(software_environment.image_name == image_name)
+            query = self._construct_software_environments_query(
+                session=session,
+                software_environment=software_environment,
+                env_image_name=env_image_name,
+                env_image_tag=env_image_tag,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                cuda_version=cuda_version,
+                image_name=image_name,
+            )
 
             query = query.join(PackageExtractRun)
             query = query.order_by(PackageExtractRun.datetime.desc())
@@ -2937,13 +2947,10 @@ class GraphDatabase(SQLBase):
                 PackageExtractRun.analysis_document_id,
                 PackageExtractRun.datetime,
             )
-
             query = query.offset(start_offset).limit(count)
-
             results = query.all()
 
             processed_results = []
-
             for r in results:
                 processed_results.append(
                     {
@@ -2963,6 +2970,48 @@ class GraphDatabase(SQLBase):
                     }
                 )
             return processed_results
+
+    @staticmethod
+    def _construct_software_environments_query(
+        session: Session,
+        software_environment: Union[ExternalSoftwareEnvironment, SoftwareEnvironment],
+        *,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+    ) -> Query:
+        """Create query for software environments."""
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
+
+        query = session.query(software_environment)
+
+        if env_image_name:
+            query = query.filter(software_environment.env_image_name == env_image_name)
+
+        if env_image_tag:
+            query = query.filter(software_environment.env_image_tag == env_image_tag)
+
+        if os_name:
+            query = query.filter(software_environment.os_name == os_name)
+
+        if os_version:
+            query = query.filter(software_environment.os_version == os_version)
+
+        if python_version:
+            query = query.filter(software_environment.python_version == python_version)
+
+        if cuda_version:
+            query = query.filter(software_environment.cuda_version == cuda_version)
+
+        if image_name:
+            query = query.filter(software_environment.image_name == image_name)
+
+        return query
 
     def get_python_package_index_urls_all(self, enabled: Optional[bool] = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
