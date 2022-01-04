@@ -3058,6 +3058,28 @@ class GraphDatabase(SQLBase):
             query = session.query(PythonPackageVersionEntity.package_name)
             return [i[0] for i in query.distinct().all()]
 
+    @staticmethod
+    def _construct_python_package_version_names_query(
+        session: Session,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+    ) -> Query:
+        """Construct query for obtaining Python package version names."""
+        query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        return query
+
     def get_python_package_version_names_all(
         self,
         *,
@@ -3080,16 +3102,9 @@ class GraphDatabase(SQLBase):
         os_name = map_os_name(os_name)
         os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
-            query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
-
-            if os_name is not None:
-                query = query.filter(PythonPackageVersion.os_name == os_name)
-
-            if os_version is not None:
-                query = query.filter(PythonPackageVersion.os_version == os_version)
-
-            if python_version is not None:
-                query = query.filter(PythonPackageVersion.python_version == python_version)
+            query = self._construct_python_package_version_names_query(
+                session, os_name=os_name, os_version=os_version, python_version=python_version
+            )
 
             if sort:
                 query = query.order_by(PythonPackageVersion.package_name)
@@ -3100,6 +3115,34 @@ class GraphDatabase(SQLBase):
                 query = query.distinct()
 
             return [item[0] for item in query.all()]
+
+    def get_python_package_version_names_count_all(
+        self,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve names of Python Packages known by Thoth.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_packages_names_count_all()
+        156468
+        """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
+        with self._session_scope() as session:
+            query = self._construct_python_package_version_names_query(
+                session, os_name=os_name, os_version=os_version, python_version=python_version
+            )
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
 
     def get_python_packages_all(
         self,
