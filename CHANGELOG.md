@@ -1,5 +1,8 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.64.0 (2022-01-04T08:55:54)
+* Introduce a query for counting software environments
+
 ## Release 0.63.0 (2021-12-22T12:11:56)
 * Introduce query for obtaining solver documents for the given package
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
