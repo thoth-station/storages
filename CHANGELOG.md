@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.65.0 (2022-01-05T08:25:11)
+* Provide a method that counts number of Python package names
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.64.0 (2022-01-04T08:55:54)
 * Introduce a query for counting software environments
 
