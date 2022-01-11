@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.66.0 (2022-01-11T15:01:00)
+* add query for number of software stacks maintained by kebechet
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.65.0 (2022-01-05T08:25:11)
 * Provide a method that counts number of Python package names
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
