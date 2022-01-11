@@ -3952,7 +3952,7 @@ class GraphDatabase(SQLBase):
         runtime_environment_name: Optional[str] = None,
         info_manager: Optional[bool] = None,
         pipfile_requirements_manager: Optional[bool] = None,
-        udpate_manager: Optional[bool] = None,
+        update_manager: Optional[bool] = None,
         version_manager: Optional[bool] = None,
         thoth_advise_manager: Optional[bool] = None,
         thoth_provenance_manager: Optional[bool] = None,
@@ -4047,7 +4047,7 @@ class GraphDatabase(SQLBase):
         runtime_environment_name: Optional[str] = None,
         info_manager: Optional[bool] = None,
         pipfile_requirements_manager: Optional[bool] = None,
-        udpate_manager: Optional[bool] = None,
+        update_manager: Optional[bool] = None,
         version_manager: Optional[bool] = None,
         thoth_advise_manager: Optional[bool] = None,
         thoth_provenance_manager: Optional[bool] = None,
@@ -4130,6 +4130,24 @@ class GraphDatabase(SQLBase):
                 )
             count = query.count()
             query.delete()
+            return count
+
+    def get_kebechet_github_installations_software_stack_count_all(
+        self,
+        *,
+        is_active: Optional[bool] = None,
+    ):
+        """Get number of Kebechet maintained software stacks."""
+        with self._session_scope() as session:
+            query = session.query(KebechetGithubAppInstallations)
+
+            if is_active is not None:
+                query = query.filter(KebechetGithubAppInstallations.is_active == is_active)
+
+            query = query.distinct(KebechetGithubAppInstallations.slug).with_entities(
+                KebechetGithubAppInstallations.slug, KebechetGithubAppInstallations.runtime_environment_name
+            )
+            count = query.count()
             return count
 
     def update_kebechet_github_installations_on_is_active(self, slug: str) -> bool:
