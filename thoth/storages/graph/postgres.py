@@ -4457,6 +4457,7 @@ class GraphDatabase(SQLBase):
                     for env in thoth_config["runtime_environments"]:
                         if env["name"] == runtime_environment_name:
                             env_dict = env
+                            break
                     else:
                         raise ValueError(f"No environment {runtime_environment_name} found in thoth configuration")
 
