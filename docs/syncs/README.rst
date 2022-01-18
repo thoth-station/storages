@@ -6,7 +6,7 @@ To make sure that everything is consistent, we use schemas describing the syncin
 for each of the components that created a document result to be synced into Thoth database:
 
 `solver <https://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_solver.jpg>`_,
-`package-analyzer <hhttps://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_package_analyzer.jpg>`_,
+`package-analyzer <https://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_package_analyzer.jpg>`_,
 `package-extract <https://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_package_extract.jpg>`_,
 `adviser <https://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_adviser.jpg>`_,
 `provenance-checker <https://github.com/thoth-station/storages/blob/master/docs/syncs/thoth_sync_provenance_checker.jpg>`_,
