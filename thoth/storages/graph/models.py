@@ -814,8 +814,8 @@ class SoftwareEnvironment(Base, BaseExtension):
     image_sha = Column(Text, nullable=True)
     os_name = Column(Text, nullable=True)
     os_version = Column(Text, nullable=True)
-    thoth_s2i_image_name = Column(Text, nullable=True)
-    thoth_s2i_image_version = Column(Text, nullable=True)
+    thoth_image_name = Column(Text, nullable=True)
+    thoth_image_version = Column(Text, nullable=True)
     env_image_name = Column(Text, nullable=True)
     env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
@@ -847,8 +847,8 @@ class SoftwareEnvironment(Base, BaseExtension):
 
     __table_args__ = (
         Index(
-            "thoth_s2i_image_name",
-            "thoth_s2i_image_version",
+            "thoth_image_name",
+            "thoth_image_version",
         ),
     )
 
@@ -866,8 +866,8 @@ class ExternalSoftwareEnvironment(Base, BaseExtension):
     image_sha = Column(Text, nullable=True)
     os_name = Column(Text, nullable=True)
     os_version = Column(Text, nullable=True)
-    thoth_s2i_image_name = Column(Text, nullable=True)
-    thoth_s2i_image_version = Column(Text, nullable=True)
+    thoth_image_name = Column(Text, nullable=True)
+    thoth_image_version = Column(Text, nullable=True)
     env_image_name = Column(Text, nullable=True)
     env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
