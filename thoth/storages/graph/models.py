@@ -1602,7 +1602,7 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    slug = Column(Text, nullable=False, unique=True)
+    slug = Column(Text, nullable=False)
     repo_name = Column(Text, nullable=False)
     private = Column(Boolean, nullable=False)
     installation_id = Column(Text, nullable=False)
