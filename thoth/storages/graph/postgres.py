@@ -2642,15 +2642,15 @@ class GraphDatabase(SQLBase):
             )
 
     def get_last_analysis_document_id(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, *, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, *, is_external: bool = False
     ) -> Optional[Dict[str, str]]:
         """Get last image analysis (if any) for the given container image."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
             result = (
                 session.query(PackageExtractRun)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .order_by(PackageExtractRun.datetime.desc())
                 .with_entities(PackageExtractRun.analysis_document_id)
                 .first()
@@ -2910,8 +2910,8 @@ class GraphDatabase(SQLBase):
                 'os_version': '8',
                 'package_extract_document_id': 'package-extract-211215162259-33c8d9c730b775eb',
                 'python_version': '3.9',
-                'thoth_s2i_image_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39',
-                'thoth_s2i_image_version': '0.32.3'
+                'thoth_image_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39',
+                'thoth_image_version': '0.32.3'
                 }
             ]
 
@@ -2942,8 +2942,8 @@ class GraphDatabase(SQLBase):
                 software_environment.os_name,
                 software_environment.os_version,
                 software_environment.python_version,
-                software_environment.thoth_s2i_image_name,
-                software_environment.thoth_s2i_image_version,
+                software_environment.thoth_image_name,
+                software_environment.thoth_image_version,
                 PackageExtractRun.analysis_document_id,
                 PackageExtractRun.datetime,
             )
@@ -2965,8 +2965,8 @@ class GraphDatabase(SQLBase):
                         "os_version": r[7],
                         "package_extract_document_id": r[11],
                         "python_version": r[8],
-                        "thoth_s2i_image_name": r[9],
-                        "thoth_s2i_image_version": r[10],
+                        "thoth_image_name": r[9],
+                        "thoth_image_version": r[10],
                     }
                 )
             return processed_results
@@ -4293,8 +4293,8 @@ class GraphDatabase(SQLBase):
         image_sha: Optional[str] = None,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
-        thoth_s2i_image_name: Optional[str] = None,
-        thoth_s2i_image_version: Optional[str] = None,
+        thoth_image_name: Optional[str] = None,
+        thoth_image_version: Optional[str] = None,
         env_image_name: Optional[str] = None,
         env_image_tag: Optional[str] = None,
         cuda_version: Optional[str] = None,
@@ -4340,10 +4340,10 @@ class GraphDatabase(SQLBase):
             if os_version:
                 os_version = normalize_os_version(os_name, os_version)
                 query = query.filter(ExternalSoftwareEnvironment.os_version == os_version)
-            if thoth_s2i_image_name:
-                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_name == thoth_s2i_image_name)
-            if thoth_s2i_image_version:
-                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_version == thoth_s2i_image_version)
+            if thoth_image_name:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_image_name == thoth_image_name)
+            if thoth_image_version:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_image_version == thoth_image_version)
             if env_image_name:
                 query = query.filter(ExternalSoftwareEnvironment.env_image_name == env_image_name)
             if env_image_tag:
@@ -5611,8 +5611,8 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
-                thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
-                thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
+                thoth_image_name=env_vars.get("THOTH_S2I_NAME"),
+                thoth_image_version=env_vars.get("THOTH_S2I_VERSION"),
                 env_image_name=env_vars.get("IMAGE_NAME"),
                 env_image_tag=env_vars.get("IMAGE_TAG"),
                 cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
@@ -6566,15 +6566,15 @@ class GraphDatabase(SQLBase):
 
     @lru_cache(maxsize=_GET_S2I_ANALYZED_IMAGE_SYMBOLS)
     def get_thoth_s2i_analyzed_image_symbols_all(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, is_external: bool = False
     ) -> List[str]:
         """Get symbols associated with a given Thoth s2i container image."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
             query = (
                 session.query(model)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .join(HasSymbol)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
@@ -6590,15 +6590,15 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = (
                 session.query(model)
-                .with_entities(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
-                .distinct(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
+                .with_entities(model.thoth_image_name, model.thoth_image_version)
+                .distinct(model.thoth_image_name, model.thoth_image_version)
             )
 
             # Query returns list of single tuples (empty if bad request)
             return [tuple(i) for i in query.all()]
 
     def get_thoth_s2i_package_extract_analysis_document_id_all(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, is_external: bool = False
     ) -> List[str]:
         """Get package-extract analysis ids for the given Thoth s2i."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
@@ -6606,8 +6606,8 @@ class GraphDatabase(SQLBase):
             query = (
                 session.query(PackageExtractRun)
                 .join(model)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .with_entities(PackageExtractRun.analysis_document_id)
             )
 
