@@ -2952,6 +2952,8 @@ class GraphDatabase(SQLBase):
                 software_environment.python_version,
                 software_environment.thoth_image_name,
                 software_environment.thoth_image_version,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.datetime,
             )
             query = query.offset(start_offset).limit(count)
             results = query.all()
@@ -2961,7 +2963,7 @@ class GraphDatabase(SQLBase):
                 processed_results.append(
                     {
                         "cuda_version": r[0],
-                        "datetime": r[16] if not convert_datetime else format_datetime(r[16]),
+                        "datetime": r[12] if not convert_datetime else format_datetime(r[12]),
                         "env_image_name": r[1],
                         "env_image_tag": r[2],
                         "environment_name": r[3],
@@ -2969,7 +2971,7 @@ class GraphDatabase(SQLBase):
                         "image_sha": r[5],
                         "os_name": r[6],
                         "os_version": r[7],
-                        "package_extract_document_id": r[15],
+                        "package_extract_document_id": r[11],
                         "python_version": r[8],
                         "thoth_image_name": r[9],
                         "thoth_image_version": r[10],
