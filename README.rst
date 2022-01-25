@@ -23,6 +23,30 @@ This library provides a library called `thoth-storages
 for `PostgreSQL database <https://www.postgresql.org/>`__ as well as adapters
 for manipulating with `Ceph <https://ceph.io/>`__ via its S3 compatible API.
 
+Quick Start
+===========
+
+Pre-requisites:
+
+* make sure you have ``podman-compose`` installed
+* make sure you are in an environment created with ``pipenv install --dev``
+
+To develop locally the first time:
+
+* Have a pg dump that you can `retrieve from aws s3
+<https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
+* Run ``podman-compose up`` to scale up pods for database and pgweb
+* Run this command to sync the pg dump into the local database:
+.. code-block:: console
+  psql -h localhost -p 5432 --username=postgres < pg_dump.sql
+
+Now you are ready to test new queries or `create new migrations
+<https://github.com/thoth-station/storages#generating-migrations-and-schema-adjustment-in-deployment>`__
+
+If you already have a local database, make sure it is not outdated and rember to follow the `Generating migrations and schema adjustment in deployment
+<https://github.com/thoth-station/storages#generating-migrations-and-schema-adjustment-in-deployment>`__
+section before testing any changes.
+
 Installation and Usage
 ======================
 
@@ -62,6 +86,12 @@ PostgreSQL instance, (make sure you installed `podman-compose
   $ dnf install -y podman podman-compose
   $ # Also available from PyPI: pip install podman-compose
   $ podman-compose up
+
+Then, sync your local instance using ``pgsql``:
+
+.. code-block:: console
+
+  $ psql -h localhost -p 5432 --username=postgres < pg_dump-1569491024.sql
 
 After running the commands above, you should be able to access a local
 PostgreSQL instance at `localhost:5432 <http://localhost:5432>`__. This is also
