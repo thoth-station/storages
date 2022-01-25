@@ -2889,6 +2889,10 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        python_package: Optional[str] = None,
+        rpm_package: Optional[str] = None,
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database.
 
@@ -2928,6 +2932,10 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
                 cuda_version=cuda_version,
                 image_name=image_name,
+                library_name=library_name,
+                symbol=symbol,
+                python_package=python_package,
+                rpm_package=rpm_package,
             )
 
             query = query.join(PackageExtractRun)
@@ -2944,8 +2952,6 @@ class GraphDatabase(SQLBase):
                 software_environment.python_version,
                 software_environment.thoth_image_name,
                 software_environment.thoth_image_version,
-                PackageExtractRun.analysis_document_id,
-                PackageExtractRun.datetime,
             )
             query = query.offset(start_offset).limit(count)
             results = query.all()
@@ -2955,7 +2961,7 @@ class GraphDatabase(SQLBase):
                 processed_results.append(
                     {
                         "cuda_version": r[0],
-                        "datetime": r[12] if not convert_datetime else format_datetime(r[12]),
+                        "datetime": r[16] if not convert_datetime else format_datetime(r[16]),
                         "env_image_name": r[1],
                         "env_image_tag": r[2],
                         "environment_name": r[3],
@@ -2963,7 +2969,7 @@ class GraphDatabase(SQLBase):
                         "image_sha": r[5],
                         "os_name": r[6],
                         "os_version": r[7],
-                        "package_extract_document_id": r[11],
+                        "package_extract_document_id": r[15],
                         "python_version": r[8],
                         "thoth_image_name": r[9],
                         "thoth_image_version": r[10],
@@ -2983,6 +2989,10 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        python_package: Optional[list] = None,
+        rpm_package: Optional[list] = None,
     ) -> Query:
         """Create query for software environments."""
         os_name = map_os_name(os_name)
@@ -3010,6 +3020,23 @@ class GraphDatabase(SQLBase):
 
         if image_name:
             query = query.filter(software_environment.image_name == image_name)
+
+        if library_name:
+            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.library_name == library_name)
+
+        if symbol:
+            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.symbol == symbol)
+
+        if python_package:
+            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == python_package)
+
+        if rpm_package:
+            query = (
+                query.join(PackageExtractRun)
+                .join(FoundRPM)
+                .join(RPMPackageVersion)
+                .filter(RPMPackageVersion.package_name == rpm_package)
+            )
 
         return query
 
