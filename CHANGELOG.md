@@ -1,5 +1,18 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.67.0 (2022-01-26T09:16:12)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix typo
+* Rename columns for software_environment table
+* Modify column name in migration file
+* Restore changes to automatically created files
+* Rename thoth_s2i_* in database schema
+* add break statement and remove unique slug constraint
+* Small typo fix
+* Fix missing links in docs
+* Enable TLS verification
+
 ## Release 0.66.0 (2022-01-11T15:01:00)
 * add query for number of software stacks maintained by kebechet
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
