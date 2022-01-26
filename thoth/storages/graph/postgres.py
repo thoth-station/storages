@@ -2891,7 +2891,7 @@ class GraphDatabase(SQLBase):
         image_name: Optional[str] = None,
         library_name: Optional[str] = None,
         symbol: Optional[str] = None,
-        python_package: Optional[str] = None,
+        package_name: Optional[str] = None,
         rpm_package: Optional[str] = None,
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database.
@@ -2934,7 +2934,7 @@ class GraphDatabase(SQLBase):
                 image_name=image_name,
                 library_name=library_name,
                 symbol=symbol,
-                python_package=python_package,
+                package_name=package_name,
                 rpm_package=rpm_package,
             )
 
@@ -2993,8 +2993,8 @@ class GraphDatabase(SQLBase):
         image_name: Optional[str] = None,
         library_name: Optional[str] = None,
         symbol: Optional[str] = None,
-        python_package: Optional[list] = None,
-        rpm_package: Optional[list] = None,
+        package_name: Optional[str] = None,
+        rpm_package: Optional[str] = None,
     ) -> Query:
         """Create query for software environments."""
         os_name = map_os_name(os_name)
@@ -3029,8 +3029,8 @@ class GraphDatabase(SQLBase):
         if symbol:
             query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.symbol == symbol)
 
-        if python_package:
-            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == python_package)
+        if package_name:
+            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
 
         if rpm_package:
             query = (
