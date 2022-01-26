@@ -2889,6 +2889,10 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
     ) -> List[Dict]:
         """Get software environments (external or internal) registered in the graph database.
 
@@ -2928,6 +2932,10 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
                 cuda_version=cuda_version,
                 image_name=image_name,
+                library_name=library_name,
+                symbol=symbol,
+                package_name=package_name,
+                rpm_package_name=rpm_package_name,
             )
 
             query = query.join(PackageExtractRun)
@@ -2983,6 +2991,10 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
     ) -> Query:
         """Create query for software environments."""
         os_name = map_os_name(os_name)
@@ -3010,6 +3022,23 @@ class GraphDatabase(SQLBase):
 
         if image_name:
             query = query.filter(software_environment.image_name == image_name)
+
+        if library_name:
+            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.library_name == library_name)
+
+        if symbol:
+            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.symbol == symbol)
+
+        if package_name:
+            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
+
+        if rpm_package_name:
+            query = (
+                query.join(PackageExtractRun)
+                .join(FoundRPM)
+                .join(RPMPackageVersion)
+                .filter(RPMPackageVersion.package_name == rpm_package_name)
+            )
 
         return query
 
