@@ -87,11 +87,11 @@ PostgreSQL instance, (make sure you installed `podman-compose
   $ # Also available from PyPI: pip install podman-compose
   $ podman-compose up
 
-Then, sync your local instance using ``pgsql``:
+If you would like to experiment with PostgreSQL programmatically, sync your local instance using ``pgsql``:
 
 .. code-block:: console
 
-  $ psql -h localhost -p 5432 --username=postgres < pg_dump-1569491024.sql
+  $ psql -h localhost -p 5432 --username=postgres < pg_dump.sql
 
 After running the commands above, you should be able to access a local
 PostgreSQL instance at `localhost:5432 <http://localhost:5432>`__. This is also
