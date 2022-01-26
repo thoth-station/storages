@@ -1,5 +1,11 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.68.0 (2022-01-26T13:52:54)
+* Change rpm_package to rpm_package_name
+* Rename python_package to package_name and correct argument type
+* Fix with_entities
+* Modify query of containerized environments to get specific content
+
 ## Release 0.67.0 (2022-01-26T09:16:12)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
