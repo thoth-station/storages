@@ -87,12 +87,6 @@ PostgreSQL instance, (make sure you installed `podman-compose
   $ # Also available from PyPI: pip install podman-compose
   $ podman-compose up
 
-If you would like to experiment with PostgreSQL programmatically, sync your local instance using ``pgsql``:
-
-.. code-block:: console
-
-  $ psql -h localhost -p 5432 --username=postgres < pg_dump.sql
-
 After running the commands above, you should be able to access a local
 PostgreSQL instance at `localhost:5432 <http://localhost:5432>`__. This is also
 the default configuration for PostgreSQL's adapter that connects to localhost
@@ -108,6 +102,12 @@ UI. To access it visit `localhost:8081 <http://localhost:8081>`__.
 
 The provided ``docker-compose.yaml`` does not use any volume. After you
 containers restart, the content will not be available anymore.
+
+You can sync your local instance using ``pgsql``:
+
+.. code-block:: console
+
+  $ psql -h localhost -p 5432 --username=postgres < pg_dump.sql
 
 If you would like to experiment with PostgreSQL programmatically, you can use
 the following code snippet as a starting point:
