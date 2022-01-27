@@ -28,16 +28,14 @@ Quick Start
 
 Pre-requisites:
 
-* make sure you have ``podman`` and ``podman-compose`` installed. You can install those tools by running ``dnf install -y podman podman-compose``
-* make sure you are in an environment created with ``pipenv install --dev``
+* make sure you have `podman` and `podman-compose` installed. You can install those tools by running `dnf install -y podman podman-compose`
+* make sure you are in an environment created with `pipenv install --dev`
 
 To develop locally the first time:
 
-* Have a pg dump that you can `retrieve from aws s3
-  <https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
+* Have a pg dump that you can `retrieve from aws s3 <https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
 
-* Run ``podman-compose up`` to scale up pods for database and pgweb. For more detail, refer to the `Running PostgreSQL locally section
-  <https://github.com/thoth-station/storages#running-postgresql-locally>`__
+* Run `podman-compose up` to scale up pods for database and pgweb. For more detail, refer to the `Running PostgreSQL locally section <https://github.com/thoth-station/storages#running-postgresql-locally>`__
 
 * Run this command to sync the pg dump into the local database:
 
