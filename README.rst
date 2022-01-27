@@ -34,12 +34,17 @@ Pre-requisites:
 To develop locally the first time:
 
 * Have a pg dump that you can `retrieve from aws s3
-<https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
+  <https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
+
 * Run ``podman-compose up`` to scale up pods for database and pgweb. For more detail, refer to the `Running PostgreSQL locally section
-<https://github.com/thoth-station/storages#running-postgresql-locally>`__
+  <https://github.com/thoth-station/storages#running-postgresql-locally>`__
+
 * Run this command to sync the pg dump into the local database:
-.. code-block:: console
-  psql -h localhost -p 5432 --username=postgres < pg_dump.sql
+
+  .. code-block:: console
+
+    psql -h localhost -p 5432 --username=postgres < pg_dump.sql
+
 
 Now you are ready to test new queries or `create new migrations
 <https://github.com/thoth-station/storages#generating-migrations-and-schema-adjustment-in-deployment>`__
