@@ -1500,7 +1500,7 @@ class PythonPackageMetadataProjectUrl(Base, BaseExtension):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     url = Column(Text, nullable=True)
-    source = Column(Text, nullable=True)
+    label = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataProjectUrl", back_populates="python_package_metadata_project_urls"
