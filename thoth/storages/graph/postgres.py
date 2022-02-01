@@ -408,10 +408,8 @@ class GraphDatabase(SQLBase):
 
     def get_last_solver_datetime(self) -> datetime:
         """Get the datetime of the last solver run synced in the database."""
-        query = "SELECT datetime FROM solver WHERE datetime IN (SELECT max(datetime) FROM solver)"
-
         with self._session_scope() as session:
-            result = session.execute(query).fetchone()
+            result = session.query(func.max(Solved.datetime))
             return result[0]
 
     @staticmethod
