@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.68.2 (2022-02-02T12:21:50)
+* Add paramaters to count environments query
+* Instructions for accessing Thoth's public database on opf-datacatalog
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.68.1 (2022-01-27T14:55:23)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * Fix formatting of README
