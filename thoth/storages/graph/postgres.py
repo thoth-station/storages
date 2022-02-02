@@ -2858,6 +2858,10 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         cuda_version: Optional[str] = None,
         image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
     ) -> int:
         """Get number of software environments stored."""
         software_environment = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
@@ -2872,6 +2876,10 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
                 cuda_version=cuda_version,
                 image_name=image_name,
+                library_name=library_name,
+                symbol=symbol,
+                package_name=package_name,
+                rpm_package_name=rpm_package_name,
             )
             return query.count()
 
