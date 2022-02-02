@@ -3038,7 +3038,11 @@ class GraphDatabase(SQLBase):
             query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.symbol == symbol)
 
         if package_name:
-            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
+            query = (
+                query.filter(PackageExtractRun.id == Identified.package_extract_run_id)
+                .filter(Identified.python_package_version_entity_id == PythonPackageVersionEntity.id)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+            )
 
         if rpm_package_name:
             query = (
