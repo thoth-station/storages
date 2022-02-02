@@ -409,7 +409,7 @@ class GraphDatabase(SQLBase):
     def get_last_solver_datetime(self) -> datetime:
         """Get the datetime of the last solver run synced in the database."""
         with self._session_scope() as session:
-            result = session.query(func.max(Solved.datetime))
+            result = session.query(func.max(Solved.datetime)).first()
             return result[0]
 
     @staticmethod
