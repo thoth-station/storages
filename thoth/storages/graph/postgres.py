@@ -3032,19 +3032,26 @@ class GraphDatabase(SQLBase):
             query = query.filter(software_environment.image_name == image_name)
 
         if library_name:
-            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.library_name == library_name)
+            query = query.filter(HasSymbol.versioned_symbol_id == VersionedSymbol.id).filter(
+                VersionedSymbol.library_name == library_name
+            )
 
         if symbol:
-            query = query.join(HasSymbol).join(VersionedSymbol).filter(VersionedSymbol.symbol == symbol)
+            query = query.filter(HasSymbol.versioned_symbol_id == VersionedSymbol.id).filter(
+                VersionedSymbol.symbol == symbol
+            )
 
         if package_name:
-            query = query.join(PythonPackageVersion).filter(PythonPackageVersion.package_name == package_name)
+            query = (
+                query.filter(PackageExtractRun.id == Identified.package_extract_run_id)
+                .filter(Identified.python_package_version_entity_id == PythonPackageVersionEntity.id)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+            )
 
         if rpm_package_name:
             query = (
-                query.join(PackageExtractRun)
-                .join(FoundRPM)
-                .join(RPMPackageVersion)
+                query.filter(PackageExtractRun.id == FoundRPM.package_extract_run_id)
+                .filter(FoundRPM.rpm_package_version_id == RPMPackageVersion.id)
                 .filter(RPMPackageVersion.package_name == rpm_package_name)
             )
 
