@@ -60,6 +60,7 @@ def upgrade():
     )
     op.bulk_insert(python_package_metadata_project_url_table, projects_source_url)
     op.bulk_insert(has_metadata_project_url_table, metadata_project_url_links)
+    op.drop_column("has_metadata_project_url", "id")
     # ### end Alembic commands ###
 
 
