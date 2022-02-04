@@ -393,26 +393,32 @@ Accessing data on Ceph
 To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
 of endpoint you are connecting to.
 
-Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
+Absolute file path of data you are accessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
-You can either configure these environemnt variables to initilaize the data handler:
+You can either configure these environment variables to initialize the data handler:
 
 .. list-table::
-   :widths: 25 25
+   :widths: 25 25 25
    :header-rows: 1
 
    * - Variable name
      - Content
-   * - ``S3_ENDPOINT_URL``
-     - Ceph Host name
-   * - ``CEPH_BUCKET``
+     - Example
+   * - ``THOTH_S3_ENDPOINT_URL``
+     - URL to an S3 compatible interface
+     - ``https://s3.redhat.com``
+   * - ``THOTH_CEPH_BUCKET``
      - Ceph Bucket name
-   * - ``CEPH_BUCKET_PREFIX``
+     - ``thoth``
+   * - ``THOTH_CEPH_BUCKET_PREFIX``
      - Ceph Prefix
-   * - ``CEPH_KEY_ID``
+     - ``data``
+   * - ``THOTH_CEPH_KEY_ID``
      - Ceph Key ID
-   * - ``CEPH_SECRET_KEY``
+     - ``AAAAAAAAAAAAAAAAAAAA``
+   * - ``THOTH_CEPH_SECRET_KEY``
      - Ceph Secret Key
+     - ``XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX``
 
 .. code-block:: python
 
