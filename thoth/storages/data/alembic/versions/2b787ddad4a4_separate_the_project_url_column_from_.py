@@ -31,8 +31,12 @@ def upgrade():
             # cases where project URL has no label (no other found)
             projects_source_url.append({"id": r[0], "label": None, "url": values[0]})
 
-    result_has = connection.execute("SELECT python_package_metadata_id,python_package_metadata_project_url_id FROM has_metadata_project_url").fetchall()
-    metadata_project_url_links = [{"python_package_metadata_id": r[0], "python_package_metadata_project_url_id": r[1]} for r in result_has]
+    result_has = connection.execute(
+        "SELECT python_package_metadata_id,python_package_metadata_project_url_id FROM has_metadata_project_url"
+    ).fetchall()
+    metadata_project_url_links = [
+        {"python_package_metadata_id": r[0], "python_package_metadata_project_url_id": r[1]} for r in result_has
+    ]
     op.drop_table("has_metadata_project_url")
     op.drop_table("python_package_metadata_project_url")
 
@@ -73,10 +77,7 @@ def downgrade():
         id_row = r[0]
         values_row = r[1]
         concat_label_url.append(
-            {
-                "id": id_row,
-                "project_url": values_row[1] if values_row[0] is None else values_row.join(",")
-            }
+            {"id": id_row, "project_url": values_row[1] if values_row[0] is None else values_row.join(",")}
         )
-    op.batch_alter_table() .bulk_insert(PythonPackageMetadataProjectUrl.__table__, concat_label_url)
+    op.batch_alter_table().bulk_insert(PythonPackageMetadataProjectUrl.__table__, concat_label_url)
     # ### end Alembic commands ###
