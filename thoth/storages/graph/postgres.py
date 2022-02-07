@@ -406,10 +406,19 @@ class GraphDatabase(SQLBase):
             result = session.execute(query).fetchone()
             return result[0]
 
-    def get_last_solver_datetime(self) -> datetime:
+    def get_last_solver_datetime(
+        self, os_name: Optional[str], os_version: Optional[str], python_version: Optional[str]
+    ) -> datetime:
         """Get the datetime of the last solver run synced in the database."""
         with self._session_scope() as session:
-            result = session.query(func.max(Solved.datetime)).first()
+            result = (
+                session.query(func.max(Solved.datetime))
+                .filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
+                .filter(EcosystemSolver.os_name == os_name)
+                .filet(EcosystemSolver.os_version == os_version)
+                .filter(EcosystemSolver.python_version == python_version)
+                .first()
+            )
             return result[0]
 
     @staticmethod
