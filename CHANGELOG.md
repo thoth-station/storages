@@ -1,5 +1,8 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.69.0 (2022-02-07T20:40:25)
+* Provide a way to iterate over solvers of a specific type
+
 ## Release 0.68.4 (2022-02-07T15:07:21)
 * Remove package_extract import
 * Fix target prefix for purge_* methods
