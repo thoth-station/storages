@@ -163,6 +163,7 @@ from .enums import KebechetManagerEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
+from ..package_extract import PackageExtractResultsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
@@ -7169,7 +7170,7 @@ class GraphDatabase(SQLBase):
         self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
     ) -> int:
         """Store and purge to be deleted package extract documents to Ceph"""
-        package_extract_store = AnalysisResultsStore()
+        package_extract_store = PackageExtractResultsStore()
         package_extract_store.connect()
 
         target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/package-extract-purge-{datetime2datetime_str()}/"
