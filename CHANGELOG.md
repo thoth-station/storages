@@ -1,5 +1,12 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.68.4 (2022-02-07T15:07:21)
+* Remove package_extract import
+* Fix target prefix for purge_* methods
+* Fix adapter name for package-extract documents
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix Ceph variable names and add examples
+
 ## Release 0.68.3 (2022-02-03T15:25:44)
 * Fix container image query (#2575)
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
