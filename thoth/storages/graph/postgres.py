@@ -411,15 +411,21 @@ class GraphDatabase(SQLBase):
     ) -> datetime:
         """Get the datetime of the last solver run synced in the database."""
         with self._session_scope() as session:
-            result = (
-                session.query(func.max(Solved.datetime))
-                .filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
-                .filter(EcosystemSolver.os_name == os_name)
-                .filet(EcosystemSolver.os_version == os_version)
-                .filter(EcosystemSolver.python_version == python_version)
-                .first()
-            )
-            return result[0]
+            result = session.query(func.max(Solved.datetime))
+
+            if os_name or os_version or python_version:
+                result = result.filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
+
+            if os_name is not None:
+                result = result.filter(EcosystemSolver.os_name == os_name)
+
+            if os_version is not None:
+                result = result.filter(EcosystemSolver.os_version == os_version)
+
+            if python_version is not None:
+                result = result.filter(EcosystemSolver.python_version == python_version)
+
+            return result.first()[0]
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
