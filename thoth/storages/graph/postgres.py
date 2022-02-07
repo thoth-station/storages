@@ -163,7 +163,6 @@ from .enums import KebechetManagerEnum
 
 from ..analyses import AnalysisResultsStore
 from ..dependency_monkey_reports import DependencyMonkeyReportsStore
-from ..package_extract import PackageExtractResultsStore
 from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
