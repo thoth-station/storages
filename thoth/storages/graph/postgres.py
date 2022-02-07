@@ -7111,7 +7111,7 @@ class GraphDatabase(SQLBase):
         solver_store = SolverResultsStore()
         solver_store.connect()
 
-        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/solver-purge-{datetime2datetime_str()}/"
+        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/solver-purge-{datetime2datetime_str()}/"
         target_store = CephStore(prefix=target_prefix)
         target_store.connect()
 
@@ -7137,7 +7137,7 @@ class GraphDatabase(SQLBase):
         adviser_store.connect()
 
         target_prefix = (
-            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/adviser-purge-{datetime2datetime_str()}/"
+            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/adviser-purge-{datetime2datetime_str()}/"
         )
         target_store = CephStore(prefix=target_prefix)
         target_store.connect()
@@ -7172,7 +7172,7 @@ class GraphDatabase(SQLBase):
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 
-        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=1)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
         target_store = CephStore(prefix=target_prefix)
         target_store.connect()
 
