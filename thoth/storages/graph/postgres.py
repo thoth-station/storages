@@ -4420,6 +4420,7 @@ class GraphDatabase(SQLBase):
         {
             'thoth-station/jupyter-nbrequirements':
                 {
+                    'environment_name': 'ubi8',
                     'installation_id': '193650988',
                     'private': False,
                     'package_name': 'click',
@@ -4471,6 +4472,7 @@ class GraphDatabase(SQLBase):
 
             query = query.with_entities(
                 KebechetGithubAppInstallations.slug,
+                KebechetGithubAppInstallations.runtime_environment_name,
                 KebechetGithubAppInstallations.installation_id,
                 KebechetGithubAppInstallations.private,
                 PythonPackageVersionEntity.package_name,
@@ -4597,16 +4599,17 @@ class GraphDatabase(SQLBase):
         query_result = {}
 
         for item in result:
-            if item[5]:
-                index_url = self.get_index_url_from_id(item[5])
+            if item[6]:
+                index_url = self.get_index_url_from_id(item[6])
             else:
-                index_url = item[5]
+                index_url = item[6]
 
             query_result[item[0]] = {
-                "installation_id": item[1],
-                "private": item[2],
-                "package_name": item[3],
-                "package_version": item[4],
+                "environment_name": item[1],
+                "installation_id": item[2],
+                "private": item[3],
+                "package_name": item[4],
+                "package_version": item[5],
                 "index_url": index_url,
             }
 
