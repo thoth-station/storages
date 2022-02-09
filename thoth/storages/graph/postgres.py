@@ -424,7 +424,7 @@ class GraphDatabase(SQLBase):
                 if python_version is not None:
                     result = result.filter(EcosystemSolver.python_version == python_version)
 
-        return max([datetime[0].isoformat() for datetime in result.all()])
+        return datetime.strptime(max([datetime[0].isoformat() for datetime in result.all()]), "%Y-%m-%d %H:%M:%S.%f")
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
