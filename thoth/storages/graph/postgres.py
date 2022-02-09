@@ -407,25 +407,24 @@ class GraphDatabase(SQLBase):
             return result[0]
 
     def get_last_solver_datetime(
-        self, os_name: Optional[str], os_version: Optional[str], python_version: Optional[str]
+        self, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
     ) -> datetime:
         """Get the datetime of the last solver run synced in the database."""
         with self._session_scope() as session:
-            result = session.query(func.max(Solved.datetime))
-
+            result = session.query(Solved.datetime)
             if os_name or os_version or python_version:
                 result = result.filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
 
-            if os_name is not None:
-                result = result.filter(EcosystemSolver.os_name == os_name)
+                if os_name is not None:
+                    result = result.filter(EcosystemSolver.os_name == os_name)
 
-            if os_version is not None:
-                result = result.filter(EcosystemSolver.os_version == os_version)
+                if os_version is not None:
+                    result = result.filter(EcosystemSolver.os_version == os_version)
 
-            if python_version is not None:
-                result = result.filter(EcosystemSolver.python_version == python_version)
+                if python_version is not None:
+                    result = result.filter(EcosystemSolver.python_version == python_version)
 
-            return result.first()[0]
+        return max([datetime[0].isoformat() for datetime in result.all()])
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
