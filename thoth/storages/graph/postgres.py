@@ -5568,7 +5568,6 @@ class GraphDatabase(SQLBase):
         session: Session,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment],
     ) -> None:
         """Sync python interpreters detected in a package-extract run into the database."""
         for py_interpreter in document["result"].get("python-interpreters"):
@@ -5697,7 +5696,7 @@ class GraphDatabase(SQLBase):
             self._system_symbols_analysis_result(
                 session, package_extract_run, document, software_environment, is_external=is_external
             )
-            self._python_interpreters_sync_analysis_result(session, package_extract_run, document, software_environment)
+            self._python_interpreters_sync_analysis_result(session, package_extract_run, document)
 
     @staticmethod
     def _get_or_create_python_package_index(
