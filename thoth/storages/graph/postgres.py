@@ -406,6 +406,26 @@ class GraphDatabase(SQLBase):
             result = session.execute(query).fetchone()
             return result[0]
 
+    def get_last_solver_datetime(
+        self, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
+    ) -> datetime:
+        """Get the datetime of the last solver run synced in the database."""
+        with self._session_scope() as session:
+            result = session.query(Solved.datetime)
+            if os_name or os_version or python_version:
+                result = result.filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
+
+                if os_name is not None:
+                    result = result.filter(EcosystemSolver.os_name == os_name)
+
+                if os_version is not None:
+                    result = result.filter(EcosystemSolver.os_version == os_version)
+
+                if python_version is not None:
+                    result = result.filter(EcosystemSolver.python_version == python_version)
+
+        return max([datetime[0] for datetime in result.all()])
+
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
@@ -7109,7 +7129,7 @@ class GraphDatabase(SQLBase):
     def purge_solver_documents(
         self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted solver documents to Ceph"""
+        """Store and purge to be deleted solver documents to Ceph."""
         solver_store = SolverResultsStore()
         solver_store.connect()
 
@@ -7134,7 +7154,7 @@ class GraphDatabase(SQLBase):
     def purge_adviser_documents(
         self, *, end_datetime: Optional[datetime] = None, adviser_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted adviser documents to Ceph"""
+        """Store and purge to be deleted adviser documents to Ceph."""
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
@@ -7170,7 +7190,7 @@ class GraphDatabase(SQLBase):
     def purge_package_extract_documents(
         self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted package extract documents to Ceph"""
+        """Store and purge to be deleted package extract documents to Ceph."""
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 
