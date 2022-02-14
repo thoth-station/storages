@@ -426,6 +426,12 @@ class GraphDatabase(SQLBase):
 
         return max([datetime[0] for datetime in result.all()])
 
+    def get_last_analysis_datetime(self) -> datetime:
+        """Get the datetime of the last container image analysis synced in the database."""
+        with self._session_scope() as session:
+            result = session.query(PackageExtractRun.datetime)
+            return max([datetime[0] for datetime in result.all()])
+
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
         """Normalize Python package name based on PEP-0503."""
