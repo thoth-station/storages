@@ -9,7 +9,8 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-
+    command: >
+      -c max_wal_size=2GB
   pgweb:
     image: docker.io/sosedoff/pgweb
     container_name: pgweb
