@@ -1,5 +1,25 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.70.0 (2022-02-14T12:43:54)
+* Resolved merge conflict
+* Fix last container image datetime query
+* Query datetime of last container image synced in the database
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Increase max_wal_size in postgres config
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Revert to datetime return type
+* Fix return type of datetime query
+* remove unusued parameter
+* Correct query of last solver datetime
+* add environment name to get_keb_gh_installation_info
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add myself to approvers
+* Verify if filters are None
+* Filter last solver docs
+* Fix last solver datetime query
+* Rewrite query with sqlalchemy
+* Retrieve datetime of last synced solver
+
 ## Release 0.69.0 (2022-02-07T20:40:25)
 * Provide a way to iterate over solvers of a specific type
 
