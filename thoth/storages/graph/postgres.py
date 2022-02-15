@@ -4925,8 +4925,8 @@ class GraphDatabase(SQLBase):
             run_memory = OpenShift.parse_memory_spec(inspection_specification["run"]["requests"]["memory"])
 
             # Convert bytes to GiB, we need float number given the fixed int size.
-            run_memory = run_memory / (1024 ** 3)
-            build_memory = build_memory / (1024 ** 3)
+            run_memory = run_memory / (1024**3)
+            build_memory = build_memory / (1024**3)
 
             runtime_environment = inspection_result["runtime_environment"]
 
