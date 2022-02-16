@@ -462,4 +462,3 @@ Instructions for accessing the bucket are available in the `documentation
 <https://github.com/thoth-station/datasets>`__ repository.
 
 Be careful not to store any confidential or valuable information in this bucket as its content can be wiped out at any time.
->>>>>>> master
