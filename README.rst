@@ -415,9 +415,9 @@ There are two ways to initialize the data handler:
         - Ceph Key ID
       * - ``CEPH_SECRET_KEY``
         - Ceph Secret Key
-   
+
    .. code-block:: python
-   
+
        from thoth.storages.ceph import CephStore
        ceph = CephStore()
 
@@ -425,7 +425,7 @@ There are two ways to initialize the data handler:
 2. Initialize the object directly with parameters
 
    .. code-block:: python
-   
+
        from thoth.storages.ceph import CephStore
        ceph = CephStore(
            key_id=<aws_access_key_id>,
