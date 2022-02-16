@@ -59,8 +59,9 @@ from thoth.python import PackageVersion
 from thoth.python import Pipfile
 from thoth.python import PipfileLock
 from thoth.common.helpers import format_datetime
+from thoth.common.helpers import datetime2datetime_str
+from thoth.common.helpers import normalize_os_version
 from thoth.common import OpenShift
-from thoth.common import normalize_os_version
 from thoth.common import map_os_name
 from thoth.common.enums import ThothAdviserIntegrationEnum
 
@@ -68,6 +69,7 @@ from .models_base import BaseExtension
 from .models import AdviserRun
 from .models import ALL_MAIN_MODELS
 from .models import CVE
+from .models import CVETimestamp
 from .models import DebDependency
 from .models import DebPackageVersion
 from .models import DependencyMonkeyRun
@@ -175,6 +177,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
+from ..ceph import CephStore
 
 
 # Name of environment variables are long
@@ -288,7 +291,7 @@ class GraphDatabase(SQLBase):
         finally:
             session.close()
 
-    def connect(self):
+    def connect(self) -> None:
         """Connect to the database."""
         if self.is_connected():
             raise AlreadyConnected("Cannot connect, the adapter is already connected")
@@ -402,6 +405,32 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             result = session.execute(query).fetchone()
             return result[0]
+
+    def get_last_solver_datetime(
+        self, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
+    ) -> datetime:
+        """Get the datetime of the last solver run synced in the database."""
+        with self._session_scope() as session:
+            result = session.query(Solved.datetime)
+            if os_name or os_version or python_version:
+                result = result.filter(Solved.ecosystem_solver_id == EcosystemSolver.id)
+
+                if os_name is not None:
+                    result = result.filter(EcosystemSolver.os_name == os_name)
+
+                if os_version is not None:
+                    result = result.filter(EcosystemSolver.os_version == os_version)
+
+                if python_version is not None:
+                    result = result.filter(EcosystemSolver.python_version == python_version)
+
+        return max([datetime[0] for datetime in result.all()])
+
+    def get_last_analysis_datetime(self) -> datetime:
+        """Get the datetime of the last container image analysis synced in the database."""
+        with self._session_scope() as session:
+            result = session.query(PackageExtractRun.datetime)
+            return max([datetime[0] for datetime in result.all()])
 
     @staticmethod
     def normalize_python_package_name(package_name: str) -> str:
@@ -884,6 +913,54 @@ class GraphDatabase(SQLBase):
                 query_result[item[0]].append((item[1], item[2]))
 
             return query_result
+
+    def get_solved_python_package_version_environments_all(
+        self,
+        package_name: str,
+        package_version: str,
+        index_url: str,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        distinct: bool = False,
+    ) -> List[Dict[str, str]]:
+        """Retrieve all the environments that were used to solve the given package.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_solved_python_package_version_environments_all( \
+                package_name="flask", package_version="2.0.2", index_url="https://pypi.org/simple")
+        [
+            {"os_name": "rhel", "os_version": "8", "python_version": "3.8"},
+            {"os_name": "fedora", "os_version": "35", "python_version": "3.9"},
+        ]
+        """
+        package_name = self.normalize_python_package_name(package_name)
+        package_version = self.normalize_python_package_version(package_version)
+        index_url = self.normalize_python_index_url(index_url)
+
+        with self._session_scope() as session:
+            query = (
+                session.query(PythonPackageVersion)
+                .filter(
+                    PythonPackageVersion.package_name == package_name,
+                    PythonPackageVersion.package_version == package_version,
+                )
+                .join(PythonPackageIndex)
+                .filter(PythonPackageIndex.url == index_url)
+            )
+
+            query = query.offset(start_offset).limit(count)
+
+            if distinct:
+                query = query.distinct()
+
+            result = query.with_entities(
+                PythonPackageVersion.os_name, PythonPackageVersion.os_version, PythonPackageVersion.python_version
+            ).all()
+
+            return [{"os_name": i[0], "os_version": i[1], "python_version": i[2]} for i in result]
 
     def get_solved_python_package_versions_count(
         self,
@@ -2149,6 +2226,7 @@ class GraphDatabase(SQLBase):
         os_name: str,
         os_version: str,
         python_version: str,
+        marker_evaluation_result: Optional[bool] = None,
     ) -> Optional[str]:
         """Get Python evaluation marker as per PEP-0508.
 
@@ -2161,7 +2239,7 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, os_version)
 
         with self._session_scope() as session:
-            result = (
+            query = (
                 session.query(PythonPackageVersion)
                 .filter(PythonPackageVersion.package_name == package_name)
                 .filter(PythonPackageVersion.package_version == package_version)
@@ -2171,7 +2249,13 @@ class GraphDatabase(SQLBase):
                 .join(PythonPackageIndex)
                 .filter(PythonPackageIndex.url == index_url)
                 .join(DependsOn)
-                .join(PythonPackageVersionEntity)
+            )
+
+            if isinstance(marker_evaluation_result, bool):
+                query = query.filter(DependsOn.marker_evaluation_result.is_(marker_evaluation_result))
+
+            result = (
+                query.join(PythonPackageVersionEntity)
                 .filter(PythonPackageVersionEntity.package_name == dependency_name)
                 .filter(PythonPackageVersionEntity.package_version == dependency_version)
                 .with_entities(DependsOn.marker)
@@ -2479,6 +2563,57 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return session.query(Solved).filter(Solved.document_id == solver_document_id).count() > 0
 
+    def get_solver_document_id_all(
+        self,
+        package_name: str,
+        package_version: Optional[str] = None,
+        index_url: Optional[str] = None,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        sort: bool = False,
+    ) -> List[str]:
+        """Get the solver document specific to the given package that has been solved.
+
+        If sorted, the latest solver document is at index 0.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.graph.get_solver_document_id_all("selinon", "1.0.0", "https://pypi.org/simple", \
+              os_name="rhel", os_version="8", python_version="3.8", sort=True)
+        [
+            "solver-rhel-8-py38-210713010253-a24759ebdaa1442c",
+            "solver-rhel-8-py38-210711003643-187580eee457bb3f",
+            "solver-rhel-8-py38-210707005412-4965667a05a39006"
+        ]
+        """
+        with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).filter(
+                PythonPackageVersion.package_name == package_name,
+            )
+
+            if package_version:
+                query = query.filter(PythonPackageVersion.package_version == package_version)
+
+            if os_name:
+                query = query.filter(PythonPackageVersion.os_name == os_name)
+
+            if os_version:
+                query = query.filter(PythonPackageVersion.os_version == os_version)
+
+            if python_version:
+                query = query.filter(PythonPackageVersion.python_version == python_version)
+
+            if index_url:
+                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+
+            if sort:
+                query = query.order_by(Solved.datetime.desc())
+
+            return [i[0] for i in query.join(Solved).with_entities(Solved.document_id).all()]
+
     def dependency_monkey_document_id_exists(self, dependency_monkey_document_id: str) -> bool:
         """Check if the given dependency monkey report record exists in the graph database."""
         with self._session_scope() as session:
@@ -2533,15 +2668,15 @@ class GraphDatabase(SQLBase):
             )
 
     def get_last_analysis_document_id(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, *, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, *, is_external: bool = False
     ) -> Optional[Dict[str, str]]:
         """Get last image analysis (if any) for the given container image."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
             result = (
                 session.query(PackageExtractRun)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .order_by(PackageExtractRun.datetime.desc())
                 .with_entities(PackageExtractRun.analysis_document_id)
                 .first()
@@ -2738,32 +2873,215 @@ class GraphDatabase(SQLBase):
             result = session.query(hardware_environment).offset(start_offset).limit(count).all()
             return [model.to_dict(without_id=without_id) for model in result]
 
+    def get_software_environments_count_all(
+        self,
+        is_external: bool = False,
+        *,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
+    ) -> int:
+        """Get number of software environments stored."""
+        software_environment = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
+        with self._session_scope() as session:
+            query = self._construct_software_environments_query(
+                session=session,
+                software_environment=software_environment,
+                env_image_name=env_image_name,
+                env_image_tag=env_image_tag,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                cuda_version=cuda_version,
+                image_name=image_name,
+                library_name=library_name,
+                symbol=symbol,
+                package_name=package_name,
+                rpm_package_name=rpm_package_name,
+            )
+            return query.count()
+
     def get_software_environments_all(
         self,
         is_external: bool = False,
+        convert_datetime: bool = True,
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
         env_image_name: Optional[str] = None,
         env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
     ) -> List[Dict]:
-        """Get software environments (external or internal) registered in the graph database."""
-        if is_external:
-            software_environment = ExternalSoftwareEnvironment
-        else:
-            software_environment = SoftwareEnvironment
+        """Get software environments (external or internal) registered in the graph database.
 
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_software_environments_all()
+
+        [
+            {
+                'cuda_version': None,
+                'datetime': datetime.datetime(2021, 12, 15, 19, 27, 52, 803266),
+                'env_image_name': None,
+                'env_image_tag': None,
+                'environment_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39:v0.32.3',
+                'environment_type': 'RUNTIME',
+                'image_sha': 'bcf4fa447e5dc889015afb4d3c54ef4a3aaddc3260fce072311602df34ffac3c',
+                'os_name': 'rhel',
+                'os_version': '8',
+                'package_extract_document_id': 'package-extract-211215162259-33c8d9c730b775eb',
+                'python_version': '3.9',
+                'thoth_image_name': 'quay.io/thoth-station/s2i-thoth-ubi8-py39',
+                'thoth_image_version': '0.32.3'
+                }
+            ]
+
+        """
+        software_environment = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
-            query = session.query(software_environment)
+            query = self._construct_software_environments_query(
+                session=session,
+                software_environment=software_environment,
+                env_image_name=env_image_name,
+                env_image_tag=env_image_tag,
+                os_name=os_name,
+                os_version=os_version,
+                python_version=python_version,
+                cuda_version=cuda_version,
+                image_name=image_name,
+                library_name=library_name,
+                symbol=symbol,
+                package_name=package_name,
+                rpm_package_name=rpm_package_name,
+            )
 
-            if env_image_name:
-                query = query.filter(software_environment.env_image_name == env_image_name)
-
-            if env_image_tag:
-                query = query.filter(software_environment.env_image_tag == env_image_tag)
-
+            query = query.join(PackageExtractRun)
+            query = query.order_by(PackageExtractRun.datetime.desc())
+            query = query.with_entities(
+                software_environment.cuda_version,
+                software_environment.env_image_name,
+                software_environment.env_image_tag,
+                software_environment.environment_name,
+                software_environment.environment_type,
+                software_environment.image_sha,
+                software_environment.os_name,
+                software_environment.os_version,
+                software_environment.python_version,
+                software_environment.thoth_image_name,
+                software_environment.thoth_image_version,
+                PackageExtractRun.analysis_document_id,
+                PackageExtractRun.datetime,
+            )
             query = query.offset(start_offset).limit(count)
-            return [model.to_dict() for model in query.all()]
+            results = query.all()
+
+            processed_results = []
+            for r in results:
+                processed_results.append(
+                    {
+                        "cuda_version": r[0],
+                        "datetime": r[12] if not convert_datetime else format_datetime(r[12]),
+                        "env_image_name": r[1],
+                        "env_image_tag": r[2],
+                        "environment_name": r[3],
+                        "environment_type": r[4],
+                        "image_sha": r[5],
+                        "os_name": r[6],
+                        "os_version": r[7],
+                        "package_extract_document_id": r[11],
+                        "python_version": r[8],
+                        "thoth_image_name": r[9],
+                        "thoth_image_version": r[10],
+                    }
+                )
+            return processed_results
+
+    @staticmethod
+    def _construct_software_environments_query(
+        session: Session,
+        software_environment: Union[ExternalSoftwareEnvironment, SoftwareEnvironment],
+        *,
+        env_image_name: Optional[str] = None,
+        env_image_tag: Optional[str] = None,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        cuda_version: Optional[str] = None,
+        image_name: Optional[str] = None,
+        library_name: Optional[str] = None,
+        symbol: Optional[str] = None,
+        package_name: Optional[str] = None,
+        rpm_package_name: Optional[str] = None,
+    ) -> Query:
+        """Create query for software environments."""
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
+
+        query = session.query(software_environment)
+
+        if env_image_name:
+            query = query.filter(software_environment.env_image_name == env_image_name)
+
+        if env_image_tag:
+            query = query.filter(software_environment.env_image_tag == env_image_tag)
+
+        if os_name:
+            query = query.filter(software_environment.os_name == os_name)
+
+        if os_version:
+            query = query.filter(software_environment.os_version == os_version)
+
+        if python_version:
+            query = query.filter(software_environment.python_version == python_version)
+
+        if cuda_version:
+            query = query.filter(software_environment.cuda_version == cuda_version)
+
+        if image_name:
+            query = query.filter(software_environment.image_name == image_name)
+
+        if library_name:
+            query = query.filter(HasSymbol.versioned_symbol_id == VersionedSymbol.id).filter(
+                VersionedSymbol.library_name == library_name
+            )
+
+        if symbol:
+            query = query.filter(HasSymbol.versioned_symbol_id == VersionedSymbol.id).filter(
+                VersionedSymbol.symbol == symbol
+            )
+
+        if package_name:
+            query = (
+                query.filter(PackageExtractRun.id == Identified.package_extract_run_id)
+                .filter(Identified.python_package_version_entity_id == PythonPackageVersionEntity.id)
+                .filter(PythonPackageVersionEntity.package_name == package_name)
+            )
+
+        if rpm_package_name:
+            query = (
+                query.filter(PackageExtractRun.id == FoundRPM.package_extract_run_id)
+                .filter(FoundRPM.rpm_package_version_id == RPMPackageVersion.id)
+                .filter(RPMPackageVersion.package_name == rpm_package_name)
+            )
+
+        return query
 
     def get_python_package_index_urls_all(self, enabled: Optional[bool] = None) -> List[str]:
         """Retrieve all the URLs of registered Python package indexes."""
@@ -2810,13 +3128,38 @@ class GraphDatabase(SQLBase):
             query = session.query(PythonPackageVersionEntity.package_name)
             return [i[0] for i in query.distinct().all()]
 
-    def get_python_package_version_names_all(
-        self,
+    @staticmethod
+    def _construct_python_package_version_names_query(
+        session: Session,
         *,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
+    ) -> Query:
+        """Construct query for obtaining Python package version names."""
+        query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
+
+        if os_name is not None:
+            query = query.filter(PythonPackageVersion.os_name == os_name)
+
+        if os_version is not None:
+            query = query.filter(PythonPackageVersion.os_version == os_version)
+
+        if python_version is not None:
+            query = query.filter(PythonPackageVersion.python_version == python_version)
+
+        return query
+
+    def get_python_package_version_names_all(
+        self,
+        *,
+        start_offset: int = 0,
+        count: Optional[int] = DEFAULT_COUNT,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
         distinct: bool = False,
+        sort: bool = False,
     ) -> List[str]:
         """Retrieve names of Python Packages known by Thoth.
 
@@ -2829,22 +3172,47 @@ class GraphDatabase(SQLBase):
         os_name = map_os_name(os_name)
         os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
-            query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
+            query = self._construct_python_package_version_names_query(
+                session, os_name=os_name, os_version=os_version, python_version=python_version
+            )
 
-            if os_name is not None:
-                query = query.filter(PythonPackageVersion.os_name == os_name)
+            if sort:
+                query = query.order_by(PythonPackageVersion.package_name)
 
-            if os_version is not None:
-                query = query.filter(PythonPackageVersion.os_version == os_version)
-
-            if python_version is not None:
-                query = query.filter(PythonPackageVersion.python_version == python_version)
+            query = query.offset(start_offset).limit(count)
 
             if distinct:
                 query = query.distinct()
 
-            result = query.all()
-            return [item[0] for item in result]
+            return [item[0] for item in query.all()]
+
+    def get_python_package_version_names_count_all(
+        self,
+        *,
+        os_name: Optional[str] = None,
+        os_version: Optional[str] = None,
+        python_version: Optional[str] = None,
+        distinct: bool = False,
+    ) -> int:
+        """Retrieve names of Python Packages known by Thoth.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_packages_names_count_all()
+        156468
+        """
+        os_name = map_os_name(os_name)
+        os_version = normalize_os_version(os_name, os_version)
+        with self._session_scope() as session:
+            query = self._construct_python_package_version_names_query(
+                session, os_name=os_name, os_version=os_version, python_version=python_version
+            )
+
+            if distinct:
+                query = query.distinct()
+
+            return query.count()
 
     def get_python_packages_all(
         self,
@@ -3654,7 +4022,7 @@ class GraphDatabase(SQLBase):
         runtime_environment_name: Optional[str] = None,
         info_manager: Optional[bool] = None,
         pipfile_requirements_manager: Optional[bool] = None,
-        udpate_manager: Optional[bool] = None,
+        update_manager: Optional[bool] = None,
         version_manager: Optional[bool] = None,
         thoth_advise_manager: Optional[bool] = None,
         thoth_provenance_manager: Optional[bool] = None,
@@ -3749,7 +4117,7 @@ class GraphDatabase(SQLBase):
         runtime_environment_name: Optional[str] = None,
         info_manager: Optional[bool] = None,
         pipfile_requirements_manager: Optional[bool] = None,
-        udpate_manager: Optional[bool] = None,
+        update_manager: Optional[bool] = None,
         version_manager: Optional[bool] = None,
         thoth_advise_manager: Optional[bool] = None,
         thoth_provenance_manager: Optional[bool] = None,
@@ -3832,6 +4200,24 @@ class GraphDatabase(SQLBase):
                 )
             count = query.count()
             query.delete()
+            return count
+
+    def get_kebechet_github_installations_software_stack_count_all(
+        self,
+        *,
+        is_active: Optional[bool] = None,
+    ):
+        """Get number of Kebechet maintained software stacks."""
+        with self._session_scope() as session:
+            query = session.query(KebechetGithubAppInstallations)
+
+            if is_active is not None:
+                query = query.filter(KebechetGithubAppInstallations.is_active == is_active)
+
+            query = query.distinct(KebechetGithubAppInstallations.slug).with_entities(
+                KebechetGithubAppInstallations.slug, KebechetGithubAppInstallations.runtime_environment_name
+            )
+            count = query.count()
             return count
 
     def update_kebechet_github_installations_on_is_active(self, slug: str) -> bool:
@@ -3977,8 +4363,8 @@ class GraphDatabase(SQLBase):
         image_sha: Optional[str] = None,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
-        thoth_s2i_image_name: Optional[str] = None,
-        thoth_s2i_image_version: Optional[str] = None,
+        thoth_image_name: Optional[str] = None,
+        thoth_image_version: Optional[str] = None,
         env_image_name: Optional[str] = None,
         env_image_tag: Optional[str] = None,
         cuda_version: Optional[str] = None,
@@ -4024,10 +4410,10 @@ class GraphDatabase(SQLBase):
             if os_version:
                 os_version = normalize_os_version(os_name, os_version)
                 query = query.filter(ExternalSoftwareEnvironment.os_version == os_version)
-            if thoth_s2i_image_name:
-                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_name == thoth_s2i_image_name)
-            if thoth_s2i_image_version:
-                query = query.filter(ExternalSoftwareEnvironment.thoth_s2i_image_version == thoth_s2i_image_version)
+            if thoth_image_name:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_image_name == thoth_image_name)
+            if thoth_image_version:
+                query = query.filter(ExternalSoftwareEnvironment.thoth_image_version == thoth_image_version)
             if env_image_name:
                 query = query.filter(ExternalSoftwareEnvironment.env_image_name == env_image_name)
             if env_image_tag:
@@ -4060,6 +4446,7 @@ class GraphDatabase(SQLBase):
         {
             'thoth-station/jupyter-nbrequirements':
                 {
+                    'environment_name': 'ubi8',
                     'installation_id': '193650988',
                     'private': False,
                     'package_name': 'click',
@@ -4111,6 +4498,7 @@ class GraphDatabase(SQLBase):
 
             query = query.with_entities(
                 KebechetGithubAppInstallations.slug,
+                KebechetGithubAppInstallations.runtime_environment_name,
                 KebechetGithubAppInstallations.installation_id,
                 KebechetGithubAppInstallations.private,
                 PythonPackageVersionEntity.package_name,
@@ -4141,6 +4529,7 @@ class GraphDatabase(SQLBase):
                     for env in thoth_config["runtime_environments"]:
                         if env["name"] == runtime_environment_name:
                             env_dict = env
+                            break
                     else:
                         raise ValueError(f"No environment {runtime_environment_name} found in thoth configuration")
 
@@ -4236,16 +4625,17 @@ class GraphDatabase(SQLBase):
         query_result = {}
 
         for item in result:
-            if item[5]:
-                index_url = self.get_index_url_from_id(item[5])
+            if item[6]:
+                index_url = self.get_index_url_from_id(item[6])
             else:
-                index_url = item[5]
+                index_url = item[6]
 
             query_result[item[0]] = {
-                "installation_id": item[1],
-                "private": item[2],
-                "package_name": item[3],
-                "package_version": item[4],
+                "environment_name": item[1],
+                "installation_id": item[2],
+                "private": item[3],
+                "package_name": item[4],
+                "package_version": item[5],
                 "index_url": index_url,
             }
 
@@ -4652,6 +5042,7 @@ class GraphDatabase(SQLBase):
         *,
         cve_id: str,
         details: str,
+        link: Optional[str],
     ) -> bool:
         """Store information about a CVE in the graph database for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
@@ -4666,6 +5057,7 @@ class GraphDatabase(SQLBase):
                     cve_id=cve_id,
                     details=details,
                     aggregated_at=datetime.utcnow(),
+                    link=link,
                 )
 
             index = self._get_or_create_python_package_index(session, index_url, only_if_enabled=False)
@@ -4682,6 +5074,31 @@ class GraphDatabase(SQLBase):
             )
 
             return existed
+
+    def set_cve_timestamp(self, timestamp: datetime) -> None:
+        """Set CVE timestamp record."""
+        with self._session_scope() as session:
+            instance = session.query(CVETimestamp).first()
+            if instance:
+                instance.timestamp = timestamp
+            else:
+                instance = CVETimestamp(timestamp=timestamp)
+
+            session.add(instance)
+            session.commit()
+
+    def get_cve_timestamp(self) -> Optional[datetime]:
+        """Get CVE timestamp record."""
+        with self._session_scope() as session:
+            query_result = session.query(CVETimestamp).with_entities(CVETimestamp.timestamp).all()
+
+            if not query_result or not query_result[0]:
+                return None
+
+            if len(query_result) > 1:
+                _LOGGER.error("Inconsistent CVE timestamp found in the database: %r", query_result)
+
+            return query_result[0][0] if query_result and query_result[0] else None
 
     def update_missing_flag_package_version(
         self, package_name: str, package_version: str, index_url: str, value: bool
@@ -4833,7 +5250,7 @@ class GraphDatabase(SQLBase):
 
         @params date_: DD-MM-YY
         """
-        return datetime.strptime(date_, "%d-%m-%Y").date()
+        return datetime.strptime(date_, "%d-%m-%Y")
 
     def get_adviser_run_document_ids_all(
         self,
@@ -4913,7 +5330,7 @@ class GraphDatabase(SQLBase):
                 conditions.append(EcosystemSolver.os_name == os_name)
 
             if os_version:
-                os_version = OpenShift.normalize_os_version(os_name, os_version)
+                os_version = normalize_os_version(os_name, os_version)
                 conditions.append(EcosystemSolver.os_version == os_version)
 
             if python_version:
@@ -5177,7 +5594,6 @@ class GraphDatabase(SQLBase):
         session: Session,
         package_extract_run: PackageExtractRun,
         document: dict,
-        software_environment: Union[SoftwareEnvironment, ExternalSoftwareEnvironment],
     ) -> None:
         """Sync python interpreters detected in a package-extract run into the database."""
         for py_interpreter in document["result"].get("python-interpreters"):
@@ -5193,11 +5609,17 @@ class GraphDatabase(SQLBase):
             )
 
     @staticmethod
-    def _package_extract_get_env_vars(document: Dict[str, Any]) -> Dict[str, str]:
-        """Obtain Thoth specific environment variables present in the container image."""
+    def _package_extract_get_env_vars(
+        document: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """Obtain environment variables present in the container image."""
         result = {}
+
         for entry in (document["result"].get("skopeo-inspect") or {}).get("Env") or []:
-            if entry.startswith(("THAMOS_", "THOTH_")):
+            if entry.startswith(("THAMOS_", "THOTH_")) or entry.split("=", maxsplit=1)[0] in [
+                "IMAGE_NAME",
+                "IMAGE_TAG",
+            ]:
                 env_name, env_val = entry.split("=", maxsplit=1)
                 result[env_name] = env_val
 
@@ -5261,8 +5683,8 @@ class GraphDatabase(SQLBase):
                 image_sha=document["result"]["layers"][-1],
                 os_name=os_name,
                 os_version=os_version,
-                thoth_s2i_image_name=env_vars.get("THOTH_S2I_NAME"),
-                thoth_s2i_image_version=env_vars.get("THOTH_S2I_VERSION"),
+                thoth_image_name=env_vars.get("THOTH_S2I_NAME"),
+                thoth_image_version=env_vars.get("THOTH_S2I_VERSION"),
                 env_image_name=env_vars.get("IMAGE_NAME"),
                 env_image_tag=env_vars.get("IMAGE_TAG"),
                 cuda_version=cuda_nvcc_version or cuda_found_in_file_version,
@@ -5300,7 +5722,7 @@ class GraphDatabase(SQLBase):
             self._system_symbols_analysis_result(
                 session, package_extract_run, document, software_environment, is_external=is_external
             )
-            self._python_interpreters_sync_analysis_result(session, package_extract_run, document, software_environment)
+            self._python_interpreters_sync_analysis_result(session, package_extract_run, document)
 
     @staticmethod
     def _get_or_create_python_package_index(
@@ -6216,15 +6638,15 @@ class GraphDatabase(SQLBase):
 
     @lru_cache(maxsize=_GET_S2I_ANALYZED_IMAGE_SYMBOLS)
     def get_thoth_s2i_analyzed_image_symbols_all(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, is_external: bool = False
     ) -> List[str]:
         """Get symbols associated with a given Thoth s2i container image."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
         with self._session_scope() as session:
             query = (
                 session.query(model)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .join(HasSymbol)
                 .join(VersionedSymbol)
                 .with_entities(VersionedSymbol.symbol)
@@ -6240,15 +6662,15 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             query = (
                 session.query(model)
-                .with_entities(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
-                .distinct(model.thoth_s2i_image_name, model.thoth_s2i_image_version)
+                .with_entities(model.thoth_image_name, model.thoth_image_version)
+                .distinct(model.thoth_image_name, model.thoth_image_version)
             )
 
             # Query returns list of single tuples (empty if bad request)
             return [tuple(i) for i in query.all()]
 
     def get_thoth_s2i_package_extract_analysis_document_id_all(
-        self, thoth_s2i_image_name: str, thoth_s2i_image_version: str, is_external: bool = False
+        self, thoth_image_name: str, thoth_image_version: str, is_external: bool = False
     ) -> List[str]:
         """Get package-extract analysis ids for the given Thoth s2i."""
         model = ExternalSoftwareEnvironment if is_external else SoftwareEnvironment
@@ -6256,8 +6678,8 @@ class GraphDatabase(SQLBase):
             query = (
                 session.query(PackageExtractRun)
                 .join(model)
-                .filter(model.thoth_s2i_image_name == thoth_s2i_image_name)
-                .filter(model.thoth_s2i_image_version == thoth_s2i_image_version)
+                .filter(model.thoth_image_name == thoth_image_name)
+                .filter(model.thoth_image_version == thoth_image_version)
                 .with_entities(PackageExtractRun.analysis_document_id)
             )
 
@@ -6710,6 +7132,105 @@ class GraphDatabase(SQLBase):
 
         return self._process_bloat_data_results(tables=tables)
 
+    def purge_solver_documents(
+        self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted solver documents to Ceph."""
+        solver_store = SolverResultsStore()
+        solver_store.connect()
+
+        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/solver-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        solver_document_ids = self.get_solver_run_document_ids_all(
+            os_version=os_version, os_name=os_name, python_version=python_version
+        )
+
+        deleted_solver_documents_count = 0
+
+        for solver_document_id in solver_document_ids:
+            document = solver_store.retrieve_document(document_id=solver_document_id)
+            target_store.store_document(document, document_id=solver_document_id)
+            solver_store.ceph.delete(object_key=solver_document_id)
+            deleted_solver_documents_count += self.delete_solver_result(solver_document_id=solver_document_id)
+
+        return deleted_solver_documents_count
+
+    def purge_adviser_documents(
+        self, *, end_datetime: Optional[datetime] = None, adviser_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted adviser documents to Ceph."""
+        adviser_store = AdvisersResultsStore()
+        adviser_store.connect()
+
+        target_prefix = (
+            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/adviser-purge-{datetime2datetime_str()}/"
+        )
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(AdviserRun.adviser_document_id).with_entities(AdviserRun.adviser_document_id)
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(AdviserRun.datetime < date_filter)
+
+            if adviser_version:
+                query = query.filter(AdviserRun.adviser_version == adviser_version)
+
+            adviser_document_ids = query.all()
+            adviser_document_ids = [obj[0] for obj in adviser_document_ids]
+
+        deleted_adviser_documents_count = 0
+
+        for adviser_document_id in adviser_document_ids:
+            document = adviser_store.retrieve_document(document_id=adviser_document_id)
+            target_store.store_document(document, document_id=adviser_document_id)
+            adviser_store.ceph.delete(object_key=adviser_document_id)
+            deleted_adviser_documents_count += self.delete_adviser_result(adviser_document_id=adviser_document_id)
+
+        return deleted_adviser_documents_count
+
+    def purge_package_extract_documents(
+        self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
+    ) -> int:
+        """Store and purge to be deleted package extract documents to Ceph."""
+        package_extract_store = AnalysisResultsStore()
+        package_extract_store.connect()
+
+        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_store = CephStore(prefix=target_prefix)
+        target_store.connect()
+
+        with self._session_scope() as session:
+            query = session.query(PackageExtractRun.analysis_document_id).with_entities(
+                PackageExtractRun.analysis_document_id
+            )
+
+            if end_datetime:
+                date_filter = self._create_date_filter(end_datetime)
+                query = query.filter(PackageExtractRun.datetime < date_filter)
+
+            if package_extract_version:
+                query = query.filter(PackageExtractRun.package_extract_version == package_extract_version)
+
+            package_extract_document_ids = query.all()
+            package_extract_document_ids = [obj[0] for obj in package_extract_document_ids]
+
+        deleted_package_extract_documents_count = 0
+
+        for package_extract_document_id in package_extract_document_ids:
+            document = package_extract_store.retrieve_document(document_id=package_extract_document_id)
+            target_store.store_document(document, document_id=package_extract_document_id)
+            package_extract_store.ceph.delete(object_key=package_extract_document_id)
+            deleted_package_extract_documents_count += self.delete_analysis_result(
+                analysis_document_id=package_extract_document_id
+            )
+
+        return deleted_package_extract_documents_count
+
     def delete_solved(self, *, os_name: str, os_version: str, python_version: str) -> int:
         """Delete corresponding solver data."""
         with self._session_scope() as session:
@@ -6951,28 +7472,39 @@ class GraphDatabase(SQLBase):
     def get_python_package_version_solver_rules_all(
         self,
         package_name: str,
-        package_version: str,
+        package_version: Optional[str] = None,
         index_url: Optional[str] = None,
-    ) -> List[str]:
+    ) -> List[Tuple[int, Optional[str], Optional[str], str]]:
         """Get rules assigned for the given Python package."""
         package_name = self.normalize_python_package_name(package_name)
-        self.normalize_python_package_version(package_version)
+        if package_version:
+            self.normalize_python_package_version(package_version)
         index_url = self.normalize_python_index_url(index_url) if index_url is not None else None
 
         with self._session_scope() as session:
             query = session.query(PythonPackageVersionEntity).filter(
                 PythonPackageVersionEntity.package_name == package_name,
-                PythonPackageVersionEntity.package_version == package_version,
             )
 
+            if package_version:
+                query = query.filter(
+                    PythonPackageVersionEntity.package_version == package_version,
+                )
+
+            query = query.join(PythonPackageIndex)
             if index_url:
-                query = query.join(PythonPackageIndex).filter(PythonPackageIndex.url == index_url)
+                query = query.filter(PythonPackageIndex.url == index_url)
 
             return [
-                i[0]
+                tuple(i)
                 for i in query.join(PythonPackageVersionEntityRulesAssociation)
                 .join(PythonPackageVersionEntityRule)
-                .with_entities(PythonPackageVersionEntityRule.description)
+                .with_entities(
+                    PythonPackageVersionEntityRule.id,
+                    PythonPackageVersionEntityRule.version_range,
+                    PythonPackageIndex.url,
+                    PythonPackageVersionEntityRule.description,
+                )
                 .all()
             ]
 
@@ -7008,22 +7540,61 @@ class GraphDatabase(SQLBase):
 
             return [{"package_name": i[1], "package_version": i[2], "location": i[0]} for i in query.all()]
 
-    def get_python_package_version_import_packages_all(self, import_name: str) -> List[Dict[str, str]]:
-        """Retrieve Python package name for the given import package name."""
+    def get_python_package_version_import_packages_all(
+        self, import_name: str, distinct: bool = False
+    ) -> List[Dict[str, str]]:
+        """Retrieve Python package name for the given import package name.
+
+        Examples:
+        >>> from thoth.storages import GraphDatabase
+        >>> graph = GraphDatabase()
+        >>> graph.get_python_package_version_import_packages_all("faust.*")
+        [
+           {'import': 'faust.web.apps',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.cache',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.cache.backends',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'},
+           {'import': 'faust.web.drivers',
+            'index_url': 'https://pypi.org/simple',
+            'package_name': 'faust',
+            'package_version': '1.9.0'}
+            ...
+        ]
+        """
         with self._session_scope() as session:
+            query = session.query(PythonPackageVersion).join(FoundImportPackage).join(ImportPackage)
+
+            if import_name.endswith("*"):
+                query = query.filter(ImportPackage.import_package_name.like(f"{import_name[:-1]}%"))
+            else:
+                query = query.filter(ImportPackage.import_package_name == import_name)
+
             query = (
-                session.query(PythonPackageVersion)
-                .join(FoundImportPackage)
-                .join(ImportPackage)
-                .filter(ImportPackage.import_package_name == import_name)
-                .filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
+                query.filter(PythonPackageVersion.id == FoundImportPackage.python_package_version_id)
                 .join(PythonPackageIndex)
                 .filter(PythonPackageVersion.python_package_index_id == PythonPackageIndex.id)
                 .with_entities(
-                    PythonPackageVersion.package_name, PythonPackageVersion.package_version, PythonPackageIndex.url
+                    PythonPackageVersion.package_name,
+                    PythonPackageVersion.package_version,
+                    PythonPackageIndex.url,
+                    ImportPackage.import_package_name,
                 )
             )
-            result = [{"package_name": i[0], "package_version": i[1], "index_url": i[2]} for i in query.all()]
+
+            if distinct:
+                query = query.distinct()
+
+            result = [
+                {"package_name": i[0], "package_version": i[1], "index_url": i[2], "import": i[3]} for i in query.all()
+            ]
 
             if not result:
                 raise NotFoundError(f"No package matching import {import_name!r} found")

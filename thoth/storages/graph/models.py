@@ -24,6 +24,7 @@ from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Table
+from sqlalchemy import BigInteger
 from sqlalchemy import Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -281,7 +282,7 @@ class PackageExtractRun(Base, BaseExtension):
     origin = Column(Text, nullable=True)
     debug = Column(Boolean, nullable=False, default=False)
     package_extract_error = Column(Boolean, nullable=False, default=False)
-    image_size = Column(Integer, nullable=True)
+    image_size = Column(BigInteger, nullable=True)
     # An image tag which was used during image analysis. As this tag can change (e.g. latest is always changing
     # on new builds), it's part of this class instead of Runtime/Buildtime environment to keep correct
     # linkage for same container images.
@@ -375,6 +376,15 @@ class FoundDeb(Base, BaseExtension):
     package_extract_run = relationship("PackageExtractRun", back_populates="found_debs")
 
 
+class CVETimestamp(Base, BaseExtension):
+    """Information about CVE aggregation maintained by cve-update-job."""
+
+    __tablename__ = "cve_timestamp"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False)
+
+
 class CVE(Base, BaseExtension):
     """Information about a CVE."""
 
@@ -385,6 +395,7 @@ class CVE(Base, BaseExtension):
     aggregated_at = Column(DateTime, nullable=True)
     cve_id = Column(Text, nullable=False, unique=True)
     details = Column(Text, nullable=False)
+    link = Column(Text, nullable=True)
 
     python_package_version_entities = relationship("HasVulnerability", back_populates="cve")
 
@@ -803,8 +814,8 @@ class SoftwareEnvironment(Base, BaseExtension):
     image_sha = Column(Text, nullable=True)
     os_name = Column(Text, nullable=True)
     os_version = Column(Text, nullable=True)
-    thoth_s2i_image_name = Column(Text, nullable=True)
-    thoth_s2i_image_version = Column(Text, nullable=True)
+    thoth_image_name = Column(Text, nullable=True)
+    thoth_image_version = Column(Text, nullable=True)
     env_image_name = Column(Text, nullable=True)
     env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
@@ -836,8 +847,8 @@ class SoftwareEnvironment(Base, BaseExtension):
 
     __table_args__ = (
         Index(
-            "thoth_s2i_image_name",
-            "thoth_s2i_image_version",
+            "thoth_image_name",
+            "thoth_image_version",
         ),
     )
 
@@ -855,8 +866,8 @@ class ExternalSoftwareEnvironment(Base, BaseExtension):
     image_sha = Column(Text, nullable=True)
     os_name = Column(Text, nullable=True)
     os_version = Column(Text, nullable=True)
-    thoth_s2i_image_name = Column(Text, nullable=True)
-    thoth_s2i_image_version = Column(Text, nullable=True)
+    thoth_image_name = Column(Text, nullable=True)
+    thoth_image_version = Column(Text, nullable=True)
     env_image_name = Column(Text, nullable=True)
     env_image_tag = Column(Text, nullable=True)
     cuda_version = Column(Text, nullable=True)
@@ -1591,7 +1602,7 @@ class KebechetGithubAppInstallations(Base, BaseExtension):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    slug = Column(Text, nullable=False, unique=True)
+    slug = Column(Text, nullable=False)
     repo_name = Column(Text, nullable=False)
     private = Column(Boolean, nullable=False)
     installation_id = Column(Text, nullable=False)
@@ -1721,6 +1732,7 @@ class FoundImportPackage(Base, BaseExtension):
 ALL_MAIN_MODELS = frozenset(
     (
         CVE,
+        CVETimestamp,
         DebDependency,
         DebPackageVersion,
         DependencyMonkeyRun,

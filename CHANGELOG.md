@@ -1,5 +1,150 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.70.0 (2022-02-14T12:43:54)
+* Resolved merge conflict
+* Fix last container image datetime query
+* Query datetime of last container image synced in the database
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Increase max_wal_size in postgres config
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Revert to datetime return type
+* Fix return type of datetime query
+* remove unusued parameter
+* Correct query of last solver datetime
+* add environment name to get_keb_gh_installation_info
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add myself to approvers
+* Verify if filters are None
+* Filter last solver docs
+* Fix last solver datetime query
+* Rewrite query with sqlalchemy
+* Retrieve datetime of last synced solver
+
+## Release 0.69.0 (2022-02-07T20:40:25)
+* Provide a way to iterate over solvers of a specific type
+
+## Release 0.68.4 (2022-02-07T15:07:21)
+* Remove package_extract import
+* Fix target prefix for purge_* methods
+* Fix adapter name for package-extract documents
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix Ceph variable names and add examples
+
+## Release 0.68.3 (2022-02-03T15:25:44)
+* Fix container image query (#2575)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.68.2 (2022-02-02T12:21:50)
+* Add paramaters to count environments query
+* Instructions for accessing Thoth's public database on opf-datacatalog
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.68.1 (2022-01-27T14:55:23)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix formatting of README
+* Add my username to maintainers
+
+## Release 0.68.0 (2022-01-26T13:52:54)
+* Change rpm_package to rpm_package_name
+* Rename python_package to package_name and correct argument type
+* Fix with_entities
+* Modify query of containerized environments to get specific content
+
+## Release 0.67.0 (2022-01-26T09:16:12)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix typo
+* Rename columns for software_environment table
+* Modify column name in migration file
+* Restore changes to automatically created files
+* Rename thoth_s2i_* in database schema
+* add break statement and remove unique slug constraint
+* Small typo fix
+* Fix missing links in docs
+* Enable TLS verification
+
+## Release 0.66.0 (2022-01-11T15:01:00)
+* add query for number of software stacks maintained by kebechet
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.65.0 (2022-01-05T08:25:11)
+* Provide a method that counts number of Python package names
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.64.0 (2022-01-04T08:55:54)
+* Introduce a query for counting software environments
+
+## Release 0.63.0 (2021-12-22T12:11:56)
+* Introduce query for obtaining solver documents for the given package
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix returning date when creating filters
+* Allow sorting and pagination of get_python_package_version_names_all
+
+## Release 0.62.1 (2021-12-21T18:50:24)
+* Fix condition to identify env vars
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.62.0 (2021-12-21T12:49:44)
+* Be consistent across library
+* Make sure datetime returned is string
+* Update thoth/storages/graph/postgres.py
+* Extend output query with package extract id and date
+* make Package Extract Run table image size column datatype BigInteger
+* Update thoth/storages/graph/postgres.py
+* Allow syncing non-Thoth env variables
+* Introduce a query for obtaining environments used to solve a package
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Parametrize query obtaining software environments
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix v0.61.0 changelog computed (#2499)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Update pyproject.toml to use Python 3.8
+* Fix v0.61.0 changelog computed
+
+## Release 0.61.0 (2021-11-30T14:24:51)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Modified package_extract_version to analysis_document_id in purge_package_extract_documents query
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
+## Release 0.60.0 (2021-11-29T11:52:15)
+* Allow querying module imports
+* Obtain environment markers based on evaluation result
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add missing types
+* add kebechet to crossroads in docs
+
+## Release 0.59.0 (2021-11-19T03:05:03)
+* Add distinct option to method
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Use explicit exports
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Adjust flexmock import to respect new flexmock release notes
+
+## Release 0.58.0 (2021-11-08T09:20:00)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Removed the build_sphinx command to generate docs in README.rst
+* Change variable name from s3 to ceph
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Add CVE link to CVE table
+* Provide primitives for manipulating with CVE timestamp
+* Add both envvar and direct init example
+* Rephrase sentences
+* Fix EOF
+* Add data retrieval example
+
+## Release 0.57.3 (2021-10-21T12:39:28)
+* Do not use colon in overlays name (#2451)
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Adjust query to return also additional solver rule information
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel:8 environment
+* Fix signature
+
 ## Release 0.57.2 (2021-10-18T10:37:08)
 * Use update on conflict method
 

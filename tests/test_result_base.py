@@ -18,8 +18,8 @@
 
 """This is the tests."""
 
-import flexmock
 import pytest
+from flexmock import flexmock
 
 from thoth.storages.result_base import ResultStorageBase
 

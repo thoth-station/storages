@@ -23,6 +23,36 @@ This library provides a library called `thoth-storages
 for `PostgreSQL database <https://www.postgresql.org/>`__ as well as adapters
 for manipulating with `Ceph <https://ceph.io/>`__ via its S3 compatible API.
 
+Quick Start
+===========
+
+Pre-requisites:
+
+* make sure you have ``podman`` and ``podman-compose`` installed. You can install those tools by running ``dnf install -y podman podman-compose``
+* make sure you are in an environment created with ``pipenv install --dev``
+
+To develop locally the first time:
+
+* Have a pg dump that you can `retrieve from aws s3
+  <https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
+
+* Run ``podman-compose up`` to scale up pods for database and pgweb. For more detail, refer to the `Running PostgreSQL locally section
+  <https://github.com/thoth-station/storages#running-postgresql-locally>`__
+
+* Run this command to sync the pg dump into the local database:
+
+  .. code-block:: console
+
+    psql -h localhost -p 5432 --username=postgres < pg_dump.sql
+
+
+Now you are ready to test new queries or `create new migrations
+<https://github.com/thoth-station/storages#generating-migrations-and-schema-adjustment-in-deployment>`__
+
+If you already have a local database, make sure it is not outdated and rember to follow the `Generating migrations and schema adjustment in deployment
+<https://github.com/thoth-station/storages#generating-migrations-and-schema-adjustment-in-deployment>`__
+section before testing any changes.
+
 Installation and Usage
 ======================
 
@@ -49,8 +79,6 @@ You can run prepared test-suite via the following command:
   pipenv install --dev
   pipenv run python3 setup.py test
 
-  # To generate docs:
-  pipenv run python3 setup.py build_sphinx
 
 Running PostgreSQL locally
 ==========================
@@ -80,6 +108,12 @@ UI. To access it visit `localhost:8081 <http://localhost:8081>`__.
 
 The provided ``docker-compose.yaml`` does not use any volume. After you
 containers restart, the content will not be available anymore.
+
+You can sync your local instance using ``pgsql``:
+
+.. code-block:: console
+
+  $ psql -h localhost -p 5432 --username=postgres < pg_dump.sql
 
 If you would like to experiment with PostgreSQL programmatically, you can use
 the following code snippet as a starting point:
@@ -359,6 +393,8 @@ Accessing data on Ceph
 To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
 of endpoint you are connecting to.
 
+Absolute file path of data you are accessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
+
 There are two ways to initialize the data handler:
 
 1. Configure environment variables
@@ -412,6 +448,18 @@ After initialization, you are ready to retrieve data
         blob = ceph.retrieve_blob(<file_path>)
 
     except NotFoundError:
-        # For case that data does not exist
+        # File does not exist
 
-Absolute file path of data you are acccessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
+
+Accessing Thoth Data on the Operate-First Public Bucket
+=======================================================
+
+A public instance of Thoth's database is available on the `Operate-First Public Bucket
+<https://github.com/operate-first/apps/blob/master/docs/content/odh/trino/access_public_bucket.md>`__ for external contributors to start developing components of Thoth.
+
+Instructions for accessing the bucket are available in the `documentation
+<https://github.com/thoth-station/datasets#accessing-thoth-data-on-the-operate-first-public-bucket>`__ of the `thoth/datasets
+<https://github.com/thoth-station/datasets>`__ repository.
+
+Be careful not to store any confidential or valuable information in this bucket as its content can be wiped out at any time.
+>>>>>>> master

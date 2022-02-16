@@ -21,8 +21,8 @@
 import os
 import json
 
-import flexmock
 import pytest
+from flexmock import flexmock
 
 
 class ThothStoragesTest(object):

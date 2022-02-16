@@ -86,8 +86,13 @@ class ResultStorageBase(StorageBase):
         """Connect the given storage adapter."""
         self.ceph.connect()
 
+    @staticmethod
     def _iter_dates_prefix_addition(
-        self, start_date: date, end_date: typing.Optional[date] = None, *, include_end_date: bool = False
+        start_date: date,
+        end_date: typing.Optional[date] = None,
+        *,
+        prefix: str = RESULT_TYPE,
+        include_end_date: bool = False,
     ) -> typing.Generator[str, None, None]:
         """Create prefix based on dates supplied."""
         if end_date is None:
@@ -103,7 +108,7 @@ class ResultStorageBase(StorageBase):
             if not include_end_date and walker == end_date:
                 break
 
-            yield walker.strftime(f"{self.RESULT_TYPE}-%y%m%d")
+            yield walker.strftime(f"{prefix}-%y%m%d")
             walker += step
 
     def get_document_listing(
