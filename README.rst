@@ -395,63 +395,61 @@ of endpoint you are connecting to.
 
 Absolute file path of data you are accessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
-You can either configure these environment variables to initialize the data handler:
+There are two ways to initialize the data handler:
 
-.. list-table::
-   :widths: 25 25 25
-   :header-rows: 1
+1. Configure environment variables
 
-   * - Variable name
-     - Content
-     - Example
-   * - ``THOTH_S3_ENDPOINT_URL``
-     - URL to an S3 compatible interface
-     - ``https://s3.redhat.com``
-   * - ``THOTH_CEPH_BUCKET``
-     - Ceph Bucket name
-     - ``thoth``
-   * - ``THOTH_CEPH_BUCKET_PREFIX``
-     - Ceph Prefix
-     - ``data``
-   * - ``THOTH_CEPH_KEY_ID``
-     - Ceph Key ID
-     - ``AAAAAAAAAAAAAAAAAAAA``
-   * - ``THOTH_CEPH_SECRET_KEY``
-     - Ceph Secret Key
-     - ``XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX``
+   .. list-table::
+      :widths: 25 25
+      :header-rows: 1
 
-.. code-block:: python
+      * - Variable name
+        - Content
+      * - ``S3_ENDPOINT_URL``
+        - Ceph Host name
+      * - ``CEPH_BUCKET``
+        - Ceph Bucket name
+      * - ``CEPH_BUCKET_PREFIX``
+        - Ceph Prefix
+      * - ``CEPH_KEY_ID``
+        - Ceph Key ID
+      * - ``CEPH_SECRET_KEY``
+        - Ceph Secret Key
 
-    from thoth.storages.ceph import CephStore
-    s3 = CephStore()
+   .. code-block:: python
 
-Or you can initialize the object directly with them:
+       from thoth.storages.ceph import CephStore
+       ceph = CephStore()
 
-.. code-block:: python
 
-    from thoth.storages.ceph import CephStore
-    ceph = CephStore(
-        key_id=<aws_access_key_id>,
-        secret_key=<aws_secret_access_key>,
-        prefix=<prefix_name>,
-        host=<endpoint_url>,
-        bucket=<bucket_name>)
+2. Initialize the object directly with parameters
+
+   .. code-block:: python
+
+       from thoth.storages.ceph import CephStore
+       ceph = CephStore(
+           key_id=<aws_access_key_id>,
+           secret_key=<aws_secret_access_key>,
+           prefix=<prefix_name>,
+           host=<endpoint_url>,
+           bucket=<bucket_name>)
 
 After initialization, you are ready to retrieve data
 
 .. code-block:: python
 
-    s3.connect()
+    ceph.connect()
 
     try:
         # For dictionary stored as json
-        json_data = s3.retrieve_document(<file_path>)
+        json_data = ceph.retrieve_document(<file_path>)
 
         # For general blob
-        blob = s3.retrieve_blob(<file_path>)
+        blob = ceph.retrieve_blob(<file_path>)
 
     except NotFoundError:
         # File does not exist
+
 
 Accessing Thoth Data on the Operate-First Public Bucket
 =======================================================
@@ -464,3 +462,4 @@ Instructions for accessing the bucket are available in the `documentation
 <https://github.com/thoth-station/datasets>`__ repository.
 
 Be careful not to store any confidential or valuable information in this bucket as its content can be wiped out at any time.
+>>>>>>> master
