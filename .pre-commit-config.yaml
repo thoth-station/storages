@@ -1,38 +1,32 @@
 ---
 repos:
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.9
+    rev: v1.1.12
     hooks:
       - id: remove-tabs
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.1.0
     hooks:
-      - id: trailing-whitespace
-      - id: check-merge-conflict
-      - id: end-of-file-fixer
       - id: check-added-large-files
+      - id: check-ast
       - id: check-byte-order-marker
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-json
+      - id: check-merge-conflict
       - id: check-symlinks
-      - id: detect-private-key
-      - id: check-ast
+      - id: check-toml
+      - id: check-yaml
       - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
 
   # - repo: https://github.com/pycqa/pydocstyle.git  TODO: Fix pydoc style errors
   #   rev: 5.1.1
   #   hooks:
   #     - id: pydocstyle
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
-    hooks:
-      - id: check-toml
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
 
   # - repo: https://github.com/pre-commit/mirrors-mypy  TODO: Fix mypy errors
   #   rev: v0.790
@@ -42,7 +36,7 @@ repos:
   #       args: [--ignore-missing-imports]
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.1.0
     hooks:
       - id: black
   # - repo: https://gitlab.com/PyCQA/flake8 TODO: Fix flake8 errors
