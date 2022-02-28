@@ -45,6 +45,7 @@ from packaging.version import parse as parse_version
 from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy import text
 from sqlalchemy import exists
 from sqlalchemy import and_
 from sqlalchemy import tuple_
@@ -1055,6 +1056,7 @@ class GraphDatabase(SQLBase):
         *,
         start_offset: int = 0,
         count: Optional[int] = DEFAULT_COUNT,
+        order_by: Optional[str] = None,
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
@@ -1082,6 +1084,11 @@ class GraphDatabase(SQLBase):
                 python_version=python_version,
                 is_missing=is_missing,
             )
+
+            if order_by == "ASC":
+                query = query.order_by(text("string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] ASC"))
+            elif order_by == "DESC":
+                query = query.order_by(text("string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] DESC"))
 
             query = query.offset(start_offset).limit(count)
 
