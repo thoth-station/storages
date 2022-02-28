@@ -1086,9 +1086,17 @@ class GraphDatabase(SQLBase):
             )
 
             if order_by == "ASC":
-                query = query.order_by(text("string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] ASC"))
+                query = query.order_by(
+                    text(
+                        "string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] ASC"
+                    )
+                )
             elif order_by == "DESC":
-                query = query.order_by(text("string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] DESC"))
+                query = query.order_by(
+                    text(
+                        "string_to_array(regexp_replace(package_version, '[^0-9.]+|(?<=\d{4})(\d+)', '', 'g'), '.', '')::int[] DESC"
+                    )
+                )
 
             query = query.offset(start_offset).limit(count)
 
