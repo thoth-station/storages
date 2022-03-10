@@ -1,5 +1,17 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.71.0 (2022-03-10T12:58:14)
+* update to latest pgsql container image
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* Fix typo
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* remove trailing ws
+* Remove trailing whitespace
+* Update GitHub issue templates for bugs and features
+* Update pre-commit configuration
+* Move file path specificiation to the end
+* Change description to numbered list
+
 ## Release 0.70.0 (2022-02-14T12:43:54)
 * Resolved merge conflict
 * Fix last container image datetime query
