@@ -36,6 +36,8 @@ To develop locally the first time:
 * Have a pg dump that you can `retrieve from aws s3
   <https://github.com/thoth-station/storages#automatic-backups-of-thoth-deployment>`__
 
+* Get the latest PostgreSQL container image from: https://catalog.redhat.com/software/containers/rhel8/postgresql-13/5ffdbdef73a65398111b8362?container-tabs=gti&gti-tabs=red-hat-login
+
 * Run ``podman-compose up`` to scale up pods for database and pgweb. For more detail, refer to the `Running PostgreSQL locally section
   <https://github.com/thoth-station/storages#running-postgresql-locally>`__
 
