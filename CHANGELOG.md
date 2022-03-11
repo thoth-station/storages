@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.71.1 (2022-03-11T12:26:33)
+* Fix method to iterate on files
+* :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.71.0 (2022-03-10T12:58:14)
 * update to latest pgsql container image
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
