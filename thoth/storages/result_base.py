@@ -86,15 +86,16 @@ class ResultStorageBase(StorageBase):
         """Connect the given storage adapter."""
         self.ceph.connect()
 
-    @staticmethod
     def _iter_dates_prefix_addition(
+        self,
         start_date: date,
         end_date: typing.Optional[date] = None,
         *,
-        prefix: str = RESULT_TYPE,
         include_end_date: bool = False,
     ) -> typing.Generator[str, None, None]:
         """Create prefix based on dates supplied."""
+        prefix = self.RESULT_TYPE
+
         if end_date is None:
             end_date = date.today() + timedelta(days=1)  # Today inclusively.
         elif end_date < start_date:
