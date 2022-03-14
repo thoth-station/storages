@@ -251,7 +251,7 @@ class GraphDatabase(SQLBase):
             "supported_platform",
         ],
         "requires_external": [HasMetadataRequiresExternal, PythonPackageMetadataRequiresExternal, "requires_external"],
-        "project_url": [HasMetadataProjectUrl, PythonPackageMetadataProjectUrl, "project_url"],
+        "project_url": [HasMetadataProjectUrl, PythonPackageMetadataProjectUrl, ["label", "url"]],
         "provides_extra": [HasMetadataProvidesExtra, PythonPackageMetadataProvidesExtra, "optional_feature"],
     }
 
@@ -3710,7 +3710,14 @@ class GraphDatabase(SQLBase):
                     .filter(tables[0].python_package_metadata_id == python_package_metadata_id)
                     .join(tables[1])
                 ).with_entities(tables[1])
-                multi_value_results[key] = [getattr(v, tables[2]) for v in query.all()]
+                if isinstance(tables[2], list):
+                    multi_value_results[key] = []
+                    values = query.all()
+                    for v in values:
+                        parts = [getattr(v, t) for t in tables[2]]
+                        multi_value_results[key].append(",".join(parts))
+                else:
+                    multi_value_results[key].append([getattr(v, tables[2]) for v in query.all()])
 
             distutils_result = dict([(key, []) for key in ["requires_dist", "provides_dist", "obsolete_dist"]])
             multi_value_results.update(distutils_result)
