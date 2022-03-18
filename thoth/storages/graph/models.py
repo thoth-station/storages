@@ -1499,7 +1499,8 @@ class PythonPackageMetadataProjectUrl(Base, BaseExtension):
     __tablename__ = "python_package_metadata_project_url"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    project_url = Column(Text, nullable=True)
+    url = Column(Text, nullable=True)
+    label = Column(Text, nullable=True)
 
     python_packages_metadata = relationship(
         "HasMetadataProjectUrl", back_populates="python_package_metadata_project_urls"

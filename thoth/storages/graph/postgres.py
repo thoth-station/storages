@@ -5794,8 +5794,9 @@ class GraphDatabase(SQLBase):
             )
 
         for project_url in importlib_metadata.pop("Project-URL", []):
+            label, url = project_url.split(",")[0].strip(), project_url.split(",")[1].strip()
             python_package_metadata_project_url, _ = PythonPackageMetadataProjectUrl.get_or_create(
-                session, project_url=project_url
+                session, label=label, url=url
             )
             HasMetadataProjectUrl.get_or_create(
                 session,
