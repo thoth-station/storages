@@ -36,9 +36,10 @@ repos:
   #       args: [--ignore-missing-imports]
 
   - repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
       - id: black
+
   # - repo: https://gitlab.com/PyCQA/flake8 TODO: Fix flake8 errors
   #   rev: '3.8.4'
   #   hooks:
