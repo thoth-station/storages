@@ -146,7 +146,7 @@ class CephStore(StorageBase):
         # signature version is needed to connect to new regions which
         # support only v4
         self._s3 = session.resource(
-            "s3", config=botocore.client.Config(signature_version="s3v4"), endpoint_url=self.host
+            "s3", config=botocore.client.Config(connect_timeout=180, signature_version="s3v4"), endpoint_url=self.host
         )
         # Ceph returns 403 on this call, let's assume the bucket exists.
         # self._create_bucket_if_needed()
