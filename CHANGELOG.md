@@ -1,5 +1,24 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.71.2 (2022-04-11T11:26:38)
+* edb4f90 Increase default S3 timeout to 180s for retrieving data from Ceph
+* 08351df :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 00e6f2f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* e291b3f Fix pre-commit config (#2617)
+* b6e8960 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 47a2b66 update metadata.id instead of passing it to 'get_or_create'
+* b8ebd83 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* b0a3823 Update python_package_metadata_project_url without dropping the table
+* 69a61cf Drop has_metadata_project_url column
+* 720b8bd Pre-commit
+* 510e536 Fix migration
+* 44f9d05 Handle data in the migration
+* dbc9014 Remove instructions from migration
+* 37881df Alembic migration and rename source column to label
+* 1c7d19a New column entry to separate source from project url
+* 0d20411 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* fcc22b7 Adjust query for metadata due to change in schema (#2579)
+
 ## Release 0.71.1 (2022-03-11T12:26:33)
 * Fix method to iterate on files
 * :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
