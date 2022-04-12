@@ -25,6 +25,7 @@ from typing import Tuple
 from typing import List
 from typing import Optional
 from pathlib import Path
+from random import random
 
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
@@ -98,8 +99,11 @@ def sync_solver_documents(
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
+    randomize_listing: Optional[bool] = False,
 ) -> tuple:
     """Sync solver documents into graph."""
+    document_listing = list(solver_store.get_document_listing())
+
     if is_local and not document_ids:
         raise ValueError(
             "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
@@ -113,8 +117,14 @@ def sync_solver_documents(
         solver_store = SolverResultsStore()
         solver_store.connect()
 
+    if randomize_listing:
+        if document_ids:
+            random.shuffle(document_ids)
+        elif document_listing:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or solver_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
         if force or not graph.solver_document_id_exists(os.path.basename(document_id)):
             try:
