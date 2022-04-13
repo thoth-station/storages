@@ -39,6 +39,7 @@ from .solvers import SolverResultsStore
 from .graph import GraphDatabase
 
 _LOGGER = logging.getLogger(__name__)
+RANDOMIZE_LISTING = os.getenv("RANDOMIZE_LISTING", 0)
 
 
 def sync_adviser_documents(
@@ -99,11 +100,8 @@ def sync_solver_documents(
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-    randomize_listing: Optional[bool] = False,
 ) -> tuple:
     """Sync solver documents into graph."""
-    document_listing = list(solver_store.get_document_listing())
-
     if is_local and not document_ids:
         raise ValueError(
             "Cannot sync documents from local directory without explicitly specifying a list of documents to be synced"
@@ -117,10 +115,13 @@ def sync_solver_documents(
         solver_store = SolverResultsStore()
         solver_store.connect()
 
-    if randomize_listing:
+    if not document_ids:
+        document_listing = list(solver_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
         if document_ids:
             random.shuffle(document_ids)
-        elif document_listing:
+        else:
             random.shuffle(document_listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
