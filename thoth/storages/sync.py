@@ -63,8 +63,17 @@ def sync_adviser_documents(
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
+    if not document_ids:
+        document_listing = list(adviser_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or adviser_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
 
         if force or not graph.adviser_document_id_exist(os.path.basename(document_id)):
@@ -175,8 +184,17 @@ def sync_revsolver_documents(
         revsolver_store = RevSolverResultsStore()
         revsolver_store.connect()
 
+    if not document_ids:
+        document_listing = list(revsolver_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or revsolver_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
         try:
             if is_local:
@@ -224,8 +242,17 @@ def sync_analysis_documents(
         analysis_store = AnalysisResultsStore()
         analysis_store.connect()
 
+    if not document_ids:
+        document_listing = list(analysis_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or analysis_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
 
         if force or not graph.analysis_document_id_exist(os.path.basename(document_id)):
@@ -276,8 +303,17 @@ def sync_provenance_checker_documents(
         provenance_check_store = ProvenanceResultsStore()
         provenance_check_store.connect()
 
+    if not document_ids:
+        document_listing = list(provenance_check_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or provenance_check_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
 
         if force or not graph.provenance_checker_document_id_exist(os.path.basename(document_id)):
@@ -330,8 +366,17 @@ def sync_dependency_monkey_documents(
         dependency_monkey_reports_store = DependencyMonkeyReportsStore()
         dependency_monkey_reports_store.connect()
 
+    if not document_ids:
+        document_listing = list(dependency_monkey_reports_store.get_document_listing())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or dependency_monkey_reports_store.get_document_listing():
+    for document_id in document_ids or document_listing:
         processed += 1
 
         if force or not graph.dependency_monkey_document_id_exists(os.path.basename(document_id)):
@@ -381,8 +426,17 @@ def sync_inspection_documents(
         graph = GraphDatabase()
         graph.connect()
 
+    if not document_ids:
+        document_listing = list(InspectionStore.iter_inspections())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for inspection_document_id in document_ids or InspectionStore.iter_inspections():
+    for inspection_document_id in document_ids or document_listing:
 
         if not is_local:
             results = []
@@ -483,8 +537,17 @@ def sync_security_indicators_documents(
         graph = GraphDatabase()
         graph.connect()
 
+    if not document_ids:
+        document_listing = list(SecurityIndicatorsResultsStore.iter_security_indicators())
+
+    if RANDOMIZE_LISTING:
+        if document_ids:
+            random.shuffle(document_ids)
+        else:
+            random.shuffle(document_listing)
+
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for security_indicator_id in document_ids or SecurityIndicatorsResultsStore.iter_security_indicators():
+    for security_indicator_id in document_ids or document_listing:
 
         processed += 1
 
