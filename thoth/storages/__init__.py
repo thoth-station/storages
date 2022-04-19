@@ -49,7 +49,6 @@ from .sync import sync_provenance_checker_documents
 from .sync import sync_security_indicators_documents
 from .sync import sync_solver_documents
 from .sync import HANDLERS_MAPPING
-from .sync import RANDOMIZE_LISTING
 
 
 __name__ = "thoth-storages"
@@ -90,5 +89,4 @@ __all__ = [
     WorkflowLogsStore.__name__,
     "HANDLERS_MAPPING",
     "RESULT_SCHEMA",
-    "RANDOMIZE_LISTING",
 ]

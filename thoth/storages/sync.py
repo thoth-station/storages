@@ -39,7 +39,7 @@ from .solvers import SolverResultsStore
 from .graph import GraphDatabase
 
 _LOGGER = logging.getLogger(__name__)
-RANDOMIZE_LISTING = os.getenv("RANDOMIZE_LISTING", 0)
+_RANDOMIZE_LISTING = bool(int(os.getenv("THOTH_STORAGES_RANDOMIZE_LISTING", 0)))
 
 
 def sync_adviser_documents(
@@ -63,17 +63,13 @@ def sync_adviser_documents(
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
-    if not document_ids:
-        document_listing = list(adviser_store.get_document_listing())
+    listing = list(adviser_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
 
         if force or not graph.adviser_document_id_exist(os.path.basename(document_id)):
@@ -124,17 +120,13 @@ def sync_solver_documents(
         solver_store = SolverResultsStore()
         solver_store.connect()
 
-    if not document_ids:
-        document_listing = list(solver_store.get_document_listing())
+    listing = list(solver_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
         if force or not graph.solver_document_id_exists(os.path.basename(document_id)):
             try:
@@ -184,17 +176,13 @@ def sync_revsolver_documents(
         revsolver_store = RevSolverResultsStore()
         revsolver_store.connect()
 
-    if not document_ids:
-        document_listing = list(revsolver_store.get_document_listing())
+    listing = list(revsolver_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
         try:
             if is_local:
@@ -242,17 +230,13 @@ def sync_analysis_documents(
         analysis_store = AnalysisResultsStore()
         analysis_store.connect()
 
-    if not document_ids:
-        document_listing = list(analysis_store.get_document_listing())
+    listing = list(analysis_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
 
         if force or not graph.analysis_document_id_exist(os.path.basename(document_id)):
@@ -303,17 +287,13 @@ def sync_provenance_checker_documents(
         provenance_check_store = ProvenanceResultsStore()
         provenance_check_store.connect()
 
-    if not document_ids:
-        document_listing = list(provenance_check_store.get_document_listing())
+    listing = list(provenance_check_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
 
         if force or not graph.provenance_checker_document_id_exist(os.path.basename(document_id)):
@@ -366,17 +346,13 @@ def sync_dependency_monkey_documents(
         dependency_monkey_reports_store = DependencyMonkeyReportsStore()
         dependency_monkey_reports_store.connect()
 
-    if not document_ids:
-        document_listing = list(dependency_monkey_reports_store.get_document_listing())
+    listing = list(dependency_monkey_reports_store.get_document_listing()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for document_id in document_ids or document_listing:
+    for document_id in listing:
         processed += 1
 
         if force or not graph.dependency_monkey_document_id_exists(os.path.basename(document_id)):
@@ -426,17 +402,13 @@ def sync_inspection_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    if not document_ids:
-        document_listing = list(InspectionStore.iter_inspections())
+    listing = list(InspectionStore.iter_inspections()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for inspection_document_id in document_ids or document_listing:
+    for inspection_document_id in listing:
 
         if not is_local:
             results = []
@@ -537,17 +509,13 @@ def sync_security_indicators_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    if not document_ids:
-        document_listing = list(SecurityIndicatorsResultsStore.iter_security_indicators())
+    listing = list(SecurityIndicatorsResultsStore.iter_security_indicators()) or document_ids
 
-    if RANDOMIZE_LISTING:
-        if document_ids:
-            random.shuffle(document_ids)
-        else:
-            random.shuffle(document_listing)
+    if _RANDOMIZE_LISTING:
+        random.shuffle(listing)
 
     processed, synced, skipped, failed = 0, 0, 0, 0
-    for security_indicator_id in document_ids or document_listing:
+    for security_indicator_id in listing:
 
         processed += 1
 
