@@ -63,10 +63,10 @@ def sync_adviser_documents(
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
-    listing = list(adviser_store.get_document_listing()) or document_ids
+    listing = adviser_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -120,10 +120,10 @@ def sync_solver_documents(
         solver_store = SolverResultsStore()
         solver_store.connect()
 
-    listing = list(solver_store.get_document_listing()) or document_ids
+    listing = solver_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -176,10 +176,10 @@ def sync_revsolver_documents(
         revsolver_store = RevSolverResultsStore()
         revsolver_store.connect()
 
-    listing = list(revsolver_store.get_document_listing()) or document_ids
+    listing = revsolver_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -230,10 +230,10 @@ def sync_analysis_documents(
         analysis_store = AnalysisResultsStore()
         analysis_store.connect()
 
-    listing = list(analysis_store.get_document_listing()) or document_ids
+    listing = analysis_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -287,10 +287,10 @@ def sync_provenance_checker_documents(
         provenance_check_store = ProvenanceResultsStore()
         provenance_check_store.connect()
 
-    listing = list(provenance_check_store.get_document_listing()) or document_ids
+    listing = provenance_check_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -346,10 +346,10 @@ def sync_dependency_monkey_documents(
         dependency_monkey_reports_store = DependencyMonkeyReportsStore()
         dependency_monkey_reports_store.connect()
 
-    listing = list(dependency_monkey_reports_store.get_document_listing()) or document_ids
+    listing = dependency_monkey_reports_store.get_document_listing() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for document_id in listing:
@@ -402,10 +402,10 @@ def sync_inspection_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    listing = list(InspectionStore.iter_inspections()) or document_ids
+    listing = InspectionStore.iter_inspections() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for inspection_document_id in listing:
@@ -509,10 +509,10 @@ def sync_security_indicators_documents(
         graph = GraphDatabase()
         graph.connect()
 
-    listing = list(SecurityIndicatorsResultsStore.iter_security_indicators()) or document_ids
+    listing = SecurityIndicatorsResultsStore.iter_security_indicators() or document_ids
 
     if _RANDOMIZE_LISTING:
-        random.shuffle(listing)
+        random.shuffle(list(listing))
 
     processed, synced, skipped, failed = 0, 0, 0, 0
     for security_indicator_id in listing:
