@@ -52,7 +52,7 @@ from .sync import HANDLERS_MAPPING
 
 
 __name__ = "thoth-storages"
-__version__ = "0.71.2"
+__version__ = "0.72.0"
 
 __all__ = [
     AdvisersCacheStore.__name__,
