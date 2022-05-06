@@ -1,5 +1,16 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.72.0 (2022-05-05T18:31:45)
+* 3fbfb67 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 03acd31 Cast to list if randomizing
+* 5842452 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 8a2adfa :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 9538b06 Post review fixes
+* bbbe8e1 Randoomize document listing in all sync methods
+* 60fafe0 randomizing listing in env variable and fixes
+* b7f9bac Randomize solver document listing
+* f0f6cbf :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.71.2 (2022-04-11T11:26:38)
 * edb4f90 Increase default S3 timeout to 180s for retrieving data from Ceph
 * 08351df :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
