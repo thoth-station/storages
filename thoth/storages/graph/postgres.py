@@ -64,6 +64,7 @@ from thoth.common.helpers import normalize_os_version
 from thoth.common import OpenShift
 from thoth.common import map_os_name
 from thoth.common.enums import ThothAdviserIntegrationEnum
+from thoth.license_solver import detect_license
 
 from .models_base import BaseExtension
 from .models import AdviserRun
@@ -110,6 +111,7 @@ from .models import RPMRequirement
 from .models import SecurityIndicatorAggregatedRun
 from .models import SoftwareEnvironment
 from .models import VersionedSymbol
+# from .models import PythonPackageLicense
 
 from .models import Advised
 from .models import DebDepends
@@ -5989,6 +5991,7 @@ class GraphDatabase(SQLBase):
                 package_version = python_package_info["package_version_requested"]
                 index_url = python_package_info["index_url"]
                 importlib_metadata = python_package_info["importlib_metadata"]["metadata"]
+                # package_license = python_package_info["package_license"]
 
                 _LOGGER.info(
                     "Syncing solver result of package %r in version %r from %r solved by %r",
@@ -6032,6 +6035,12 @@ class GraphDatabase(SQLBase):
                         f"No related columns for {list(importlib_metadata.keys())!r} "
                         "found in PythonPackageMetadata table, the error is not fatal"
                     )
+
+                # license_metadata = PythonPackageLicense.get_or_create(
+                #     session,
+                #     license_name="aa"
+                # )
+
                 try:
                     python_package_version = self._create_python_package_version(
                         session,
@@ -6042,6 +6051,8 @@ class GraphDatabase(SQLBase):
                         python_version=ecosystem_solver.python_version,
                         index_url=index_url,
                         python_package_metadata_id=package_metadata.id,
+                        # package_license_id=license_id,
+                        # package_license_warning=package_license_warning,
                     )
                 except NoResultFound:
                     if not force:
