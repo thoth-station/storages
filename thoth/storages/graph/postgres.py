@@ -3135,6 +3135,7 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
+        starts_with: Optional[str] = None,
     ) -> Query:
         """Construct query for obtaining Python package version names."""
         query = session.query(PythonPackageVersion).with_entities(PythonPackageVersion.package_name)
@@ -3148,6 +3149,9 @@ class GraphDatabase(SQLBase):
         if python_version is not None:
             query = query.filter(PythonPackageVersion.python_version == python_version)
 
+        if starts_with is not None:
+            query = query.filter(PythonPackageVersion.package_name.startswith(starts_with))
+
         return query
 
     def get_python_package_version_names_all(
@@ -3160,6 +3164,7 @@ class GraphDatabase(SQLBase):
         python_version: Optional[str] = None,
         distinct: bool = False,
         sort: bool = False,
+        starts_with: Optional[str] = None,
     ) -> List[str]:
         """Retrieve names of Python Packages known by Thoth.
 
@@ -3173,7 +3178,7 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_version_names_query(
-                session, os_name=os_name, os_version=os_version, python_version=python_version
+                session, os_name=os_name, os_version=os_version, python_version=python_version, starts_with=starts_with
             )
 
             if sort:
@@ -3193,6 +3198,7 @@ class GraphDatabase(SQLBase):
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
+        starts_with: Optional[str] = None,
     ) -> int:
         """Retrieve names of Python Packages known by Thoth.
 
@@ -3206,7 +3212,7 @@ class GraphDatabase(SQLBase):
         os_version = normalize_os_version(os_name, os_version)
         with self._session_scope() as session:
             query = self._construct_python_package_version_names_query(
-                session, os_name=os_name, os_version=os_version, python_version=python_version
+                session, os_name=os_name, os_version=os_version, python_version=python_version, starts_with=starts_with
             )
 
             if distinct:
