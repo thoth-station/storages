@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.72.2 (2022-05-24T11:28:40)
+* ffbaf18 added option for starts_with filter on /python/package
+* 4f56bc2 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.72.1 (2022-05-10T15:31:25)
 * fe906f3 Fix syncing of documents
 * 27e2780 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
