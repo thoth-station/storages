@@ -73,7 +73,7 @@ class PythonPackageVersion(Base, BaseExtension):
     )
     is_missing = Column(Boolean, nullable=False, default=False)
     provides_source_distro = Column(Boolean, nullable=False, default=True)
-    package_license = Column(Integer, ForeignKey('python_package_license.id'))  # nullable=False
+    package_license = Column(Integer, ForeignKey("python_package_license.id"))  # nullable=False
     package_license_warning = Column(Boolean)  # nullable=False
 
     # Relations
