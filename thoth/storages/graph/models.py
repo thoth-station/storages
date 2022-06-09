@@ -73,6 +73,9 @@ class PythonPackageVersion(Base, BaseExtension):
     )
     is_missing = Column(Boolean, nullable=False, default=False)
     provides_source_distro = Column(Boolean, nullable=False, default=True)
+    package_license = Column(Integer, ForeignKey('python_package_license.id'))  # nullable=False
+    package_license_warning = Column(Boolean)  # nullable=False
+
     # Relations
     dependencies = relationship("DependsOn", back_populates="version")
     solvers = relationship("Solved", back_populates="version")
@@ -82,6 +85,7 @@ class PythonPackageVersion(Base, BaseExtension):
     si_aggregated = relationship("SIAggregated", back_populates="python_package_version")
     python_software_stacks = relationship("HasPythonRequirementsLock", back_populates="python_package_version")
     import_packages = relationship("FoundImportPackage", back_populates="python_package_version")
+    licenses = relationship("PythonPackageLicense", back_populates="python_package_version")
 
     __table_args__ = tuple(
         get_python_package_version_index_combinations()
@@ -92,6 +96,21 @@ class PythonPackageVersion(Base, BaseExtension):
             Index("python_package_version_environment_idx", "os_name", "os_version", "python_version"),
         ]
     )
+
+
+class PythonPackageLicense(Base, BaseExtension):
+    """Representation of a Licenses."""
+
+    __tablename__ = "python_package_license"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+
+    license_name = Column(Text, nullable=False)
+    license_identifier = Column(Text, nullable=False)
+    license_version = Column(Text, nullable=False)
+
+    # Relations
+    python_package_version = relationship("PythonPackageVersion", back_populates="licenses")
 
 
 class HasArtifact(Base, BaseExtension):
@@ -1761,6 +1780,7 @@ ALL_MAIN_MODELS = frozenset(
         PythonPackageRequirement,
         PythonPackageVersion,
         PythonPackageVersionEntity,
+        PythonPackageLicense,
         RPMPackageVersion,
         RPMRequirement,
         SecurityIndicatorAggregatedRun,
