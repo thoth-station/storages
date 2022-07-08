@@ -1,0 +1,13 @@
+[flake8]
+ignore =
+    E2,
+    W5
+select =
+    E,
+    W,
+    F,
+    N
+max-line-length=120
+exclude =
+    # Don't check auto generated alembic migrations
+    thoth/storages/data/alembic/versions
