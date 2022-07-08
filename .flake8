@@ -8,6 +8,3 @@ select =
     F,
     N
 max-line-length=120
-exclude =
-    # Don't check auto generated alembic migrations
-    thoth/storages/data/alembic/versions

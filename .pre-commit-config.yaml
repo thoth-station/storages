@@ -45,3 +45,4 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies: ['pep8-naming']
+        exclude: ^thoth/storages/data/alembic/versions/
