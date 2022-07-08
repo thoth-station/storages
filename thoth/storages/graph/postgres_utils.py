@@ -46,7 +46,6 @@ from copy import copy
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.exc import OperationalError, ProgrammingError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -121,7 +120,7 @@ def create_database(url, encoding="utf8", template=None):
             template = "template1"
 
         text = "CREATE DATABASE {0} ENCODING '{1}' TEMPLATE {2}".format(
-            quote(engine, database), encoding, quote(engine, template)
+            quote(engine, database), encoding, quote(engine, template)  # noqa F821
         )
         result_proxy = engine.execute(text)
 

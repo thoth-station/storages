@@ -375,7 +375,7 @@ class GraphDatabase(SQLBase):
 
     def get_table_alembic_version_head(self) -> str:
         """Get alembic version head from database table."""
-        query = f"SELECT * FROM alembic_version"
+        query = "SELECT * FROM alembic_version"
 
         with self._session_scope() as session:
             result = session.execute(query).fetchone()
@@ -400,7 +400,7 @@ class GraphDatabase(SQLBase):
 
     def get_alembic_version_count_all(self) -> int:
         """Get number of records in alembic version table (1 expected)."""
-        query = f"SELECT COUNT(*) FROM alembic_version"
+        query = "SELECT COUNT(*) FROM alembic_version"
 
         with self._session_scope() as session:
             result = session.execute(query).fetchone()
@@ -4322,7 +4322,7 @@ class GraphDatabase(SQLBase):
                 .first()
             )
 
-            return [manager for manager, is_active in instance._asdict().items() if is_active == True]
+            return [manager for manager, is_active in instance._asdict().items() if is_active]
 
     def get_kebechet_github_installations_active_managers_count_all(
         self, kebechet_manager: str, distinct: bool = False
@@ -6517,7 +6517,7 @@ class GraphDatabase(SQLBase):
                 # Discover unresolved package matching the message ID
                 if package["id"] == "MISSING-PACKAGE":
 
-                    python_package_version_entity = self._create_python_package_version(
+                    self._create_python_package_version(
                         session,
                         package_name=package["package_name"],
                         package_version=package["package_version"].lstrip("=="),
@@ -6888,10 +6888,13 @@ class GraphDatabase(SQLBase):
             END AS index_tuple_hdr,
             sum( (1-coalesce(pg_stats.null_frac, 0)) * coalesce(pg_stats.avg_width, 1024) ) AS nulldatawidth
             FROM pg_attribute
-            JOIN btree_index_atts AS ind_atts ON pg_attribute.attrelid = ind_atts.indexrelid AND pg_attribute.attnum = ind_atts.attnum
+            JOIN btree_index_atts AS ind_atts ON pg_attribute.attrelid = ind_atts.indexrelid
+                                                 AND pg_attribute.attnum = ind_atts.attnum
             JOIN pg_stats ON pg_stats.schemaname = ind_atts.nspname
                 -- stats for regular index columns
-                AND ( (pg_stats.tablename = ind_atts.tablename AND pg_stats.attname = pg_catalog.pg_get_indexdef(pg_attribute.attrelid, pg_attribute.attnum, TRUE))
+                AND ( (pg_stats.tablename = ind_atts.tablename
+                        AND pg_stats.attname = pg_catalog.pg_get_indexdef(pg_attribute.attrelid,
+                                                                          pg_attribute.attnum, TRUE))
                 -- stats for functional indexes
                 OR   (pg_stats.tablename = ind_atts.index_name AND pg_stats.attname = pg_attribute.attname))
             WHERE pg_attribute.attnum > 0
@@ -6930,7 +6933,8 @@ class GraphDatabase(SQLBase):
             CASE
                 WHEN index_aligned_est.relpages <= expected
                     THEN 0
-                    ELSE bs*(index_aligned_est.relpages-expected)::bigint * 100 / (bs*(index_aligned_est.relpages)::bigint)
+                    ELSE bs*(index_aligned_est.relpages-expected)::bigint
+                           * 100 / (bs*(index_aligned_est.relpages)::bigint)
                 END AS realbloat,
             pg_relation_size(index_aligned_est.table_oid) as table_bytes,
             stat.idx_scan as index_scans
@@ -7217,7 +7221,10 @@ class GraphDatabase(SQLBase):
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 
-        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_prefix = (
+            f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}"
+            f"/package-extract-purge-{datetime2datetime_str()}/"
+        )
         target_store = CephStore(prefix=target_prefix)
         target_store.connect()
 

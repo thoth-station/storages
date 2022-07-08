@@ -5,6 +5,12 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# add your model's MetaData object here
+# for 'autogenerate' support
+from thoth.storages import GraphDatabase
+
+target_metadata = GraphDatabase._DECLARATIVE_BASE.metadata
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -13,12 +19,6 @@ config = context.config
 # This line sets up loggers basically.
 if config.attributes.get("configure_logger", False):
     fileConfig(config.config_file_name)
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-from thoth.storages import GraphDatabase
-
-target_metadata = GraphDatabase._DECLARATIVE_BASE.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

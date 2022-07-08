@@ -40,8 +40,8 @@ repos:
     hooks:
       - id: black
 
-  # - repo: https://gitlab.com/PyCQA/flake8 TODO: Fix flake8 errors
-  #   rev: '3.8.4'
-  #   hooks:
-  #     - id: flake8
-  #       additional_dependencies: ['pep8-naming']
+  - repo: https://gitlab.com/PyCQA/flake8
+    rev: '3.8.4'
+    hooks:
+      - id: flake8
+        additional_dependencies: ['pep8-naming']

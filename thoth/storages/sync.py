@@ -363,9 +363,9 @@ def sync_dependency_monkey_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        f"Syncing dependency monkey report document from %r with id %r to graph",
-                        dependency_monkey_reports_store.ceph.host,
-                        document_id,
+                        f"Syncing dependency monkey report document from "
+                        f"{dependency_monkey_reports_store.ceph.host} with id "
+                        f"{document_id}, to graph"
                     )
                     document = dependency_monkey_reports_store.retrieve_document(document_id)
 
