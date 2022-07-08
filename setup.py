@@ -1,7 +1,7 @@
 import os
 import sys
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
+from setuptools.command.test import test
 from pathlib import Path
 
 
@@ -29,7 +29,7 @@ def get_version():
     raise ValueError("No version identifier found")
 
 
-class Test(TestCommand):
+class Test(test):
     """Introduce test command to run testsuite using pytest."""
 
     _IMPLICIT_PYTEST_ARGS = [
