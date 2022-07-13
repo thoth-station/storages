@@ -38,10 +38,12 @@ class ThothStoragesTest(object):
 
     @classmethod
     def get_solver_results(cls):
+        """Retrieve solver JSON results files as a test input."""
         return cls._get_result_type("solver")
 
     @classmethod
     def get_analyzer_results(cls):
+        """Retrieve analyzer JSON results files as a test input."""
         return cls._get_result_type("analyzer")
 
     @classmethod
@@ -53,6 +55,8 @@ class ThothStoragesTest(object):
 
 
 class StorageBaseTest(ThothStoragesTest):
+    """Class for testing the Ceph storage."""
+
     def test_connect(self, adapter):
         """Test lazy connection to Ceph."""
         assert not adapter.is_connected()
@@ -64,6 +68,7 @@ class StorageBaseTest(ThothStoragesTest):
         assert adapter.is_connected()
 
     def test_is_connected(self, adapter):
+        """Test connection to Ceph."""
         assert not adapter.is_connected()
         adapter.connect()
         assert adapter.is_connected()

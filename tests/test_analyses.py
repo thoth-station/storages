@@ -45,4 +45,5 @@ class TestAnalysisResultsStore(ResultBaseTest):
 
     @pytest.mark.parametrize("document,document_id", ResultBaseTest.get_analyzer_results())
     def test_store_document(self, adapter, document, document_id):
+        """Test that document are correctly stored in Ceph."""
         self.store_retrieve_document_test(adapter, document, document_id)

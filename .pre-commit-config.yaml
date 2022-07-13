@@ -23,10 +23,11 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  # - repo: https://github.com/pycqa/pydocstyle.git  TODO: Fix pydoc style errors
-  #   rev: 5.1.1
-  #   hooks:
-  #     - id: pydocstyle
+  - repo: https://github.com/pycqa/pydocstyle.git
+    rev: 5.1.1
+    hooks:
+      - id: pydocstyle
+        exclude: ^thoth/storages/data/alembic/versions/
 
   # - repo: https://github.com/pre-commit/mirrors-mypy  TODO: Fix mypy errors
   #   rev: v0.790

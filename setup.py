@@ -1,3 +1,5 @@
+"""Setup configuration for storages module."""
+
 import os
 import sys
 from setuptools import setup
@@ -6,6 +8,7 @@ from pathlib import Path
 
 
 def get_install_requires():
+    """Get requirements for storages module."""
     with open("requirements.txt", "r") as requirements_file:
         # TODO: respect hashes in requirements.txt file
         res = requirements_file.readlines()
@@ -13,12 +16,14 @@ def get_install_requires():
 
 
 def get_test_requires():
+    """Get test requirements for storages module."""
     with open("requirements-test.txt", "r") as requirements_file:
         res = requirements_file.readlines()
         return [req.split(" ", maxsplit=1)[0] for req in res if req]
 
 
 def get_version():
+    """Get current version of storages module."""
     with open(os.path.join("thoth", "storages", "__init__.py")) as f:
         content = f.readlines()
 
@@ -48,15 +53,18 @@ class Test(test):
     user_options = [("pytest-args=", "a", "Arguments to pass into py.test")]
 
     def initialize_options(self):
+        """Initialize cli options."""
         super().initialize_options()
         self.pytest_args = None
 
     def finalize_options(self):
+        """Finalize cli options."""
         super().finalize_options()
         self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
+        """Run module tests."""
         import pytest
 
         passed_args = list(self._IMPLICIT_PYTEST_ARGS)

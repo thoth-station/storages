@@ -80,6 +80,8 @@ def _fixture_connected_adapter():
 
 
 class TestCephStore(ThothStoragesTest):
+    """Testing class for Ceph operations."""
+
     def test_init_kwargs(self):
         """Test initialization of Ceph based on arguments."""
         adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
@@ -147,6 +149,7 @@ class TestCephStore(ThothStoragesTest):
         assert connected_adapter.retrieve_document(key) == document
 
     def test_iterate_results_empty(self, connected_adapter):
+        """Test iterating over an empty set of results."""
         assert list(connected_adapter.iterate_results()) == []
 
     def test_iterate_results(self, connected_adapter):
