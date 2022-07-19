@@ -32,7 +32,7 @@ from .exceptions import NoDocumentIdError
 class ResultStorageBase(StorageBase):
     """Adapter base for storing results."""
 
-    # Type of results to distinguish them based on prefix on Ceph.
+    # Type of results to distinguish them based on prefix on S3 store.
     RESULT_TYPE = ""
     # Use core analyzers schema as default one, derived classes can adjust this.
     SCHEMA = RESULT_SCHEMA
@@ -118,7 +118,7 @@ class ResultStorageBase(StorageBase):
         include_end_date: bool = False,
         only_requests: bool = False,
     ) -> typing.Generator[str, None, None]:
-        """Get listing of documents available in Ceph as a generator.
+        """Get listing of documents available in S3 store as a generator.
 
         Additional parameters can filter results. If start_date is supplied
         and no end_date is supplied explicitly, the current date is
@@ -162,7 +162,7 @@ class ResultStorageBase(StorageBase):
         )
 
     def store_document(self, document: dict) -> str:
-        """Store the given document in Ceph."""
+        """Store the given document in S3 store."""
         if self.SCHEMA:
             try:
                 self.SCHEMA(document)
@@ -191,12 +191,12 @@ class ResultStorageBase(StorageBase):
         return self.s3.document_exists(f"{document_id}.request")
 
     def store_file(self, file_path: str, file_id: str) -> str:
-        """Store the given file in Ceph."""
+        """Store the given file in S3 store."""
         self.s3.store_file(file_path, file_id)
         return file_id
 
     def retrieve_document(self, document_id: str) -> dict:
-        """Retrieve a document from Ceph by its id."""
+        """Retrieve a document from S3 store by its id."""
         return self.s3.retrieve_document(document_id)
 
     def iterate_results(
@@ -206,7 +206,7 @@ class ResultStorageBase(StorageBase):
         end_date: typing.Optional[date] = None,
         include_end_date: bool = False,
     ) -> typing.Generator[tuple, None, None]:
-        """Iterate over results available in the Ceph.
+        """Iterate over results available in the S3 store.
 
         Additional parameters can filter results. If start_date is supplied
         and no end_date is supplied explicitly, the current date is

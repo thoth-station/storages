@@ -44,7 +44,7 @@ class SolverResultsStore(ResultStorageBase):
         end_date: Optional[date] = None,
         include_end_date: bool = False,
     ) -> Generator[str, None, None]:
-        """Get listing of documents available in Ceph as a generator.
+        """Get listing of documents available in S3 store as a generator.
 
         Additional parameters can filter results. If start_date is supplied
         and no end_date is supplied explicitly, the current date is

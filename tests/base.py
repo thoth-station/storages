@@ -54,7 +54,7 @@ class ThothStoragesTest(object):
 
 class StorageBaseTest(ThothStoragesTest):
     def test_connect(self, adapter):
-        """Test lazy connection to Ceph."""
+        """Test lazy connection to S3 store."""
         assert not adapter.is_connected()
 
         flexmock(adapter.s3).should_receive("connect").with_args().and_return(None).once()
@@ -76,13 +76,13 @@ class StorageBaseTest(ThothStoragesTest):
         assert adapter.s3.retrieve_document(document_id) == document
 
     def test_iterate_results(self, adapter):
-        """Test iterating over results for build logs stored on Ceph."""
+        """Test iterating over results for build logs stored on S3 store."""
         # Just check that the request is properly propagated.
         flexmock(adapter.s3).should_receive("iterate_results").with_args().and_yield().once()
         assert list(adapter.iterate_results()) == []
 
     def test_get_document_listing(self, adapter):
-        """Test document listing for build logs stored on Ceph."""
+        """Test document listing for build logs stored on S3 store."""
         # Just check that the request is properly propagated.
         flexmock(adapter.s3).should_receive("get_document_listing").with_args().and_return([]).once()
         assert list(adapter.get_document_listing()) == []

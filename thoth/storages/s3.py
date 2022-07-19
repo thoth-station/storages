@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Adapter for Ceph distributed object storage."""
+"""Adapter for S3 store distributed object storage."""
 
 import json
 import os
@@ -29,7 +29,7 @@ from .exceptions import NotFoundError
 
 
 class S3store(StorageBase):
-    """Adapter for storing and retrieving data from Ceph - low level API."""
+    """Adapter for storing and retrieving data from S3 store - low level API."""
 
     def __init__(
         self,
@@ -41,7 +41,7 @@ class S3store(StorageBase):
         bucket: str = None,
         region: str = None,
     ):
-        """Initialize adapter to Ceph.
+        """Initialize adapter to S3 store.
 
         Parameters not explicitly provided will be picked from env variables.
         """
@@ -58,33 +58,33 @@ class S3store(StorageBase):
             self.prefix += "/"
 
     def get_document_listing(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[str, None, None]:
-        """Get listing of documents stored on the Ceph."""
+        """Get listing of documents stored on the S3 store."""
         prefix = f"{self.prefix}{prefix_addition}" if prefix_addition else self.prefix
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
             yield obj.key[len(self.prefix) :]  # Ignore PycodestyleBear (E203)
 
     def store_file(self, document_path: str, document_id: str) -> dict:
-        """Store a file on Ceph."""
+        """Store a file on S3 store."""
         response = self._s3.Object(self.bucket, f"{self.prefix}{document_id}").upload_file(Filename=document_path)
         return response
 
     @staticmethod
     def dict2blob(dictionary: dict) -> bytes:
-        """Encode a dictionary to a blob so it can be stored on Ceph."""
+        """Encode a dictionary to a blob so it can be stored on S3 store."""
         return json.dumps(dictionary, sort_keys=True, separators=(",", ": "), indent=2).encode()
 
     def store_blob(self, blob: bytes, object_key: str) -> dict:
-        """Store a blob on Ceph."""
+        """Store a blob on S3 store."""
         put_kwargs = {"Body": blob}
         response = self._s3.Object(self.bucket, f"{self.prefix}{object_key}").put(**put_kwargs)
         return response
 
     def delete(self, object_key: str) -> None:
-        """Delete the given object from Ceph."""
+        """Delete the given object from S3 store."""
         self._s3.Object(self.bucket, f"{self.prefix}{object_key}").delete()
 
     def store_document(self, document: dict, document_id: str) -> dict:
-        """Store a document (dict) onto Ceph."""
+        """Store a document (dict) onto S3 store."""
         blob = self.dict2blob(document)
         return self.store_blob(blob, document_id)
 
@@ -98,7 +98,7 @@ class S3store(StorageBase):
             raise
 
     def iterate_results(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[tuple, None, None]:
-        """Iterate over results available in the Ceph."""
+        """Iterate over results available in the S3 store."""
         for document_id in self.get_document_listing(prefix_addition=prefix_addition):
             document = self.retrieve_document(document_id)
             yield document_id, document
@@ -108,7 +108,7 @@ class S3store(StorageBase):
         return json.loads(self.retrieve_blob(document_id).decode())
 
     def is_connected(self) -> bool:
-        """Check whether adapter is connected to the remote Ceph storage."""
+        """Check whether adapter is connected to the remote S3 store storage."""
         return self._s3 is not None
 
     def document_exists(self, document_id: str) -> bool:
@@ -128,9 +128,9 @@ class S3store(StorageBase):
         return exists
 
     def check_connection(self) -> None:
-        """Ceph Connection Check.
+        """S3 store Connection Check.
 
-        Check whether the given connection to the Ceph is alive and healthy,
+        Check whether the given connection to the S3 store is alive and healthy,
         raise an exception if not.
         """
         # The document exists method calls HEAD so we do not transfer actual
@@ -139,7 +139,7 @@ class S3store(StorageBase):
         self.document_exists("foo")
 
     def connect(self) -> None:
-        """Create a connection to the remote Ceph."""
+        """Create a connection to the remote S3 store."""
         session = boto3.session.Session(
             aws_access_key_id=self.key_id, aws_secret_access_key=self.secret_key, region_name=self.region
         )
@@ -148,7 +148,7 @@ class S3store(StorageBase):
         self._s3 = session.resource(
             "s3", config=botocore.client.Config(connect_timeout=180, signature_version="s3v4"), endpoint_url=self.host
         )
-        # Ceph returns 403 on this call, let's assume the bucket exists.
+        # S3 store returns 403 on this call, let's assume the bucket exists.
         # self._create_bucket_if_needed()
 
     def _create_bucket_if_needed(self) -> None:

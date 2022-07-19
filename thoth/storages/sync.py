@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-"""Routines for syncing data from Ceph into graph database."""
+"""Routines for syncing data from S3 store into graph database."""
 
 import logging
 import json

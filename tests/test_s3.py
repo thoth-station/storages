@@ -63,7 +63,7 @@ _BUCKET_PREFIX = "some-prefix/"
 
 @pytest.fixture(name="adapter")
 def _fixture_adapter():
-    """Retrieve an adapter to Ceph."""
+    """Retrieve an adapter to S3 store."""
     mock_s3().start()
     try:
         yield S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
@@ -73,7 +73,7 @@ def _fixture_adapter():
 
 @pytest.fixture(name="connected_adapter")
 def _fixture_connected_adapter():
-    """Retrieve a connected adapter to Ceph."""
+    """Retrieve a connected adapter to S3 store."""
     adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
     with connected_s3_adapter(adapter, raw_s3=True) as connected_adapter:
         yield connected_adapter
@@ -81,20 +81,20 @@ def _fixture_connected_adapter():
 
 class TestS3Store(ThothStoragesTest):
     def test_init_kwargs(self):
-        """Test initialization of Ceph based on arguments."""
+        """Test initialization of S3 store based on arguments."""
         adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
         for key, value in CEPH_INIT_KWARGS.items():
             assert (
                 getattr(adapter, key) == value
-            ), f"Ceph attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"
+            ), f"S3 store attribute {key!r} has value {getattr(adapter, key)!r} but expected is {value!r}"
 
         assert adapter.prefix == _BUCKET_PREFIX
         assert not adapter.is_connected()
 
     @with_adjusted_env(_ENV)
     def test_init_env(self):
-        """Test initialization of Ceph adapter based on env variables."""
+        """Test initialization of S3 store adapter based on env variables."""
         adapter = S3store(_BUCKET_PREFIX)
 
         assert adapter.prefix == _BUCKET_PREFIX
@@ -102,7 +102,7 @@ class TestS3Store(ThothStoragesTest):
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
             assert getattr(adapter, attribute) == value, (
-                f"Ceph attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is "
+                f"S3 store attribute {attribute!r} has value {getattr(adapter, attribute)!r} but expected is "
                 f"{value!r} (env: {key!r})"
             )
 
@@ -113,11 +113,11 @@ class TestS3Store(ThothStoragesTest):
         assert adapter.is_connected()
 
     def test_get_document_listing_empty(self, connected_adapter):
-        """Test listing of documents stored on Ceph."""
+        """Test listing of documents stored on S3 store."""
         assert list(connected_adapter.get_document_listing()) == []
 
     def test_get_document_listing(self, connected_adapter):
-        """Test listing of documents stored on Ceph."""
+        """Test listing of documents stored on S3 store."""
         assert list(connected_adapter.get_document_listing()) == []
 
         document1, document1_id = {"foo": "bar"}, "666"
@@ -132,14 +132,14 @@ class TestS3Store(ThothStoragesTest):
         assert document2_id in document_listing
 
     def test_test_store_blob(self, connected_adapter):
-        """Test storing binary objects onto Ceph."""
+        """Test storing binary objects onto S3 store."""
         blob = b"foo"
         key = "some-key"
         connected_adapter.store_blob(blob, key)
         assert connected_adapter.retrieve_blob(key) == blob
 
     def test_store_document(self, connected_adapter):
-        """Test storing document on Ceph."""
+        """Test storing document on S3 store."""
         document, key = {"thoth": "is awesome! ;-)"}, "my-key"
         assert not connected_adapter.document_exists(key)
 
@@ -150,7 +150,7 @@ class TestS3Store(ThothStoragesTest):
         assert list(connected_adapter.iterate_results()) == []
 
     def test_iterate_results(self, connected_adapter):
-        """Test iterating over stored documents on Ceph."""
+        """Test iterating over stored documents on S3 store."""
         document1, key1 = {"thoth": "document"}, "key-1"
         document2, key2 = {"just": "dict"}, "key-2"
 
@@ -168,13 +168,13 @@ class TestS3Store(ThothStoragesTest):
             connected_adapter.retrieve_document("some-document-that-really-does-not-exist")
 
     def test_document_exists(self, connected_adapter):
-        """Test document presents on Ceph."""
+        """Test document presents on S3 store."""
         assert connected_adapter.document_exists("foo") is False
         connected_adapter.store_document({"Hello": "Thoth"}, "foo")
         assert connected_adapter.document_exists("foo") is True
 
     def connect(self, adapter):
-        """Test connecting to Ceph."""
+        """Test connecting to S3 store."""
         assert not adapter.is_connected()
         adapter.connect()
         assert adapter.is_connected()

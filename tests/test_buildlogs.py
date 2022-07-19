@@ -72,7 +72,7 @@ class TestBuildLogsStore(StorageBaseTest):
 
         for key, value in CEPH_INIT_KWARGS.items():
             assert getattr(adapter.s3, key) == value, (
-                f"Ceph's adapter key {key!r} should have value {value!r} but "
+                f"S3 store's adapter key {key!r} should have value {value!r} but "
                 f"got {getattr(adapter.s3, key)!r} instead"
             )
 
@@ -95,12 +95,12 @@ class TestBuildLogsStore(StorageBaseTest):
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
             assert getattr(adapter.s3, attribute) == value, (
-                f"Ceph's adapter attribute {attribute!r} should have value {value!r} but "
+                f"S3 store's adapter attribute {attribute!r} should have value {value!r} but "
                 f"got {getattr(adapter.s3, key)!r} instead (env: {key})"
             )
 
     def test_store_document(self, adapter):
-        """Test storing results on Ceph."""
+        """Test storing results on S3 store."""
         # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
         document_id = "buildlog-bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2"

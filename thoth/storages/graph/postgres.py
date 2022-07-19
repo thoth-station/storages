@@ -7152,7 +7152,7 @@ class GraphDatabase(SQLBase):
     def purge_solver_documents(
         self, *, os_name: Optional[str] = None, os_version: Optional[str] = None, python_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted solver documents to Ceph."""
+        """Store and purge to be deleted solver documents to S3 store."""
         solver_store = SolverResultsStore()
         solver_store.connect()
 
@@ -7177,7 +7177,7 @@ class GraphDatabase(SQLBase):
     def purge_adviser_documents(
         self, *, end_datetime: Optional[datetime] = None, adviser_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted adviser documents to Ceph."""
+        """Store and purge to be deleted adviser documents to S3 store."""
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
@@ -7211,7 +7211,7 @@ class GraphDatabase(SQLBase):
     def purge_package_extract_documents(
         self, *, end_datetime: Optional[datetime] = None, package_extract_version: Optional[str] = None
     ) -> int:
-        """Store and purge to be deleted package extract documents to Ceph."""
+        """Store and purge to be deleted package extract documents to S3 store."""
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 

@@ -49,7 +49,7 @@ class _InspectionBase:
     __slots__ = ["s3", "inspection_id"]
 
     def connect(self) -> None:
-        """Connect this adapter to Ceph."""
+        """Connect this adapter to S3 store."""
         self.s3.connect()
 
     def is_connected(self) -> bool:

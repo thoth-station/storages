@@ -69,7 +69,7 @@ class ResultBaseTest(StorageBaseTest):
 
     @staticmethod
     def store_retrieve_document_test(adapter, document, document_id):
-        """Some logic common to Ceph storing/retrieval wrappers.
+        """Some logic common to S3 store storing/retrieval wrappers.
 
         Call it with appropriate adapter.
         """

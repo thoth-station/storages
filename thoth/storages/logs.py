@@ -63,5 +63,5 @@ class WorkflowLogsStore(StorageBase):
         return self.s3.retrieve_blob(results[0]).decode()
 
     def connect(self) -> None:
-        """Connect to Ceph."""
+        """Connect to S3 store."""
         self.s3.connect()

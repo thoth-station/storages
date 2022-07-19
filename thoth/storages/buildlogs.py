@@ -60,20 +60,20 @@ class BuildLogsStore(StorageBase):
         self.s3.connect()
 
     def store_document(self, document: dict) -> str:
-        """Store the given document in Ceph."""
+        """Store the given document in S3 store."""
         blob = self.s3.dict2blob(document)
         document_id = "buildlog-" + hashlib.sha256(blob).hexdigest()
         self.s3.store_blob(blob, document_id)
         return document_id
 
     def retrieve_document(self, document_id: str) -> dict:
-        """Retrieve a document from Ceph by its id."""
+        """Retrieve a document from S3 store by its id."""
         return self.s3.retrieve_document(document_id)
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
-        """Iterate over results available in the Ceph."""
+        """Iterate over results available in the S3 store."""
         return self.s3.iterate_results()
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
-        """Get listing of documents stored on the Ceph."""
+        """Get listing of documents stored on the S3 store."""
         return self.s3.get_document_listing()

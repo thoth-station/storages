@@ -42,13 +42,13 @@ def with_adjusted_env(env_dict: dict):
 
 @contextmanager
 def connected_s3_adapter(adapter, raw_s3=False):
-    """Retrieve a connected adapter to Ceph results."""
+    """Retrieve a connected adapter to S3 store results."""
     mock_s3().start()
 
     try:
         adapter.connect()
         # FIXME: We need to call this explicitly since we use moto/boto3
-        # instead of raw Ceph which has slightly different behaviour if
+        # instead of raw S3 store which has slightly different behaviour if
         # a bucket is already present.
         if not raw_s3:
             adapter.s3._create_bucket_if_needed()

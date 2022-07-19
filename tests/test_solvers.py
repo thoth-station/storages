@@ -37,7 +37,7 @@ def _fixture_adapter():
 
 class TestSolverResultsStore(ResultBaseTest):
     def test_prefix(self, adapter):
-        """Test that results stored on Ceph are correctly prefixed."""
+        """Test that results stored on S3 store are correctly prefixed."""
         assert adapter.s3.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
     @pytest.mark.parametrize("document,document_id", ResultBaseTest.get_solver_results())

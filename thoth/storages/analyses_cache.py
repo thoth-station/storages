@@ -23,7 +23,7 @@ from .s3_cache import S3Cache
 class AnalysesCacheStore(S3Cache):
     """Adapter for retrieving and storing hashes for fast image lookups.
 
-    This adapter is used to store simple files on Ceph so that there can be quickly checked whether the given image
+    This adapter is used to store simple files on S3 store so that there can be quickly checked whether the given image
     was analyzed based in its SHA and which analysis corresponds to the analyzed image.
     """
 
