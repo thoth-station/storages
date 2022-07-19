@@ -72,7 +72,7 @@ class GraphBackupStore(ResultStorageBase):
                 backup_file[1],
                 self.GRAPH_BACKUP_STORE_ROTATE,
             )
-            self.ceph.delete(backup_file[1])
+            self.s3.delete(backup_file[1])
 
     def store_dump(self, dump_file_path: str) -> str:
         """Store the given dump, maintain a fixed set of dumps ."""

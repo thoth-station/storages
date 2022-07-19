@@ -80,7 +80,7 @@ def sync_adviser_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing adviser document from %r with id %r to graph", adviser_store.ceph.host, document_id
+                        "Syncing adviser document from %r with id %r to graph", adviser_store.s3.host, document_id
                     )
                     document = adviser_store.retrieve_document(document_id)
 
@@ -136,7 +136,7 @@ def sync_solver_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing solver document from %r with id %r to graph", solver_store.ceph.host, document_id
+                        "Syncing solver document from %r with id %r to graph", solver_store.s3.host, document_id
                     )
                     document = solver_store.retrieve_document(document_id)
 
@@ -192,7 +192,7 @@ def sync_revsolver_documents(
             else:
                 _LOGGER.info(
                     "Syncing reverse solver document from %r with id %r to graph",
-                    revsolver_store.ceph.host,
+                    revsolver_store.s3.host,
                     document_id,
                 )
                 document = revsolver_store.retrieve_document(document_id)
@@ -247,7 +247,7 @@ def sync_analysis_documents(
                         document = json.loads(document_file.read())
                 else:
                     _LOGGER.info(
-                        "Syncing analysis document from %r with id %r to graph", analysis_store.ceph.host, document_id
+                        "Syncing analysis document from %r with id %r to graph", analysis_store.s3.host, document_id
                     )
                     document = analysis_store.retrieve_document(document_id)
 
@@ -305,7 +305,7 @@ def sync_provenance_checker_documents(
                 else:
                     _LOGGER.info(
                         "Syncing provenance-checker document from %r with id %r to graph",
-                        provenance_check_store.ceph.host,
+                        provenance_check_store.s3.host,
                         document_id,
                     )
                     document = provenance_check_store.retrieve_document(document_id)
@@ -364,7 +364,7 @@ def sync_dependency_monkey_documents(
                 else:
                     _LOGGER.info(
                         f"Syncing dependency monkey report document from %r with id %r to graph",
-                        dependency_monkey_reports_store.ceph.host,
+                        dependency_monkey_reports_store.s3.host,
                         document_id,
                     )
                     document = dependency_monkey_reports_store.retrieve_document(document_id)
@@ -449,7 +449,7 @@ def sync_inspection_documents(
                         else:
                             _LOGGER.info(
                                 "Syncing analysis document from %r with id %r and number %r to graph",
-                                inspection_store.results.ceph.host,
+                                inspection_store.results.s3.host,
                                 inspection_document_id,
                                 inspection_result_number,
                             )
@@ -530,7 +530,7 @@ def sync_security_indicators_documents(
                     si_aggregated_store.connect()
                     _LOGGER.info(
                         "Syncing analysis document from %r with id %r to graph",
-                        si_aggregated_store.ceph.host,
+                        si_aggregated_store.s3.host,
                         security_indicator_id,
                     )
 
@@ -574,7 +574,7 @@ def sync_documents(
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     inspection_only_graph_sync: bool = False,
-    inspection_only_ceph_sync: bool = False,
+    inspection_only_s3_sync: bool = False,
     is_local: bool = False,
 ) -> Dict[str, Tuple[int, int, int, int]]:
     """Sync documents based on document type.
@@ -585,8 +585,8 @@ def sync_documents(
     """
     stats = dict.fromkeys(HANDLERS_MAPPING, (0, 0, 0, 0))
 
-    if inspection_only_ceph_sync and inspection_only_graph_sync:
-        raise ValueError("Parameters `inspection_only_ceph_sync' and `inspection_only_graph_sync' are disjoint")
+    if inspection_only_s3_sync and inspection_only_graph_sync:
+        raise ValueError("Parameters `inspection_only_s3_sync' and `inspection_only_graph_sync' are disjoint")
 
     for document_id in document_ids or [None] * len(HANDLERS_MAPPING):
         for document_prefix, handler in HANDLERS_MAPPING.items():
@@ -608,7 +608,7 @@ def sync_documents(
                         force=force,
                         graceful=graceful,
                         graph=graph,
-                        only_ceph_sync=inspection_only_ceph_sync,
+                        only_s3_sync=inspection_only_s3_sync,
                         only_graph_sync=inspection_only_graph_sync,
                         is_local=is_local,
                     )

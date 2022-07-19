@@ -177,7 +177,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
-from ..ceph import S3store
+from ..s3 import S3store
 
 
 # Name of environment variables are long
@@ -7156,7 +7156,7 @@ class GraphDatabase(SQLBase):
         solver_store = SolverResultsStore()
         solver_store.connect()
 
-        target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/solver-purge-{datetime2datetime_str()}/"
+        target_prefix = f"{solver_store.s3.prefix.rsplit('/', maxsplit=2)[0]}/solver-purge-{datetime2datetime_str()}/"
         target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
@@ -7169,7 +7169,7 @@ class GraphDatabase(SQLBase):
         for solver_document_id in solver_document_ids:
             document = solver_store.retrieve_document(document_id=solver_document_id)
             target_store.store_document(document, document_id=solver_document_id)
-            solver_store.ceph.delete(object_key=solver_document_id)
+            solver_store.s3.delete(object_key=solver_document_id)
             deleted_solver_documents_count += self.delete_solver_result(solver_document_id=solver_document_id)
 
         return deleted_solver_documents_count
@@ -7181,9 +7181,7 @@ class GraphDatabase(SQLBase):
         adviser_store = AdvisersResultsStore()
         adviser_store.connect()
 
-        target_prefix = (
-            f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/adviser-purge-{datetime2datetime_str()}/"
-        )
+        target_prefix = f"{adviser_store.s3.prefix.rsplit('/', maxsplit=2)[0]}/adviser-purge-{datetime2datetime_str()}/"
         target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
@@ -7205,7 +7203,7 @@ class GraphDatabase(SQLBase):
         for adviser_document_id in adviser_document_ids:
             document = adviser_store.retrieve_document(document_id=adviser_document_id)
             target_store.store_document(document, document_id=adviser_document_id)
-            adviser_store.ceph.delete(object_key=adviser_document_id)
+            adviser_store.s3.delete(object_key=adviser_document_id)
             deleted_adviser_documents_count += self.delete_adviser_result(adviser_document_id=adviser_document_id)
 
         return deleted_adviser_documents_count
@@ -7217,7 +7215,7 @@ class GraphDatabase(SQLBase):
         package_extract_store = AnalysisResultsStore()
         package_extract_store.connect()
 
-        target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
+        target_prefix = f"{package_extract_store.s3.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
         target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
@@ -7241,7 +7239,7 @@ class GraphDatabase(SQLBase):
         for package_extract_document_id in package_extract_document_ids:
             document = package_extract_store.retrieve_document(document_id=package_extract_document_id)
             target_store.store_document(document, document_id=package_extract_document_id)
-            package_extract_store.ceph.delete(object_key=package_extract_document_id)
+            package_extract_store.s3.delete(object_key=package_extract_document_id)
             deleted_package_extract_documents_count += self.delete_analysis_result(
                 analysis_document_id=package_extract_document_id
             )

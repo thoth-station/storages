@@ -24,9 +24,9 @@ from flexmock import flexmock
 from thoth.storages import BuildLogsStore
 
 from .base import StorageBaseTest
-from .test_ceph import CEPH_ENV_MAP
-from .test_ceph import CEPH_INIT_ENV
-from .test_ceph import CEPH_INIT_KWARGS
+from .test_s3 import CEPH_ENV_MAP
+from .test_s3 import CEPH_INIT_ENV
+from .test_s3 import CEPH_INIT_KWARGS
 from .utils import with_adjusted_env
 
 _BUILDLOGS_INIT_KWARGS = {
@@ -67,36 +67,36 @@ class TestBuildLogsStore(StorageBaseTest):
                 f"got {getattr(adapter, key)!r} instead"
             )
 
-        assert adapter.ceph is not None
-        assert not adapter.ceph.is_connected()
+        assert adapter.s3 is not None
+        assert not adapter.s3.is_connected()
 
         for key, value in CEPH_INIT_KWARGS.items():
-            assert getattr(adapter.ceph, key) == value, (
+            assert getattr(adapter.s3, key) == value, (
                 f"Ceph's adapter key {key!r} should have value {value!r} but "
-                f"got {getattr(adapter.ceph, key)!r} instead"
+                f"got {getattr(adapter.s3, key)!r} instead"
             )
 
         bucket_prefix = _BUILDLOGS_INIT_KWARGS_EXP["bucket_prefix"]
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
-        assert adapter.ceph.prefix == adapter.prefix
+        assert adapter.s3.prefix == adapter.prefix
 
     def test_init_env(self, adapter):
         """Test initialization from env variables."""
         assert not adapter.is_connected()
-        assert adapter.ceph is not None
-        assert not adapter.ceph.is_connected()
+        assert adapter.s3 is not None
+        assert not adapter.s3.is_connected()
 
         assert adapter.deployment_name == _BUILDLOGS_INIT_ENV["THOTH_DEPLOYMENT_NAME"]
 
         bucket_prefix = _BUILDLOGS_INIT_ENV_EXP["THOTH_CEPH_BUCKET_PREFIX"]
         assert adapter.prefix == f"{bucket_prefix}/{adapter.deployment_name}/buildlogs/"
-        assert adapter.ceph.prefix == adapter.prefix
+        assert adapter.s3.prefix == adapter.prefix
 
         for key, value in CEPH_INIT_ENV.items():
             attribute = CEPH_ENV_MAP[key]
-            assert getattr(adapter.ceph, attribute) == value, (
+            assert getattr(adapter.s3, attribute) == value, (
                 f"Ceph's adapter attribute {attribute!r} should have value {value!r} but "
-                f"got {getattr(adapter.ceph, key)!r} instead (env: {key})"
+                f"got {getattr(adapter.s3, key)!r} instead (env: {key})"
             )
 
     def test_store_document(self, adapter):
@@ -104,6 +104,6 @@ class TestBuildLogsStore(StorageBaseTest):
         # This method handling is different from store_document() of result base as we use hashes as ids.
         document = b'{\n  "foo": "bar"\n}'
         document_id = "buildlog-bbe8e9a86be651f9efc8e8df7fb76999d8e9a4a9674df9be8de24f4fb3d872a2"
-        adapter.ceph = flexmock(dict2blob=lambda _: document)
-        adapter.ceph.should_receive("store_blob").with_args(document, document_id).and_return(document_id).once()
+        adapter.s3 = flexmock(dict2blob=lambda _: document)
+        adapter.s3.should_receive("store_blob").with_args(document, document_id).and_return(document_id).once()
         assert adapter.store_document(document) == document_id

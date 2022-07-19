@@ -28,5 +28,5 @@ class AnalysisByDigest(ResultStorageBase):
 
     def store_document(self, image_digest: str, analysis_info: str) -> dict:
         """Store the given document representing analysis info onto Ceph."""
-        document_id = self.ceph.store_document(analysis_info, document_id=image_digest)
+        document_id = self.s3.store_document(analysis_info, document_id=image_digest)
         return document_id

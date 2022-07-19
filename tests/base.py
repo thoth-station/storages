@@ -57,8 +57,8 @@ class StorageBaseTest(ThothStoragesTest):
         """Test lazy connection to Ceph."""
         assert not adapter.is_connected()
 
-        flexmock(adapter.ceph).should_receive("connect").with_args().and_return(None).once()
-        flexmock(adapter.ceph).should_receive("is_connected").with_args().and_return(True).once()
+        flexmock(adapter.s3).should_receive("connect").with_args().and_return(None).once()
+        flexmock(adapter.s3).should_receive("is_connected").with_args().and_return(True).once()
         adapter.connect()
 
         assert adapter.is_connected()
@@ -72,17 +72,17 @@ class StorageBaseTest(ThothStoragesTest):
         """Test proper document retrieval."""
         document = {"foo": "bar"}
         document_id = "<document_id>"
-        flexmock(adapter.ceph).should_receive("retrieve_document").with_args(document_id).and_return(document).once()
-        assert adapter.ceph.retrieve_document(document_id) == document
+        flexmock(adapter.s3).should_receive("retrieve_document").with_args(document_id).and_return(document).once()
+        assert adapter.s3.retrieve_document(document_id) == document
 
     def test_iterate_results(self, adapter):
         """Test iterating over results for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph).should_receive("iterate_results").with_args().and_yield().once()
+        flexmock(adapter.s3).should_receive("iterate_results").with_args().and_yield().once()
         assert list(adapter.iterate_results()) == []
 
     def test_get_document_listing(self, adapter):
         """Test document listing for build logs stored on Ceph."""
         # Just check that the request is properly propagated.
-        flexmock(adapter.ceph).should_receive("get_document_listing").with_args().and_return([]).once()
+        flexmock(adapter.s3).should_receive("get_document_listing").with_args().and_return([]).once()
         assert list(adapter.get_document_listing()) == []

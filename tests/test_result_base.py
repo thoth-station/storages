@@ -24,9 +24,9 @@ from flexmock import flexmock
 from thoth.storages.result_base import ResultStorageBase
 
 from .base import StorageBaseTest
-from .test_ceph import CEPH_INIT_ENV
-from .test_ceph import CEPH_INIT_KWARGS
-from .utils import connected_ceph_adapter
+from .test_s3 import CEPH_INIT_ENV
+from .test_s3 import CEPH_INIT_KWARGS
+from .utils import connected_s3_adapter
 
 _DEPLOYMENT_NAME = "my-deployment"
 _RESULT_TYPE = "TEST"
@@ -58,8 +58,8 @@ class ResultBaseTest(StorageBaseTest):
     @pytest.mark.parametrize("document,document_id", StorageBaseTest.get_all_results())
     def test_store_document(self, adapter, document, document_id):
         # pytest does not support fixtures and parameters at the same time
-        adapter.ceph = flexmock(get_document_id=ResultStorageBase.get_document_id)
-        adapter.ceph.should_receive("store_document").with_args(document, document_id).and_return(document_id).once()
+        adapter.s3 = flexmock(get_document_id=ResultStorageBase.get_document_id)
+        adapter.s3.should_receive("store_document").with_args(document, document_id).and_return(document_id).once()
         assert adapter.store_document(document) == document_id
 
     def test_assertion_error(self):
@@ -73,7 +73,7 @@ class ResultBaseTest(StorageBaseTest):
 
         Call it with appropriate adapter.
         """
-        with connected_ceph_adapter(adapter) as connected_adapter:
+        with connected_s3_adapter(adapter) as connected_adapter:
             stored_document_id = connected_adapter.store_document(document)
             assert stored_document_id == document_id
             assert connected_adapter.retrieve_document(stored_document_id) == document

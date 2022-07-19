@@ -23,7 +23,7 @@ from datetime import date
 from datetime import timedelta
 
 from .base import StorageBase
-from .ceph import S3store
+from .s3 import S3store
 from .result_schema import RESULT_SCHEMA
 from .exceptions import SchemaError
 from .exceptions import NoDocumentIdError
@@ -61,7 +61,7 @@ class ResultStorageBase(StorageBase):
         self.prefix = "{}/{}/{}".format(
             prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
         )
-        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
+        self.s3 = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     @classmethod
     def get_document_id(cls, document: dict) -> str:
@@ -78,11 +78,11 @@ class ResultStorageBase(StorageBase):
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
-        return self.ceph.is_connected()
+        return self.s3.is_connected()
 
     def connect(self) -> None:
         """Connect the given storage adapter."""
-        self.ceph.connect()
+        self.s3.connect()
 
     def _iter_dates_prefix_addition(
         self,
@@ -128,7 +128,7 @@ class ResultStorageBase(StorageBase):
             for prefix_addition in self._iter_dates_prefix_addition(
                 start_date=start_date, end_date=end_date, include_end_date=include_end_date
             ):
-                for document_id in self.ceph.get_document_listing(prefix_addition):
+                for document_id in self.s3.get_document_listing(prefix_addition):
                     if not only_requests:
                         if not document_id.endswith(".request"):
                             yield document_id
@@ -137,7 +137,7 @@ class ResultStorageBase(StorageBase):
                             yield document_id
 
         else:
-            for document_id in self.ceph.get_document_listing():
+            for document_id in self.s3.get_document_listing():
                 if not only_requests:
                     if not document_id.endswith(".request"):
                         yield document_id
@@ -170,7 +170,7 @@ class ResultStorageBase(StorageBase):
                 raise SchemaError("Failed to validate document schema") from exc
 
         document_id = self.get_document_id(document)
-        self.ceph.store_document(document, document_id)
+        self.s3.store_document(document, document_id)
         return document_id
 
     def store_request(self, document_id: str, request: typing.Dict[str, typing.Any]) -> str:
@@ -179,25 +179,25 @@ class ResultStorageBase(StorageBase):
         This function stores a request document for user request traceability.
         """
         document_id = f"{document_id}.request"
-        self.ceph.store_document(request, document_id)
+        self.s3.store_document(request, document_id)
         return document_id
 
     def retrieve_request(self, document_id: str) -> typing.Dict[str, typing.Any]:
         """Retrieve document capturing requests."""
-        return self.ceph.retrieve_document(f"{document_id}.request")
+        return self.s3.retrieve_document(f"{document_id}.request")
 
     def request_exists(self, document_id: str) -> bool:
         """Check if a request exists for the given document id."""
-        return self.ceph.document_exists(f"{document_id}.request")
+        return self.s3.document_exists(f"{document_id}.request")
 
     def store_file(self, file_path: str, file_id: str) -> str:
         """Store the given file in Ceph."""
-        self.ceph.store_file(file_path, file_id)
+        self.s3.store_file(file_path, file_id)
         return file_id
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a document from Ceph by its id."""
-        return self.ceph.retrieve_document(document_id)
+        return self.s3.retrieve_document(document_id)
 
     def iterate_results(
         self,
@@ -216,10 +216,10 @@ class ResultStorageBase(StorageBase):
             for prefix_addition in self._iter_dates_prefix_addition(
                 start_date=start_date, end_date=end_date, include_end_date=include_end_date
             ):
-                yield from self.ceph.iterate_results(prefix_addition)
+                yield from self.s3.iterate_results(prefix_addition)
         else:
-            yield from self.ceph.iterate_results()
+            yield from self.s3.iterate_results()
 
     def document_exists(self, document_id: str) -> bool:
         """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists(document_id)
+        return self.s3.document_exists(document_id)

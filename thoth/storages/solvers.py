@@ -58,15 +58,15 @@ class SolverResultsStore(ResultStorageBase):
             for prefix_addition in self._iter_dates_prefix_addition(
                 prefix=prefix, start_date=start_date, end_date=end_date, include_end_date=include_end_date
             ):
-                for document_id in self.ceph.get_document_listing(prefix_addition):
+                for document_id in self.s3.get_document_listing(prefix_addition):
                     yield document_id
         else:
             if all(i is not None for i in (os_name, os_version, python_version)):
                 prefix = f"solver-{os_name}-{os_version}-py{python_version.replace('.', '')}"
-                for document_id in self.ceph.get_document_listing(prefix):
+                for document_id in self.s3.get_document_listing(prefix):
                     yield document_id
             elif all(i is None for i in (os_name, os_version, python_version)):
-                for document_id in self.ceph.get_document_listing():
+                for document_id in self.s3.get_document_listing():
                     yield document_id
             else:
                 raise ValueError("None or all parameters for os_name, os_version, python_version have to be supplied")

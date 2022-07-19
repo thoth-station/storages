@@ -23,7 +23,7 @@ import pytest
 from thoth.storages import AnalysisResultsStore
 
 from .test_result_base import ResultBaseTest
-from .test_ceph import CEPH_INIT_KWARGS
+from .test_s3 import CEPH_INIT_KWARGS
 
 
 _DEPLOYMENT_NAME = "thoth-my-deployment"
@@ -41,7 +41,7 @@ class TestAnalysisResultsStore(ResultBaseTest):
 
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
-        assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
+        assert adapter.s3.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"
 
     @pytest.mark.parametrize("document,document_id", ResultBaseTest.get_analyzer_results())
     def test_store_document(self, adapter, document, document_id):

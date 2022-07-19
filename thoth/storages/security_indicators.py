@@ -24,7 +24,7 @@ from typing import Dict
 from typing import Optional
 from typing import Generator
 
-from .ceph import S3store
+from .s3 import S3store
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,19 +43,19 @@ def _get_security_indicators_prefix(security_indicator_id: Optional[str] = None)
 class _SecurityIndicatorBase:
     """A base class for security-indicators analyzers results."""
 
-    __slots__ = ["ceph", "security_indicator_id"]
+    __slots__ = ["s3", "security_indicator_id"]
 
     def connect(self) -> None:
         """Connect this adapter to Ceph."""
-        self.ceph.connect()
+        self.s3.connect()
 
     def is_connected(self) -> bool:
         """Check if this adapter is connected."""
-        return self.ceph.is_connected()
+        return self.s3.is_connected()
 
     def check_connection(self) -> None:
         """Check connection of this adapter."""
-        return self.ceph.check_connection()
+        return self.s3.check_connection()
 
 
 class SIBanditStore(_SecurityIndicatorBase):
@@ -64,16 +64,16 @@ class SIBanditStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = S3store(prefix=prefix)
+        self.s3 = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI bandit document."""
-        return self.ceph.retrieve_document("bandit")
+        return self.s3.retrieve_document("bandit")
 
     def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("bandit")
+        return self.s3.document_exists("bandit")
 
 
 class SIClocStore(_SecurityIndicatorBase):
@@ -82,16 +82,16 @@ class SIClocStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = S3store(prefix=prefix)
+        self.s3 = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI cloc document."""
-        return self.ceph.retrieve_document("cloc")
+        return self.s3.retrieve_document("cloc")
 
     def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("cloc")
+        return self.s3.document_exists("cloc")
 
 
 class SIAggregatedStore(_SecurityIndicatorBase):
@@ -100,16 +100,16 @@ class SIAggregatedStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = S3store(prefix=prefix)
+        self.s3 = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
         """Retrieve SI aggregated document."""
-        return self.ceph.retrieve_document("aggregated")
+        return self.s3.retrieve_document("aggregated")
 
     def document_exists(self) -> bool:
         """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("aggregated")
+        return self.s3.document_exists("aggregated")
 
 
 class SecurityIndicatorsResultsStore:
@@ -143,11 +143,11 @@ class SecurityIndicatorsResultsStore:
     @classmethod
     def iter_security_indicators(cls) -> Generator[str, None, None]:
         """Iterate over security_indicators ids stored."""
-        ceph = S3store(prefix=_get_security_indicators_prefix())
-        ceph.connect()
+        s3 = S3store(prefix=_get_security_indicators_prefix())
+        s3.connect()
 
         last_id = None
-        for item in ceph.get_document_listing():
+        for item in s3.get_document_listing():
             security_indicator_id = item.split("/", maxsplit=1)[0]
             if last_id == security_indicator_id:
                 # Return only unique si ids, discard any results placed under the given prefix.

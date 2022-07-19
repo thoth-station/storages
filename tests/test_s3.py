@@ -26,7 +26,7 @@ from thoth.storages.exceptions import NotFoundError
 
 from .base import ThothStoragesTest
 from .utils import with_adjusted_env
-from .utils import connected_ceph_adapter
+from .utils import connected_s3_adapter
 
 
 CEPH_INIT_ENV = {
@@ -75,7 +75,7 @@ def _fixture_adapter():
 def _fixture_connected_adapter():
     """Retrieve a connected adapter to Ceph."""
     adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
-    with connected_ceph_adapter(adapter, raw_ceph=True) as connected_adapter:
+    with connected_s3_adapter(adapter, raw_s3=True) as connected_adapter:
         yield connected_adapter
 
 

@@ -35,4 +35,4 @@ class CephCache(ResultStorageBase):
 
     def store_document_record(self, document_id: str, document: dict) -> str:
         """Store the given document record in the cache."""
-        self.ceph.store_document(document, document_id)
+        self.s3.store_document(document, document_id)

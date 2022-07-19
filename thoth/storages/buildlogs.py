@@ -21,7 +21,7 @@ import hashlib
 import os
 import typing
 
-from .ceph import S3store
+from .s3 import S3store
 from .base import StorageBase
 
 
@@ -49,31 +49,31 @@ class BuildLogsStore(StorageBase):
         self.prefix = "{}/{}/{}/".format(
             bucket_prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
         )
-        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
+        self.s3 = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
-        return self.ceph.is_connected()
+        return self.s3.is_connected()
 
     def connect(self) -> None:
         """Connect the given storage adapter."""
-        self.ceph.connect()
+        self.s3.connect()
 
     def store_document(self, document: dict) -> str:
         """Store the given document in Ceph."""
-        blob = self.ceph.dict2blob(document)
+        blob = self.s3.dict2blob(document)
         document_id = "buildlog-" + hashlib.sha256(blob).hexdigest()
-        self.ceph.store_blob(blob, document_id)
+        self.s3.store_blob(blob, document_id)
         return document_id
 
     def retrieve_document(self, document_id: str) -> dict:
         """Retrieve a document from Ceph by its id."""
-        return self.ceph.retrieve_document(document_id)
+        return self.s3.retrieve_document(document_id)
 
     def iterate_results(self) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
-        return self.ceph.iterate_results()
+        return self.s3.iterate_results()
 
     def get_document_listing(self) -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        return self.ceph.get_document_listing()
+        return self.s3.get_document_listing()

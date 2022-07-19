@@ -21,7 +21,7 @@ import os
 from typing import Optional
 
 from thoth.storages.base import StorageBase
-from thoth.storages.ceph import S3store
+from thoth.storages.s3 import S3store
 from thoth.storages.exceptions import MultipleFoundError
 from thoth.storages.exceptions import NotFoundError
 
@@ -46,11 +46,11 @@ class WorkflowLogsStore(StorageBase):
             prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"],
             self.deployment_name,
         )
-        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
+        self.s3 = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     def get_log(self, workflow_id: str) -> str:
         """Obtain log from the given workflow."""
-        results = list(self.ceph.get_document_listing(workflow_id))
+        results = list(self.s3.get_document_listing(workflow_id))
         if len(results) > 1:
             raise MultipleFoundError(
                 f"Multiple results match the given workflow_id ({workflow_id!r}) provided: {results!r}"
@@ -60,8 +60,8 @@ class WorkflowLogsStore(StorageBase):
         if not results or not results[0].startswith(f"{workflow_id}/"):
             raise NotFoundError(f"No log entry found for {workflow_id!r}")
 
-        return self.ceph.retrieve_blob(results[0]).decode()
+        return self.s3.retrieve_blob(results[0]).decode()
 
     def connect(self) -> None:
         """Connect to Ceph."""
-        self.ceph.connect()
+        self.s3.connect()

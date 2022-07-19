@@ -24,7 +24,7 @@ from typing import Dict
 from typing import Generator
 from typing import Optional
 
-from .ceph import S3store
+from .s3 import S3store
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,19 +46,19 @@ def _get_inspection_prefix(inspection_id: Optional[str] = None) -> str:
 class _InspectionBase:
     """A base class for inspection builds and results."""
 
-    __slots__ = ["ceph", "inspection_id"]
+    __slots__ = ["s3", "inspection_id"]
 
     def connect(self) -> None:
         """Connect this adapter to Ceph."""
-        self.ceph.connect()
+        self.s3.connect()
 
     def is_connected(self) -> bool:
         """Check if this adapter is connected."""
-        return self.ceph.is_connected()
+        return self.s3.is_connected()
 
     def check_connection(self) -> None:
         """Check connection of this adapter."""
-        return self.ceph.check_connection()
+        return self.s3.check_connection()
 
 
 class InspectionBuildsStore(_InspectionBase):
@@ -67,20 +67,20 @@ class InspectionBuildsStore(_InspectionBase):
     def __init__(self, inspection_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_inspection_prefix(inspection_id)}/build/"
-        self.ceph = S3store(prefix=prefix)
+        self.s3 = S3store(prefix=prefix)
         self.inspection_id = inspection_id
 
     def retrieve_dockerfile(self) -> str:
         """Retrieve Dockerfile used during the build."""
-        return self.ceph.retrieve_blob("Dockerfile").decode()
+        return self.s3.retrieve_blob("Dockerfile").decode()
 
     def retrieve_log(self) -> str:
         """Retrieve logs (stdout together with stderr) reported during the build."""
-        return self.ceph.retrieve_blob("log").decode()
+        return self.s3.retrieve_blob("log").decode()
 
     def retrieve_specification(self) -> Dict[str, Any]:
         """Retrieve specification used for the build, captures also run specification."""
-        return self.ceph.retrieve_document("specification")
+        return self.s3.retrieve_document("specification")
 
 
 class InspectionResultsStore(_InspectionBase):
@@ -89,8 +89,8 @@ class InspectionResultsStore(_InspectionBase):
     def __init__(self, inspection_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_inspection_prefix(inspection_id)}/results/"
-        self.ceph = S3store(prefix=prefix)
-        self.ceph.connect()
+        self.s3 = S3store(prefix=prefix)
+        self.s3.connect()
         self.inspection_id = inspection_id
 
     @classmethod
@@ -102,7 +102,7 @@ class InspectionResultsStore(_InspectionBase):
         """Obtain number of results produced during inspection run."""
         items = []
         items_set = set()
-        for object_key in self.ceph.get_document_listing():
+        for object_key in self.s3.get_document_listing():
             item, _ = object_key.split("/", maxsplit=1)
             item_int = int(item)
             if item_int not in items_set:
@@ -123,15 +123,15 @@ class InspectionResultsStore(_InspectionBase):
 
     def retrieve_hwinfo(self, item: int) -> Dict[str, Any]:
         """Obtain hardware information for the given inspection run."""
-        return self.ceph.retrieve_document(f"{item}/hwinfo")
+        return self.s3.retrieve_document(f"{item}/hwinfo")
 
     def retrieve_log(self, item: int) -> str:
         """Obtain log for the given inspection run."""
-        return self.ceph.retrieve_blob(f"{item}/log").decode()
+        return self.s3.retrieve_blob(f"{item}/log").decode()
 
     def retrieve_result(self, item: int) -> Dict[str, Any]:
         """Obtain the actual result for the given inspection run."""
-        return self.ceph.retrieve_document(f"{item}/result")
+        return self.s3.retrieve_document(f"{item}/result")
 
     def iter_inspection_results(self) -> Generator[Dict[str, Any], None, None]:
         """Iterate over inspection results."""
@@ -171,16 +171,16 @@ class InspectionStore:
     def exists(self) -> bool:
         """Check if the given inspection exists."""
         # Specification is stored as one of the very first inspection results.
-        return self.build.ceph.document_exists("specification")
+        return self.build.s3.document_exists("specification")
 
     @classmethod
     def iter_inspections(cls) -> Generator[str, None, None]:
         """Iterate over inspection ids stored."""
-        ceph = S3store(prefix=_get_inspection_prefix())
-        ceph.connect()
+        s3 = S3store(prefix=_get_inspection_prefix())
+        s3.connect()
 
         last_id = None
-        for item in ceph.get_document_listing():
+        for item in s3.get_document_listing():
             inspection_id = item.split("/", maxsplit=1)[0]
             if last_id == inspection_id:
                 # Return only unique inspection ids, discard any results placed under the given prefix.
