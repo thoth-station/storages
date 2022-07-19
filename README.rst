@@ -21,7 +21,7 @@ This library provides a library called `thoth-storages
 <https://pypi.org/project/thoth-storages>`__ used in project `Thoth
 <https://thoth-station.ninja>`__.  The library exposes core queries and methods
 for `PostgreSQL database <https://www.postgresql.org/>`__ as well as adapters
-for manipulating with `Ceph <https://ceph.io/>`__ via its S3 compatible API.
+for manipulating the S3 store.
 
 Quick Start
 ===========
@@ -301,7 +301,7 @@ Automatic backups of Thoth deployment
 
 In each deployment, an automatic knowledge `graph backup cronjob
 <https://github.com/thoth-station/graph-backup-job>`__ is run, usually once a
-day. Results of automatic backups are stored on Ceph - you can find them in
+day. Results of automatic backups are stored in the S3 store - you can find them in
 ``s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp>.sql``.
 Refer to deployment configuration for expansion of parameters in the path.
 
@@ -311,7 +311,7 @@ PostgreSQL instance and fill it from the backup file:
 .. code-block:: console
 
   $ cd thoth-station/storages
-  $ aws s3 --endpoint <ceph-s3-endpoint> cp s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp> pg_dump-<timestamp>.sql
+  $ aws s3 --endpoint <s3-endpoint> cp s3://<bucket-name>/<prefix>/<deployment-name>/graph-backup/pg_dump-<timestamp> pg_dump-<timestamp>.sql
   $ podman-compose up
   $ psql -h localhost -p 5432 --username=postgres < pg_dump-<timestamp>.sql
   password: <type password "postgres" here>
@@ -368,9 +368,9 @@ Syncing results of a workflow run in the cluster
 
 Each workflow task in the cluster reports a JSON which states necessary
 information about the task run (metadata) and actual results. These results of
-workflow tasks are stored on object storage `Ceph <https://ceph.io/>`__ via S3
-compatible API and later on synced via graph syncs to the knowledge graph. The
-component responsible for graph syncs is `graph-sync-job
+workflow tasks are stored on in a object storage supporting the  S3 API and
+later on synced via graph syncs to the knowledge graph. The component
+responsible for graph syncs is `graph-sync-job
 <https://github.com/thoth-station/graph-sync-job>`__ which is written generic
 enough to sync any data and report metrics about synced data so you don't need
 to provide such logic on each new workload registered in the system. To sync
@@ -390,10 +390,10 @@ For query naming conventions, please read all the docs in `conventions for
 query name
 <https://github.com/thoth-station/storages/blob/master/docs/conventions/README.md>`__.
 
-Accessing data on Ceph
-======================
-To access data on Ceph, you need to know ``aws_access_key_id`` and ``aws_secret_access_key`` credentials
-of endpoint you are connecting to.
+Accessing data on the S3 store
+==============================
+To access data on the S3 store, you need to know ``aws_access_key_id`` and
+``aws_secret_access_key`` credentials of endpoint you are connecting to.
 
 Absolute file path of data you are accessing is constructed as: ``s3://<bucket_name>/<prefix_name>/<file_path>``
 
@@ -408,15 +408,15 @@ There are two ways to initialize the data handler:
       * - Variable name
         - Content
       * - ``S3_ENDPOINT_URL``
-        - Ceph Host name
+        - S3 Host name
       * - ``CEPH_BUCKET``
-        - Ceph Bucket name
+        - S3 Bucket name
       * - ``CEPH_BUCKET_PREFIX``
-        - Ceph Prefix
+        - S3 Prefix
       * - ``CEPH_KEY_ID``
-        - Ceph Key ID
+        - S3 Key ID
       * - ``CEPH_SECRET_KEY``
-        - Ceph Secret Key
+        - S3 Secret Key
 
    .. code-block:: python
 
