@@ -17,10 +17,10 @@
 
 """Adapter for retrieving and storing hashes for fast buildlog lookups."""
 
-from .s3_cache import CephCache
+from .s3_cache import S3Cache
 
 
-class BuildLogsAnalysesCacheStore(CephCache):
+class BuildLogsAnalysesCacheStore(S3Cache):
     """Adapter for retrieving and storing hashes for fast buildlog lookups.
 
     This adapter is used to store simple files on Ceph so that there can be quickly checked whether the given buildlog

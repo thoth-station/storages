@@ -17,10 +17,10 @@
 
 """Adapter for retrieving and storing hashes for cached adviser results."""
 
-from .s3_cache import CephCache
+from .s3_cache import S3Cache
 
 
-class AdvisersCacheStore(CephCache):
+class AdvisersCacheStore(S3Cache):
     """Adapter for retrieving and storing hashes for cached adviser results."""
 
     RESULT_TYPE = "adviser-cache"

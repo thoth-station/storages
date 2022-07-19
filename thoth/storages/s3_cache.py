@@ -23,7 +23,7 @@ from .exceptions import NotFoundError
 from .result_base import ResultStorageBase
 
 
-class CephCache(ResultStorageBase):
+class S3Cache(ResultStorageBase):
     """A base class implementing cache interface."""
 
     def retrieve_document_record(self, document_id: str) -> dict:

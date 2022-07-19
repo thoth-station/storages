@@ -17,10 +17,10 @@
 
 """Adapter for retrieving and storing hashes for cached provenance checker results."""
 
-from .s3_cache import CephCache
+from .s3_cache import S3Cache
 
 
-class ProvenanceCacheStore(CephCache):
+class ProvenanceCacheStore(S3Cache):
     """Adapter for retrieving and storing hashes for cached provenance checker results."""
 
     RESULT_TYPE = "provenance-cache"
