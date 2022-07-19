@@ -1,4 +1,4 @@
-Thoth Storages syncs into Thoth Databse
+Thoth Storages syncs into Thoth Database
 ----------------------------------------
 
 Thoth collects several type of observations and sync them using `graph-sync-job <https://github.com/thoth-station/graph-sync-job>`_
