@@ -23,6 +23,28 @@ This library provides a library called `thoth-storages
 for `PostgreSQL database <https://www.postgresql.org/>`__ as well as adapters
 for manipulating with `Ceph <https://ceph.io/>`__ via its S3 compatible API.
 
+Overview
+========
+
+Thoth stores its data in two persistent stores, a Postgres SQL database, and an
+S3 object store.
+
+S3 Object store
+---------------
+
+The S3 store contains JSON documents, which are the results of Thoth operations
+(analysis, reports, etc).
+
+Postgres Database
+-----------------
+
+Two kinds of things are stored in the database:
+
+- The aforementioned results documents are referenced.
+- Reference to packages sources (ex: Python packages indexes).
+
+These two combined form the knowledge graph.
+
 Quick Start
 ===========
 
