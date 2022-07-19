@@ -79,7 +79,7 @@ def _fixture_connected_adapter():
         yield connected_adapter
 
 
-class TestCephStore(ThothStoragesTest):
+class TestS3Store(ThothStoragesTest):
     def test_init_kwargs(self):
         """Test initialization of Ceph based on arguments."""
         adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
