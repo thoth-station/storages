@@ -21,7 +21,7 @@ import os
 from typing import Optional
 
 from thoth.storages.base import StorageBase
-from thoth.storages.ceph import CephStore
+from thoth.storages.ceph import S3store
 from thoth.storages.exceptions import MultipleFoundError
 from thoth.storages.exceptions import NotFoundError
 
@@ -46,9 +46,7 @@ class WorkflowLogsStore(StorageBase):
             prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"],
             self.deployment_name,
         )
-        self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
-        )
+        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     def get_log(self, workflow_id: str) -> str:
         """Obtain log from the given workflow."""

@@ -25,7 +25,7 @@ from .analyses_cache import AnalysesCacheStore
 from .buildlogs import BuildLogsStore
 from .buildlogs_parsed import BuildLogsParsedResultsStore
 from .buildlogs_analyses_cache import BuildLogsAnalysesCacheStore
-from .ceph import CephStore
+from .ceph import S3store
 from .dependency_monkey_reports import DependencyMonkeyReportsStore
 from .dependency_monkey_requests import DependencyMonkeyRequestsStore
 from .graph import GraphDatabase
@@ -63,7 +63,7 @@ __all__ = [
     BuildLogsAnalysesCacheStore.__name__,
     BuildLogsParsedResultsStore.__name__,
     BuildLogsStore.__name__,
-    CephStore.__name__,
+    S3store.__name__,
     DependencyMonkeyReportsStore.__name__,
     DependencyMonkeyRequestsStore.__name__,
     GraphBackupStore.__name__,

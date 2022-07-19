@@ -24,7 +24,7 @@ from typing import Dict
 from typing import Optional
 from typing import Generator
 
-from .ceph import CephStore
+from .ceph import S3store
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class SIBanditStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
+        self.ceph = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
@@ -82,7 +82,7 @@ class SIClocStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
+        self.ceph = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
@@ -100,7 +100,7 @@ class SIAggregatedStore(_SecurityIndicatorBase):
     def __init__(self, security_indicator_id: str) -> None:
         """Constructor."""
         prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
+        self.ceph = S3store(prefix=prefix)
         self.security_indicator_id = security_indicator_id
 
     def retrieve_document(self) -> Dict[str, Any]:
@@ -143,7 +143,7 @@ class SecurityIndicatorsResultsStore:
     @classmethod
     def iter_security_indicators(cls) -> Generator[str, None, None]:
         """Iterate over security_indicators ids stored."""
-        ceph = CephStore(prefix=_get_security_indicators_prefix())
+        ceph = S3store(prefix=_get_security_indicators_prefix())
         ceph.connect()
 
         last_id = None

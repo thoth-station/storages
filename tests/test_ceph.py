@@ -21,7 +21,7 @@
 import pytest
 from moto import mock_s3
 
-from thoth.storages import CephStore
+from thoth.storages import S3store
 from thoth.storages.exceptions import NotFoundError
 
 from .base import ThothStoragesTest
@@ -66,7 +66,7 @@ def _fixture_adapter():
     """Retrieve an adapter to Ceph."""
     mock_s3().start()
     try:
-        yield CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+        yield S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
     finally:
         mock_s3().stop()
 
@@ -74,7 +74,7 @@ def _fixture_adapter():
 @pytest.fixture(name="connected_adapter")
 def _fixture_connected_adapter():
     """Retrieve a connected adapter to Ceph."""
-    adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
     with connected_ceph_adapter(adapter, raw_ceph=True) as connected_adapter:
         yield connected_adapter
 
@@ -82,7 +82,7 @@ def _fixture_connected_adapter():
 class TestCephStore(ThothStoragesTest):
     def test_init_kwargs(self):
         """Test initialization of Ceph based on arguments."""
-        adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+        adapter = S3store(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
 
         for key, value in CEPH_INIT_KWARGS.items():
             assert (
@@ -95,7 +95,7 @@ class TestCephStore(ThothStoragesTest):
     @with_adjusted_env(_ENV)
     def test_init_env(self):
         """Test initialization of Ceph adapter based on env variables."""
-        adapter = CephStore(_BUCKET_PREFIX)
+        adapter = S3store(_BUCKET_PREFIX)
 
         assert adapter.prefix == _BUCKET_PREFIX
 

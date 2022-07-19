@@ -177,7 +177,7 @@ from ..exceptions import DatabaseNotInitialized
 from ..exceptions import DistutilsKeyNotKnown
 from ..exceptions import SortTypeQueryError
 from ..exceptions import CudaVersionDoesNotMatch
-from ..ceph import CephStore
+from ..ceph import S3store
 
 
 # Name of environment variables are long
@@ -7157,7 +7157,7 @@ class GraphDatabase(SQLBase):
         solver_store.connect()
 
         target_prefix = f"{solver_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/solver-purge-{datetime2datetime_str()}/"
-        target_store = CephStore(prefix=target_prefix)
+        target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
         solver_document_ids = self.get_solver_run_document_ids_all(
@@ -7184,7 +7184,7 @@ class GraphDatabase(SQLBase):
         target_prefix = (
             f"{adviser_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/adviser-purge-{datetime2datetime_str()}/"
         )
-        target_store = CephStore(prefix=target_prefix)
+        target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
         with self._session_scope() as session:
@@ -7218,7 +7218,7 @@ class GraphDatabase(SQLBase):
         package_extract_store.connect()
 
         target_prefix = f"{package_extract_store.ceph.prefix.rsplit('/', maxsplit=2)[0]}/package-extract-purge-{datetime2datetime_str()}/"
-        target_store = CephStore(prefix=target_prefix)
+        target_store = S3store(prefix=target_prefix)
         target_store.connect()
 
         with self._session_scope() as session:

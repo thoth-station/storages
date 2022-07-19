@@ -23,7 +23,7 @@ from datetime import date
 from datetime import timedelta
 
 from .base import StorageBase
-from .ceph import CephStore
+from .ceph import S3store
 from .result_schema import RESULT_SCHEMA
 from .exceptions import SchemaError
 from .exceptions import NoDocumentIdError
@@ -61,9 +61,7 @@ class ResultStorageBase(StorageBase):
         self.prefix = "{}/{}/{}".format(
             prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
         )
-        self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
-        )
+        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     @classmethod
     def get_document_id(cls, document: dict) -> str:

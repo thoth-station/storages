@@ -28,7 +28,7 @@ from .base import StorageBase
 from .exceptions import NotFoundError
 
 
-class CephStore(StorageBase):
+class S3store(StorageBase):
     """Adapter for storing and retrieving data from Ceph - low level API."""
 
     def __init__(

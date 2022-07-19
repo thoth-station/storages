@@ -21,7 +21,7 @@ import hashlib
 import os
 import typing
 
-from .ceph import CephStore
+from .ceph import S3store
 from .base import StorageBase
 
 
@@ -49,9 +49,7 @@ class BuildLogsStore(StorageBase):
         self.prefix = "{}/{}/{}/".format(
             bucket_prefix or os.environ["THOTH_CEPH_BUCKET_PREFIX"], self.deployment_name, self.RESULT_TYPE
         )
-        self.ceph = CephStore(
-            self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region
-        )
+        self.ceph = S3store(self.prefix, host=host, key_id=key_id, secret_key=secret_key, bucket=bucket, region=region)
 
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
