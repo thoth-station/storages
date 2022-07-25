@@ -19,7 +19,6 @@
 
 from voluptuous import Required, Optional
 from voluptuous import Schema
-from .result_schema import Datetime
 
 
 # Metadata about specifications produced by inspections.

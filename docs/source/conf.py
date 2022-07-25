@@ -78,7 +78,7 @@ pygments_style = None
 # a list of builtin themes.
 #
 
-import sphinx_nameko_theme
+import sphinx_nameko_theme  # noqa 402
 
 html_theme_path = [sphinx_nameko_theme.get_html_theme_path()]
 html_theme = "nameko"

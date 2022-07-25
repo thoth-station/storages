@@ -23,7 +23,6 @@ from sqlalchemy import DateTime
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-from sqlalchemy import Table
 from sqlalchemy import BigInteger
 from sqlalchemy import Text
 from sqlalchemy.orm import relationship
@@ -44,7 +43,6 @@ from .enums import RecommendationTypeEnum
 from .enums import RequirementsFormatEnum
 from .enums import InspectionSyncStateEnum
 from .enums import MetadataDistutilsTypeEnum
-from .enums import PlatformEnum
 
 # Environment type used in package-extract as a flag as well as in software environment records.
 _ENVIRONMENT_TYPE_ENUM = ENUM(

@@ -40,10 +40,9 @@ repos:
     hooks:
       - id: black
 
-  # - repo: https://gitlab.com/PyCQA/flake8 TODO: Fix flake8 errors
-  #   rev: '3.8.4'
-  #   hooks:
-  #     - id: flake8
-  #       additional_dependencies: ['pep8-naming']
-  #       # Ignore all format-related checks as Black takes care of those.
-  #       args: ['--ignore', 'E2,W5', '--select', 'E,W,F,N', '--max-line-length=120']
+  - repo: https://gitlab.com/PyCQA/flake8
+    rev: '3.8.4'
+    hooks:
+      - id: flake8
+        additional_dependencies: ['pep8-naming']
+        exclude: ^thoth/storages/data/alembic/versions/

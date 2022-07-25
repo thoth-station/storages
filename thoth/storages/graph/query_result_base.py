@@ -19,7 +19,7 @@
 
 import logging
 
-from typing import List, Dict, Any, Optional, Union, Tuple
+from typing import List, Dict, Any, Optional, Union
 
 _LOGGER = logging.getLogger(__name__)
 
