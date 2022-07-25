@@ -42,18 +42,19 @@ from datetime import datetime
 import attr
 from packaging.specifiers import SpecifierSet
 from packaging.version import parse as parse_version
+from sqlalchemy import and_
 from sqlalchemy import create_engine
 from sqlalchemy import desc
-from sqlalchemy import func
 from sqlalchemy import exists
-from sqlalchemy import and_
-from sqlalchemy import tuple_
+from sqlalchemy import func
 from sqlalchemy import or_
+from sqlalchemy import tuple_
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.session import Session
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
+from sqlalchemy_utils import database_exists, create_database
 
 from thoth.python import PackageVersion
 from thoth.python import Pipfile
@@ -150,8 +151,6 @@ from .models_performance import PERFORMANCE_MODELS_ML_FRAMEWORKS
 
 from .sql_base import SQLBase
 from .models_base import Base
-from .postgres_utils import database_exists
-from .postgres_utils import create_database
 from .query_result_base import PythonQueryResult
 from .enums import EnvironmentTypeEnum
 from .enums import SoftwareStackTypeEnum
