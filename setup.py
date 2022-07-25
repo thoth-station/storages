@@ -2,24 +2,23 @@
 
 import os
 import sys
+from functools import partial
 from setuptools import setup
 from setuptools.command.test import test
 from pathlib import Path
 
 
-def get_install_requires():
+def _get_requires(requirements: str):
     """Get requirements for storages module."""
-    with open("requirements.txt", "r") as requirements_file:
+    with open(requirements, "r") as requirements_file:
         # TODO: respect hashes in requirements.txt file
         res = requirements_file.readlines()
         return [req.split(" ", maxsplit=1)[0] for req in res if req]
 
 
-def get_test_requires():
-    """Get test requirements for storages module."""
-    with open("requirements-test.txt", "r") as requirements_file:
-        res = requirements_file.readlines()
-        return [req.split(" ", maxsplit=1)[0] for req in res if req]
+get_install_requires = partial(_get_requires, "requirements.txt")
+
+get_test_requires = partial(_get_requires, "requirements-test.txt")
 
 
 def get_version():
