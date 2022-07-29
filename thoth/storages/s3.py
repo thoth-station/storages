@@ -179,3 +179,7 @@ class S3store(StorageBase):
             self._s3.create_bucket(Bucket=self.bucket)
         else:
             self._s3.create_bucket(Bucket=self.bucket, CreateBucketConfiguration={"LocationConstraint": self.region})
+
+
+class CephStore(S3store):
+    """DEPRECATED. Use S3Store instead."""
