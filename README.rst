@@ -368,7 +368,7 @@ Syncing results of a workflow run in the cluster
 
 Each workflow task in the cluster reports a JSON which states necessary
 information about the task run (metadata) and actual results. These results of
-workflow tasks are stored on in a object storage supporting the  S3 API and
+workflow tasks are stored on in a object storage supporting the S3 API and
 later on synced via graph syncs to the knowledge graph. The component
 responsible for graph syncs is `graph-sync-job
 <https://github.com/thoth-station/graph-sync-job>`__ which is written generic
