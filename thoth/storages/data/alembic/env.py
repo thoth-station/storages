@@ -1,3 +1,7 @@
+"""Python script run whenever the alembic migration tool is invoked.
+
+See https://alembic.sqlalchemy.org/en/latest/tutorial.html#the-migration-environment for details.
+"""
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config

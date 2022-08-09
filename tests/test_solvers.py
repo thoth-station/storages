@@ -36,6 +36,8 @@ def _fixture_adapter():
 
 
 class TestSolverResultsStore(ResultBaseTest):
+    """Tester for solver results storage."""
+
     def test_prefix(self, adapter):
         """Test that results stored on Ceph are correctly prefixed."""
         assert adapter.ceph.prefix == f"{_BUCKET_PREFIX}/{_DEPLOYMENT_NAME}/{adapter.RESULT_TYPE}/"

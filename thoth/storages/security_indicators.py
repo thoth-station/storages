@@ -43,7 +43,21 @@ def _get_security_indicators_prefix(security_indicator_id: Optional[str] = None)
 class _SecurityIndicatorBase:
     """A base class for security-indicators analyzers results."""
 
-    __slots__ = ["ceph", "security_indicator_id"]
+    __slots__ = ["ceph", "security_indicator_id", "security_indicator_type"]
+
+    def __init__(self, security_indicator_id: str) -> None:
+        """Set ceph prefix from security_indicator_id."""
+        prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
+        self.ceph = CephStore(prefix=prefix)
+        self.security_indicator_id = security_indicator_id
+
+    def retrieve_document(self) -> Dict[str, Any]:
+        """Retrieve security indicator document."""
+        return self.ceph.retrieve_document(self.security_indicator_type)
+
+    def document_exists(self) -> bool:
+        """Check if the there is an object with the given key in bucket."""
+        return self.ceph.document_exists(self.security_indicator_type)
 
     def connect(self) -> None:
         """Connect this adapter to Ceph."""
@@ -59,66 +73,30 @@ class _SecurityIndicatorBase:
 
 
 class SIBanditStore(_SecurityIndicatorBase):
-    """An adapter for manipulating with security-indicators bandit."""
+    """An adapter for manipulating security-indicators bandit."""
 
-    def __init__(self, security_indicator_id: str) -> None:
-        """Constructor."""
-        prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
-        self.security_indicator_id = security_indicator_id
-
-    def retrieve_document(self) -> Dict[str, Any]:
-        """Retrieve SI bandit document."""
-        return self.ceph.retrieve_document("bandit")
-
-    def document_exists(self) -> bool:
-        """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("bandit")
+    security_indicator_type = "bandit"
 
 
 class SIClocStore(_SecurityIndicatorBase):
     """An adapter for manipulating with security-indicators cloc."""
 
-    def __init__(self, security_indicator_id: str) -> None:
-        """Constructor."""
-        prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
-        self.security_indicator_id = security_indicator_id
-
-    def retrieve_document(self) -> Dict[str, Any]:
-        """Retrieve SI cloc document."""
-        return self.ceph.retrieve_document("cloc")
-
-    def document_exists(self) -> bool:
-        """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("cloc")
+    security_indicator_type = "cloc"
 
 
 class SIAggregatedStore(_SecurityIndicatorBase):
-    """An adapter for manipulating with security-indicators aggregated."""
+    """An adapter for manipulating security-indicators aggregated."""
 
-    def __init__(self, security_indicator_id: str) -> None:
-        """Constructor."""
-        prefix = f"{_get_security_indicators_prefix(security_indicator_id)}/"
-        self.ceph = CephStore(prefix=prefix)
-        self.security_indicator_id = security_indicator_id
-
-    def retrieve_document(self) -> Dict[str, Any]:
-        """Retrieve SI aggregated document."""
-        return self.ceph.retrieve_document("aggregated")
-
-    def document_exists(self) -> bool:
-        """Check if the there is an object with the given key in bucket."""
-        return self.ceph.document_exists("aggregated")
+    security_indicator_type = "aggregated"
 
 
 class SecurityIndicatorsResultsStore:
-    """Adapter for manipulating with Security Indicators."""
+    """Adapter for manipulating Security Indicators."""
 
     __slots__ = ["bandit", "cloc", "aggregated", "security_indicator_id"]
 
     def __init__(self, security_indicator_id: str) -> None:
-        """A representation of a Security Indicator."""
+        """Init sub stores for each security indicator type."""
         self.security_indicator_id = security_indicator_id
         self.bandit = SIBanditStore(security_indicator_id)
         self.cloc = SIClocStore(security_indicator_id)

@@ -62,10 +62,10 @@ class _InspectionBase:
 
 
 class InspectionBuildsStore(_InspectionBase):
-    """An adapter for manipulating with inspection builds."""
+    """An adapter for retrieving inspection builds."""
 
     def __init__(self, inspection_id: str) -> None:
-        """Constructor."""
+        """Set the ceph query prefix based on inspection_id and connect to Ceph."""
         prefix = f"{_get_inspection_prefix(inspection_id)}/build/"
         self.ceph = CephStore(prefix=prefix)
         self.inspection_id = inspection_id
@@ -87,7 +87,7 @@ class InspectionResultsStore(_InspectionBase):
     """An adapter for manipulating with inspection results."""
 
     def __init__(self, inspection_id: str) -> None:
-        """Constructor."""
+        """Set the ceph query prefix based on inspection_id and connect to Ceph."""
         prefix = f"{_get_inspection_prefix(inspection_id)}/results/"
         self.ceph = CephStore(prefix=prefix)
         self.ceph.connect()
@@ -140,12 +140,12 @@ class InspectionResultsStore(_InspectionBase):
 
 
 class InspectionStore:
-    """Adapter for manipulating with Amun inspections."""
+    """Adapter for manipulating Amun inspections."""
 
     __slots__ = ["build", "results", "inspection_id"]
 
     def __init__(self, inspection_id: str) -> None:
-        """A representation of an inspection."""
+        """Construct sub stores using inspection_id."""
         self.inspection_id = inspection_id
         self.build = InspectionBuildsStore(inspection_id)
         self.results = InspectionResultsStore(inspection_id)

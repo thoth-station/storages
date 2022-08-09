@@ -1745,6 +1745,7 @@ class GraphDatabase(SQLBase):
         distinct: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Get SI analyzed Python package versions in Thoth Database.
+
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -1826,6 +1827,7 @@ class GraphDatabase(SQLBase):
         si_error: bool = False,
     ) -> List[Tuple[str, str, str]]:
         """Retrieve solved Python package versions in Thoth Database, that are not anaylyzed by SI.
+
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -1890,6 +1892,7 @@ class GraphDatabase(SQLBase):
 
     def get_ecosystem_solver_all(self) -> List[str]:
         """Get all solvers.
+
         Examples:
         >>> from thoth.storages import GraphDatabase
         >>> graph = GraphDatabase()
@@ -1925,9 +1928,7 @@ class GraphDatabase(SQLBase):
     def _construct_query_get_si_aggregated_python_package_version(
         self, session: Session, package_name: Optional[str], package_version: Optional[str], index_url: Optional[str]
     ) -> Query:
-        """Construct query for aggregate Security Indicators (SI) results per Python package version functions,
-        the query is not executed.
-        """
+        """Construct query for aggregate Security Indicators (SI) results per Python package version functions."""
         query = session.query(SecurityIndicatorAggregatedRun)
 
         if package_name is not None:
@@ -4044,7 +4045,7 @@ class GraphDatabase(SQLBase):
         external_software_environment_id: Optional[int] = None,
         advised_python_software_stack_id: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all github kebechet installations with optional filters on values
+        """Get all github kebechet installations with optional filters on values.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -4139,7 +4140,7 @@ class GraphDatabase(SQLBase):
         external_software_environment_id: Optional[int] = None,
         advised_python_software_stack_id: Optional[int] = None,
     ) -> int:
-        """Delete github kebechet installations which match the given filters
+        """Delete github kebechet installations which match the given filters.
 
         Examples:
         >>> from thoth.storages import GraphDatabase
@@ -4382,7 +4383,7 @@ class GraphDatabase(SQLBase):
         cuda_version: Optional[str] = None,
         environment_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Get all github kebechet installations with optional filters on software environment
+        """Get all github kebechet installations with optional filters on software environment.
 
         Examples:
         >>> from thoth.storages import GraphDatabase

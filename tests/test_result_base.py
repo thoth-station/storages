@@ -51,12 +51,13 @@ class ResultBaseTest(StorageBaseTest):
     """The Base Class for Result Tests."""
 
     def test_get_document_id(self):
-        # Make sure we pick document id from right place.
+        """Make sure we pick document id from right place."""
         document = {"metadata": {"document_id": "foo"}}
         assert ResultStorageBase.get_document_id(document) == "foo"
 
     @pytest.mark.parametrize("document,document_id", StorageBaseTest.get_all_results())
     def test_store_document(self, adapter, document, document_id):
+        """Test storing a document."""
         # pytest does not support fixtures and parameters at the same time
         adapter.ceph = flexmock(get_document_id=ResultStorageBase.get_document_id)
         adapter.ceph.should_receive("store_document").with_args(document, document_id).and_return(document_id).once()
@@ -69,7 +70,7 @@ class ResultBaseTest(StorageBaseTest):
 
     @staticmethod
     def store_retrieve_document_test(adapter, document, document_id):
-        """Some logic common to Ceph storing/retrieval wrappers.
+        """Test store/retrieve roundtrip identity with the provided adapter.
 
         Call it with appropriate adapter.
         """

@@ -1704,7 +1704,7 @@ class SIAggregated(Base, BaseExtension):
 
 
 class ImportPackage(Base, BaseExtension):
-    """Packages imported as a result of solver run"""
+    """Packages imported as a result of solver run."""
 
     __tablename__ = "import_package"
 
