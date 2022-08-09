@@ -24,6 +24,8 @@ import typing
 import boto3
 import botocore
 
+from datetime import datetime
+
 from .base import StorageBase
 from .exceptions import NotFoundError
 
@@ -92,6 +94,15 @@ class CephStore(StorageBase):
         """Retrieve remote object content."""
         try:
             return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["Body"].read()
+        except botocore.exceptions.ClientError as exc:
+            if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
+                raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
+            raise
+
+    def retrieve_document_last_modification_date(self, object_key: str) -> datetime:
+        """Retrieve the last modification date of a document from S3."""
+        try:
+            return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["LastModified"]
         except botocore.exceptions.ClientError as exc:
             if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
