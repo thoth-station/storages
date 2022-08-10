@@ -43,8 +43,7 @@ class CephCache(ResultStorageBase):
         # Verify if the document is present in the cache
         self.retrieve_document_record(document_id)
 
-        # No timezone is indicated to calculate the present datetime on purpose to get the correct time delta
-        # regardless of the environment where the data is retrieved from (production or stage)
+        # Uses UTC time to be environment agnostic (no timezone)
         time_lived = (datetime.now() - self.ceph.retrieve_document_last_modification_date(document_id)).total_seconds()
 
         if time_lived <= 7200.0:

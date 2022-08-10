@@ -101,12 +101,7 @@ class CephStore(StorageBase):
 
     def retrieve_document_last_modification_date(self, object_key: str) -> datetime:
         """Retrieve the last modification date of a document from S3."""
-        try:
-            return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["LastModified"]
-        except botocore.exceptions.ClientError as exc:
-            if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
-                raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
-            raise
+        return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["LastModified"]
 
     def iterate_results(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
