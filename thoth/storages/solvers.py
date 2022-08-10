@@ -42,6 +42,7 @@ class SolverResultsStore(ResultStorageBase):
 
     def get_document_listing(
         self,
+        *,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         include_end_date: bool = False,
@@ -68,26 +69,3 @@ class SolverResultsStore(ResultStorageBase):
             yield from self.ceph.get_document_listing(prefix_solver)
         else:
             yield from self.ceph.get_document_listing()
-
-    def get_document_count(
-        self,
-        os_name: Optional[str] = None,
-        os_version: Optional[str] = None,
-        python_version: Optional[str] = None,
-        *,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        include_end_date: bool = False,
-    ) -> int:
-        """Get number of documents present."""
-        return sum(
-            1
-            for _ in self.get_document_listing(
-                os_name=os_name,
-                os_version=os_version,
-                python_version=python_version,
-                start_date=start_date,
-                end_date=end_date,
-                include_end_date=include_end_date,
-            )
-        )
