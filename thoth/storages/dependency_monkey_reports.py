@@ -19,14 +19,15 @@
 
 from .result_base import ResultStorageBase
 
+from typing import Iterable
+
 
 class DependencyMonkeyReportsStore(ResultStorageBase):
     """Adapter for persisting reports from Dependency Monkey runs."""
 
     RESULT_TYPE = "dependency-monkey-reports"
 
-    def iterate_inspection_ids(self) -> str:
+    def iterate_inspection_ids(self) -> Iterable[str]:
         """Iterate over all inspection ids that were run."""
         for _, report in self.iterate_results():
-            # Yield inspections.
             yield from report["result"]["output"]
