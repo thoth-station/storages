@@ -17,6 +17,7 @@ sqlalchemy-utils = "*"
 alembic = "*"
 thoth-ssdeep = "*"
 packaging = "*"
+thoth-license-solver = ">=0.1.4"
 
 [dev-packages]
 pytest = "*"

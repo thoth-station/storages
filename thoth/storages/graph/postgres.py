@@ -111,6 +111,7 @@ from .models import RPMRequirement
 from .models import SecurityIndicatorAggregatedRun
 from .models import SoftwareEnvironment
 from .models import VersionedSymbol
+from .models import PythonPackageLicense
 
 from .models import Advised
 from .models import DebDepends
@@ -4740,6 +4741,8 @@ class GraphDatabase(SQLBase):
         python_version: Union[str, None],
         python_package_metadata_id: int = None,
         sync_only_entity: bool = False,
+        package_license: int = None,
+        package_license_warning: bool = None,
     ) -> Union[PythonPackageVersion, PythonPackageVersionEntity]:
         """Create a Python package version.
 
@@ -4774,6 +4777,8 @@ class GraphDatabase(SQLBase):
             os_version=os_version,
             python_version=python_version,
             entity_id=entity.id,
+            package_license=package_license,
+            package_license_warning=package_license_warning,
         )
 
         # including this value in "get_or_create" will cause errors because it is not part of a unique entry
@@ -5995,11 +6000,13 @@ class GraphDatabase(SQLBase):
                 package_version = python_package_info["package_version_requested"]
                 index_url = python_package_info["index_url"]
                 importlib_metadata = python_package_info["importlib_metadata"]["metadata"]
+                package_license = python_package_info["package_license"]
 
                 _LOGGER.info(
-                    "Syncing solver result of package %r in version %r from %r solved by %r",
+                    "Syncing solver result of package %r in version %r license %r from %r solved by %r",
                     package_name,
                     package_version,
+                    package_license,
                     index_url,
                     solver_info,
                 )
@@ -6038,6 +6045,14 @@ class GraphDatabase(SQLBase):
                         f"No related columns for {list(importlib_metadata.keys())!r} "
                         "found in PythonPackageMetadata table, the error is not fatal"
                     )
+
+                license_metadata, _ = PythonPackageLicense.get_or_create(
+                    session,
+                    license_name=package_license["license"].get("full_name"),
+                    license_identifier=package_license["license"].get("identifier_spdx"),
+                    license_version=package_license["license_version"],
+                )
+
                 try:
                     python_package_version = self._create_python_package_version(
                         session,
@@ -6048,6 +6063,8 @@ class GraphDatabase(SQLBase):
                         python_version=ecosystem_solver.python_version,
                         index_url=index_url,
                         python_package_metadata_id=package_metadata.id,
+                        package_license=license_metadata.id,
+                        package_license_warning=package_license["warning"],
                     )
                 except NoResultFound:
                     if not force:
