@@ -99,7 +99,7 @@ class PythonPackageVersion(Base, BaseExtension):
 
 
 class PythonPackageLicense(Base, BaseExtension):
-    """Representation of a Licenses."""
+    """Representation of a License."""
 
     __tablename__ = "python_package_license"
 
