@@ -57,9 +57,9 @@ class CephStore(StorageBase):
         if not self.prefix.endswith("/"):
             self.prefix += "/"
 
-    def get_document_listing(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[str, None, None]:
+    def get_document_listing(self, prefix_addition: typing.Optional[str] = "") -> typing.Generator[str, None, None]:
         """Get listing of documents stored on the Ceph."""
-        prefix = f"{self.prefix}{prefix_addition}" if prefix_addition else self.prefix
+        prefix = f"{self.prefix}{prefix_addition}"
         for obj in self._s3.Bucket(self.bucket).objects.filter(Prefix=prefix).all():
             yield obj.key[len(self.prefix) :]  # Ignore PycodestyleBear (E203)
 

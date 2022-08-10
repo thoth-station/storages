@@ -54,11 +54,11 @@ class SolverResultsStore(ResultStorageBase):
             if os_name is None or os_version is None or python_version is None:
                 raise ValueError("Date filter can be used only when specific solvers are requested")
 
-            prefix = f"solver-{os_name}-{os_version}-py{python_version.replace('.', '')}"
-            for prefix_addition in self._iter_dates_prefix_addition(
-                prefix=prefix, start_date=start_date, end_date=end_date, include_end_date=include_end_date
+            prefix_solver = f"-{os_name}-{os_version}-py{python_version.replace('.', '')}"
+            for prefix_date in self._iter_dates_prefix_addition(
+                start_date=start_date, end_date=end_date, include_end_date=include_end_date
             ):
-                for document_id in self.ceph.get_document_listing(prefix_addition):
+                for document_id in self.ceph.get_document_listing(f"{prefix_solver}{prefix_date}"):
                     yield document_id
         else:
             if all(i is not None for i in (os_name, os_version, python_version)):
