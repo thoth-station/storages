@@ -19,9 +19,15 @@
 
 from datetime import date
 from typing import Optional
-from typing import Generator
+from typing import Generator, TypedDict
 
 from .result_base import ResultStorageBase
+
+
+class _SolverInfo(TypedDict):
+    os_name: str
+    os_version: str
+    python_version: str
 
 
 class SolverResultsStore(ResultStorageBase):
@@ -36,13 +42,10 @@ class SolverResultsStore(ResultStorageBase):
 
     def get_document_listing(
         self,
-        os_name: Optional[str] = None,
-        os_version: Optional[str] = None,
-        python_version: Optional[str] = None,
-        *,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
         include_end_date: bool = False,
+        solver_info: _SolverInfo = None,
     ) -> Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator.
 
@@ -50,26 +53,21 @@ class SolverResultsStore(ResultStorageBase):
         and no end_date is supplied explicitly, the current date is
         considered as end_date (inclusively).
         """
-        if start_date:
-            if os_name is None or os_version is None or python_version is None:
-                raise ValueError("Date filter can be used only when specific solvers are requested")
+        if solver_info is None and start_date is not None:
+            raise ValueError("Date filter can be used only when specific solvers are requested")
+        if solver_info:
+            _s = solver_info
+            prefix_solver = f"-{_s['os_name']}-{_s['os_version']}-py{_s['python_version'].replace('.', '')}"
 
-            prefix_solver = f"-{os_name}-{os_version}-py{python_version.replace('.', '')}"
+        if start_date is not None:
             for prefix_date in self._iter_dates_prefix_addition(
                 start_date=start_date, end_date=end_date, include_end_date=include_end_date
             ):
-                for document_id in self.ceph.get_document_listing(f"{prefix_solver}{prefix_date}"):
-                    yield document_id
+                yield from self.ceph.get_document_listing(prefix_solver + prefix_date)
+        elif solver_info is not None:
+            yield from self.ceph.get_document_listing(prefix_solver)
         else:
-            if all(i is not None for i in (os_name, os_version, python_version)):
-                prefix = f"solver-{os_name}-{os_version}-py{python_version.replace('.', '')}"
-                for document_id in self.ceph.get_document_listing(prefix):
-                    yield document_id
-            elif all(i is None for i in (os_name, os_version, python_version)):
-                for document_id in self.ceph.get_document_listing():
-                    yield document_id
-            else:
-                raise ValueError("None or all parameters for os_name, os_version, python_version have to be supplied")
+            yield from self.ceph.get_document_listing()
 
     def get_document_count(
         self,
