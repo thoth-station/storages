@@ -33,6 +33,6 @@ class CephCache(ResultStorageBase):
         except NotFoundError as exc:
             raise CacheMiss(f"There was no record found in the cache for {document_id!r}") from exc
 
-    def store_document_record(self, document_id: str, document: dict) -> str:
+    def store_document_record(self, document_id: str, document: dict) -> None:
         """Store the given document record in the cache."""
         self.ceph.store_document(document, document_id)
