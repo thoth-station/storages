@@ -1,5 +1,38 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.0 (2022-08-19T05:36:24)
+* 49aa91b :guardsman: Include myself as the approver for the repo (#2684)
+* c733cb0 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 49b860f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 2665710 added license-solver
+* 5b25197 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 2edaa5b Make _iter_dates_prefix_addition a static method
+* d2e6c6f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 83a70c4 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 9ef431a refactor setup.py (identical functions)
+* 0f2aa94 Factorize _SecurityIndicatorBase subclass methods
+* 5bbd7a1 Enable pre-commit pydocstyle and fix docstrings errors
+* 042d0f7 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 6eaa613 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 1ea1a1f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* b3b6581 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 857d70f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* a358ccd 🥹 moving @fridex and @pacospace in the OWNERS file, thanks for all the great work!! :arrow_up: update some CI config
+* 7430c3f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 6dea0e9 Make flake8 happy
+* 3bb2f38 Move flake8 excludes to pre-commit hook config
+* 15a4bf2 Revert "Reproduce methods specific for postgres"
+* d9075d8 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* ea13510 Fix flake8 errors and enable pre-commit hook
+* 1d5b7c6 Factor out flake8 config from pre-commit
+* 92c2359 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* f15bd70 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 14148d8 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* c229e33 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2641)
+* 56b7907 add thoth-license-solver
+* 8376915 added thoth-license-solver
+* 7d01189 changed query to use `like` (#2646)
+
 ## Release 0.72.2 (2022-05-24T11:28:40)
 * ffbaf18 added option for starts_with filter on /python/package
 * 4f56bc2 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
