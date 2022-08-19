@@ -2,6 +2,7 @@
 
 approvers:
   - mayaCostantini
+  - harshad16
   - sesheta
 
 emeritus_approvers:
@@ -9,6 +10,7 @@ emeritus_approvers:
   - pacospace
 
 reviewers:
+  - mayaCostantini
   - kpostoffice
   - harshad16
   - VannTen
