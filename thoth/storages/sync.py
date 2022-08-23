@@ -418,7 +418,8 @@ def sync_inspection_documents(
             number_results = inspection_store.results.get_results_count()
         else:
             main_repo = Path(f"{inspection_document_id}/results")
-            results = [repo.name for repo in main_repo.iterdir()]
+            results = [int(repo.name) for repo in main_repo.iterdir()]
+            # dir entry should be numbers
 
         if number_results > 0:
 
