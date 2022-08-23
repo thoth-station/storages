@@ -20,12 +20,12 @@
 import logging
 import json
 import os
+import random
 from typing import Dict
 from typing import Tuple
 from typing import List
 from typing import Optional
 from pathlib import Path
-from random import random
 
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
