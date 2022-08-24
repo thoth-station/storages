@@ -23,6 +23,7 @@ import os
 import random
 from typing import Dict
 from typing import List
+from typing import Iterable
 from typing import Optional
 from typing import Tuple
 from pathlib import Path
@@ -43,12 +44,12 @@ _RANDOMIZE_LISTING = bool(int(os.getenv("THOTH_STORAGES_RANDOMIZE_LISTING", 0)))
 
 
 def sync_adviser_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync adviser documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -100,12 +101,12 @@ def sync_adviser_documents(
 
 
 def sync_solver_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync solver documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -156,12 +157,12 @@ def sync_solver_documents(
 
 
 def sync_revsolver_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync reverse solver documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -210,12 +211,12 @@ def sync_revsolver_documents(
 
 
 def sync_analysis_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync image analysis documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -267,12 +268,12 @@ def sync_analysis_documents(
 
 
 def sync_provenance_checker_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync provenance check documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -326,12 +327,12 @@ def sync_provenance_checker_documents(
 
 
 def sync_dependency_monkey_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync dependency monkey reports into graph database."""
     if is_local and not document_ids:
         raise ValueError(
@@ -385,12 +386,12 @@ def sync_dependency_monkey_documents(
 
 
 def sync_inspection_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync observations made on Amun into graph database."""
     if is_local and not document_ids:
         raise ValueError(
@@ -492,12 +493,12 @@ def sync_inspection_documents(
 
 
 def sync_security_indicators_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync security indicators results into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -566,7 +567,7 @@ HANDLERS_MAPPING = {
 
 
 def sync_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
