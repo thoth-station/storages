@@ -97,6 +97,10 @@ class CephStore(StorageBase):
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 
+    def retrieve_document_attr(self, object_key: str, attr: str) -> typing.Any:
+        """Retrieve the given attribute of a document from S3."""
+        return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()[attr]
+
     def iterate_results(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""
         for document_id in self.get_document_listing(prefix_addition=prefix_addition):

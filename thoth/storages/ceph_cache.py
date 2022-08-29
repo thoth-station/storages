@@ -17,6 +17,7 @@
 
 """A base class for implementing caches based on Ceph."""
 
+from datetime import datetime
 
 from .exceptions import CacheMiss
 from .exceptions import NotFoundError
@@ -36,3 +37,18 @@ class CephCache(ResultStorageBase):
     def store_document_record(self, document_id: str, document: dict) -> str:
         """Store the given document record in the cache."""
         self.ceph.store_document(document, document_id)
+
+    def retrieve_document_ttl(self, document_id: str) -> float:
+        """Retrieve the TTL for a cached document."""
+        # Verify if the document is present in the cache
+        self.retrieve_document_record(document_id)
+
+        # Uses UTC time to be environment agnostic (no timezone)
+        time_lived = (
+            datetime.now() - self.ceph.retrieve_document_attr(object_key=document_id, attr="LastModified")
+        ).total_seconds()
+
+        if time_lived <= 14400.0:
+            return time_lived
+
+        return 0.0
