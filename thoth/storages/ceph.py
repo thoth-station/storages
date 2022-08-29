@@ -24,8 +24,6 @@ import typing
 import boto3
 import botocore
 
-from datetime import datetime
-
 from .base import StorageBase
 from .exceptions import NotFoundError
 
@@ -99,9 +97,9 @@ class CephStore(StorageBase):
                 raise NotFoundError("Failed to retrieve object, object {!r} does not exist".format(object_key)) from exc
             raise
 
-    def retrieve_document_last_modification_date(self, object_key: str) -> datetime:
-        """Retrieve the last modification date of a document from S3."""
-        return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()["LastModified"]
+    def retrieve_document_attr(self, object_key: str, attr: str) -> typing.Any:
+        """Retrieve the given attribute of a document from S3."""
+        return self._s3.Object(self.bucket, f"{self.prefix}{object_key}").get()[attr]
 
     def iterate_results(self, prefix_addition: typing.Optional[str] = None) -> typing.Generator[tuple, None, None]:
         """Iterate over results available in the Ceph."""

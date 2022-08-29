@@ -44,9 +44,11 @@ class CephCache(ResultStorageBase):
         self.retrieve_document_record(document_id)
 
         # Uses UTC time to be environment agnostic (no timezone)
-        time_lived = (datetime.now() - self.ceph.retrieve_document_last_modification_date(document_id)).total_seconds()
+        time_lived = (
+            datetime.now() - self.ceph.retrieve_document_attr(object_key=document_id, attr="LastModified")
+        ).total_seconds()
 
-        if time_lived <= 7200.0:
+        if time_lived <= 14400.0:
             return time_lived
 
         return 0.0
