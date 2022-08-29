@@ -1,5 +1,12 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.1 (2022-08-29T14:25:37)
+* 2ef24ec Generalize getting attribute from S3 object and set TTL to default value of 4 hours
+* c46b922 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2687)
+* 506dd47 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2683)
+* 8f95f7e Remove duplicate error handling and make timezone comment environment agnostic
+* e286186 Retrieve TTL of cached documents
+
 ## Release 0.73.0 (2022-08-19T05:36:24)
 * 49aa91b :guardsman: Include myself as the approver for the repo (#2684)
 * c733cb0 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
