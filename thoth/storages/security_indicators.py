@@ -23,6 +23,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Generator
+from abc import abstractmethod
 
 from .ceph import CephStore
 
@@ -43,7 +44,11 @@ def _get_security_indicators_prefix(security_indicator_id: Optional[str] = None)
 class _SecurityIndicatorBase:
     """A base class for security-indicators analyzers results."""
 
-    __slots__ = ["ceph", "security_indicator_id", "security_indicator_type"]
+    @classmethod
+    @property
+    @abstractmethod
+    def security_indicator_type(cls) -> str:
+        pass
 
     def __init__(self, security_indicator_id: str) -> None:
         """Set ceph prefix from security_indicator_id."""
