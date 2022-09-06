@@ -22,8 +22,9 @@ import logging
 from typing import Any
 from typing import Dict
 from typing import Optional
-from typing import Generator
+from typing import Iterator
 from abc import abstractmethod
+from itertools import groupby
 
 from .ceph import CephStore
 
@@ -124,20 +125,16 @@ class SecurityIndicatorsResultsStore:
         self.aggregated.check_connection()
 
     @classmethod
-    def iter_security_indicators(cls) -> Generator[str, None, None]:
+    def iter_security_indicators(cls) -> Iterator[str]:
         """Iterate over security_indicators ids stored."""
         ceph = CephStore(prefix=_get_security_indicators_prefix())
         ceph.connect()
 
-        last_id = None
-        for item in ceph.get_document_listing():
-            security_indicator_id = item.split("/", maxsplit=1)[0]
-            if last_id == security_indicator_id:
-                # Return only unique si ids, discard any results placed under the given prefix.
-                continue
+        def _key_id(key: str) -> str:
+            return key[: key.find("/")]
 
-            last_id = security_indicator_id
-            yield security_indicator_id
+        # Return only unique si ids, discard any results placed under the given prefix.
+        yield from (k for k, _ in groupby(ceph.get_document_listing(), _key_id))
 
     @classmethod
     def get_security_indicators_count(cls) -> int:
