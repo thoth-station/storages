@@ -23,6 +23,7 @@ from typing import Any
 from typing import Dict
 from typing import Generator
 from typing import Optional
+from abc import abstractmethod
 
 from .ceph import CephStore
 
@@ -48,6 +49,18 @@ class _InspectionBase:
 
     __slots__ = ["ceph", "inspection_id"]
 
+    @classmethod
+    @property
+    @abstractmethod
+    def sub_prefix(cls) -> str:
+        pass
+
+    def __init__(self, inspection_id: str) -> None:
+        """Set the ceph query prefix based on inspection_id and connect to Ceph."""
+        prefix = f"{_get_inspection_prefix(inspection_id)}/{self.sub_prefix}/"
+        self.ceph = CephStore(prefix=prefix)
+        self.inspection_id = inspection_id
+
     def connect(self) -> None:
         """Connect this adapter to Ceph."""
         self.ceph.connect()
@@ -64,11 +77,7 @@ class _InspectionBase:
 class InspectionBuildsStore(_InspectionBase):
     """An adapter for retrieving inspection builds."""
 
-    def __init__(self, inspection_id: str) -> None:
-        """Set the ceph query prefix based on inspection_id and connect to Ceph."""
-        prefix = f"{_get_inspection_prefix(inspection_id)}/build/"
-        self.ceph = CephStore(prefix=prefix)
-        self.inspection_id = inspection_id
+    sub_prefix = "build"
 
     def retrieve_dockerfile(self) -> str:
         """Retrieve Dockerfile used during the build."""
@@ -86,12 +95,7 @@ class InspectionBuildsStore(_InspectionBase):
 class InspectionResultsStore(_InspectionBase):
     """An adapter for manipulating with inspection results."""
 
-    def __init__(self, inspection_id: str) -> None:
-        """Set the ceph query prefix based on inspection_id and connect to Ceph."""
-        prefix = f"{_get_inspection_prefix(inspection_id)}/results/"
-        self.ceph = CephStore(prefix=prefix)
-        self.ceph.connect()
-        self.inspection_id = inspection_id
+    sub_prefix = "results"
 
     @classmethod
     def get_document_id(cls, document: Dict[str, Any]) -> str:
