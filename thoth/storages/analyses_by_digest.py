@@ -25,8 +25,3 @@ class AnalysisByDigest(ResultStorageBase):
 
     RESULT_TYPE = "analysis-by-digest"
     SCHEMA = None
-
-    def store_document(self, image_digest: str, analysis_info: str) -> dict:
-        """Store the given document representing analysis info onto Ceph."""
-        document_id = self.ceph.store_document(analysis_info, document_id=image_digest)
-        return document_id
