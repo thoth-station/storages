@@ -16,7 +16,10 @@ exclude = '''
 '''
 
 [tool.mypy]
-ignore_missing_imports = true
 exclude = [
-    '^(docs|tasks|tests)|setup\.py'
+    '^(docs|tests)|setup\.py'
 ]
+
+[[tool.mypy.overrides]]
+module = "storages.graph.*"
+ignore_errors = true
