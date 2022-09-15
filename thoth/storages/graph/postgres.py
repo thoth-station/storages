@@ -6046,11 +6046,25 @@ class GraphDatabase(SQLBase):
                         "found in PythonPackageMetadata table, the error is not fatal"
                     )
 
+                if package_license["license"] == "UNDETECTED":
+                    package_license_name = None
+                    package_license_spdx = None
+
+                else:
+                    package_license_name = package_license["license"].get("full_name")
+                    package_license_spdx = package_license["license"].get("identifier_spdx")
+
+                if package_license["license_version"] == "UNDETECTED":
+                    package_license_version = None
+
+                else:
+                    package_license_version = package_license["license_version"]
+
                 license_metadata, _ = PythonPackageLicense.get_or_create(
                     session,
-                    license_name=package_license["license"].get("full_name"),
-                    license_identifier=package_license["license"].get("identifier_spdx"),
-                    license_version=package_license["license_version"],
+                    license_name=package_license_name,
+                    license_identifier=package_license_spdx,
+                    license_version=package_license_version,
                 )
 
                 try:
