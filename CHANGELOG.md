@@ -1,5 +1,15 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.2 (2022-09-16T07:58:36)
+* 7df08ad :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* fb13f91 Convert ceph datetime object to offset-aware
+* d5ec369 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 9fb3a4d :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* f4b5e7f :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* e76ba32 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 68f5a76 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2695)
+* 110ce1e :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2694)
+
 ## Release 0.73.1 (2022-08-29T14:25:37)
 * 2ef24ec Generalize getting attribute from S3 object and set TTL to default value of 4 hours
 * c46b922 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment (#2687)
