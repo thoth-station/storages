@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.3 (2022-09-19T23:13:33)
+* c44ee21 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* b357f95 Set license solver params as unique constraint to reduce duplication
+
 ## Release 0.73.2 (2022-09-16T07:58:36)
 * 7df08ad :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * fb13f91 Convert ceph datetime object to offset-aware
