@@ -109,6 +109,7 @@ class PythonPackageLicense(Base, BaseExtension):
 
     # Relations
     python_package_version = relationship("PythonPackageVersion", back_populates="licenses")
+    __table_args__ = (UniqueConstraint("license_name", "license_identifier", "license_version"),)
 
 
 class HasArtifact(Base, BaseExtension):
