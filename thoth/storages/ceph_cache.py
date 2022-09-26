@@ -18,6 +18,7 @@
 """A base class for implementing caches based on Ceph."""
 
 from datetime import datetime
+from datetime import timezone
 
 from .exceptions import CacheMiss
 from .exceptions import NotFoundError
@@ -46,9 +47,7 @@ class CephCache(ResultStorageBase):
         # Uses UTC time to be environment agnostic (no timezone)
         time_lived = (
             datetime.now()
-            - self.ceph.retrieve_document_attr(object_key=document_id, attr="LastModified").replace(
-                tzinfo=datetime.timezone.utc
-            )
+            - self.ceph.retrieve_document_attr(object_key=document_id, attr="LastModified").replace(tzinfo=timezone.utc)
         ).total_seconds()
 
         if time_lived <= 14400.0:
