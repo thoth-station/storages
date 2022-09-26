@@ -1,5 +1,9 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.4 (2022-09-26T10:34:36)
+* 2e90406 Fix timezone import in ceph cache
+* 0315672 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+
 ## Release 0.73.3 (2022-09-19T23:13:33)
 * c44ee21 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * b357f95 Set license solver params as unique constraint to reduce duplication
