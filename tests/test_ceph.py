@@ -18,9 +18,12 @@
 
 """This is the tests."""
 
+import json
 import pytest
+import time
 from moto import mock_s3
 
+from thoth.storages import AdvisersCacheStore
 from thoth.storages import CephStore
 from thoth.storages.exceptions import NotFoundError
 
@@ -58,7 +61,7 @@ CEPH_ENV_MAP = {
 }
 
 _ENV = {**CEPH_INIT_ENV}
-_BUCKET_PREFIX = "some-prefix/"
+_BUCKET_PREFIX = "some-prefix"
 
 
 @pytest.fixture(name="adapter")
@@ -77,6 +80,14 @@ def _fixture_connected_adapter():
     adapter = CephStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
     with connected_ceph_adapter(adapter, raw_ceph=True) as connected_adapter:
         yield connected_adapter
+
+
+@pytest.fixture(name="connected_cache_adapter")
+def _fixture_connected_cache_adapter():
+    """Retrieve a connected cache adapter to Ceph."""
+    adapter = AdvisersCacheStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    with connected_ceph_adapter(adapter, raw_ceph=False) as connected_cache_adapter:
+        yield connected_cache_adapter
 
 
 class TestCephStore(ThothStoragesTest):
@@ -181,3 +192,20 @@ class TestCephStore(ThothStoragesTest):
         assert not adapter.is_connected()
         adapter.connect()
         assert adapter.is_connected()
+
+
+class TestCephCache(ThothStoragesTest):
+    """Test retrieving properties from cached documents."""
+
+    def test_retrieve_document_ttl(self, connected_cache_adapter):
+        """Test retrieving TTL from a cached document."""
+        assert connected_cache_adapter.document_exists("adviser-220131050913-b7c4ef0fc532ac45") is False
+        with open("tests/data/result/adviser/adviser-220131050913-b7c4ef0fc532ac45", "r") as advise_result:
+            advise_file = json.load(advise_result)
+            connected_cache_adapter.store_document(advise_file)
+        assert connected_cache_adapter.document_exists("adviser-220131050913-b7c4ef0fc532ac45") is True
+
+        time.sleep(10)
+        document_ttl = connected_cache_adapter.retrieve_document_ttl("adviser-220131050913-b7c4ef0fc532ac45")
+        eps = 1
+        assert abs(7210 - document_ttl) <= 10 + eps

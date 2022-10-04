@@ -46,7 +46,7 @@ class CephCache(ResultStorageBase):
 
         # Uses UTC time to be environment agnostic (no timezone)
         time_lived = (
-            datetime.now()
+            datetime.now().replace(tzinfo=timezone.utc)
             - self.ceph.retrieve_document_attr(object_key=document_id, attr="LastModified").replace(tzinfo=timezone.utc)
         ).total_seconds()
 

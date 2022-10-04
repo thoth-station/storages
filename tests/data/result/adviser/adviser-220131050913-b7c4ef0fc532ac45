@@ -1,0 +1,162 @@
+{
+  "metadata": {
+    "analyzer": "thoth-adviser",
+    "analyzer_version": "0.50.0",
+    "arguments": {
+      "advise": {
+        "beam_width": 25000,
+        "constraints": "input/constraints.txt",
+        "count": 1,
+        "dev": false,
+        "labels": "input/labels.json",
+        "library_usage": "input/library_usage.json",
+        "limit": 1,
+        "limit_latest_versions": -1,
+        "no_pretty": false,
+        "output": "/mnt/workdir/adviser-220131050913-b7c4ef0fc532ac45",
+        "pipeline": null,
+        "plot": null,
+        "predictor": "AUTO",
+        "predictor_config": {},
+        "prescription": [
+          "/opt/app-root/src/prescriptions.pickle"
+        ],
+        "recommendation_type": "latest",
+        "requirements": "input/Pipfile",
+        "requirements_format": "pipenv",
+        "requirements_locked": "input/Pipfile.lock",
+        "runtime_environment": "input/runtime_environment.json",
+        "seed": 42,
+        "user_stack_scoring": true
+      },
+      "thoth-adviser": {
+        "metadata": {
+          "kebechet_metadata": null,
+          "origin": "https://github.com/thoth-station/ps-cv",
+          "re_run_adviser_id": null,
+          "source_type": null,
+          "thoth.adviser": {
+            "justification": null,
+            "stack_info": null
+          }
+        },
+        "verbose": false
+      }
+    },
+    "datetime": "2022-01-31T05:15:49.969966",
+    "distribution": {
+      "codename": "Ootpa",
+      "id": "rhel",
+      "like": "fedora",
+      "version": "8.3",
+      "version_parts": {
+        "build_number": "",
+        "major": "8",
+        "minor": "3"
+      }
+    },
+    "document_id": "adviser-220131050913-b7c4ef0fc532ac45",
+    "duration": 376,
+    "hostname": "adviser-220131050913-b7c4ef0fc532ac45-1876565397",
+    "os_release": {
+      "id": "rhel",
+      "name": "Red Hat Enterprise Linux",
+      "platform_id": "platform:el8",
+      "redhat_bugzilla_product": "Red Hat Enterprise Linux 8",
+      "redhat_bugzilla_product_version": "8.3",
+      "redhat_support_product": "Red Hat Enterprise Linux",
+      "redhat_support_product_version": "8.3",
+      "version": "8.3 (Ootpa)",
+      "version_id": "8.3"
+    },
+    "python": {
+      "api_version": 1013,
+      "implementation_name": "cpython",
+      "major": 3,
+      "micro": 3,
+      "minor": 8,
+      "releaselevel": "final",
+      "serial": 0
+    },
+    "thoth_deployment_name": "ocp4-stage",
+    "timestamp": 1643606149
+  },
+  "result": {
+    "error": true,
+    "error_msg": "Resolver was killed as allocated memory has been exceeded (OOM) - https://thoth-station.ninja/j/oom",
+    "parameters": {
+      "beam_width": 25000,
+      "constraints": "input/constraints.txt",
+      "count": 1,
+      "dev": false,
+      "labels": {},
+      "library_usage": null,
+      "limit": 1,
+      "limit_latest_versions": -1,
+      "no_pretty": false,
+      "output": "/mnt/workdir/adviser-220131050913-b7c4ef0fc532ac45",
+      "pipeline": null,
+      "plot": null,
+      "predictor": "AUTO",
+      "predictor_config": "{}",
+      "prescription": [
+        "/opt/app-root/src/prescriptions.pickle"
+      ],
+      "project": {
+        "constraints": [],
+        "requirements": {
+          "dev-packages": {},
+          "packages": {
+            "jupyter-tensorboard": "*",
+            "keras": "*",
+            "opencv-python": "*",
+            "pillow": "*",
+            "tensorboard": "*",
+            "tensorflow": ">=2.0.0"
+          },
+          "requires": {
+            "python_version": "3.8"
+          },
+          "source": [
+            {
+              "name": "pypi",
+              "url": "https://pypi.org/simple",
+              "verify_ssl": true
+            }
+          ]
+        },
+        "requirements_locked": null,
+        "runtime_environment": {
+          "base_image": null,
+          "cuda_version": null,
+          "cudnn_version": null,
+          "hardware": {
+            "cpu_family": null,
+            "cpu_model": null,
+            "gpu_model": null
+          },
+          "labels": null,
+          "mkl_version": null,
+          "name": "ps-cv-tensorflow",
+          "openblas_version": null,
+          "openmpi_version": null,
+          "operating_system": {
+            "name": "ubi",
+            "version": "8"
+          },
+          "platform": "linux-x86_64",
+          "python_version": "3.8",
+          "recommendation_type": null
+        }
+      },
+      "recommendation_type": "latest",
+      "requirements": "input/Pipfile",
+      "requirements_format": "pipenv",
+      "requirements_locked": "input/Pipfile.lock",
+      "runtime_environment": "input/runtime_environment.json",
+      "seed": 42,
+      "user_stack_scoring": true
+    },
+    "report": null
+  }
+}
