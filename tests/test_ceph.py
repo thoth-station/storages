@@ -85,7 +85,7 @@ def _fixture_connected_adapter():
 @pytest.fixture(name="connected_cache_adapter")
 def _fixture_connected_cache_adapter():
     """Retrieve a connected cache adapter to Ceph."""
-    adapter = AdvisersCacheStore(_BUCKET_PREFIX, **CEPH_INIT_KWARGS)
+    adapter = AdvisersCacheStore(**CEPH_INIT_KWARGS, prefix=_BUCKET_PREFIX)
     with connected_ceph_adapter(adapter, raw_ceph=False) as connected_cache_adapter:
         yield connected_cache_adapter
 
