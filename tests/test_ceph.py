@@ -62,6 +62,7 @@ CEPH_ENV_MAP = {
 
 _ENV = {**CEPH_INIT_ENV}
 _BUCKET_PREFIX = "some-prefix/"
+_DEPLOYMENT_NAME = "thoth-test-deployment"
 
 
 @pytest.fixture(name="adapter")
@@ -85,7 +86,7 @@ def _fixture_connected_adapter():
 @pytest.fixture(name="connected_cache_adapter")
 def _fixture_connected_cache_adapter():
     """Retrieve a connected cache adapter to Ceph."""
-    adapter = AdvisersCacheStore(**CEPH_INIT_KWARGS, prefix=_BUCKET_PREFIX)
+    adapter = AdvisersCacheStore(**CEPH_INIT_KWARGS, prefix=_BUCKET_PREFIX, deployment_name=_DEPLOYMENT_NAME)
     with connected_ceph_adapter(adapter, raw_ceph=False) as connected_cache_adapter:
         yield connected_cache_adapter
 
