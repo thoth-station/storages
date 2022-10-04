@@ -206,7 +206,6 @@ class TestCephCache(ThothStoragesTest):
             connected_cache_adapter.store_document(advise_file)
         assert connected_cache_adapter.document_exists("adviser-220131050913-b7c4ef0fc532ac45") is True
 
-        time.sleep(10)
         document_ttl = connected_cache_adapter.retrieve_document_ttl("adviser-220131050913-b7c4ef0fc532ac45")
-        eps = 1
-        assert abs(7210 - document_ttl) <= 10 + eps
+        eps = 10
+        assert abs(7210 - document_ttl) <= eps
