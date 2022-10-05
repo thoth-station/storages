@@ -20,7 +20,6 @@
 
 import json
 import pytest
-import time
 from moto import mock_s3
 
 from thoth.storages import AdvisersCacheStore
@@ -208,4 +207,4 @@ class TestCephCache(ThothStoragesTest):
 
         document_ttl = connected_cache_adapter.retrieve_document_ttl("adviser-220131050913-b7c4ef0fc532ac45")
         eps = 10
-        assert abs(7210 - document_ttl) <= eps
+        assert abs(14400.0 - document_ttl) <= eps
