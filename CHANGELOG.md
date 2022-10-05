@@ -1,5 +1,16 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.5 (2022-10-05T16:16:00)
+* e5cc1bd :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 4c942a7 Use timedelta
+* 58089d7 Fix TTL value
+* bffc989 Remove timeout > 2s
+* 5bccc94 Add _DEPLOYMENT_NAME variable
+* f96453b Fix prefix not recognized in cluster tests
+* a13f693 Fix bucket prefix
+* 98034e8 Unit test Ceph cache and fix timezone awareness
+* 260b5ed Add Max to approvers
+
 ## Release 0.73.4 (2022-09-26T10:34:36)
 * 2e90406 Fix timezone import in ceph cache
 * 0315672 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
