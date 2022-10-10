@@ -17,12 +17,19 @@
 
 """Adapter for Ceph distributed object storage."""
 
+from __future__ import annotations
+
 import json
 import os
 import typing
 
 import boto3
 import botocore
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mypy_boto3_stubs import S3Resource
 
 from .base import StorageBase
 from .exceptions import NotFoundError
@@ -51,7 +58,7 @@ class CephStore(StorageBase):
         self.secret_key = secret_key or os.environ["THOTH_CEPH_SECRET_KEY"]
         self.bucket = bucket or os.environ["THOTH_CEPH_BUCKET"]
         self.region = region or os.getenv("THOTH_CEPH_REGION", None)
-        self._s3 = None
+        self._s3: S3Resource = None
         self.prefix = prefix
 
         if not self.prefix.endswith("/"):

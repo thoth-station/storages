@@ -66,10 +66,10 @@ class GraphBackupStore(ResultStorageBase):
             backup_files_maintained.append((datetime_obj, backup_file))
 
         backup_files_maintained.sort(key=operator.itemgetter(0), reverse=True)
-        for backup_file in backup_files_maintained[self.GRAPH_BACKUP_STORE_ROTATE :]:
+        for _, backup_file in backup_files_maintained[self.GRAPH_BACKUP_STORE_ROTATE :]:
             _LOGGER.info(
                 "Removing backup file %r based on rotation configuration (keeping %d dumps)",
-                backup_file[1],
+                backup_file,
                 self.GRAPH_BACKUP_STORE_ROTATE,
             )
             self.ceph.delete(backup_file[1])

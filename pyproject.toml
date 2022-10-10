@@ -14,3 +14,12 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.mypy]
+exclude = [
+    '^(docs|tests)|setup\.py'
+]
+
+[[tool.mypy.overrides]]
+module = "storages.graph.*"
+ignore_errors = true

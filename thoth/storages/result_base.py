@@ -22,6 +22,7 @@ import typing
 from datetime import date
 from datetime import timedelta
 
+
 from .base import StorageBase
 from .ceph import CephStore
 from .result_schema import RESULT_SCHEMA
@@ -145,23 +146,11 @@ class ResultStorageBase(StorageBase):
                     if document_id.endswith(".request"):
                         yield document_id
 
-    def get_document_count(
-        self,
-        *,
-        start_date: typing.Optional[date] = None,
-        end_date: typing.Optional[date] = None,
-        only_requests: bool = False,
-        include_end_date: bool = False,
-    ) -> int:
+    def get_document_count(self, *args, **kwargs) -> int:
         """Get number of documents present."""
-        return sum(
-            1
-            for _ in self.get_document_listing(
-                start_date=start_date, end_date=end_date, include_end_date=include_end_date, only_requests=only_requests
-            )
-        )
+        return sum(1 for _ in self.get_document_listing(*args, **kwargs))
 
-    def store_document(self, document: dict) -> str:
+    def store_document(self, document: dict, document_id: typing.Optional[str] = None) -> str:
         """Store the given document in Ceph."""
         if self.SCHEMA:
             try:
@@ -169,7 +158,8 @@ class ResultStorageBase(StorageBase):
             except Exception as exc:
                 raise SchemaError("Failed to validate document schema") from exc
 
-        document_id = self.get_document_id(document)
+        if document_id is None:
+            document_id = self.get_document_id(document)
         self.ceph.store_document(document, document_id)
         return document_id
 

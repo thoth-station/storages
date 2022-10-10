@@ -20,12 +20,13 @@
 import logging
 import json
 import os
+import random
 from typing import Dict
-from typing import Tuple
 from typing import List
+from typing import Iterable
 from typing import Optional
+from typing import Tuple
 from pathlib import Path
-from random import random
 
 from .analyses import AnalysisResultsStore
 from .advisers import AdvisersResultsStore
@@ -43,12 +44,12 @@ _RANDOMIZE_LISTING = bool(int(os.getenv("THOTH_STORAGES_RANDOMIZE_LISTING", 0)))
 
 
 def sync_adviser_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync adviser documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -100,12 +101,12 @@ def sync_adviser_documents(
 
 
 def sync_solver_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync solver documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -156,12 +157,12 @@ def sync_solver_documents(
 
 
 def sync_revsolver_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync reverse solver documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -210,12 +211,12 @@ def sync_revsolver_documents(
 
 
 def sync_analysis_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync image analysis documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -267,12 +268,12 @@ def sync_analysis_documents(
 
 
 def sync_provenance_checker_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync provenance check documents into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -326,12 +327,12 @@ def sync_provenance_checker_documents(
 
 
 def sync_dependency_monkey_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync dependency monkey reports into graph database."""
     if is_local and not document_ids:
         raise ValueError(
@@ -385,13 +386,12 @@ def sync_dependency_monkey_documents(
 
 
 def sync_inspection_documents(
-    document_ids: Optional[List[str]] = None,
-    *,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync observations made on Amun into graph database."""
     if is_local and not document_ids:
         raise ValueError(
@@ -418,7 +418,8 @@ def sync_inspection_documents(
             number_results = inspection_store.results.get_results_count()
         else:
             main_repo = Path(f"{inspection_document_id}/results")
-            results = [repo.name for repo in main_repo.iterdir()]
+            results = [int(repo.name) for repo in main_repo.iterdir()]
+            # dir entry should be numbers
 
         if number_results > 0:
 
@@ -493,12 +494,12 @@ def sync_inspection_documents(
 
 
 def sync_security_indicators_documents(
-    document_ids: Optional[List[str]] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
     is_local: bool = False,
-) -> tuple:
+) -> Tuple[int, int, int, int]:
     """Sync security indicators results into graph."""
     if is_local and not document_ids:
         raise ValueError(
@@ -567,14 +568,10 @@ HANDLERS_MAPPING = {
 
 
 def sync_documents(
-    document_ids: Optional[List[str]] = None,
-    *,
-    amun_api_url: Optional[str] = None,
+    document_ids: Optional[Iterable[str]] = None,
     force: bool = False,
     graceful: bool = False,
     graph: Optional[GraphDatabase] = None,
-    inspection_only_graph_sync: bool = False,
-    inspection_only_ceph_sync: bool = False,
     is_local: bool = False,
 ) -> Dict[str, Tuple[int, int, int, int]]:
     """Sync documents based on document type.
@@ -583,49 +580,26 @@ def sync_documents(
     >>> from thoth.storages.sync import sync_documents
     >>> sync_documents(["adviser-efa7213babd12911", "package-extract-f8e354d9597a1203"])
     """
-    stats = dict.fromkeys(HANDLERS_MAPPING, (0, 0, 0, 0))
-
-    if inspection_only_ceph_sync and inspection_only_graph_sync:
-        raise ValueError("Parameters `inspection_only_ceph_sync' and `inspection_only_graph_sync' are disjoint")
-
-    for document_id in document_ids or [None] * len(HANDLERS_MAPPING):
-        for document_prefix, handler in HANDLERS_MAPPING.items():
-            # Basename for local syncs, document_id should not have slash otherwise.
-            if document_id is None or os.path.basename(document_id).startswith(document_prefix):
-                to_sync_document_id = [document_id] if document_id is not None else None
-                if handler == sync_inspection_documents:
-                    # A special case with additional arguments to obtain results from Amun API.
-                    if amun_api_url is None:
-                        error_msg = f"Cannot sync document with id {document_id!r} without specifying Amun API URL"
-                        if not graceful:
-                            raise ValueError(error_msg)
-
-                        _LOGGER.error(error_msg)
-
-                    stats_change = handler(
-                        to_sync_document_id,
-                        amun_api_url=amun_api_url,
-                        force=force,
-                        graceful=graceful,
-                        graph=graph,
-                        only_ceph_sync=inspection_only_ceph_sync,
-                        only_graph_sync=inspection_only_graph_sync,
-                        is_local=is_local,
-                    )
-                else:
-                    stats_change = handler(
-                        to_sync_document_id, force=force, graceful=graceful, graph=graph, is_local=is_local
-                    )
-
-                stats[document_prefix] = tuple(map(sum, zip(stats[document_prefix], stats_change)))
-                if document_id is not None:
-                    break
-        else:
-            if document_id is not None:
-                error_msg = f"No handler defined for document identifier {document_id!r}"
+    if document_ids:
+        handlers: Dict[str, List[str]] = dict.fromkeys(HANDLERS_MAPPING, [])
+        assert handlers is not None
+        for doc in document_ids:
+            try:
+                handlers[doc[doc.rfind("/") + 1 : doc.rfind("-")]].append(doc)
+                # Basename for local syncs, document_id should not have slash otherwise.
+            except KeyError:
+                error_msg = f"No handler defined for document identifier {doc}"
                 if not graceful:
                     raise ValueError(error_msg)
-
                 _LOGGER.error(error_msg)
+
+    else:
+        static_handlers = dict.fromkeys(HANDLERS_MAPPING, None)
+
+    stats = dict.fromkeys(HANDLERS_MAPPING, (0, 0, 0, 0))
+    for handler, documents in (handlers or static_handlers).items():
+        stats[handler] = HANDLERS_MAPPING[handler](
+            documents, force=force, graceful=graceful, graph=graph, is_local=is_local
+        )
 
     return stats
