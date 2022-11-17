@@ -2127,7 +2127,7 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
-        extras: FrozenSet[Optional[str]] = None,
+        extras: Optional[FrozenSet[Optional[str]]] = None,
         marker_evaluation_result: Optional[bool] = None,
     ) -> List[
         Tuple[
@@ -2435,7 +2435,7 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
-        extras: FrozenSet[Optional[str]] = None,
+        extras: Optional[FrozenSet[Optional[str]]] = None,
         marker_evaluation_result: Optional[bool] = None,
         is_missing: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
@@ -2838,7 +2838,7 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return session.query(PythonPackageIndex).filter(PythonPackageIndex.url == index_url).delete()
 
-    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, Any]]:
+    def get_python_package_index_all(self, enabled: Optional[bool] = None) -> List[Dict[str, Any]]:
         """Get listing of Python package indexes registered in the graph database."""
         with self._session_scope() as session:
             query = session.query(
@@ -3414,7 +3414,7 @@ class GraphDatabase(SQLBase):
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
-        sort_by: QuerySortTypeEnum = None,
+        sort_by: Optional[QuerySortTypeEnum] = None,
     ) -> PythonQueryResult:
         """Retrieve number of versions per Python package name in Thoth Database.
 
@@ -3837,7 +3837,7 @@ class GraphDatabase(SQLBase):
         self,
         session: Session,
         pipfile_locked: dict,
-        software_environment: SoftwareEnvironment = None,
+        software_environment: Optional[SoftwareEnvironment] = None,
         sync_only_entity: bool = False,
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
@@ -4739,10 +4739,10 @@ class GraphDatabase(SQLBase):
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
-        python_package_metadata_id: int = None,
+        python_package_metadata_id: Optional[int] = None,
         sync_only_entity: bool = False,
-        package_license: int = None,
-        package_license_warning: bool = None,
+        package_license: Optional[int] = None,
+        package_license_warning: Optional[bool] = None,
     ) -> Union[PythonPackageVersion, PythonPackageVersionEntity]:
         """Create a Python package version.
 
@@ -4806,12 +4806,12 @@ class GraphDatabase(SQLBase):
         self,
         session: Session,
         software_stack_type: Optional[str] = None,
-        requirements: dict = None,
-        requirements_lock: dict = None,
-        software_environment: SoftwareEnvironment = None,
+        requirements: Optional[dict] = None,
+        requirements_lock: Optional[dict] = None,
+        software_environment: Optional[SoftwareEnvironment] = None,
         *,
-        performance_score: float = None,
-        overall_score: float = None,
+        performance_score: Optional[float] = None,
+        overall_score: Optional[float] = None,
         is_external: bool = False,
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""

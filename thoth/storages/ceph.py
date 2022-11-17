@@ -26,7 +26,7 @@ import typing
 import boto3
 import botocore
 
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mypy_boto3_stubs import S3Resource
@@ -42,11 +42,11 @@ class CephStore(StorageBase):
         self,
         prefix,
         *,
-        host: str = None,
-        key_id: str = None,
-        secret_key: str = None,
-        bucket: str = None,
-        region: str = None,
+        host: Optional[str] = None,
+        key_id: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        bucket: Optional[str] = None,
+        region: Optional[str] = None,
     ):
         """Initialize adapter to Ceph.
 

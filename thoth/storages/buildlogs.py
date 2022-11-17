@@ -23,6 +23,7 @@ import typing
 
 from .ceph import CephStore
 from .base import StorageBase
+from typing import Optional
 
 
 class BuildLogsStore(StorageBase):
@@ -34,12 +35,12 @@ class BuildLogsStore(StorageBase):
         self,
         deployment_name=None,
         *,
-        bucket_prefix: str = None,
-        host: str = None,
-        key_id: str = None,
-        secret_key: str = None,
-        bucket: str = None,
-        region: str = None,
+        bucket_prefix: Optional[str] = None,
+        host: Optional[str] = None,
+        key_id: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        bucket: Optional[str] = None,
+        region: Optional[str] = None,
     ):
         """Initialize adapter for storing build logs.
 

@@ -28,6 +28,7 @@ from .ceph import CephStore
 from .result_schema import RESULT_SCHEMA
 from .exceptions import SchemaError
 from .exceptions import NoDocumentIdError
+from typing import Optional
 
 
 class ResultStorageBase(StorageBase):
@@ -42,12 +43,12 @@ class ResultStorageBase(StorageBase):
         self,
         deployment_name=None,
         *,
-        host: str = None,
-        key_id: str = None,
-        secret_key: str = None,
-        bucket: str = None,
-        region: str = None,
-        prefix: str = None,
+        host: Optional[str] = None,
+        key_id: Optional[str] = None,
+        secret_key: Optional[str] = None,
+        bucket: Optional[str] = None,
+        region: Optional[str] = None,
+        prefix: Optional[str] = None,
     ):
         """Initialize result storage database.
 
