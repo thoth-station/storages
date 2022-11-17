@@ -36,6 +36,7 @@ repos:
         exclude: ^docs
         additional_dependencies:
           - types-all
+          - boto3-stubs[s3]
 
   - repo: https://github.com/psf/black
     rev: 22.10.0
