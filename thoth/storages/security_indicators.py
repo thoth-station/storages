@@ -45,11 +45,10 @@ def _get_security_indicators_prefix(security_indicator_id: Optional[str] = None)
 class _SecurityIndicatorBase:
     """A base class for security-indicators analyzers results."""
 
-    @classmethod
     @property
     @abstractmethod
-    def security_indicator_type(cls) -> str:
-        pass
+    def security_indicator_type(self) -> str:
+        raise NotImplementedError
 
     def __init__(self, security_indicator_id: str) -> None:
         """Set ceph prefix from security_indicator_id."""

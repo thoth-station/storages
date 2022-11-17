@@ -23,8 +23,10 @@ import abc
 class StorageBase(metaclass=abc.ABCMeta):
     """A base class for implementing storage adapters."""
 
+    @abc.abstractmethod
     def is_connected(self) -> bool:
         """Check if the given database adapter is in connected state."""
 
+    @abc.abstractmethod
     def connect(self) -> None:
         """Connect the given storage adapter."""
