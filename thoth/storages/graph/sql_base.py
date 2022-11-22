@@ -23,7 +23,7 @@ import logging
 
 from sqlalchemy.engine import Engine
 
-from ..exceptions import NotConnected
+from ..exceptions import NotConnectedError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class SQLBase:
     def disconnect(self) -> None:
         """Disconnect from the connected database."""
         if not self.is_connected():
-            raise NotConnected("Cannot disconnect, the adapter is not connected")
+            raise NotConnectedError("Cannot disconnect, the adapter is not connected")
 
         if self._sessionmaker is not None:
             self._sessionmaker = None
@@ -67,6 +67,6 @@ class SQLBase:
     def drop_all(self) -> None:
         """Drop all content stored in the database."""
         if not self.is_connected():
-            raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
+            raise NotConnectedError("Cannot initialize schema: the adapter is not connected yet")
 
         self._DECLARATIVE_BASE.metadata.drop_all(self._engine)

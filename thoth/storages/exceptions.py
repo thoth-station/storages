@@ -18,65 +18,65 @@
 """Exceptions for storage adapters and storage handling."""
 
 
-class ThothStorageException(Exception):
+class ThothStorageExceptionError(Exception):
     """A base exception for Thoth storage exception hierarchy."""
 
 
-class NotFoundError(ThothStorageException):
+class NotFoundError(ThothStorageExceptionError):
     """Raised if the given artifact cannot be found."""
 
 
-class SchemaError(ThothStorageException):
+class SchemaError(ThothStorageExceptionError):
     """Raised if trying to store document with invalid schema."""
 
 
-class CacheMiss(ThothStorageException):
+class CacheMissError(ThothStorageExceptionError):
     """Raised if the requested document was not found in the cache."""
 
 
-class NotConnected(ThothStorageException):
+class NotConnectedError(ThothStorageExceptionError):
     """Raised if there was no connection established when communicating with a storage."""
 
 
-class AlreadyConnected(ThothStorageException):
+class AlreadyConnectedError(ThothStorageExceptionError):
     """Raised if trying to connect on already connected adapter."""
 
 
-class DatabaseNotInitialized(ThothStorageException):
+class DatabaseNotInitializedError(ThothStorageExceptionError):
     """Raised if trying to perform operations on un-initialized database schema."""
 
 
-class MultipleFoundError(ThothStorageException):
+class MultipleFoundError(ThothStorageExceptionError):
     """Raised if there are multiple entities when a method used requires just one present."""
 
 
-class PythonIndexNotRegistered(ThothStorageException):
+class PythonIndexNotRegisteredError(ThothStorageExceptionError):
     """Raised if an attempt to insert a Python package with an index not being registered to the system."""
 
 
-class PerformanceIndicatorNotRegistered(ThothStorageException):
+class PerformanceIndicatorNotRegisteredError(ThothStorageExceptionError):
     """Raised if a performance indicator model which is about to be synced was not found."""
 
 
-class PythonIndexNotProvided(ThothStorageException):
+class PythonIndexNotProvidedError(ThothStorageExceptionError):
     """Raised if an attempt to insert a package without an index."""
 
 
-class SolverNotRun(ThothStorageException):
+class SolverNotRunError(ThothStorageExceptionError):
     """Raised if an attempt to insert a package which was not solved."""
 
 
-class DistutilsKeyNotKnown(ThothStorageException):
+class DistutilsKeyNotKnownError(ThothStorageExceptionError):
     """Raised if a distutils in Python Package metadata is not known."""
 
 
-class SortTypeQueryError(ThothStorageException):
+class SortTypeQueryError(ThothStorageExceptionError):
     """Raised if a sort key used in a query is not known."""
 
 
-class NoDocumentIdError(ThothStorageException):
+class NoDocumentIdError(ThothStorageExceptionError):
     """Raised if document id is not found in the document."""
 
 
-class CudaVersionDoesNotMatch(ThothStorageException):
+class CudaVersionDoesNotMatchError(ThothStorageExceptionError):
     """Raised if the cuda versions from txt file and nvcc command is different."""
