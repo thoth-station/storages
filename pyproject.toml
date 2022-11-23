@@ -19,7 +19,12 @@ exclude = '''
 exclude = [
     '^(docs|tests)|setup\.py'
 ]
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
-module = "storages.graph.*"
+module = "thoth.storages.graph.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "thoth.storages.data.*"
 ignore_errors = true

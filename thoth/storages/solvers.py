@@ -47,7 +47,7 @@ class SolverResultsStore(ResultStorageBase):
         end_date: Optional[date] = None,
         include_end_date: bool = False,
         only_requests: bool = False,
-        solver_info: _SolverInfo = None,
+        solver_info: Optional[_SolverInfo] = None,
     ) -> Generator[str, None, None]:
         """Get listing of documents available in Ceph as a generator.
 

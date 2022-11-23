@@ -167,16 +167,16 @@ from ..provenance import ProvenanceResultsStore
 from ..solvers import SolverResultsStore
 from ..advisers import AdvisersResultsStore
 from ..exceptions import NotFoundError
-from ..exceptions import PythonIndexNotRegistered
-from ..exceptions import PerformanceIndicatorNotRegistered
-from ..exceptions import PythonIndexNotProvided
-from ..exceptions import SolverNotRun
-from ..exceptions import NotConnected
-from ..exceptions import AlreadyConnected
-from ..exceptions import DatabaseNotInitialized
-from ..exceptions import DistutilsKeyNotKnown
+from ..exceptions import PythonIndexNotRegisteredError
+from ..exceptions import PerformanceIndicatorNotRegisteredError
+from ..exceptions import PythonIndexNotProvidedError
+from ..exceptions import SolverNotRunError
+from ..exceptions import NotConnectedError
+from ..exceptions import AlreadyConnectedError
+from ..exceptions import DatabaseNotInitializedError
+from ..exceptions import DistutilsKeyNotKnownError
 from ..exceptions import SortTypeQueryError
-from ..exceptions import CudaVersionDoesNotMatch
+from ..exceptions import CudaVersionDoesNotMatchError
 from ..ceph import CephStore
 
 
@@ -294,7 +294,7 @@ class GraphDatabase(SQLBase):
     def connect(self) -> None:
         """Connect to the database."""
         if self.is_connected():
-            raise AlreadyConnected("Cannot connect, the adapter is already connected")
+            raise AlreadyConnectedError("Cannot connect, the adapter is already connected")
 
         echo = bool(int(os.getenv("THOTH_STORAGES_DEBUG_QUERIES", 0)))
         try:
@@ -320,7 +320,7 @@ class GraphDatabase(SQLBase):
         try:
             if not self.is_schema_up2date():
                 _LOGGER.debug("Database adapter connected, database is initialized")
-        except DatabaseNotInitialized as exc:
+        except DatabaseNotInitializedError as exc:
             _LOGGER.warning("Database is not ready to receive or query data: %s", str(exc))
 
     @staticmethod
@@ -341,7 +341,7 @@ class GraphDatabase(SQLBase):
         from alembic import command
 
         if not self.is_connected():
-            raise NotConnected("Cannot initialize schema: the adapter is not connected yet")
+            raise NotConnectedError("Cannot initialize schema: the adapter is not connected yet")
 
         if not database_exists(self._engine.url):
             _LOGGER.info("The database has not been created yet, it will be created now...")
@@ -2127,7 +2127,7 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
-        extras: FrozenSet[Optional[str]] = None,
+        extras: Optional[FrozenSet[Optional[str]]] = None,
         marker_evaluation_result: Optional[bool] = None,
     ) -> List[
         Tuple[
@@ -2435,7 +2435,7 @@ class GraphDatabase(SQLBase):
         os_name: Optional[str] = None,
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
-        extras: FrozenSet[Optional[str]] = None,
+        extras: Optional[FrozenSet[Optional[str]]] = None,
         marker_evaluation_result: Optional[bool] = None,
         is_missing: Optional[bool] = None,
     ) -> Dict[str, List[Tuple[str, str]]]:
@@ -2838,7 +2838,7 @@ class GraphDatabase(SQLBase):
         with self._session_scope() as session:
             return session.query(PythonPackageIndex).filter(PythonPackageIndex.url == index_url).delete()
 
-    def get_python_package_index_all(self, enabled: bool = None) -> List[Dict[str, Any]]:
+    def get_python_package_index_all(self, enabled: Optional[bool] = None) -> List[Dict[str, Any]]:
         """Get listing of Python package indexes registered in the graph database."""
         with self._session_scope() as session:
             query = session.query(
@@ -3414,7 +3414,7 @@ class GraphDatabase(SQLBase):
         os_version: Optional[str] = None,
         python_version: Optional[str] = None,
         distinct: bool = False,
-        sort_by: QuerySortTypeEnum = None,
+        sort_by: Optional[QuerySortTypeEnum] = None,
     ) -> PythonQueryResult:
         """Retrieve number of versions per Python package name in Thoth Database.
 
@@ -3837,7 +3837,7 @@ class GraphDatabase(SQLBase):
         self,
         session: Session,
         pipfile_locked: dict,
-        software_environment: SoftwareEnvironment = None,
+        software_environment: Optional[SoftwareEnvironment] = None,
         sync_only_entity: bool = False,
     ) -> List[PythonPackageVersion]:
         """Create Python packages from Pipfile.lock entries and return them."""
@@ -3878,7 +3878,7 @@ class GraphDatabase(SQLBase):
                         .first()
                     )
                 else:
-                    raise PythonIndexNotProvided(
+                    raise PythonIndexNotProvidedError(
                         f"Trying to sync package {package.name!r} in version {package.locked_version!r} "
                         "which does not have corresponding Python entity record"
                     )
@@ -3898,7 +3898,7 @@ class GraphDatabase(SQLBase):
                         )
                     )
                 else:
-                    raise SolverNotRun(
+                    raise SolverNotRunError(
                         f"Trying to sync package {package.name!r} in version {package.locked_version!r} "
                         f"not solved by solver-{os_name}-{os_version}-{python_version}"
                     )
@@ -4739,10 +4739,10 @@ class GraphDatabase(SQLBase):
         os_name: Union[str, None],
         os_version: Union[str, None],
         python_version: Union[str, None],
-        python_package_metadata_id: int = None,
+        python_package_metadata_id: Optional[int] = None,
         sync_only_entity: bool = False,
-        package_license: int = None,
-        package_license_warning: bool = None,
+        package_license: Optional[int] = None,
+        package_license_warning: Optional[bool] = None,
     ) -> Union[PythonPackageVersion, PythonPackageVersionEntity]:
         """Create a Python package version.
 
@@ -4806,12 +4806,12 @@ class GraphDatabase(SQLBase):
         self,
         session: Session,
         software_stack_type: Optional[str] = None,
-        requirements: dict = None,
-        requirements_lock: dict = None,
-        software_environment: SoftwareEnvironment = None,
+        requirements: Optional[dict] = None,
+        requirements_lock: Optional[dict] = None,
+        software_environment: Optional[SoftwareEnvironment] = None,
         *,
-        performance_score: float = None,
-        overall_score: float = None,
+        performance_score: Optional[float] = None,
+        overall_score: Optional[float] = None,
         is_external: bool = False,
     ) -> PythonSoftwareStack:
         """Create a Python software stack out of its JSON/dict representation."""
@@ -5044,7 +5044,7 @@ class GraphDatabase(SQLBase):
                 performance_model_class = PERFORMANCE_MODEL_BY_NAME.get(performance_indicator_name)
 
                 if not performance_model_class:
-                    raise PerformanceIndicatorNotRegistered(
+                    raise PerformanceIndicatorNotRegisteredError(
                         f"No performance indicator registered for name {performance_indicator_name!r}"
                     )
 
@@ -5662,7 +5662,7 @@ class GraphDatabase(SQLBase):
             and cuda_found_in_file_version is not None
             and cuda_nvcc_version != cuda_found_in_file_version
         ):
-            raise CudaVersionDoesNotMatch(
+            raise CudaVersionDoesNotMatchError(
                 f"Cuda version detected by nvcc {cuda_nvcc_version!r} is different from the one found in "
                 f"/usr/local/cuda/version.txt "
                 f"{document['result'].get('cuda-version', {}).get('/usr/local/cuda/version.txt', None)!r}"
@@ -5755,10 +5755,10 @@ class GraphDatabase(SQLBase):
 
         if python_package_index is None:
             if only_if_enabled:
-                raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not know to system")
+                raise PythonIndexNotRegisteredError(f"Python package index {index_url!r} is not know to system")
             python_package_index, _ = PythonPackageIndex.get_or_create(session, url=index_url)
         elif not python_package_index.enabled and only_if_enabled:
-            raise PythonIndexNotRegistered(f"Python package index {index_url!r} is not enabled")
+            raise PythonIndexNotRegisteredError(f"Python package index {index_url!r} is not enabled")
 
         return python_package_index
 
@@ -5836,7 +5836,7 @@ class GraphDatabase(SQLBase):
             elif dist_key == "Obsoletes-Dist":
                 distutils_type = MetadataDistutilsTypeEnum.OBSOLETE.value
             else:
-                raise DistutilsKeyNotKnown(f"No distutils key registered for {dist_key!r} ")
+                raise DistutilsKeyNotKnownError(f"No distutils key registered for {dist_key!r} ")
 
             for distutils in importlib_metadata.pop(dist_key, []):
                 python_package_metadata_distutils, _ = PythonPackageMetadataDistutils.get_or_create(
@@ -5905,7 +5905,7 @@ class GraphDatabase(SQLBase):
         )
 
         if not python_package_version:
-            raise SolverNotRun(
+            raise SolverNotRunError(
                 f"Trying to sync package {package_name!r} in version {package_version!r} " f"not solved by any solver."
             )
 
@@ -6039,7 +6039,6 @@ class GraphDatabase(SQLBase):
                 )
 
                 if importlib_metadata:
-                    # There can be raised PythonPackageMetadataAttributeMissing once all metadata gathered.
                     _LOGGER.warning(
                         "Cannot sync the whole solver result: "
                         f"No related columns for {list(importlib_metadata.keys())!r} "

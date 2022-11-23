@@ -21,7 +21,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from .exceptions import CacheMiss
+from .exceptions import CacheMissError
 from .exceptions import NotFoundError
 from .result_base import ResultStorageBase
 
@@ -34,7 +34,7 @@ class CephCache(ResultStorageBase):
         try:
             return self.retrieve_document(document_id)
         except NotFoundError as exc:
-            raise CacheMiss(f"There was no record found in the cache for {document_id!r}") from exc
+            raise CacheMissError(f"There was no record found in the cache for {document_id!r}") from exc
 
     def store_document_record(self, document_id: str, document: dict) -> None:
         """Store the given document record in the cache."""

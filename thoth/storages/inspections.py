@@ -49,11 +49,10 @@ class _InspectionBase:
 
     __slots__ = ["ceph", "inspection_id"]
 
-    @classmethod
     @property
     @abstractmethod
-    def sub_prefix(cls) -> str:
-        pass
+    def sub_prefix(self) -> str:
+        raise NotImplementedError
 
     def __init__(self, inspection_id: str) -> None:
         """Set the ceph query prefix based on inspection_id and connect to Ceph."""
