@@ -206,6 +206,8 @@ class PythonPackageVersionEntity(Base, BaseExtension):
             "package_name",
             "package_version",
             "python_package_index_id",
+            # https://docs.sqlalchemy.org/en/14/dialects/postgresql.html#partial-indexes
+            postgresql_where=python_package_index_id.isnot(None),
             unique=True,
         ),
         Index("python_package_version_entity_id_idx", "id", unique=True),
