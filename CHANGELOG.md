@@ -1,5 +1,38 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.73.6 (2022-12-04T15:47:57)
+* 853c37a ':arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment'
+* 321adf2 Fix NULL values considered distinct by Postgres < 15 by adding the postgresql_where parameter to the python_package_version_entity_idx (see link to doc in code)
+* 5418bed Fix mypy errors
+* 36a0ad1 Apply https://github.com/hauntsaninja/no_implicit_optional
+* dbf3e6c Fix mypy configuration
+* 290ab53 Fix flake8 errors ('Exceptions must have Error suffix')
+* 2334b2e Remove unused exceptions
+* bc6a502 Update + fix pre-commit config
+* d02f64a :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* b697afa :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* 7092dec :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* dd6c2a7 :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
+* ae11d22 Ignore storages.graph type errors
+* 03b531a Inspections: factorize constructor.
+* 6060262 Fix incompatible method overload for AnalysisByDigest
+* 0cd11dc Light refactor on security_indicator utilities
+* 6aa1eec Proper typing for security indicators
+* 0b45759 Remove unused code
+* 590a8ab Fix incompatible child class method override
+* 8ded948 Fix type inconsistency with explicit conversion
+* c10b40b sync: More precise handlers types
+* 3e6d529 sync: remove unused parameters and refactor
+* 0449a70 Fix bad import
+* 234e8d8 Fix type confusion (same var name, different types)
+* 6e7061b CephCache
+* ec8b10b dependency_monkeys
+* 33a6bca Trying to fix get_document_* on solvers
+* ab70c50 Use TypedDict for reifying "all or nothing" for solver infos
+* 76f3719 S3Resource typing
+* 83e2596 mypy: exclude docs
+* 0f16910 Enable mypy and put its config in pyproject.toml
+
 ## Release 0.73.5 (2022-10-05T16:16:00)
 * e5cc1bd :arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment
 * 4c942a7 Use timedelta
