@@ -1,17 +1,18 @@
 # See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
-  - mayaCostantini
+  - codificat
   - harshad16
   - sesheta
   - VannTen
 
 emeritus_approvers:
   - fridex
+  - mayaCostantini  # Jan 2023
   - pacospace
 
 reviewers:
-  - mayaCostantini
+  - codificat
   - kpostoffice
   - harshad16
   - VannTen
