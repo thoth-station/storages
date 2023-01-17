@@ -1288,9 +1288,7 @@ class HasSymbol(Base, BaseExtension):
 
     __tablename__ = "has_symbol"
 
-    software_environment_id = Column(
-        Integer, ForeignKey("software_environment.id", ondelete="CASCADE"), primary_key=True
-    )
+    software_environment_id = Column(Integer, ForeignKey("software_environment.id", ondelete="CASCADE"))
     versioned_symbol_id = Column(Integer, ForeignKey("versioned_symbol.id", ondelete="CASCADE"), primary_key=True)
 
     software_environment = relationship("SoftwareEnvironment", back_populates="versioned_symbols")
