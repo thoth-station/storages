@@ -1,5 +1,13 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.74.0 (2023-01-17T18:32:09)
+* e465e86 Fix software_environment_id null violation (#2748)
+* de8c132 Fix new data causing PythonPackageVersion class IntegrityError (#2749)
+* 5e09fcd :face_in_clouds: Fix the sync_documents formatting (#2751)
+* ab70879 ':arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment'
+* 3b1d01c ':arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment'
+* af0d6f6 Swap Pep for Maya as an approver / reviewer (#2752)
+
 ## Release 0.73.6 (2022-12-04T15:47:57)
 * 853c37a ':arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment'
 * 321adf2 Fix NULL values considered distinct by Postgres < 15 by adding the postgresql_where parameter to the python_package_version_entity_idx (see link to doc in code)
