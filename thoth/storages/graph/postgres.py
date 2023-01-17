@@ -4777,13 +4777,15 @@ class GraphDatabase(SQLBase):
             os_version=os_version,
             python_version=python_version,
             entity_id=entity.id,
-            package_license=package_license,
-            package_license_warning=package_license_warning,
         )
 
         # including this value in "get_or_create" will cause errors because it is not part of a unique entry
         if python_package_metadata_id:
             python_package_version.python_package_metadata_id = python_package_metadata_id
+        if package_license:
+            python_package_version.package_license = package_license
+        if package_license_warning:
+            python_package_version.package_license_warning = package_license_warning
 
         return python_package_version
 
