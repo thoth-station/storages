@@ -580,12 +580,14 @@ def sync_documents(
     >>> from thoth.storages.sync import sync_documents
     >>> sync_documents(["adviser-efa7213babd12911", "package-extract-f8e354d9597a1203"])
     """
+
+    handlers: Dict[str, List[str]] = dict()
     if document_ids:
-        handlers: Dict[str, List[str]] = dict.fromkeys(HANDLERS_MAPPING, [])
+        handlers = {key: [] for key in HANDLERS_MAPPING.keys()}
         assert handlers is not None
         for doc in document_ids:
             try:
-                handlers[doc[doc.rfind("/") + 1 : doc.rfind("-")]].append(doc)
+                handlers[doc[doc.rfind("/") + 1 : doc.find("-")]].append(doc)
                 # Basename for local syncs, document_id should not have slash otherwise.
             except KeyError:
                 error_msg = f"No handler defined for document identifier {doc}"
@@ -598,8 +600,9 @@ def sync_documents(
 
     stats = dict.fromkeys(HANDLERS_MAPPING, (0, 0, 0, 0))
     for handler, documents in (handlers or static_handlers).items():
-        stats[handler] = HANDLERS_MAPPING[handler](
-            documents, force=force, graceful=graceful, graph=graph, is_local=is_local
-        )
+        if documents != []:
+            stats[handler] = HANDLERS_MAPPING[handler](
+                documents, force=force, graceful=graceful, graph=graph, is_local=is_local
+            )
 
     return stats
