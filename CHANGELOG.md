@@ -1,5 +1,10 @@
 # Changelog for Thoth's Storage Module
 
+## Release 0.74.1 (2023-01-18T21:24:36)
+* d96f414 ':arrow_up: Automatic update of dependencies by Kebechet for the rhel-8 environment'
+* 5370eb6 'Update requirements.txt respecting requirements in Pipfile'
+* 43978f9 Remove '-' from handlers designation
+
 ## Release 0.74.0 (2023-01-17T18:32:09)
 * e465e86 Fix software_environment_id null violation (#2748)
 * de8c132 Fix new data causing PythonPackageVersion class IntegrityError (#2749)
