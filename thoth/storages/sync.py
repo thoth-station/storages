@@ -557,13 +557,13 @@ def sync_security_indicators_documents(
 
 HANDLERS_MAPPING = {
     "adviser": sync_adviser_documents,
-    "dependency-monkey": sync_dependency_monkey_documents,
+    "dependency": sync_dependency_monkey_documents,
     "inspection": sync_inspection_documents,
-    "package-extract": sync_analysis_documents,
-    "provenance-checker": sync_provenance_checker_documents,
+    "package": sync_analysis_documents,
+    "provenance": sync_provenance_checker_documents,
     "solver": sync_solver_documents,
     "revsolver": sync_revsolver_documents,
-    "security-indicator": sync_security_indicators_documents,
+    "security": sync_security_indicators_documents,
 }
 
 
@@ -580,7 +580,6 @@ def sync_documents(
     >>> from thoth.storages.sync import sync_documents
     >>> sync_documents(["adviser-efa7213babd12911", "package-extract-f8e354d9597a1203"])
     """
-
     handlers: Dict[str, List[str]] = dict()
     if document_ids:
         handlers = {key: [] for key in HANDLERS_MAPPING.keys()}
