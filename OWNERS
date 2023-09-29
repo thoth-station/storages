@@ -4,12 +4,12 @@ approvers:
   - codificat
   - harshad16
   - sesheta
-  - VannTen
 
 emeritus_approvers:
   - fridex
   - mayaCostantini  # Jan 2023
   - pacospace
+  - VannTen
 
 reviewers:
   - codificat
